@@ -1,4 +1,4 @@
-FROM hzcsai_com/waltzk12-base
+FROM hzcsai_com/hzcsk12-base
 
 LABEL maintainer="framework@hzcsai.com"
 
