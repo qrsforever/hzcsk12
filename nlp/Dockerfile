@@ -1,4 +1,4 @@
-FROM hzcsai_com/hzcsk12-base
+FROM hzcsai_com/k12nlp-base
 
 LABEL maintainer="framework@hzcsai.com"
 
@@ -24,7 +24,7 @@ LABEL org.label-schema.schema-version="1.0" \
       org.label-schema.vendor=$VENDOR \
       org.label-schema.version=$VERSION \
       org.label-schema.docker.cmd="docker run -d --name $PROJECT \
---restart unless-stopped --network host --hostname waltznlp \
+--restart unless-stopped --network host --hostname $PROJECT \
 --volume /data:/data \
 --runtime nvidia --shm-size=2g --ulimit memlock=-1 --ulimit stack=67108864 \
 $REPOSITORY:$TAG python app_service.py --port $PORT"
