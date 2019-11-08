@@ -14,8 +14,7 @@ REPOSITORY="$VENDOR/$PROJECT"
 
 WORKDIR=/hzcsk12/nlp
 
-
-NBDIR=/data/jupyter/$REPOSITORY
+NBDIR=$CURDIR/jupyter/notebook
 DBDIR=/data/datasets/nlp
 
 ### Jupyter
@@ -31,10 +30,10 @@ then
         fi
         docker run -dit --name $JNAME --restart unless-stopped \
             --runtime nvidia --shm-size=2g --ulimit memlock=-1 --ulimit stack=67108864 \
-            --env WORKDIR=$WORKDIR --volume $NBDIR:/jupyter \
+            --env WORKDIR=$WORKDIR --volume $NBDIR:/notebook \
             --volume $DBDIR:/datasets --volume ${CURDIR}/allennlp:$WORKDIR/allennlp \
             --network host --entrypoint jupyter ${REPOSITORY}-dev \
-            notebook --no-browser --notebook-dir=/jupyter --allow-root --ip=0.0.0.0 --port=$DEVPORT
+            notebook --no-browser --notebook-dir=/notebook --allow-root --ip=0.0.0.0 --port=$DEVPORT
     else
         echo "$JNAME: already run!!!"
     fi
