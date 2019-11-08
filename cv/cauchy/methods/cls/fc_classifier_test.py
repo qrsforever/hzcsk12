@@ -30,6 +30,7 @@ from cauchy.utils.tools.res_filter import partial_list_items, select_samples
 class FCClassifierTest(object):
     def __init__(self, configer):
         self.configer = configer
+        self.records = self.configer.get("data", "records")
         self.blob_helper = BlobHelper(configer)
         self.cls_model_manager = ModelManager(configer)
         self.cls_data_loader = DataLoader(configer)
@@ -129,7 +130,8 @@ class FCClassifierTest(object):
             top1_pred, top3_pred, top5_pred = self.cls_running_score.get_pred()
             labels = labels.tolist()
             outputs = outputs.tolist()
-            selected_indices = select_samples(labels, 10)
+            # TODO QRS: if the pics is not enough, select 3 samples
+            selected_indices = select_samples(labels, 10 if self.records > 1000 else 3)
             selected_labels = partial_list_items(labels, selected_indices)
             selected_outputs = partial_list_items(outputs, selected_indices)
             selected_rltv_path_list = partial_list_items(

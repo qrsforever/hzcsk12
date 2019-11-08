@@ -1,0 +1,41 @@
+FROM ufoym/deepo:pytorch-py36-cu90
+
+LABEL maintainer="framework@hzcsai.com"
+
+ARG BUILD_DATE
+
+LABEL org.label-schema.schema-version="1.0"
+LABEL org.label-schema.build-date=$BUILD_DATE
+LABEL org.label-schema.name="hzcsai"
+LABEL org.label-schema.description="Base Framework Image for CV"
+
+RUN sed -i 's/http:\/\/archive\.ubuntu\.com\/ubuntu\//http:\/\/mirrors\.intra\.didiyun\.com\/ubuntu\//g' /etc/apt/sources.list && \
+  apt-get update && \
+  apt install -y unzip libsm6 libxrender1 libxext6 libfontconfig1 libglib2.0-0 openssh-server openssh-client psmisc curl nfs-common htop
+
+ADD requirements.txt /tmp/requirements.txt
+RUN mkdir ~/.pip && \
+        echo '[global]\ntrusted-host=mirrors.intra.didiyun.com\nindex-url=http://mirrors.intra.didiyun.com/pip/simple/' > /root/.pip/pip.conf
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
+
+# install opencv_python_headless for imgaug using aliyun
+RUN pip install --trusted-host=mirrors.aliyun.com -i https://mirrors.aliyun.com/pypi/simple/ opencv_python_headless
+
+RUN mkdir -p /Softwares/
+
+# install opencv_python_headless for imgaug using aliyun
+RUN pip install --trusted-host=mirrors.aliyun.com -i https://mirrors.aliyun.com/pypi/simple/ opencv_python_headless
+
+# install apex
+COPY external/apex/apex-master.zip /Softwares/apex-master.zip
+RUN unzip /Softwares/apex-master.zip -d /Softwares && \
+        cd /Softwares/apex-master && \
+        python setup.py install --cuda_ext --cpp_ext
+
+# install imgaug
+COPY external/imgaug/imgaug-master.zip /Softwares/imgaug-master.zip
+RUN unzip /Softwares/imgaug-master.zip -d /Softwares && \
+        cd /Softwares/imgaug-master && \
+        python setup.py install
+
+RUN rm -rf /Softwares

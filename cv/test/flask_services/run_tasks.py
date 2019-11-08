@@ -466,9 +466,7 @@ if __name__ == "__main__":
                 text=json.dumps("starting training", ensure_ascii=False),
                 win=task_window,
             )
-            print("#################start#####################")
             Controller.train(runner)
-            print("#################end#####################")
             vis.text(
                 text=json.dumps("training finished", ensure_ascii=False),
                 win=task_window,

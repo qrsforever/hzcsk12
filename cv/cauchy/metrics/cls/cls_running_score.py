@@ -18,6 +18,7 @@ class ClsRunningScore(object):
         self.top1_pred = []
         self.top3_pred = []
         self.top5_pred = []
+        self.num_classes = self.configer.get("data", "num_classes")
 
     def get_top1_acc(self):
         return self.top1_acc.avg
@@ -37,7 +38,14 @@ class ClsRunningScore(object):
     def update(self, output, target):
         """Computes the precision@k for the specified values of k"""
         topk = (1, 3, 5)
-        maxk = max(topk)
+        # TODO QRS if dataset is too small
+        # maxk = max(topk)
+        if self.num_classes < 3:
+            maxk = 1;
+        elif self.num_classes < 5:
+            maxk = 3;
+        else:
+            maxk = 5;
         batch_size = target.size(0)
 
         _, pred = output.topk(maxk, 1, True, True)
@@ -49,18 +57,30 @@ class ClsRunningScore(object):
         _pred_3 = _pred_1.clone()
         _pred_5 = _pred_1.clone()
         for k, _pred in zip(topk, [_pred_1, _pred_3, _pred_5]):
+            if k > self.num_classes:
+                break
             correct_k = correct[:k]
             correct_k_sum = correct_k.view(-1).float().sum(0, keepdim=False)
             correct_k = correct_k.sum(dim=0)
             _pred[correct_k == 1] = target[correct_k == 1]
             res.append(correct_k_sum / batch_size)
-        self.top1_pred.append(_pred_1)
-        self.top3_pred.append(_pred_3)
-        self.top5_pred.append(_pred_5)
 
+        self.top1_pred.append(_pred_1)
         self.top1_acc.update(res[0].item(), batch_size)
-        self.top3_acc.update(res[1].item(), batch_size)
-        self.top5_acc.update(res[2].item(), batch_size)
+
+        if self.num_classes >= 3:
+            self.top3_pred.append(_pred_3)
+            self.top3_acc.update(res[1].item(), batch_size)
+        else:
+            self.top3_pred.append(_pred_1)
+            self.top3_acc.update(res[0].item(), batch_size)
+
+        if self.num_classes >= 5:
+            self.top5_pred.append(_pred_5)
+            self.top5_acc.update(res[2].item(), batch_size)
+        else:
+            self.top5_pred.append(_pred_1)
+            self.top5_acc.update(res[0].item(), batch_size)
 
     def reset(self):
         self.top1_acc.reset()

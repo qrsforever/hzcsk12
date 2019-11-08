@@ -15,3 +15,8 @@ torch
 torchvision
 GPUtil
 psutil
+six
+scikit-image
+imageio
+Shapely
+flask
