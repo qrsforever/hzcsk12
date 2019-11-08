@@ -35,6 +35,7 @@ RUN pip install -r /tmp/requirements.txt
 COPY apis apis/
 COPY cauchy cauchy/
 COPY setup.py setup.py
+COPY app app/
 
 # install vulkan
 RUN cd cauchy/utils/vulkan/ && \
