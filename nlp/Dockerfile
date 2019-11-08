@@ -1,42 +1,36 @@
-FROM python:3.6.8-stretch
+FROM hzcsai_com/waltzk12-base
 
-ENV LC_ALL=C.UTF-8
-ENV LANG=C.UTF-8
+LABEL maintainer="framework@hzcsai.com"
 
-ENV PATH /usr/local/nvidia/bin/:$PATH
-ENV LD_LIBRARY_PATH /usr/local/nvidia/lib:/usr/local/nvidia/lib64
+ARG VENDOR
+ARG PROJECT
+ARG REPOSITORY
+ARG TAG
+ARG DATE
+ARG VERSION
+ARG URL
+ARG COMMIT
+ARG BRANCH
+ARG PORT
 
-# Tell nvidia-docker the driver spec that we need as well as to
-# use all available devices, which are mounted at /usr/local/nvidia.
-# The LABEL supports an older version of nvidia-docker, the env
-# variables a newer one.
-ENV NVIDIA_VISIBLE_DEVICES all
-ENV NVIDIA_DRIVER_CAPABILITIES compute,utility
-LABEL com.nvidia.volumes.needed="nvidia_driver"
+LABEL org.label-schema.schema-version="1.0" \
+      org.label-schema.build-date=$DATE \
+      org.label-schema.name=$REPOSITORY \
+      org.label-schema.description="NLP Backend" \
+      org.label-schema.url=https://www.hzcsai.com/index.php?r=front \
+      org.label-schema.vcs-url=$URL \
+      org.label-schema.vcs-ref=$COMMIT \
+      org.label-schema.vcs-branch=$BRANCH \
+      org.label-schema.vendor=$VENDOR \
+      org.label-schema.version=$VERSION \
+      org.label-schema.docker.cmd="docker run -d --name $PROJECT \
+--restart unless-stopped --network host --hostname waltznlp \
+--volume /data:/data \
+--runtime nvidia --shm-size=2g --ulimit memlock=-1 --ulimit stack=67108864 \
+$REPOSITORY:$TAG python app_service.py --port $PORT"
 
-WORKDIR /stage/allennlp
-
-# Install base packages.
-RUN apt-get update --fix-missing && apt-get install -y \
-    bzip2 \
-    ca-certificates \
-    curl \
-    gcc \
-    git \
-    libc-dev \
-    libglib2.0-0 \
-    libsm6 \
-    libxext6 \
-    libxrender1 \
-    wget \
-    libevent-dev \
-    build-essential && \
-    rm -rf /var/lib/apt/lists/*
-
-# Copy select files needed for installing requirements.
-# We only copy what we need here so small changes to the repository does not trigger re-installation of the requirements.
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip install -i https://mirrors.aliyun.com/pypi/simple/ -r requirements.txt
 
 COPY scripts/ scripts/
 COPY allennlp/ allennlp/
@@ -65,9 +59,7 @@ ARG SOURCE_COMMIT
 ENV ALLENNLP_SOURCE_COMMIT $SOURCE_COMMIT
 
 # Copy wrapper script to allow beaker to run resumable training workloads.
-COPY scripts/ai2-internal/resumable_train.sh /stage/allennlp
-
-LABEL maintainer="allennlp-contact@allenai.org"
+COPY scripts/ai2-internal/resumable_train.sh /hzcsk12/nlp
 
 EXPOSE 8000
 CMD ["/bin/bash"]
