@@ -63,3 +63,5 @@ COPY scripts/ai2-internal/resumable_train.sh /hzcsk12/nlp
 
 EXPOSE 8000
 CMD ["/bin/bash"]
+
+WORKDIR /hzcsk12/nlp/app

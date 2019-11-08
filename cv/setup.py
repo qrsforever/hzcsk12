@@ -74,7 +74,7 @@ def get_extensions():
     return ext_modules
 
 
-readme = read("README.md")
+readme = "CV" # read("README.md")
 
 VERSION = find_version("cauchy", "__init__.py")
 

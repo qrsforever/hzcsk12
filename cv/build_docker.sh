@@ -7,14 +7,17 @@
 
 export LANG="en_US.utf8"
 
+PORT=8339
 DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
 VERSION=$(git describe --tags --always)
 URL=$(git config --get remote.origin.url)
 COMMIT=$(git rev-parse HEAD | cut -c 1-7)
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
-REPOSITORY="hzcsai_com/waltzcv"
-TAG="0.3.$(git rev-list HEAD | wc -l | awk '{print $1}')"
+VENDOR=hzcsai_com
+PROJECT=k12cv
+REPOSITORY="$VENDOR/$PROJECT"
+TAG="0.4.$(git rev-list HEAD | wc -l | awk '{print $1}')"
 
 echo "DATE: $DATE"
 echo "VERSION: $VERSION"
@@ -34,12 +37,30 @@ then
                   --file Dockerfile.base .
 fi
 
-docker build --tag $REPOSITORY:$TAG \
-             --build-arg REPOSITORY=$REPOSITORY \
-             --build-arg TAG=$TAG \
-             --build-arg DATE=$DATE \
-             --build-arg VERSION=$VERSION \
-             --build-arg URL=$URL \
-             --build-arg COMMIT=$COMMIT \
-             --build-arg BRANCH=$BRANCH \
-             .
+check_exist=`docker images -q $REPOSITORY:$TAG`
+
+if [[ x$check_exist == x ]]
+then
+    docker build --tag $REPOSITORY:$TAG \
+                 --build-arg VENDOR=$VENDOR \
+                 --build-arg PROJECT=$PROJECT \
+                 --build-arg REPOSITORY=$REPOSITORY \
+                 --build-arg TAG=$TAG \
+                 --build-arg DATE=$DATE \
+                 --build-arg VERSION=$VERSION \
+                 --build-arg URL=$URL \
+                 --build-arg COMMIT=$COMMIT \
+                 --build-arg BRANCH=$BRANCH \
+                 .
+fi
+
+check_ok=`docker images -q $REPOSITORY:$TAG`
+
+if [[ x$check_ok != x ]]
+then
+    echo "Build Success!"
+    sed "s/{{REPLACEME}}/${VENDOR}\/$PROJECT:$TAG/g" Dockerfile.dev > .Dockerfile.dev
+    docker build --tag ${REPOSITORY}-dev --file .Dockerfile.dev .
+else
+    echo "Build Failed!"
+fi

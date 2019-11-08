@@ -1,0 +1,23 @@
+FROM {{REPLACEME}}
+
+LABEL org.label-schema.schema-version="1.0"
+LABEL org.label-schema.name="jupyter-k12cv"
+LABEL org.label-schema.description="Jupyter Framework Image for CV"
+
+RUN pip3 install -U jupyter \
+        jupyter_contrib_nbextensions \
+        jupyter_nbextensions_configurator \
+        -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+ARG jupyter_data_dir=/root/.local/share/jupyter
+ARG jupyter_conf_dir=/root/.jupyter
+
+RUN jupyter contrib nbextension install
+RUN jupyter nbextensions_configurator enable
+RUN mkdir -p ${jupyter_data_dir}/nbextensions
+COPY jupyter/vim_binding ${jupyter_data_dir}/nbextensions/vim_binding
+RUN jupyter nbextension enable vim_binding/vim_binding
+RUN jupyter notebook --generate-config
+COPY jupyter/jupyter_notebook_config.json ${jupyter_conf_dir}/jupyter_notebook_config.json
+
+CMD ["/bin/bash"]

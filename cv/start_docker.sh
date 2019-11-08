@@ -5,7 +5,40 @@
 # author: QRS
 #=================================================================
 
-REPOSITORY="hzcsai_com/waltzcv"
+CURDIR=`pwd`
+
+DEVPORT=8338
+VENDOR=hzcsai_com
+PROJECT=k12cv
+REPOSITORY="$VENDOR/$PROJECT"
+
+WORKDIR=/hzcsk12/cv
+
+NBDIR=$CURDIR/jupyter/notebook
+DBDIR=/data/datasets
+
+### Jupyter
+if [[ x$1 == xdev ]]
+then
+    JNAME=jupyter-$PROJECT
+    check_exist=`docker container ls --filter name=$JNAME --filter status=running -q`
+    if [[ x$check_exist == x ]]
+    then
+        if [[ ! -d $NBDIR ]]
+        then
+            mkdir -p $NBDIR
+        fi
+        docker run -dit --name $JNAME --restart unless-stopped \
+            --runtime nvidia --shm-size=2g --ulimit memlock=-1 --ulimit stack=67108864 \
+            --env WORKDIR=$WORKDIR --volume $NBDIR:/notebook --volume $DBDIR:/datasets \
+            --volume ${CURDIR}/app:$WORKDIR/app --volume ${CURDIR}/cauchy:$WORKDIR/cauchy \
+            --network host --entrypoint jupyter ${REPOSITORY}-dev \
+            notebook --no-browser --notebook-dir=/notebook --allow-root --ip=0.0.0.0 --port=$DEVPORT
+    else
+        echo "$JNAME: already run!!!"
+    fi
+    exit 0
+fi
 
 items=($(docker images --filter "label=org.label-schema.name=$REPOSITORY" --format "{{.Repository}}:{{.Tag}}"))
 count=${#items[@]}

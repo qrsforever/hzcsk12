@@ -17,8 +17,7 @@ BRANCH=$(git rev-parse --abbrev-ref HEAD)
 VENDOR=hzcsai_com
 PROJECT=k12nlp
 REPOSITORY="$VENDOR/$PROJECT"
-# TAG="0.4.$(git rev-list HEAD | wc -l | awk '{print $1}')"
-TAG="0.4.4"
+TAG="0.4.$(git rev-list HEAD | wc -l | awk '{print $1}')"
 
 echo "DATE: $DATE"
 echo "VERSION: $VERSION"

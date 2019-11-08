@@ -30,8 +30,8 @@ then
         fi
         docker run -dit --name $JNAME --restart unless-stopped \
             --runtime nvidia --shm-size=2g --ulimit memlock=-1 --ulimit stack=67108864 \
-            --env WORKDIR=$WORKDIR --volume $NBDIR:/notebook \
-            --volume $DBDIR:/datasets --volume ${CURDIR}/allennlp:$WORKDIR/allennlp \
+            --env WORKDIR=$WORKDIR --volume $NBDIR:/notebook --volume $DBDIR:/datasets\
+            --volume ${CURDIR}/app:$WORKDIR/app --volume ${CURDIR}/allennlp:$WORKDIR/allennlp \
             --network host --entrypoint jupyter ${REPOSITORY}-dev \
             notebook --no-browser --notebook-dir=/notebook --allow-root --ip=0.0.0.0 --port=$DEVPORT
     else

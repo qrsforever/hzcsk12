@@ -1,4 +1,4 @@
-FROM ufoym/deepo:pytorch-py36-cu90
+FROM ufoym/deepo:pytorch-py36-cu100
 
 LABEL maintainer="framework@hzcsai.com"
 
@@ -8,6 +8,13 @@ LABEL org.label-schema.schema-version="1.0"
 LABEL org.label-schema.build-date=$BUILD_DATE
 LABEL org.label-schema.name="hzcsai"
 LABEL org.label-schema.description="Base Framework Image for CV"
+
+ENV LC_ALL=C.UTF-8
+ENV LANG=C.UTF-8
+ENV PYTHONIOENCODING=utf-8
+
+ENV PATH /usr/local/cuda/bin/:$PATH
+ENV LD_LIBRARY_PATH /usr/local/cuda/lib:/usr/local/cuda/lib64
 
 RUN sed -i 's/http:\/\/archive\.ubuntu\.com\/ubuntu\//http:\/\/mirrors\.intra\.didiyun\.com\/ubuntu\//g' /etc/apt/sources.list && \
   apt-get update && \
@@ -28,14 +35,12 @@ RUN pip install --trusted-host=mirrors.aliyun.com -i https://mirrors.aliyun.com/
 
 # install apex
 COPY external/apex/apex-master.zip /Softwares/apex-master.zip
-RUN unzip /Softwares/apex-master.zip -d /Softwares && \
-        cd /Softwares/apex-master && \
-        python setup.py install --cuda_ext --cpp_ext
+RUN pip install -v --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" /Softwares/apex-master.zip
 
 # install imgaug
 COPY external/imgaug/imgaug-master.zip /Softwares/imgaug-master.zip
-RUN unzip /Softwares/imgaug-master.zip -d /Softwares && \
-        cd /Softwares/imgaug-master && \
-        python setup.py install
+RUN pip install -v /Softwares/imgaug-master.zip
 
 RUN rm -rf /Softwares
+
+WORKDIR /hzcsk12/cv

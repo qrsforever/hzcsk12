@@ -1,8 +1,9 @@
-FROM hzcsai_com/waltzcv-base
+FROM hzcsai_com/k12cv-base
 
 LABEL maintainer="framework@hzcsai.com"
 
-ARG VENDOR="hzcsai"
+ARG VENDOR
+ARG PROJECT
 ARG REPOSITORY
 ARG TAG
 ARG DATE
@@ -10,6 +11,7 @@ ARG VERSION
 ARG URL
 ARG COMMIT
 ARG BRANCH
+ARG PORT
 
 LABEL org.label-schema.schema-version="1.0" \
       org.label-schema.build-date=$DATE \
@@ -21,47 +23,38 @@ LABEL org.label-schema.schema-version="1.0" \
       org.label-schema.vcs-branch=$BRANCH \
       org.label-schema.vendor=$VENDOR \
       org.label-schema.version=$VERSION \
-      org.label-schema.docker.cmd="docker run -d --name waltzcv \
---restart unless-stopped --network host --hostname waltzcv \
+      org.label-schema.docker.cmd="docker run -d --name $PROJECT \
+--restart unless-stopped --network host --hostname $PROJECT \
 --volume /data:/data --volume /data/pretrained:/root/.torch/models \
 --runtime nvidia --shm-size=2g --ulimit memlock=-1 --ulimit stack=67108864 \
-$REPOSITORY:$TAG python cauchy_services.py --port 8339"
+$REPOSITORY:$TAG python app_service.py --port $PORT"
 
 ADD requirements.txt /tmp/requirements.txt
 RUN pip install -r /tmp/requirements.txt
 
-RUN mkdir -p /Softwares/torchcv/
-
-COPY apis /Softwares/torchcv/apis/
-COPY cauchy /Softwares/torchcv/cauchy/
-COPY setup.py LICENSE MANIFEST.in README.md /Softwares/torchcv/
+COPY apis apis/
+COPY cauchy cauchy/
+COPY setup.py setup.py
 
 # install vulkan
-RUN cd /Softwares/torchcv/cauchy/utils/vulkan/ && \
+RUN cd cauchy/utils/vulkan/ && \
         python setup.py install
 
 # install coco api
-RUN cd /Softwares/torchcv/apis/cocoapi/PythonAPI/ && \
+RUN cd apis/cocoapi/PythonAPI/ && \
         python setup.py install
 
 # install torchcv extensions
-RUN cd /Softwares/torchcv/cauchy/extensions/ && \
+RUN cd cauchy/extensions/ && \
         chmod +x make.sh && \
         sh make.sh
-
-ENV LANG=C.UTF-8
-ENV PYTHONIOENCODING=utf-8
 
 # install torchcv
 ARG FORCE_CUDA="1"
 ENV FORCE_CUDA=${FORCE_CUDA}
-RUN cd /Softwares/torchcv/ && \
-        python setup.py install
 
-RUN rm -rf /Softwares
+RUN pip install --editable .
 
-RUN mkdir /app
+CMD ["/bin/bash"]
 
-COPY test/flask_services /app
-
-WORKDIR /app
+WORKDIR /hzcsk12/cv/app
