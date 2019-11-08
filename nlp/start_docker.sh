@@ -7,9 +7,12 @@
 
 CURDIR=`pwd`
 
+DEVPORT=8348
 VENDOR=hzcsai_com
-PROJECT=waltznlp
+PROJECT=k12nlp
 REPOSITORY="$VENDOR/$PROJECT"
+
+NBDIR=/data/jupyter
 
 ### Jupyter
 if [[ x$1 == xdev ]]
@@ -18,15 +21,15 @@ then
     check_exist=`docker container ls --filter name=$JNAME --filter status=running -q`
     if [[ x$check_exist == x ]]
     then
-        if [[ ! -d /data/jupyter ]]
+        if [[ ! -d $NBDIR ]]
         then
-            mkdir -p /data/jupyter
+            mkdir -p $NBDIR
         fi
         docker run -dit --name $JNAME --restart unless-stopped \
             --runtime nvidia --shm-size=2g --ulimit memlock=-1 --ulimit stack=67108864 \
-            --volume /data/:/data --volume ${CURDIR}/allennlp:/stage/allennlp/allennlp \
+            --volume /data/:/data --volume ${CURDIR}/allennlp:/hzcsk12/nlp/allennlp \
             --network host --entrypoint jupyter ${REPOSITORY}-dev \
-            notebook --no-browser --notebook-dir=/data/jupyter --allow-root --ip=0.0.0.0 --port=9812
+            notebook --no-browser --notebook-dir=$NBDIR --allow-root --ip=0.0.0.0 --port=$DEVPORT
     else
         echo "$JNAME: already run!!!"
     fi
