@@ -12,7 +12,11 @@ VENDOR=hzcsai_com
 PROJECT=k12nlp
 REPOSITORY="$VENDOR/$PROJECT"
 
+WORKDIR=/hzcsk12/nlp
+
+
 NBDIR=/data/jupyter/$REPOSITORY
+DBDIR=/data/datasets/nlp
 
 ### Jupyter
 if [[ x$1 == xdev ]]
@@ -27,10 +31,10 @@ then
         fi
         docker run -dit --name $JNAME --restart unless-stopped \
             --runtime nvidia --shm-size=2g --ulimit memlock=-1 --ulimit stack=67108864 \
-            --env NBROOT_DIR=$NBDIR --env DATASETS_DIR=/data/datasets \
-            --volume /data/:/data --volume ${CURDIR}/allennlp:/hzcsk12/nlp/allennlp \
+            --env WORKDIR=$WORKDIR --volume $NBDIR:/jupyter \
+            --volume $DBDIR:/datasets --volume ${CURDIR}/allennlp:$WORKDIR/allennlp \
             --network host --entrypoint jupyter ${REPOSITORY}-dev \
-            notebook --no-browser --notebook-dir=$NBDIR --allow-root --ip=0.0.0.0 --port=$DEVPORT
+            notebook --no-browser --notebook-dir=/jupyter --allow-root --ip=0.0.0.0 --port=$DEVPORT
     else
         echo "$JNAME: already run!!!"
     fi
