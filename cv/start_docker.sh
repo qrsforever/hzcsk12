@@ -20,7 +20,7 @@ DBDIR=/data/datasets
 ### Jupyter
 if [[ x$1 == xdev ]]
 then
-    JNAME=jupyter-$PROJECT
+    JNAME=${PROJECT}-dev
     check_exist=`docker container ls --filter name=$JNAME --filter status=running -q`
     if [[ x$check_exist == x ]]
     then
@@ -30,7 +30,7 @@ then
         fi
         docker run -dit --name $JNAME --restart unless-stopped \
             --runtime nvidia --shm-size=2g --ulimit memlock=-1 --ulimit stack=67108864 \
-            --env WORKDIR=$WORKDIR --volume $NBDIR:/notebook --volume $DBDIR:/datasets \
+            --env WORKDIR=$WORKDIR --volume $NBDIR:/notebook --volume $DBDIR:$DBDIR \
             --volume ${CURDIR}/app:$WORKDIR/app --volume ${CURDIR}/cauchy:$WORKDIR/cauchy \
             --network host --entrypoint jupyter ${REPOSITORY}-dev \
             notebook --no-browser --notebook-dir=/notebook --allow-root --ip=0.0.0.0 --port=$DEVPORT

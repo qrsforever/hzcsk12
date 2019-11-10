@@ -51,6 +51,7 @@ then
                  --build-arg URL=$URL \
                  --build-arg COMMIT=$COMMIT \
                  --build-arg BRANCH=$BRANCH \
+                 --build-arg PORT=$PORT \
                  .
 fi
 

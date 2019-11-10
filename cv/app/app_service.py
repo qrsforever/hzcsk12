@@ -1,3 +1,4 @@
+import cauchy.extensions.ops.nms.gpu_nms
 import argparse
 import base64
 import json
@@ -75,11 +76,16 @@ def train():
 
 @app.route('/cauchy/free_port', methods=['POST', 'GET'])
 def get_port():
-  viz_port = str(find_free_port(8140, 8199))
+  port = find_free_port(8140, 8199)
+  viz_port = str(port)
   try:
     viz_instance = subprocess.Popen(
         ["python", "-m", "visdom.server", "-port", viz_port])
-    sleep(2)
+    for i in range(5):
+        print("[{}]: start visdom.server for port {}".format(i, viz_port))
+        sleep(1)
+        if (check_viz_status(port=port)):
+            break
     return msg({'viz_pid': viz_instance.pid, "viz_port": viz_port}, "100200")
   except Exception as e:
     print(str(e))
