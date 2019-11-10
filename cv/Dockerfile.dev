@@ -20,4 +20,6 @@ RUN jupyter nbextension enable vim_binding/vim_binding
 RUN jupyter notebook --generate-config
 COPY jupyter/jupyter_notebook_config.json ${jupyter_conf_dir}/jupyter_notebook_config.json
 
+RUN echo "umask 0000" >> /etc/bash.bashrc
+
 CMD ["/bin/bash"]
