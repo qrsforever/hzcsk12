@@ -34,11 +34,11 @@ RUN mkdir -p /Softwares/
 RUN pip install --trusted-host=mirrors.aliyun.com -i https://mirrors.aliyun.com/pypi/simple/ opencv_python_headless
 
 # install apex
-COPY external/apex/apex-master.zip /Softwares/apex-master.zip
+COPY external/apex/apex-master-20191106.zip /Softwares/apex-master.zip
 RUN pip install -v --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" /Softwares/apex-master.zip
 
 # install imgaug
-COPY external/imgaug/imgaug-master.zip /Softwares/imgaug-master.zip
+COPY external/imgaug/imgaug-master-20190828.zip /Softwares/imgaug-master.zip
 RUN pip install -v /Softwares/imgaug-master.zip
 
 RUN rm -rf /Softwares
