@@ -128,7 +128,8 @@ class Inception3(nn.Module):
         # 8 x 8 x 2048
         x = self.Mixed_7c(x)
         # 8 x 8 x 2048
-        x = F.avg_pool2d(x, kernel_size=8)
+        # QRS: torch1.2 fix bug, Output size is too small
+        x = F.avg_pool2d(x, kernel_size=8, ceil_mode=True)
         # 1 x 1 x 2048
         x = F.dropout(x, training=self.training)
         # 1 x 1 x 2048
@@ -167,7 +168,8 @@ class InceptionA(nn.Module):
         branch3x3dbl = self.branch3x3dbl_2(branch3x3dbl)
         branch3x3dbl = self.branch3x3dbl_3(branch3x3dbl)
 
-        branch_pool = F.avg_pool2d(x, kernel_size=3, stride=1, padding=1)
+        # QRS: torch1.2 fix bug, Output size is too small
+        branch_pool = F.avg_pool2d(x, kernel_size=3, stride=1, padding=1, ceil_mode=True)
         branch_pool = self.branch_pool(branch_pool)
 
         outputs = [branch1x1, branch5x5, branch3x3dbl, branch_pool]
@@ -239,7 +241,8 @@ class InceptionC(nn.Module):
         branch7x7dbl = self.branch7x7dbl_4(branch7x7dbl)
         branch7x7dbl = self.branch7x7dbl_5(branch7x7dbl)
 
-        branch_pool = F.avg_pool2d(x, kernel_size=3, stride=1, padding=1)
+        # QRS: torch1.2 fix bug, Output size is too small
+        branch_pool = F.avg_pool2d(x, kernel_size=3, stride=1, padding=1, ceil_mode=True)
         branch_pool = self.branch_pool(branch_pool)
 
         outputs = [branch1x1, branch7x7, branch7x7dbl, branch_pool]
@@ -314,7 +317,8 @@ class InceptionE(nn.Module):
         ]
         branch3x3dbl = torch.cat(branch3x3dbl, 1)
 
-        branch_pool = F.avg_pool2d(x, kernel_size=3, stride=1, padding=1)
+        # QRS: torch1.2 fix bug, Output size is too small
+        branch_pool = F.avg_pool2d(x, kernel_size=3, stride=1, padding=1, ceil_mode=True)
         branch_pool = self.branch_pool(branch_pool)
 
         outputs = [branch1x1, branch3x3, branch3x3dbl, branch_pool]
@@ -332,7 +336,8 @@ class InceptionAux(nn.Module):
 
     def forward(self, x):
         # 17 x 17 x 768
-        x = F.avg_pool2d(x, kernel_size=5, stride=3)
+        # QRS: torch1.2 fix bug, Output size is too small
+        x = F.avg_pool2d(x, kernel_size=5, stride=3, ceil_mode=True)
         # 5 x 5 x 768
         x = self.conv0(x)
         # 5 x 5 x 128
