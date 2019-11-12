@@ -50,7 +50,7 @@ class VGGModel(nn.Module):
         in_channels = 3
         for v in cfg:
             if v == "M":
-                layers += [nn.MaxPool2d(kernel_size=2, stride=2)]
+                layers += [nn.MaxPool2d(kernel_size=2, stride=2, ceil_mode=True)]
             elif v == "C":
                 layers += [
                     nn.MaxPool2d(kernel_size=2, stride=2, ceil_mode=True)

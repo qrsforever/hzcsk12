@@ -180,7 +180,7 @@ class Transition(nn.Module):
 
   def forward(self, x):
     out = self.conv(F.relu(self.bn(x)))
-    out = F.avg_pool2d(out, 2)
+    out = F.avg_pool2d(out, 2, ceil_mode=True)
     return out
 
 

@@ -32,6 +32,7 @@ then
             --runtime nvidia --shm-size=2g --ulimit memlock=-1 --ulimit stack=67108864 \
             --env WORKDIR=$WORKDIR --volume $NBDIR:/notebook --volume $DBDIR:$DBDIR \
             --volume ${CURDIR}/app:$WORKDIR/app --volume ${CURDIR}/cauchy:$WORKDIR/cauchy \
+            --volume /data/pretrained:/root/.cache/torch/checkpoints \
             --network host ${REPOSITORY}-dev \
             /bin/bash -c "umask 0000; jupyter notebook --no-browser --notebook-dir=/notebook --allow-root --ip=0.0.0.0 --port=$DEVPORT"
     else

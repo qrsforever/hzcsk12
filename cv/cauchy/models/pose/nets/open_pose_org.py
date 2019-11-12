@@ -64,7 +64,7 @@ def make_layers(layer_dict):
             v = layer[k]
             if "pool" in k:
                 layers += [
-                    nn.MaxPool2d(kernel_size=v[0], stride=v[1], padding=v[2])
+                    nn.MaxPool2d(kernel_size=v[0], stride=v[1], padding=v[2], ceil_mode=True)
                 ]
             else:
                 conv2d = nn.Conv2d(
@@ -163,7 +163,7 @@ def get_open_pose_org(configer):
             v = block[key]
             if "pool" in key:
                 layers += [
-                    nn.MaxPool2d(kernel_size=v[0], stride=v[1], padding=v[2])
+                    nn.MaxPool2d(kernel_size=v[0], stride=v[1], padding=v[2], ceil_mode=True)
                 ]
             else:
                 conv2d = nn.Conv2d(

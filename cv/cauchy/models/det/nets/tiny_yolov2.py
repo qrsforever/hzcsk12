@@ -44,27 +44,27 @@ class TinyYolov2(nn.Module):
                     ("conv1", nn.Conv2d(3, 16, 3, 1, 1, bias=False)),
                     ("bn1", nn.BatchNorm2d(16)),
                     ("leaky1", nn.LeakyReLU(0.1, inplace=True)),
-                    ("pool1", nn.MaxPool2d(2, 2)),
+                    ("pool1", nn.MaxPool2d(2, 2, ceil_mode=True)),
                     # conv2
                     ("conv2", nn.Conv2d(16, 32, 3, 1, 1, bias=False)),
                     ("bn2", nn.BatchNorm2d(32)),
                     ("leaky2", nn.LeakyReLU(0.1, inplace=True)),
-                    ("pool2", nn.MaxPool2d(2, 2)),
+                    ("pool2", nn.MaxPool2d(2, 2, ceil_mode=True)),
                     # conv3
                     ("conv3", nn.Conv2d(32, 64, 3, 1, 1, bias=False)),
                     ("bn3", nn.BatchNorm2d(64)),
                     ("leaky3", nn.LeakyReLU(0.1, inplace=True)),
-                    ("pool3", nn.MaxPool2d(2, 2)),
+                    ("pool3", nn.MaxPool2d(2, 2, ceil_mode=True)),
                     # conv4
                     ("conv4", nn.Conv2d(64, 128, 3, 1, 1, bias=False)),
                     ("bn4", nn.BatchNorm2d(128)),
                     ("leaky4", nn.LeakyReLU(0.1, inplace=True)),
-                    ("pool4", nn.MaxPool2d(2, 2)),
+                    ("pool4", nn.MaxPool2d(2, 2, ceil_mode=True)),
                     # conv5
                     ("conv5", nn.Conv2d(128, 256, 3, 1, 1, bias=False)),
                     ("bn5", nn.BatchNorm2d(256)),
                     ("leaky5", nn.LeakyReLU(0.1, inplace=True)),
-                    ("pool5", nn.MaxPool2d(2, 2)),
+                    ("pool5", nn.MaxPool2d(2, 2, ceil_mode=True)),
                     # conv6
                     ("conv6", nn.Conv2d(256, 512, 3, 1, 1, bias=False)),
                     ("bn6", nn.BatchNorm2d(512)),

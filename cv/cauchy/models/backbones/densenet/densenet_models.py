@@ -262,7 +262,7 @@ class DenseNet(nn.Module):
                     num_output_features=num_features // 2,
                     bn_type=bn_type,
                 )
-                avg_pool = nn.AvgPool2d(kernel_size=2, stride=2)
+                avg_pool = nn.AvgPool2d(kernel_size=2, stride=2, ceil_mode=True)
                 self.features.add_module("transition%d" % (i + 1), trans)
                 self.features.add_module(
                     "transition%s_pool" % (i + 1), avg_pool

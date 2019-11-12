@@ -105,7 +105,7 @@ def _make_layers(in_channels, net_cfg):
     else:
         for item in net_cfg:
             if item == "M":
-                layers.append(nn.MaxPool2d(kernel_size=2, stride=2))
+                layers.append(nn.MaxPool2d(kernel_size=2, stride=2, ceil_mode=True))
             else:
                 out_channels, ksize = item
                 layers.append(

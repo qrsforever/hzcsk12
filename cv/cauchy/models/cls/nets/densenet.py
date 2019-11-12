@@ -85,7 +85,7 @@ class _Transition(nn.Sequential):
                 bias=False,
             ),
         )
-        self.add_module("pool", nn.AvgPool2d(kernel_size=2, stride=2))
+        self.add_module("pool", nn.AvgPool2d(kernel_size=2, stride=2, ceil_mode=True))
 
 
 class DenseNet(nn.Module):

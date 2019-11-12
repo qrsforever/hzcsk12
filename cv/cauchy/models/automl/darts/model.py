@@ -97,7 +97,7 @@ class AuxiliaryHeadCIFAR(nn.Module):
         self.features = nn.Sequential(
             nn.ReLU(inplace=True),
             nn.AvgPool2d(
-                5, stride=3, padding=0, count_include_pad=False
+                5, stride=3, padding=0, ceil_mode=True, count_include_pad=False
             ),  # image size = 2 x 2
             nn.Conv2d(C, 128, 1, bias=False),
             nn.BatchNorm2d(128),
@@ -120,7 +120,7 @@ class AuxiliaryHeadImageNet(nn.Module):
         super(AuxiliaryHeadImageNet, self).__init__()
         self.features = nn.Sequential(
             nn.ReLU(inplace=True),
-            nn.AvgPool2d(5, stride=2, padding=0, count_include_pad=False),
+            nn.AvgPool2d(5, stride=2, padding=0, ceil_mode=True, count_include_pad=False),
             nn.Conv2d(C, 128, 1, bias=False),
             nn.BatchNorm2d(128),
             nn.ReLU(inplace=True),
@@ -235,7 +235,7 @@ class NetworkImageNet(nn.Module):
             self.auxiliary_head = AuxiliaryHeadImageNet(
                 C_to_auxiliary, num_classes
             )
-        self.global_pooling = nn.AvgPool2d(7)
+        self.global_pooling = nn.AvgPool2d(7, ceil_mode=True)
         self.classifier = nn.Linear(C_prev, num_classes)
 
     def forward(self, input):

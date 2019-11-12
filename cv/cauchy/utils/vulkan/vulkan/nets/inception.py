@@ -81,13 +81,13 @@ class Inception3(nn.Module):
         # 147 x 147 x 32
         x = self.Conv2d_2b_3x3(x)
         # 147 x 147 x 64
-        x = F.max_pool2d(x, kernel_size=3, stride=2)
+        x = F.max_pool2d(x, kernel_size=3, stride=2, ceil_mode=True)
         # 73 x 73 x 64
         x = self.Conv2d_3b_1x1(x)
         # 73 x 73 x 80
         x = self.Conv2d_4a_3x3(x)
         # 71 x 71 x 192
-        x = F.max_pool2d(x, kernel_size=3, stride=2)
+        x = F.max_pool2d(x, kernel_size=3, stride=2, ceil_mode=True)
         # 35 x 35 x 192
         x = self.Mixed_5b(x)
         # 35 x 35 x 256
@@ -114,7 +114,7 @@ class Inception3(nn.Module):
         # 8 x 8 x 2048
         x = self.Mixed_7c(x)
         # 8 x 8 x 2048
-        x = F.avg_pool2d(x, kernel_size=8)
+        x = F.avg_pool2d(x, kernel_size=8, ceil_mode=True)
         # 1 x 1 x 2048
         x = F.dropout(x, training=self.training)
         # 1 x 1 x 2048
@@ -176,7 +176,7 @@ class InceptionB(nn.Module):
         branch3x3dbl = self.branch3x3dbl_2(branch3x3dbl)
         branch3x3dbl = self.branch3x3dbl_3(branch3x3dbl)
 
-        branch_pool = F.max_pool2d(x, kernel_size=3, stride=2)
+        branch_pool = F.max_pool2d(x, kernel_size=3, stride=2, ceil_mode=True)
 
         outputs = [branch3x3, branch3x3dbl, branch_pool]
         return torch.cat(outputs, 1)
@@ -242,7 +242,7 @@ class InceptionD(nn.Module):
         branch7x7x3 = self.branch7x7x3_3(branch7x7x3)
         branch7x7x3 = self.branch7x7x3_4(branch7x7x3)
 
-        branch_pool = F.max_pool2d(x, kernel_size=3, stride=2)
+        branch_pool = F.max_pool2d(x, kernel_size=3, stride=2, ceil_mode=True)
         outputs = [branch3x3, branch7x7x3, branch_pool]
         return torch.cat(outputs, 1)
 

@@ -25,7 +25,7 @@ LABEL org.label-schema.schema-version="1.0" \
       org.label-schema.version=$VERSION \
       org.label-schema.docker.cmd="docker run -d --name $PROJECT \
 --restart unless-stopped --network host --hostname $PROJECT \
---volume /data:/data --volume /data/pretrained:/root/.torch/models \
+--volume /data:/data --volume /data/pretrained:/root/.cache/torch/checkpoints \
 --runtime nvidia --shm-size=2g --ulimit memlock=-1 --ulimit stack=67108864 \
 $REPOSITORY:$TAG python app_service.py --port $PORT"
 

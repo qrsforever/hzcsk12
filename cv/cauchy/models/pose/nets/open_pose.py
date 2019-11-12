@@ -64,7 +64,7 @@ class PoseModel(nn.Module):
                 if "pool" in k:
                     layers += [
                         nn.MaxPool2d(
-                            kernel_size=v[0], stride=v[1], padding=v[2]
+                            kernel_size=v[0], stride=v[1], padding=v[2], ceil_mode=True 
                         )
                     ]
                 else:
@@ -152,7 +152,7 @@ class PoseModel(nn.Module):
                 if "pool" in key:
                     layers += [
                         nn.MaxPool2d(
-                            kernel_size=v[0], stride=v[1], padding=v[2]
+                            kernel_size=v[0], stride=v[1], padding=v[2], ceil_mode=True
                         )
                     ]
                 else:
