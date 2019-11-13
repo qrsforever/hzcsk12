@@ -43,3 +43,4 @@ __pycache__
 .tags
 .Dockerfile.dev
 jupyter/notebook/tmp
+app/tmp
