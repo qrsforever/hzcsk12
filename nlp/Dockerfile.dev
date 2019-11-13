@@ -15,9 +15,9 @@ ARG jupyter_conf_dir=/root/.jupyter
 RUN jupyter contrib nbextension install
 RUN jupyter nbextensions_configurator enable
 RUN mkdir -p ${jupyter_data_dir}/nbextensions
-COPY jupyter/vim_binding ${jupyter_data_dir}/nbextensions/vim_binding
+COPY app/tools/vim_binding ${jupyter_data_dir}/nbextensions/vim_binding
 RUN jupyter nbextension enable vim_binding/vim_binding
 RUN jupyter notebook --generate-config
-COPY jupyter/jupyter_notebook_config.json ${jupyter_conf_dir}/jupyter_notebook_config.json
+COPY app/tools/jupyter_notebook_config.json ${jupyter_conf_dir}/jupyter_notebook_config.json
 
 CMD ["/bin/bash"]

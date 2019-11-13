@@ -6,4 +6,4 @@
 
 **/**/.tags
 **/**/.Dockerfile.dev
-**/**/jupyter/notebook/tmp
+**/**/tmp
