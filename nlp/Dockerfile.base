@@ -60,5 +60,5 @@ RUN pip install /Softwares/en_core_web_sm.tar.gz
 
 RUN rm -rf /Softwares
 
-WORKDIR /hzcsk12/nlp
+WORKDIR /hzcsk12
 

@@ -12,14 +12,26 @@ VENDOR=hzcsai_com
 PROJECT=k12nlp
 REPOSITORY="$VENDOR/$PROJECT"
 
-WORKDIR=/hzcsk12/nlp
+WORKDIR=/hzcsk12/
 
-NBDIR=$CURDIR/app/notebook
-DBDIR=/data/datasets/nlp
+DATASETSDIR=/data/datasets
+PRETRAINDIR=/data/pretrained
 
 ### Jupyter
 if [[ x$1 == xdev ]]
 then
+    ROOTDIR=`cd $CURDIR/../..; pwd` 
+    if [[ ! -d $ROOTDIR/hzcsnote ]]
+    then
+        cd $ROOTDIR
+        git clone https://gitee.com/hzcsai_com/hzcsnote.git
+        cd - > /dev/null
+        if [[ ! -d $ROOTDIR/hzcsnote ]]
+        then
+            echo "Cann't download hzcsnote"
+            exit 0
+        fi
+    fi
     JNAME=${PROJECT}-dev
     check_exist=`docker container ls --filter name=$JNAME --filter status=running -q`
     if [[ x$check_exist == x ]]
@@ -30,8 +42,11 @@ then
         fi
         docker run -dit --name $JNAME --restart unless-stopped \
             --runtime nvidia --shm-size=2g --ulimit memlock=-1 --ulimit stack=67108864 \
-            --env WORKDIR=$WORKDIR --volume $DBDIR:$DBDIR \
-            --volume ${CURDIR}/app:$WORKDIR/app --volume ${CURDIR}/allennlp:$WORKDIR/allennlp \
+            --volume $DATASETSDIR:$DATASETSDIR \
+            --volume $PRETRAINDIR:$PRETRAINDIR \
+            --volume $CURDIR/allennlp:$WORKDIR/allennlp 
+            --volume $CURDIR/app:$WORKDIR/app \
+            --volume $ROOTDIR/hzcsnote:$WORKDIR/app/notebook \
             --network host ${REPOSITORY}-dev \
             /bin/bash -c "umask 0000; jupyter notebook --no-browser --notebook-dir=$WORKDIR/app --allow-root --ip=0.0.0.0 --port=$DEVPORT"
     else
@@ -81,7 +96,7 @@ do
     docker container stop $c
 done
 
-docker inspect ${items[$select]} --format  '{{json .ContainerConfig.Labels}}' | python -m json.tool
+docker inspect ${items[$select]} --format '{{json .ContainerConfig.Labels}}' | python -m json.tool
 
 cmd=$(docker inspect ${items[$select]} --format '{{index .ContainerConfig.Labels "org.label-schema.docker.cmd"}}')
 

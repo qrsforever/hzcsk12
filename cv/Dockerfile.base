@@ -43,4 +43,4 @@ RUN pip install -v /Softwares/imgaug-master.zip
 
 RUN rm -rf /Softwares
 
-WORKDIR /hzcsk12/cv
+WORKDIR /hzcsk12/

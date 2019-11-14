@@ -60,6 +60,10 @@ check_ok=`docker images -q $REPOSITORY:$TAG`
 if [[ x$check_ok != x ]]
 then
     echo "Build Success!"
+    if [[ ! -d .jupyter_config ]]
+    then
+        git clone https://gitee.com/lidongai/jupyter_config.git .jupyter_config
+    fi
     sed "s/{{REPLACEME}}/${VENDOR}\/$PROJECT:$TAG/g" Dockerfile.dev > .Dockerfile.dev
     docker build --tag ${REPOSITORY}-dev --file .Dockerfile.dev .
 else

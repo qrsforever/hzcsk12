@@ -40,7 +40,4 @@ __pycache__
 .coverage
 .pytest_cache/
 
-.tags
 .Dockerfile.dev
-jupyter/notebook/tmp
-**/**/tmp

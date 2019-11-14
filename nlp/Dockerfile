@@ -32,6 +32,7 @@ $REPOSITORY:$TAG python app_service.py --port $PORT"
 COPY requirements.txt .
 RUN pip install -i https://mirrors.aliyun.com/pypi/simple/ -r requirements.txt
 
+COPY app app/
 COPY scripts/ scripts/
 COPY allennlp/ allennlp/
 COPY pytest.ini pytest.ini
@@ -64,4 +65,4 @@ COPY scripts/ai2-internal/resumable_train.sh /hzcsk12/nlp
 EXPOSE 8000
 CMD ["/bin/bash"]
 
-WORKDIR /hzcsk12/nlp/app
+WORKDIR /hzcsk12/app

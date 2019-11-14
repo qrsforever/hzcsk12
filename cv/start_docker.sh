@@ -12,29 +12,39 @@ VENDOR=hzcsai_com
 PROJECT=k12cv
 REPOSITORY="$VENDOR/$PROJECT"
 
-WORKDIR=/hzcsk12/cv
+WORKDIR=/hzcsk12/
 
-NBDIR=$CURDIR/app/notebook
-DBDIR=/data/datasets
+DATASETSDIR=/data/datasets
+PRETRAINDIR=/data/pretrained
 
 ### Jupyter
 if [[ x$1 == xdev ]]
 then
+    ROOTDIR=`cd $CURDIR/../..; pwd` 
+    if [[ ! -d $ROOTDIR/hzcsnote ]]
+    then
+        cd $ROOTDIR
+        git clone https://gitee.com/hzcsai_com/hzcsnote.git
+        cd - > /dev/null
+        if [[ ! -d $ROOTDIR/hzcsnote ]]
+        then
+            echo "Cann't download hzcsnote"
+            exit 0
+        fi
+    fi
     JNAME=${PROJECT}-dev
     check_exist=`docker container ls --filter name=$JNAME --filter status=running -q`
     if [[ x$check_exist == x ]]
     then
-        if [[ ! -d $NBDIR ]]
-        then
-            mkdir -p $NBDIR
-        fi
         docker run -dit --name $JNAME --restart unless-stopped \
             --runtime nvidia --shm-size=2g --ulimit memlock=-1 --ulimit stack=67108864 \
-            --env WORKDIR=$WORKDIR --volume $DBDIR:$DBDIR \
-            --volume ${CURDIR}/app:$WORKDIR/app --volume ${CURDIR}/cauchy:$WORKDIR/cauchy \
-            --volume /data/pretrained:/root/.cache/torch/checkpoints \
+            --volume $DATASETSDIR:$DATASETSDIR \
+            --volume $PRETRAINDIR:/root/.cache/torch/checkpoints \
+            --volume $CURDIR/cauchy:$WORKDIR/cauchy \
+            --volume $CURDIR/app:$WORKDIR/app \
+            --volume $ROOTDIR/hzcsnote:$WORKDIR/app/notebook \
             --network host ${REPOSITORY}-dev \
-            /bin/bash -c "umask 0000; jupyter notebook --no-browser --notebook-dir=/app --allow-root --ip=0.0.0.0 --port=$DEVPORT"
+            /bin/bash -c "umask 0000; jupyter notebook --no-browser --notebook-dir=$WORKDIR/app --allow-root --ip=0.0.0.0 --port=$DEVPORT"
     else
         echo "$JNAME: already run!!!"
     fi

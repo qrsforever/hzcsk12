@@ -32,10 +32,10 @@ $REPOSITORY:$TAG python app_service.py --port $PORT"
 ADD requirements.txt /tmp/requirements.txt
 RUN pip install -r /tmp/requirements.txt
 
+COPY app app/
 COPY apis apis/
 COPY cauchy cauchy/
 COPY setup.py setup.py
-COPY app app/
 
 # install vulkan
 RUN cd cauchy/utils/vulkan/ && \
@@ -58,4 +58,4 @@ RUN pip install --editable .
 
 CMD ["/bin/bash"]
 
-WORKDIR /hzcsk12/cv/app
+WORKDIR /hzcsk12/app

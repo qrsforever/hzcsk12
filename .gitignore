@@ -4,6 +4,7 @@
 **/**/*.pyo
 **/**/__pycache__
 
+**/**/tmp
 **/**/.tags
 **/**/.Dockerfile.dev
-**/**/tmp
+**/**/.jupyter_config

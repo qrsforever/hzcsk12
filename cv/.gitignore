@@ -2,5 +2,3 @@
 cauchy/extensions/**/*.so
 cauchy.egg-info
 dist
-**/**/__pycache__
-.tags
