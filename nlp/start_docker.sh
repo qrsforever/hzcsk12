@@ -36,15 +36,11 @@ then
     check_exist=`docker container ls --filter name=$JNAME --filter status=running -q`
     if [[ x$check_exist == x ]]
     then
-        if [[ ! -d $NBDIR ]]
-        then
-            mkdir -p $NBDIR
-        fi
         docker run -dit --name $JNAME --restart unless-stopped \
             --runtime nvidia --shm-size=2g --ulimit memlock=-1 --ulimit stack=67108864 \
             --volume $DATASETSDIR:$DATASETSDIR \
             --volume $PRETRAINDIR:$PRETRAINDIR \
-            --volume $CURDIR/allennlp:$WORKDIR/allennlp 
+            --volume $CURDIR/allennlp:$WORKDIR/allennlp \
             --volume $CURDIR/app:$WORKDIR/app \
             --volume $ROOTDIR/hzcsnote:$WORKDIR/app/notebook \
             --network host ${REPOSITORY}-dev \
