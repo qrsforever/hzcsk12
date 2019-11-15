@@ -6,5 +6,6 @@
 
 **/**/tmp
 **/**/.tags
+**/**/.Dockerfile.base
 **/**/.Dockerfile.dev
 **/**/.jupyter_config

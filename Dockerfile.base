@@ -1,0 +1,71 @@
+FROM ufoym/deepo:pytorch-py36-cu100
+
+LABEL maintainer="hzcsk12@hzcsai.com"
+
+ARG VENDOR
+ARG PROJECT
+ARG REPOSITORY
+ARG TAG
+ARG DATE
+ARG VERSION
+ARG URL
+ARG COMMIT
+ARG BRANCH
+ARG PORT
+
+LABEL org.label-schema.schema-version="1.0" \
+      org.label-schema.build-date=$DATE \
+      org.label-schema.name=$REPOSITORY \
+      org.label-schema.description="HZCS K12 Base" \
+      org.label-schema.url=https://www.hzcsai.com/index.php?r=front \
+      org.label-schema.vcs-url=$URL \
+      org.label-schema.vcs-ref=$COMMIT \
+      org.label-schema.vcs-branch=$BRANCH \
+      org.label-schema.vendor=$VENDOR \
+      org.label-schema.version=$VERSION
+
+LABEL com.nvidia.volumes.needed="nvidia_driver"
+
+ENV LC_ALL=C.UTF-8
+ENV LANG=C.UTF-8
+ENV PYTHONIOENCODING=utf-8
+
+ENV PATH /usr/local/cuda/bin/:$PATH
+ENV LD_LIBRARY_PATH /usr/local/cuda/lib:/usr/local/cuda/lib64
+ENV NVIDIA_VISIBLE_DEVICES all
+ENV NVIDIA_DRIVER_CAPABILITIES compute,utility
+
+WORKDIR /hzcsk12
+
+# apt install
+RUN sed -i 's/http:\/\/archive\.ubuntu\.com\/ubuntu\//http:\/\/mirrors\.intra\.didiyun\.com\/ubuntu\//g' /etc/apt/sources.list
+RUN apt-get update --fix-missing && apt-get install -y \
+    bzip2 unzip ca-certificates \
+    gcc git curl wget openssh-server openssh-client psmisc curl nfs-common htop \
+    libc-dev libevent-dev libglib2.0-0 libsm6 libxext6 libxrender1 libfontconfig1 \
+    build-essential && \
+    rm -rf /var/lib/apt/lists/*
+
+# pip install
+COPY external/docker/pip/pip.conf /root/.pip/pip.conf
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+RUN rm requirements.txt
+
+RUN mkdir -p external
+
+# install apex
+COPY external/apex/apex-master-20191106.zip external/apex-master.zip
+RUN pip install -v --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" external/apex-master.zip
+
+# spacy2.1 with en_core_web_sm-2.1.0
+COPY external/en_core_web_sm/en_core_web_sm-2.1.0.tar.gz external/en_core_web_sm.tar.gz
+RUN pip install -v --no-cache-dir external/en_core_web_sm.tar.gz
+
+# install imgaug
+COPY external/imgaug/imgaug-master-20190828.zip external/imgaug-master.zip
+RUN pip install -v --no-cache-dir external/imgaug-master.zip
+
+RUN rm -rf external
+
+CMD ["/bin/bash"]

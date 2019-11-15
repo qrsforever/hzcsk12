@@ -1,6 +1,6 @@
-FROM hzcsai_com/k12cv-base
+FROM hzcsai_com/hzcsk12-base
 
-LABEL maintainer="framework@hzcsai.com"
+LABEL maintainer="k12cv@hzcsai.com"
 
 ARG VENDOR
 ARG PROJECT
@@ -29,8 +29,8 @@ LABEL org.label-schema.schema-version="1.0" \
 --runtime nvidia --shm-size=2g --ulimit memlock=-1 --ulimit stack=67108864 \
 $REPOSITORY:$TAG python app_service.py --port $PORT"
 
-ADD requirements.txt /tmp/requirements.txt
-RUN pip install -r /tmp/requirements.txt
+ADD requirements.txt requirements.txt
+RUN pip install -v --no-cache-dir -r requirements.txt
 
 COPY app app/
 COPY apis apis/

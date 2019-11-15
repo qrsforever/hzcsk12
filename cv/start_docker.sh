@@ -43,7 +43,7 @@ then
             --volume $CURDIR/cauchy:$WORKDIR/cauchy \
             --volume $CURDIR/app:$WORKDIR/app \
             --volume $ROOTDIR/hzcsnote:$WORKDIR/app/notebook \
-            --network host ${REPOSITORY}-dev \
+            --network host --hostname $PROJECT ${REPOSITORY}-dev \
             /bin/bash -c "umask 0000; jupyter notebook --no-browser --notebook-dir=$WORKDIR/app --allow-root --ip=0.0.0.0 --port=$DEVPORT"
     else
         echo "$JNAME: already run!!!"
@@ -84,7 +84,7 @@ then
     exit 0
 fi
 
-containers=(`docker container  ls --filter name=waltzcv --filter status=running -q`)
+containers=(`docker container ls --filter name=$PROJECT --filter status=running -q`)
 
 for c in $containers
 do

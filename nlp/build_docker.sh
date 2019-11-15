@@ -26,17 +26,6 @@ echo "COMMIT: $COMMIT"
 echo "BRANCH: $BRANCH"
 echo "IMAGE: $REPOSITORY:$TAG"
 
-base_image=${REPOSITORY}-base
-base_tag=`docker images -q $base_image:latest`
-
-if [[ x$base_tag == x ]]
-then
-     echo "build $base_image"
-     docker build --tag $base_image:latest \
-                  --build-arg DATE=$DATE \
-                  --file Dockerfile.base .
-fi
-
 check_exist=`docker images -q $REPOSITORY:$TAG`
 
 if [[ x$check_exist == x ]]
