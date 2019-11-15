@@ -14,11 +14,11 @@ __run()
 cd $app_dir
 
 
-if [[ -d $tmp_dir/callback_basic_sst ]]
+if [[ -d $tmp_dir/callback_bcn_sst ]]
 then
     flags='--recover'
 fi
-__run allennlp train config/callback_basic_sst.jsonnet --serialization-dir $tmp_dir/callback_basic_sst --include-package hzcsnlp $flags
+__run allennlp train config/callback_bcn_sst.jsonnet --serialization-dir $tmp_dir/callback_bcn_sst --include-package hzcsnlp $flags
 
 
 cd - >/dev/null
