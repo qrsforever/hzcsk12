@@ -49,3 +49,6 @@ six
 scikit-image
 imageio
 Shapely
+
+# rpc
+zerorpc

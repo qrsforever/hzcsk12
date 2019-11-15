@@ -18,39 +18,39 @@
             "token_embedders": {
                 "tokens": {
                     "type": "embedding",
-                    "embedding_dim": 200,
-                    "pretrained_file": "/data/datasets/nlp/glove/glove.6B.200d.txt.gz",
+                    "embedding_dim": 50,
+                    "pretrained_file": "/data/datasets/nlp/glove/glove.6B.50d.txt.gz",
                     "trainable": false
                 }
             }
         },
         "embedding_dropout": 0.25,
         "pre_encode_feedforward": {
-            "input_dim": 200,
+            "input_dim": 50,
             "num_layers": 1,
-            "hidden_dims": [200],
+            "hidden_dims": [50],
             "activations": ["relu"],
             "dropout": [0.25]
         },
         "encoder": {
             "type": "lstm",
-            "input_size": 200,
-            "hidden_size": 200,
+            "input_size": 50,
+            "hidden_size": 50,
             "num_layers": 1,
             "bidirectional": true
         },
         "integrator": {
             "type": "lstm",
-            "input_size": 1200,
-            "hidden_size": 200,
+            "input_size": 300,
+            "hidden_size": 50,
             "num_layers": 1,
             "bidirectional": true
         },
         "integrator_dropout": 0.1,
         "output_layer": {
-            "input_dim": 1600,
+            "input_dim": 400,
             "num_layers": 3,
-            "output_dims": [800, 400, 5],
+            "output_dims": [200, 100, 5],
             "pool_sizes": 4,
             "dropout": [0.2, 0.3, 0.0]
         }
@@ -58,7 +58,7 @@
     "iterator": {
         "type": "bucket",
         "sorting_keys": [["tokens", "num_tokens"]],
-        "batch_size" : 2
+        "batch_size" : 4
     },
     "trainer": {
         "type": "callback",

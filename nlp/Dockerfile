@@ -1,6 +1,6 @@
-FROM hzcsai_com/k12nlp-base
+FROM hzcsai_com/hzcsk12-base
 
-LABEL maintainer="framework@hzcsai.com"
+LABEL maintainer="k12nlp@hzcsai.com"
 
 ARG VENDOR
 ARG PROJECT
@@ -35,10 +35,6 @@ RUN pip install -i https://mirrors.aliyun.com/pypi/simple/ -r requirements.txt
 COPY app app/
 COPY scripts/ scripts/
 COPY allennlp/ allennlp/
-COPY pytest.ini pytest.ini
-COPY .pylintrc .pylintrc
-COPY tutorials/ tutorials/
-COPY training_config training_config/
 COPY setup.py setup.py
 COPY README.md README.md
 
@@ -60,7 +56,7 @@ ARG SOURCE_COMMIT
 ENV ALLENNLP_SOURCE_COMMIT $SOURCE_COMMIT
 
 # Copy wrapper script to allow beaker to run resumable training workloads.
-COPY scripts/ai2-internal/resumable_train.sh /hzcsk12/nlp
+COPY scripts/ai2-internal/resumable_train.sh /hzcsk12/app
 
 EXPOSE 8000
 CMD ["/bin/bash"]

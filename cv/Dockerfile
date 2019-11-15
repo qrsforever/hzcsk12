@@ -31,6 +31,7 @@ $REPOSITORY:$TAG python app_service.py --port $PORT"
 
 ADD requirements.txt requirements.txt
 RUN pip install -v --no-cache-dir -r requirements.txt
+RUN rm requirements.txt
 
 COPY app app/
 COPY apis apis/

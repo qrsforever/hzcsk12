@@ -1,7 +1,7 @@
 FROM {{REPLACEME}}
 
 LABEL org.label-schema.schema-version="1.0"
-LABEL org.label-schema.name="jupyter-k12nlp"
+LABEL org.label-schema.name="k12nlp-dev"
 LABEL org.label-schema.description="Jupyter Framework Image for NLP"
 
 RUN pip3 install -U jupyter \

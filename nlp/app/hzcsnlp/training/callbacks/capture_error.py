@@ -1,11 +1,12 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-# @file log_to_visdom.py
+# @file capture_error.py
 # @brief
 # @author QRS
+# @blog qrsforever.github.io
 # @version 1.0
-# @date 2019-11-13 17:01:56
+# @date 2019-11-15 14:50:25
 
 from typing import Set, Dict, TYPE_CHECKING
 import logging
@@ -28,12 +29,11 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-@Callback.register("log_to_visdom")
-class LogToVisdom(Callback):
-    def __init__(self, server_pid: int, server_port: int, min_interval: int = 5) -> None:
+@Callback.register("error")
+class CaptureError(Callback):
+    def __init__(self, server_port: int, min_interval: int = 5) -> None:
         logger.info("visdom server_port: %d", server_port)
         self.interval = min_interval
-        self.pid = server_pid
         self.port = server_port
         self.visdom = Visdom(port=server_port)
         self.widget = self.visdom.text("training_monitor")
@@ -110,3 +110,9 @@ class LogToVisdom(Callback):
     @handle_event(Events.TRAINING_END)
     def training_end(self, trainer: 'CallbackTrainer'):
         logger.info("trainning end")
+
+
+    @handle_event(Events.Error)
+    def capture_error(self, trainer: 'CallbackTrainer'):
+        logger.info("capture error")
+        self.exc = trainer.exception

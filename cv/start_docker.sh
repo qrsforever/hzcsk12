@@ -5,22 +5,46 @@
 # author: QRS
 #=================================================================
 
+export LANG="en_US.utf8"
+
 CURDIR=`pwd`
 
+MAJOR=0
+MINOR=4
+PORT=8339
 DEVPORT=8338
+
+DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+VERSION=$(git describe --tags --always)
+URL=$(git config --get remote.origin.url)
+COMMIT=$(git rev-parse HEAD | cut -c 1-7)
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
 VENDOR=hzcsai_com
 PROJECT=k12cv
+
 REPOSITORY="$VENDOR/$PROJECT"
+TAG="$MAJOR.$MINOR.$(git rev-list HEAD | wc -l | awk '{print $1}')"
 
-WORKDIR=/hzcsk12/
-
-DATASETSDIR=/data/datasets
-PRETRAINDIR=/data/pretrained
+WORKDIR=/hzcsk12
+DATADIR=/data
+DATASETSDIR=$DATADIR/datasets
+PRETRAINDIR=$DATADIR/pretrained
 
 ### Jupyter
 if [[ x$1 == xdev ]]
 then
-    ROOTDIR=`cd $CURDIR/../..; pwd` 
+    check_exist=`docker images $REPOSITORY-dev -q`
+    if [[ x$check_exist == x ]]
+    then
+        if [[ ! -d .jupyter_config ]]
+        then
+            git clone https://gitee.com/lidongai/jupyter_config.git .jupyter_config
+        fi
+        sed "s/{{REPLACEME}}/${VENDOR}\/$PROJECT:$TAG/g" Dockerfile.dev > .Dockerfile.dev
+        docker build --tag ${REPOSITORY}-dev --file .Dockerfile.dev .
+    fi
+    ROOTDIR=`cd $CURDIR/../..; pwd`
     if [[ ! -d $ROOTDIR/hzcsnote ]]
     then
         cd $ROOTDIR
@@ -38,7 +62,7 @@ then
     then
         docker run -dit --name $JNAME --restart unless-stopped \
             --runtime nvidia --shm-size=2g --ulimit memlock=-1 --ulimit stack=67108864 \
-            --volume $DATASETSDIR:$DATASETSDIR \
+            --volume $DATADIR:$DATADIR \
             --volume $PRETRAINDIR:/root/.cache/torch/checkpoints \
             --volume $CURDIR/cauchy:$WORKDIR/cauchy \
             --volume $CURDIR/app:$WORKDIR/app \
@@ -51,32 +75,75 @@ then
     exit 0
 fi
 
-items=($(docker images --filter "label=org.label-schema.name=$REPOSITORY" --format "{{.Repository}}:{{.Tag}}"))
+__build_image()
+{
+    echo "build $REPOSITORY:$TAG"
+    docker build --tag $REPOSITORY:$TAG \
+        --build-arg VENDOR=$VENDOR \
+        --build-arg PROJECT=$PROJECT \
+        --build-arg REPOSITORY=$REPOSITORY \
+        --build-arg TAG=$TAG \
+        --build-arg DATE=$DATE \
+        --build-arg VERSION=$VERSION \
+        --build-arg URL=$URL \
+        --build-arg COMMIT=$COMMIT \
+        --build-arg BRANCH=$BRANCH \
+        --build-arg PORT=$PORT \
+        .
+}
+
+items=($(docker images --filter "label=org.label-schema.name=$REPOSITORY" --format "{{.Tag}}"))
 count=${#items[@]}
 
 if (( $count == 0 ))
 then
-    echo "not found correct image!"
-    exit 0
-fi
-
-if (( $count > 1 ))
-then
+    __build_image
+    imageName=`docker images $REPOSITORY:$TAG --format "{{.Repository}}:{{.Tag}}"`
+else
+    lastest=0
     i=0
     while (( i < $count ))
     do
-        echo "$i. ${items[$i]}"
+        echo "$i. $REPOSITORY:${items[$i]}"
+        if [[ $lastest != 1 ]] && [[ $(echo ${items[$i]} | cut -d \. -f1-2) == $MAJOR.$MINOR ]]
+        then
+            lastest=1
+        fi
         (( i = i + 1 ))
     done
-    echo -n "Select: "
-    read select
-else
-    select=0
+    if (( $lastest == 0 ))
+    then
+        echo "$i. $REPOSITORY:$TAG (need build)"
+        echo -n "Select: "
+        read select
+        if [[ x$i == x$select ]]
+        then
+            __build_image
+            imageName=`docker images $REPOSITORY:$TAG --format "{{.Repository}}:{{.Tag}}"`
+        else
+            imageName=$REPOSITORY:${items[$select]}
+        fi
+    else
+        if (( $i > 1 ))
+        then
+            echo -n "Select: "
+            read select
+            imageName=$REPOSITORY:${items[$select]}
+        else
+            imageName=$REPOSITORY:${items[0]}
+        fi
+    fi
 fi
 
-echo "use image: ${items[$select]}"
+echo "use image: $imageName"
 
-container=`docker container  ls --filter ancestor=${items[$select]} --filter status=running -q`
+if [[ x$imageName == x ]]
+then
+    echo "Image is null"
+    exit 0
+fi
+
+container=`docker container  ls --filter ancestor=$imageName --filter status=running -q`
 
 if [[ x$container != x ]]
 then
@@ -92,12 +159,13 @@ do
     docker container stop $c
 done
 
-docker inspect ${items[$select]} --format  '{{json .ContainerConfig.Labels}}' | python -m json.tool
+docker inspect ${imageName} --format '{{json .ContainerConfig.Labels}}' | python -m json.tool
 
-cmd=$(docker inspect ${items[$select]} --format '{{index .ContainerConfig.Labels "org.label-schema.docker.cmd"}}')
+cmd=$(docker inspect ${imageName} --format '{{index .ContainerConfig.Labels "org.label-schema.docker.cmd"}}')
 
 if [[ x$cmd != x ]]
 then
+    echo "$cmd"
     $cmd
 else
     echo "not found command in org.label-schema.docker.cmd"
