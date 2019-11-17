@@ -66,7 +66,7 @@ RUN pip install -v --no-cache-dir external/en_core_web_sm.tar.gz
 COPY external/imgaug/imgaug-master-20190828.zip external/imgaug-master.zip
 RUN pip install -v --no-cache-dir external/imgaug-master.zip
 
-# check install scripts 
+# check install scripts
 COPY external/docker/scripts/check_install.sh external/check_install.sh
 RUN chmod +x ./external/check_install.sh && ./external/check_install.sh
 
