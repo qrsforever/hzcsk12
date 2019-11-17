@@ -51,14 +51,14 @@
             "type": "lstm",
             "bidirectional": true,
             "input_size": 200,
-            "hidden_size": 200,
+            "hidden_size": 100,
             "num_layers": 1
         },
         "similarity_function": {
             "type": "linear",
             "combination": "x,y,x*y",
-            "tensor_1_dim": 100,
-            "tensor_2_dim": 100
+            "tensor_1_dim": 200,
+            "tensor_2_dim": 200
         },
         "modeling_layer": {
             "type": "lstm",
