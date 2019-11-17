@@ -1,6 +1,7 @@
 {
     "dataset_reader": {
         "type": "squad",
+	    "lazy": true,
         "token_indexers": {
             "tokens": {
                 "type": "single_id",
@@ -25,8 +26,8 @@
             "token_embedders": {
                 "tokens": {
                     "type": "embedding",
-                    "pretrained_file": "/data/datasets/nlp/glove/glove.6B.50d.txt.gz",
-                    "embedding_dim": 50,
+                    "pretrained_file": "/data/datasets/nlp/glove/glove.6B.100d.txt.gz",
+                    "embedding_dim": 100,
                     "trainable": false
                 },
                 "token_characters": {
@@ -38,7 +39,7 @@
                     "encoder": {
                         "type": "cnn",
                         "embedding_dim": 16,
-                        "num_filters": 50,
+                        "num_filters": 100,
                         "ngram_filter_sizes": [5]
                     },
                     "dropout": 0.2
@@ -49,8 +50,8 @@
         "phrase_layer": {
             "type": "lstm",
             "bidirectional": true,
-            "input_size": 100,
-            "hidden_size": 5,
+            "input_size": 200,
+            "hidden_size": 200,
             "num_layers": 1
         },
         "similarity_function": {
@@ -62,16 +63,16 @@
         "modeling_layer": {
             "type": "lstm",
             "bidirectional": true,
-            "input_size": 40,
-            "hidden_size": 5,
+            "input_size": 800,
+            "hidden_size": 100,
             "num_layers": 2,
             "dropout": 0.2
         },
         "span_end_encoder": {
             "type": "lstm",
             "bidirectional": true,
-            "input_size": 70,
-            "hidden_size": 5,
+            "input_size": 1400,
+            "hidden_size": 100,
             "num_layers": 1
         },
         "dropout": 0.2

@@ -85,10 +85,6 @@ class BidirectionalAttentionFlow(Model):
         self._modeling_layer = modeling_layer
         self._span_end_encoder = span_end_encoder
 
-        print("text_field_embedder: ", text_field_embedder.get_output_dim())
-        print("phrase_layer: ", phrase_layer.get_input_dim(), phrase_layer.get_output_dim())
-        print("modeling_layer: ", modeling_layer.get_input_dim(), modeling_layer.get_output_dim())
-
         encoding_dim = phrase_layer.get_output_dim()
         modeling_dim = modeling_layer.get_output_dim()
         span_start_input_dim = encoding_dim * 4 + modeling_dim
