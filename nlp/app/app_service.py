@@ -15,7 +15,12 @@ import socket
 import zerorpc
 import requests
 import consul
+import tempfile
+import subprocess
 from threading import Thread
+from allennlp.training.util import create_serialization_dir
+from allennlp.common.checks import ConfigurationError
+from allennlp.common.params import Params
 
 if os.environ.get("K12NLP_DEBUG"):
     LEVEL = logging.DEBUG
@@ -63,10 +68,40 @@ def _delay_do_consul(host, port):
             logger.info("consul agent service register err", err)
             time.sleep(3)
 
+userdata_dir = '/data/users'
+
 class NLPServiceRPC(object):
 
-    def train(self, *args, **kwargs):
+    def train(self, op, user, uuid, params):
         logger.info("call train")
+        if op == 'stop':
+            print(params['task_pid'])
+            task_pid = str(params['task_pid'])
+            if os.path.exists(os.path.join('/proc', task_pid)):
+                subprocess.run(["kill", "-2", task_pid])
+                return 1
+            return 0
+        pro_dir = os.path.join(userdata_dir, user, uuid)
+        if not os.path.exists(pro_dir):
+            os.makedirs(pro_dir)
+        config_path = os.path.join(pro_dir, 'config.json')
+        with open(config_path, 'w') as fout:
+            fout.write(json.dumps(params))
+        output_dir = os.path.join(pro_dir, 'output')
+        if os.path.exists(output_dir):
+            try:
+                create_serialization_dir(Params.from_file(config_path), output_dir, True, False)
+                flag = '--recover'
+            except ConfigurationError as err:
+                flag = '--force'
+        else:
+            flag = ' '
+        task = subprocess.Popen([
+            "allennlp", "train", config_path, flag,
+            "--serialization-dir", output_dir,
+            "--include-package", "hzcsnlp",
+        ])
+        return task.pid
 
     def evaluate(self, *args, **kwargs):
         logger.info("call evaluate")

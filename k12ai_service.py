@@ -7,14 +7,13 @@
 # @version 1.0
 # @date 2019-11-15 18:53:37
 
-import os
-import json
+import os, time, json
 import argparse
 import logging
 import zerorpc
 import socket
 import consul
-import time
+import subprocess
 from flask import Flask, request, jsonify
 from threading import Thread
 
@@ -51,6 +50,29 @@ app_host_ip = _get_host_ip()
 consul_addr = None
 consul_port = None
 
+ERRORS = {
+        100000: 'No Error.',
+        100100: '100100', 
+        100101: 'Error: Json key not found.',
+        100102: 'Error: Json value is invalid.',
+
+        100200: '100200',
+        100201: 'Error: Service is not found.',
+        100202: 'Error: Start train task fail.',
+        100203: 'Error: Train task process is not found.',
+
+        999999: 'Error: Unkown error!',
+}
+
+def _response_msg(code, content=None):
+    result = {}
+    if content:
+        result['content'] = content
+    else:
+        result['content'] = ERRORS[code]
+    result['code'] = code
+    return json.dumps(result)
+
 def _delay_do_consul(host, port):
     time.sleep(3)
     while not app_quit:
@@ -62,7 +84,7 @@ def _delay_do_consul(host, port):
                     check=consul.Check.http('http://{}:{}/status'.format(host, port), interval='5s'))
             break
         except Exception as err:
-            logger.info("consul agent service register err", err)
+            logger.error("consul agent service register err", err)
             time.sleep(3)
 
 class RPCServiceAgent(object):
@@ -102,19 +124,27 @@ def _framework_train():
     logger.info('call _framework_train')
     try:
         reqjson = request.json
+        user = reqjson['user']
+        op = reqjson['op']
+        if op not in ('start', 'stop'):
+            return _response_msg(100102)
         service_name = reqjson['service_name']
-        cmd = reqjson['service_cmd']
+        service_uuid = reqjson['service_uuid']
+        service_params = reqjson['service_params']
     except Exception as err:
-        logger.info(err)
-        return "error"
-
-    if cmd == "stop":
-        return 0;
+        logger.error(err)
+        return _response_msg(100101)
 
     agent = _get_service_by_name(service_name)
-    agent.train('aaa')
-
-    return "1"
+    if not agent:
+        return _response_msg(100201)
+    try:
+        ret = agent.train(op, user, service_uuid, service_params)
+        if op == 'stop':
+            return _response_msg(100000, {"result": ret})
+        return _response_msg(100000, {"task_pid": ret})
+    except Exception as err:
+        return _response_msg(100202)
 
 @app.route('/k12ai/framework/evaluate', methods=['POST'])
 def _framework_evaluate():
