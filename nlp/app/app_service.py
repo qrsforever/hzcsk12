@@ -11,8 +11,10 @@ import os, sys, time
 import argparse
 import signal
 import logging, json
+import socket
 import zerorpc
 import requests
+import consul
 from threading import Thread
 
 if os.environ.get("K12NLP_DEBUG"):
@@ -27,34 +29,56 @@ logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s
 
 logger = logging.getLogger(__name__)
 
-class AppServiceRPC(object):
+app_quit = False
 
-    def rpctest(self):
-        logger.error("call conntest ok!")
+def _get_host_name():
+    return socket.gethostname()
 
-    def train(self):
-        pass
+def _get_host_ip():
+    try:
+        s = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+        s.connect(('8.8.8.8',80))
+        ip = s.getsockname()[0]
+    finally:
+        s.close()
+    return ip
 
-    def evaluate(self):
-        pass
+app_host_name = _get_host_name()
+app_host_ip = _get_host_ip()
 
-    def predict(self):
-        pass
+consul_addr = None
+consul_port = None
 
-# def _loop(remote_api):
-#     time.sleep(2)
-#     while True:
-#         try:
-#             requests.get(remote_api)
-#             time.sleep(100)
-#         except Exception as e:
-#             time.sleep(5)
+def _delay_do_consul(host, port):
+    time.sleep(3)
+    while not app_quit:
+        try:
+            client = consul.Consul(host=consul_addr, port=consul_port)
+            client.agent.service.register(
+                    name='{}-k12nlp'.format(socket.gethostname()),
+                    address=host, port=port, tags=('AI', 'ML'),
+                    check=consul.Check.tcp(host, port, interval='10s', timeout='20s', deregister='30s'))
+            break
+        except Exception as err:
+            logger.info("consul agent service register err", err)
+            time.sleep(3)
+
+class NLPServiceRPC(object):
+
+    def train(self, *args, **kwargs):
+        logger.info("call train")
+
+    def evaluate(self, *args, **kwargs):
+        logger.info("call evaluate")
+
+    def predict(self, *args, **kwargs):
+        logger.info("call predict")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
             '--host',
-            default='0.0.0.0',
+            default=None,
             type=str,
             dest='host',
             help="host to run app service")
@@ -65,27 +89,33 @@ if __name__ == "__main__":
             dest='port',
             help="port to run app service")
     parser.add_argument(
-            '--k12ai_host',
-            default='0.0.0.0',
+            '--consul_addr',
+            default=None,
             type=str,
-            dest='k12ai_host',
-            help="k12ai_host to run app service")
+            dest='consul_addr',
+            help="consul address")
     parser.add_argument(
-            '--k12ai_port',
-            default=8129,
+            '--consul_port',
+            default=8500,
             type=int,
-            dest='k12ai_port',
-            help="k12ai_port to run app service")
+            dest='consul_port',
+            help="consul port")
     args = parser.parse_args()
 
     logger.info('start zerorpc server on %s:%d', args.host, args.port)
 
-    app = zerorpc.Server(AppServiceRPC())
-    app.bind('tcp://%s:%d' % (args.host, args.port))
+    host = args.host if args.host else app_host_ip
 
-    # remote_api = 'http://%s:%d/k12ai/service/message'
-    #         % (args.k12ai_host, args.k12ai_port, 'k12nlp', args.host, args.port)
+    consul_addr = args.consul_addr if args.consul_addr else app_host_ip
+    consul_port = args.consul_port
 
-    # Thread(target = _loop, args = (remote_api,)).start()
+    thread = Thread(target=_delay_do_consul, args=(host, args.port))
+    thread.start()
 
-    app.run()
+    try:
+        app = zerorpc.Server(NLPServiceRPC())
+        app.bind('tcp://%s:%d' % (host, args.port))
+        app.run()
+    finally:
+        app_quit = True
+        thread.join()
