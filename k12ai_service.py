@@ -22,9 +22,6 @@ if os.environ.get("K12AI_DEBUG"):
 else:
     LEVEL = logging.INFO
 
-# TODO
-LEVEL = logging.DEBUG
-
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s', level=LEVEL)
 
 logger = logging.getLogger(__name__)
@@ -81,7 +78,8 @@ def _delay_do_consul(host, port):
             client.agent.service.register(
                     name='{}-k12ai'.format(app_host_name),
                     address=host, port=port, tags=('AI', 'ML'),
-                    check=consul.Check.http('http://{}:{}/status'.format(host, port), interval='5s'))
+                    check=consul.Check.http('http://{}:{}/status'.format(host, port),
+                        interval='10s', timeout='5s', deregister='10s'))
             break
         except Exception as err:
             logger.error("consul agent service register err", err)
@@ -126,11 +124,12 @@ def _framework_train():
         reqjson = request.json
         user = reqjson['user']
         op = reqjson['op']
-        if op not in ('start', 'stop'):
+        if op not in ('train.start', 'train.stop'):
             return _response_msg(100102)
         service_name = reqjson['service_name']
         service_uuid = reqjson['service_uuid']
-        service_params = reqjson['service_params']
+        service_params = reqjson.get('service_params', None)
+        # service_params = reqjson['service_params']
     except Exception as err:
         logger.error(err)
         return _response_msg(100101)
@@ -140,9 +139,7 @@ def _framework_train():
         return _response_msg(100201)
     try:
         ret = agent.train(op, user, service_uuid, service_params)
-        if op == 'stop':
-            return _response_msg(100000, {"result": ret})
-        return _response_msg(100000, {"task_pid": ret})
+        return _response_msg(100000, {"result": ret})
     except Exception as err:
         return _response_msg(100202)
 
@@ -166,6 +163,17 @@ def _framework_predict():
         logger.info(err)
         return "error"
 
+    return "1"
+
+@app.route('/k12ai/framework/message', methods=['POST'])
+def _framework_message():
+    logger.info('call _framework_message')
+    try:
+        reqjson = request.json
+    except Exception as err:
+        logger.info(err)
+        return "error"
+    logger.info(reqjson)
     return "1"
 
 if __name__ == "__main__":

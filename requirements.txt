@@ -52,3 +52,4 @@ Shapely
 
 # rpc
 zerorpc
+python-consul
