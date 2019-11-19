@@ -381,6 +381,10 @@ class Trainer(TrainerBase):
                     self._tensorboard.add_train_scalar("current_batch_size", cur_batch)
                     self._tensorboard.add_train_scalar("mean_batch_size", average)
 
+            # QRS: add
+            if self._batch_num_total % 100 == 0:
+                training_util.hzcsk12_send_message(metrics)
+
             # Save model if needed.
             if self._model_save_interval is not None and (
                     time.time() - last_save_time > self._model_save_interval
@@ -528,6 +532,9 @@ class Trainer(TrainerBase):
             if self._serialization_dir:
                 dump_metrics(os.path.join(self._serialization_dir, f'metrics_epoch_{epoch}.json'), metrics)
 
+            # QRS: add
+            training_util.hzcsk12_send_message(metrics)
+
             # The Scheduler API is agnostic to whether your schedule requires a validation metric -
             # if it doesn't, the validation metric passed here is ignored.
             if self._learning_rate_scheduler:
@@ -551,6 +558,9 @@ class Trainer(TrainerBase):
 
         # make sure pending events are flushed to disk and files are closed properly
         self._tensorboard.close()
+
+        # QRS: add
+        training_util.hzcsk12_send_message(metrics, True)
 
         # Load the best model state before returning
         best_model_state = self._checkpointer.best_model_state()

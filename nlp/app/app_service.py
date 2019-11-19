@@ -96,12 +96,15 @@ def _check_config_diff(training_conf, serial_conf):
 class NLPServiceRPC(object):
 
     def __init__(self,
+            host, port,
             k12ai='k12ai',
             image='hzcsai_com/k12nlp-dev',
             libs='hzcsnlp',
             workdir='/hzcsk12', debug=False):
         self._debug = debug
-        self._k12ai = k12ai
+        self._host = host
+        self._port = port
+        self._k12ai = '{}-k12ai'.format(app_host_name)
         self._image = image
         self._libs = libs
         self._docker = docker.from_env()
@@ -110,7 +113,7 @@ class NLPServiceRPC(object):
                 os.path.dirname(os.path.abspath(__file__)) + os.path.sep + "..")
         logger.info('workdir:%s, projdir:%s', self._workdir, self._projdir)
 
-    def _notify_message(self, label, user, uuid, message):
+    def send_message(self, task, user, uuid, message):
         client = consul.Consul(consul_addr, port=consul_port)
         service = client.agent.services().get(self._k12ai)
         if not service:
@@ -119,26 +122,26 @@ class NLPServiceRPC(object):
         # service
         api = 'http://{}:{}/k12ai/framework/message'.format(service['Address'], service['Port'])
         requests.post(api, json=message)
-        client.kv.put('%s/%s/%s'%(user, uuid, label), json.dumps(message))
+        client.kv.put('%s/%s/%s'%(user, uuid, task), json.dumps(message))
 
-    def _run(self, phase, user, uuid, command=None):
+    def _run(self, task, user, uuid, command=None):
         message = {
                 'user': user,
                 'service_uuid': uuid,
                 'timestamp': round(time.time() * 1000)
                 }
-        token = '%s-%s-%s' % (phase, user, uuid)
+        container_id = '%s-%s-%s' % (task, user, uuid)
         if command == None:
-            message['op'] = '%s.stop' % phase
+            message['op'] = '%s.stop' % task
             try:
-                con = self._docker.containers.get(token)
+                con = self._docker.containers.get(container_id)
                 con.stop()
                 message['result'] = {'code': 0, 'id': con.id}
             except Exception as err:
                 logger.error(err)
                 message['result'] = {'code': -1, 'err': str(err)}
         else:
-            message['op'] = '%s.start' % phase
+            message['op'] = '%s.start' % task
             volumes = {
                     '/data': {'bind':'/data', 'mode':'rw'}
                     }
@@ -148,20 +151,27 @@ class NLPServiceRPC(object):
                 volumes['%s/app'%self._projdir] = {'bind':'%s/app'%self._workdir, 'mode':'rw'}
                 volumes['%s/allennlp'%self._projdir] = {'bind':'%s/allennlp'%self._workdir, 'mode':'rw'}
             logger.info(volumes)
+            environs = {
+                    'K12NLP_RPC_HOST': '%s' % self._host,
+                    'K12NLP_RPC_PORT': '%s' % self._port,
+                    'K12NLP_TASK': '%s' % task,
+                    'K12NLP_USER': '%s' % user,
+                    'K12NLP_UUID': '%s' % uuid
+                    }
             kwargs = {
-                    'name': token,
+                    'name': container_id,
                     'auto_remove': rm_flag,
-                    'remove': rm_flag,
                     'detach': True,
                     'network_mode': 'host',
                     'runtime': 'nvidia',
                     'shm_size': '2g',
-                    'volumes': volumes
+                    'volumes': volumes,
+                    'environment': environs
                     }
 
             try:
                 try:
-                    con = self._docker.containers.get('xxx')
+                    con = self._docker.containers.get(container_id)
                     message['result'] = {'code': 1, 'err': 'Container for the task already running!'}
                 except: 
                     con = self._docker.containers.run(self._image,
@@ -170,12 +180,13 @@ class NLPServiceRPC(object):
             except Exception as err:
                 logger.error(err)
                 message['result'] = {'code': -1, 'err': str(err)}
-        self._notify_message(phase, user, uuid, message)
+        self.send_message(task, user, uuid, message)
 
     def train(self, op, user, uuid, params):
         logger.info("call train(%s, %s, %s)", op, user, uuid)
+        task = 'train'
         if op == 'train.stop':
-            Thread(target=lambda: self._run(phase='train', user=user, uuid=uuid),
+            Thread(target=lambda: self._run(task=task, user=user, uuid=uuid),
                     daemon=True).start()
             return 0
 
@@ -191,9 +202,9 @@ class NLPServiceRPC(object):
         if os.path.exists(serial_conf):
             if not _check_config_diff(training_config, serial_conf):
                 flag = '--recover'
-        command = "allennlp train {} {} -s {} --include-package {}".format(
+        command = 'allennlp train {} {} -s {} --include-package {}'.format(
                 training_config, flag, output_dir, self._libs)
-        Thread(target=lambda: self._run(phase='train', user=user, uuid=uuid, command=command),
+        Thread(target=lambda: self._run(task=task, user=user, uuid=uuid, command=command),
                 daemon=True).start()
         return 0
 
@@ -251,7 +262,7 @@ if __name__ == "__main__":
 
     try:
         app = zerorpc.Server(NLPServiceRPC(
-            k12ai='{}-k12ai'.format(app_host_name),
+            host=host, port=args.port, k12ai='k12ai',
             image=image, libs='hzcsnlp', debug=debug))
         app.bind('tcp://%s:%d' % (host, args.port))
         app.run()
