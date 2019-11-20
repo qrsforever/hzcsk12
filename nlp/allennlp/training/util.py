@@ -13,6 +13,7 @@ import torch
 from torch.nn.parallel import replicate, parallel_apply
 from torch.nn.parallel.scatter_gather import gather
 
+from allennlp.common.util import hzcsk12_send_message
 from allennlp.common.checks import ConfigurationError, check_for_gpu
 from allennlp.common.params import Params
 from allennlp.common.tqdm import Tqdm
@@ -24,42 +25,7 @@ from allennlp.models.model import Model
 from allennlp.models.archival import CONFIG_NAME
 from allennlp.nn import util as nn_util
 
-# QRS: talk with remote k12nlp service
-import zerorpc
-_RPCClient = None
-_RPCEnable = -1
-K12NLP_TASK, K12NLP_USER, K12NLP_UUID = None, None, None
-
 logger = logging.getLogger(__name__)
-
-# QRS: send message to k12nlp service using zerorpc
-def hzcsk12_send_message(metrics: Dict[str, float], end = False):
-    global _RPCClient, _RPCEnable, K12NLP_TASK, K12NLP_USER, K12NLP_UUID
-
-    if _RPCEnable == 0:
-        return
-
-    if _RPCEnable == -1:
-        host = os.environ.get('K12NLP_RPC_HOST', None)
-        port = os.environ.get('K12NLP_RPC_PORT', None)
-        if not host or not port:
-            _RPCEnable = 0
-            return
-        K12NLP_TASK = os.environ.get('K12NLP_TASK', 'Unkown')
-        K12NLP_USER = os.environ.get('K12NLP_USER', 'Unkown')
-        K12NLP_UUID = os.environ.get('K12NLP_UUID', 'Unkown')
-        _RPCClient = zerorpc.Client(
-                connect_to='tcp://{}:{}'.format(host, port),
-                timeout=2,
-                passive_heartbeat=True)
-        _RPCEnable = 1
-
-    try:
-        _RPCClient.send_message(K12NLP_TASK, K12NLP_USER, K12NLP_UUID, metrics)        
-        if end:
-            _RPCClient.close()
-    except Exception as err:
-        logging.error(err)
 
 # We want to warn people that tqdm ignores metrics that start with underscores
 # exactly once. This variable keeps track of whether we have.
@@ -453,7 +419,8 @@ def evaluate(model: Model,
             generator_tqdm.set_description(description, refresh=False)
 
             # QRS: add
-            hzcsk12_send_message(metrics)
+            if batch_count % 100 == 0:
+                hzcsk12_send_message(metrics)
 
         final_metrics = model.get_metrics(reset=True)
         if loss_count > 0:

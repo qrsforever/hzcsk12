@@ -13,7 +13,7 @@ import torch.optim.lr_scheduler
 from allennlp.common import Params
 from allennlp.common.checks import ConfigurationError, parse_cuda_device
 from allennlp.common.util import (dump_metrics, gpu_memory_mb, peak_memory_mb,
-                                  lazy_groups_of)
+                                  lazy_groups_of, hzcsk12_send_message)
 from allennlp.common.tqdm import Tqdm
 from allennlp.data.instance import Instance
 from allennlp.data.iterators.data_iterator import DataIterator, TensorDict
@@ -383,7 +383,7 @@ class Trainer(TrainerBase):
 
             # QRS: add
             if self._batch_num_total % 100 == 0:
-                training_util.hzcsk12_send_message(metrics)
+                hzcsk12_send_message(metrics)
 
             # Save model if needed.
             if self._model_save_interval is not None and (
@@ -533,7 +533,7 @@ class Trainer(TrainerBase):
                 dump_metrics(os.path.join(self._serialization_dir, f'metrics_epoch_{epoch}.json'), metrics)
 
             # QRS: add
-            training_util.hzcsk12_send_message(metrics)
+            hzcsk12_send_message(metrics)
 
             # The Scheduler API is agnostic to whether your schedule requires a validation metric -
             # if it doesn't, the validation metric passed here is ignored.
@@ -560,7 +560,7 @@ class Trainer(TrainerBase):
         self._tensorboard.close()
 
         # QRS: add
-        training_util.hzcsk12_send_message(metrics, True)
+        hzcsk12_send_message(metrics, True)
 
         # Load the best model state before returning
         best_model_state = self._checkpointer.best_model_state()

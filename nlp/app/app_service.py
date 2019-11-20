@@ -48,7 +48,7 @@ app_host_ip = _get_host_ip()
 consul_addr = None
 consul_port = None
 
-userdata_dir = '/data/users'
+users_cache_dir = '/data/users'
 
 def _delay_do_consul(host, port):
     time.sleep(3)
@@ -93,6 +93,9 @@ def _check_config_diff(training_conf, serial_conf):
             diff = True
     return diff
 
+OP_SUCCESS = 0
+OP_FAILURE = -1
+
 class NLPServiceRPC(object):
 
     def __init__(self,
@@ -119,35 +122,50 @@ class NLPServiceRPC(object):
         if not service:
             logger.error("Not found %s service!" % self._k12ai)
             return
-        # service
-        api = 'http://{}:{}/k12ai/framework/message'.format(service['Address'], service['Port'])
-        requests.post(api, json=message)
-        client.kv.put('%s/%s/%s'%(user, uuid, task), json.dumps(message))
 
-    def _run(self, task, user, uuid, command=None):
-        message = {
+        data = {
+                'version': '0.1.0',
+                'op': task,
                 'user': user,
                 'service_uuid': uuid,
-                'timestamp': round(time.time() * 1000)
                 }
-        container_id = '%s-%s-%s' % (task, user, uuid)
-        if command == None:
-            message['op'] = '%s.stop' % task
+        now_time = time.time()
+        data['timestamp'] = round(now_time * 1000)
+        data['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(now_time))
+        data['message'] = message
+
+        # service
+        api = 'http://{}:{}/k12ai/framework/message'.format(service['Address'], service['Port'])
+        requests.post(api, json=data)
+        if self._debug:
+            client.kv.put('%s/%s/%s'%(user, uuid, task), json.dumps(data, indent=4))
+
+    def _run(self, task, user, uuid, command=None):
+        message = {}
+        stopcmd = command == None
+        container_id = '%s-%s-%s' % (task.split('.')[0], user, uuid)
+        try:
+            con = self._docker.containers.get(container_id)
+        except docker.errors.NotFound as err1:
+            con = None
+
+        if stopcmd: # stop
             try:
-                con = self._docker.containers.get(container_id)
-                con.stop()
-                message['result'] = {'code': 0, 'id': con.id}
+                if con:
+                    if con.status == 'running':
+                        con.stop()
+                    message['result'] = {'code': 0, 'id': con.short_id}
+                else:
+                    message['result'] = {'code': -1, 'err': 'Container is not found!'}
             except Exception as err:
-                logger.error(err)
                 message['result'] = {'code': -1, 'err': str(err)}
-        else:
-            message['op'] = '%s.start' % task
+        else: # start
+            rm_flag = True
             volumes = {
                     '/data': {'bind':'/data', 'mode':'rw'}
                     }
-            rm_flag = True
             if self._debug:
-                # rm_flag = False
+                rm_flag = False
                 volumes['%s/app'%self._projdir] = {'bind':'%s/app'%self._workdir, 'mode':'rw'}
                 volumes['%s/allennlp'%self._projdir] = {'bind':'%s/allennlp'%self._workdir, 'mode':'rw'}
             logger.info(volumes)
@@ -168,29 +186,34 @@ class NLPServiceRPC(object):
                     'volumes': volumes,
                     'environment': environs
                     }
-
             try:
-                try:
-                    con = self._docker.containers.get(container_id)
-                    message['result'] = {'code': 1, 'err': 'Container for the task already running!'}
-                except: 
+                if not con or con.status != 'running':
+                    if con:
+                        con.remove()
                     con = self._docker.containers.run(self._image,
                             command, **kwargs)
-                    message['result'] = {'code': 0, 'id': con.id}
+                    message['result'] = {'code': 0, 'id': con.short_id}
+                else:
+                    if con:
+                        message['result'] = {'code': -1,
+                                'err': 'Container [%s] is running!' % con.short_id}
             except Exception as err:
                 logger.error(err)
                 message['result'] = {'code': -1, 'err': str(err)}
+
         self.send_message(task, user, uuid, message)
 
     def train(self, op, user, uuid, params):
         logger.info("call train(%s, %s, %s)", op, user, uuid)
-        task = 'train'
         if op == 'train.stop':
-            Thread(target=lambda: self._run(task=task, user=user, uuid=uuid),
+            Thread(target=lambda: self._run(task=op, user=user, uuid=uuid),
                     daemon=True).start()
-            return 0
+            return OP_SUCCESS, {'op': op, 'exec': 'success'}
 
-        pro_dir = os.path.join(userdata_dir, user, uuid)
+        if not params or not isinstance(params, dict):
+            return OP_FAILURE, {'op': op, 'exec': 'service params is invalid'}
+
+        pro_dir = os.path.join(users_cache_dir, user, uuid)
         if not os.path.exists(pro_dir):
             os.makedirs(pro_dir)
         training_config = os.path.join(pro_dir, 'config.json')
@@ -204,15 +227,82 @@ class NLPServiceRPC(object):
                 flag = '--recover'
         command = 'allennlp train {} {} -s {} --include-package {}'.format(
                 training_config, flag, output_dir, self._libs)
-        Thread(target=lambda: self._run(task=task, user=user, uuid=uuid, command=command),
+        Thread(target=lambda: self._run(task=op, user=user, uuid=uuid, command=command),
                 daemon=True).start()
-        return 0
+        return OP_SUCCESS, {'op': op, 'exec': 'success', 'cache_dir': pro_dir}
 
-    def evaluate(self, *args, **kwargs):
-        logger.info("call evaluate")
+    def evaluate(self, op, user, uuid, params):
+        logger.info("call evaluate(%s, %s, %s)", op, user, uuid)
+        if op == 'evaluate.stop':
+            Thread(target=lambda: self._run(task=op, user=user, uuid=uuid),
+                    daemon=True).start()
+            return OP_SUCCESS, {'op': op, 'exec': 'success'}
 
-    def predict(self, *args, **kwargs):
-        logger.info("call predict")
+        if not params or not isinstance(params, dict):
+            return OP_FAILURE, {'op': op, 'exec': 'service params is invalid'}
+
+        input_file = params.get('input_file', None)
+        if not input_file:
+            return OP_FAILURE, {'op': op, 'exec': 'no key: input_file'}
+
+        pro_dir = os.path.join(users_cache_dir, user, uuid)
+        archive_file = os.path.join(pro_dir, 'output', 'model.tar.gz')
+        if not os.path.exists(archive_file):
+            return OP_FAILURE, {'op': op, 'exec': 'not found model.tar.gz'}
+        output_file = params.get('output_file', None)
+        if not output_file:
+            output_file = os.path.join(pro_dir, 'evaluate_output.txt')
+
+        command = 'allennlp evaluate {} {} --output-file {} --include-package {}'.format(
+                archive_file, input_file, output_file, self._libs)
+        Thread(target=lambda: self._run(task=op, user=user, uuid=uuid, command=command),
+                daemon=True).start()
+        return OP_SUCCESS, {'op': op, 'exec': 'success', 'cache_dir': pro_dir}
+
+    def predict(self, op, user, uuid, params):
+        logger.info("call predict(%s, %s, %s)", op, user, uuid)
+        if op == 'predict.stop':
+            Thread(target=lambda: self._run(task=op, user=user, uuid=uuid),
+                    daemon=True).start()
+            return OP_SUCCESS, {'op': op, 'exec': 'success'}
+
+        if not params or not isinstance(params, dict):
+            return OP_FAILURE, {'op': op, 'exec': 'service params is invalid'}
+
+        pro_dir = os.path.join(users_cache_dir, user, uuid)
+        archive_file = os.path.join(pro_dir, 'output', 'model.tar.gz')
+        if not os.path.exists(archive_file):
+            return OP_FAILURE, {'op': op, 'exec': 'not found model.tar.gz'}
+
+        input_type = params.get('input_type', None)
+        if not input_type:
+            return OP_FAILURE, {'op': op, 'exec': 'no key: input_type'}
+
+        if input_type == 'text':
+            input_text = params.get('input_text', None)
+            if not input_text:
+                return OP_FAILURE, {'op': op, 'exec': 'no key: input_text'}
+            input_file = os.path.join(pro_dir, 'predict_input.txt')
+            with open(input_file, 'w') as fout:
+                fout.write(input_text)
+
+        output_file = params.get('output_file', None)
+        if not output_file:
+            output_file = os.path.join(pro_dir, 'predict_output.json')
+
+        other_args = ''
+        batch_size = params.get('batch_size', None)
+        if batch_size and isinstance(batch_size, int):
+            other_args += ' --batch-size %d' % batch_size
+        predictor = params.get('predictor', None)
+        if predictor:
+            other_args += ' --predictor %s' % predictor
+
+        command = 'allennlp predict {} {} --output-file {} --include-package {} {}'.format(
+                archive_file, input_file, output_file, self._libs, other_args)
+        Thread(target=lambda: self._run(task=op, user=user, uuid=uuid, command=command),
+                daemon=True).start()
+        return OP_SUCCESS, {'op': op, 'exec': 'success', 'cache_dir': pro_dir}
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

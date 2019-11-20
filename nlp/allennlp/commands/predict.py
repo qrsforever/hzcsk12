@@ -57,7 +57,7 @@ import json
 from allennlp.commands.subcommand import Subcommand
 from allennlp.common.checks import check_for_gpu, ConfigurationError
 from allennlp.common.file_utils import cached_path
-from allennlp.common.util import lazy_groups_of
+from allennlp.common.util import (lazy_groups_of, hzcsk12_send_message)
 from allennlp.models.archival import load_archive
 from allennlp.predictors.predictor import Predictor, JsonDict
 from allennlp.data import Instance
@@ -173,6 +173,12 @@ class _PredictManager:
         if self._output_file is not None:
             self._output_file.write(prediction)
 
+        # QRS: add
+        message = {}
+        message['index'] = index
+        message['prediction'] = prediction
+        hzcsk12_send_message(message)
+
     def _get_json_data(self) -> Iterator[JsonDict]:
         if self._input_file == "-":
             for line in sys.stdin:
@@ -209,6 +215,9 @@ class _PredictManager:
 
         if self._output_file is not None:
             self._output_file.close()
+
+        # QRS: add
+        hzcsk12_send_message(None, True)
 
 def _predict(args: argparse.Namespace) -> None:
     predictor = _get_predictor(args)

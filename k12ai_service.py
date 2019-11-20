@@ -50,15 +50,14 @@ consul_port = None
 ERRORS = {
         100000: 'No Error.',
         100100: '100100', 
-        100101: 'Error: Json key not found.',
-        100102: 'Error: Json value is invalid.',
+        100101: 'Json key not found.',
+        100102: 'Json value is invalid.',
 
         100200: '100200',
-        100201: 'Error: Service is not found.',
-        100202: 'Error: Start train task fail.',
-        100203: 'Error: Train task process is not found.',
+        100201: 'Service is not found.',
+        100202: 'Start task failure.',
 
-        999999: 'Error: Unkown error!',
+        999999: 'Unkown error!',
 }
 
 def _response_msg(code, content=None):
@@ -121,7 +120,7 @@ def _consul_check_status():
 def _framework_train():
     logger.info('call _framework_train')
     try:
-        reqjson = request.json
+        reqjson = json.loads(request.get_data().decode())
         user = reqjson['user']
         op = reqjson['op']
         if op not in ('train.start', 'train.stop'):
@@ -136,10 +135,12 @@ def _framework_train():
 
     agent = _get_service_by_name(service_name)
     if not agent:
-        return _response_msg(100201)
+        return _response_msg(100201, {"service_name": service_name})
     try:
-        ret = agent.train(op, user, service_uuid, service_params)
-        return _response_msg(100000, {"result": ret})
+        code, detail = agent.train(op, user, service_uuid, service_params)
+        if code < 0:
+            return _response_msg(100202, {"result": detail})
+        return _response_msg(100000, {"result": detail})
     except Exception as err:
         return _response_msg(100202)
 
@@ -148,22 +149,54 @@ def _framework_evaluate():
     logger.info('call _framework_evaluate')
     try:
         reqjson = json.loads(request.get_data().decode())
+        user = reqjson['user']
+        op = reqjson['op']
+        if op not in ('evaluate.start', 'evaluate.stop'):
+            return _response_msg(100102)
+        service_name = reqjson['service_name']
+        service_uuid = reqjson['service_uuid']
+        service_params = reqjson.get('service_params', None)
     except Exception as err:
-        logger.info(err)
-        return "error"
+        logger.error(err)
+        return _response_msg(100101)
 
-    return "1"
+    agent = _get_service_by_name(service_name)
+    if not agent:
+        return _response_msg(100201, {"service_name": service_name})
+    try:
+        code, detail = agent.evaluate(op, user, service_uuid, service_params)
+        if code < 0:
+            return _response_msg(100202, {"result": detail})
+        return _response_msg(100000, {"result": detail})
+    except Exception as err:
+        return _response_msg(100202)
 
 @app.route('/k12ai/framework/predict', methods=['POST'])
 def _framework_predict():
     logger.info('call _framework_predict')
     try:
         reqjson = json.loads(request.get_data().decode())
+        user = reqjson['user']
+        op = reqjson['op']
+        if op not in ('predict.start', 'predict.stop'):
+            return _response_msg(100102)
+        service_name = reqjson['service_name']
+        service_uuid = reqjson['service_uuid']
+        service_params = reqjson.get('service_params', None)
     except Exception as err:
-        logger.info(err)
-        return "error"
+        logger.error(err)
+        return _response_msg(100101)
 
-    return "1"
+    agent = _get_service_by_name(service_name)
+    if not agent:
+        return _response_msg(100201, {"service_name": service_name})
+    try:
+        code, detail = agent.predict(op, user, service_uuid, service_params)
+        if code < 0:
+            return _response_msg(100202, {"result": detail})
+        return _response_msg(100000, {"result": detail})
+    except Exception as err:
+        return _response_msg(100202)
 
 @app.route('/k12ai/framework/message', methods=['POST'])
 def _framework_message():

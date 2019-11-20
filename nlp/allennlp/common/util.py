@@ -34,6 +34,46 @@ from allennlp.common.tee_logger import TeeLogger
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
+################################ HZCSK12 ###########################
+
+# QRS: talk with remote k12nlp service
+import zerorpc
+_RPCClient = None
+_RPCEnable = -1
+K12NLP_TASK, K12NLP_USER, K12NLP_UUID = None, None, None
+
+# QRS: send message to k12nlp service using zerorpc
+def hzcsk12_send_message(metrics: Dict[str, float], end = False):
+    global _RPCClient, _RPCEnable, K12NLP_TASK, K12NLP_USER, K12NLP_UUID
+
+    if _RPCEnable == 0:
+        return
+
+    if _RPCEnable == -1:
+        host = os.environ.get('K12NLP_RPC_HOST', None)
+        port = os.environ.get('K12NLP_RPC_PORT', None)
+        if not host or not port:
+            _RPCEnable = 0
+            return
+        K12NLP_TASK = os.environ.get('K12NLP_TASK', 'Unkown')
+        K12NLP_USER = os.environ.get('K12NLP_USER', 'Unkown')
+        K12NLP_UUID = os.environ.get('K12NLP_UUID', 'Unkown')
+        _RPCClient = zerorpc.Client(
+                connect_to='tcp://{}:{}'.format(host, port),
+                timeout=2,
+                passive_heartbeat=True)
+        _RPCEnable = 1
+
+    try:
+        if metrics:
+            _RPCClient.send_message(K12NLP_TASK, K12NLP_USER, K12NLP_UUID, metrics)        
+        if end:
+            _RPCClient.close()
+    except Exception as err:
+        logging.error(err)
+
+################################ HZCSK12 ###########################
+
 JsonDict = Dict[str, Any]  # pylint: disable=invalid-name
 
 # If you want to have start and/or end symbols for any reason in your code, we recommend you use
