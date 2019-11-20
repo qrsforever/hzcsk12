@@ -9,15 +9,15 @@
 
 import os, sys, time
 import argparse
-import signal
 import logging, json
 import socket
 import zerorpc
 import requests
 import consul
-import subprocess
 import docker
 from threading import Thread
+
+service_name = 'k12nlp'
 
 if os.environ.get("K12NLP_DEBUG"):
     LEVEL = logging.DEBUG
@@ -56,8 +56,8 @@ def _delay_do_consul(host, port):
         try:
             client = consul.Consul(host=consul_addr, port=consul_port)
             client.agent.service.register(
-                    name='{}-k12nlp'.format(socket.gethostname()),
-                    address=host, port=port, tags=('AI', 'ML'),
+                    name='{}-{}'.format(app_host_name, service_name),
+                    address=host, port=port, tags=('AI', 'FRAMEWORK'),
                     check=consul.Check.tcp(host, port,
                         interval='10s', timeout='5s', deregister='10s'))
             break
@@ -107,7 +107,7 @@ class NLPServiceRPC(object):
         self._debug = debug
         self._host = host
         self._port = port
-        self._k12ai = '{}-k12ai'.format(app_host_name)
+        self._k12ai = k12ai
         self._image = image
         self._libs = libs
         self._docker = docker.from_env()
@@ -124,6 +124,7 @@ class NLPServiceRPC(object):
             return
 
         data = {
+                'tag': 'framework',
                 'version': '0.1.0',
                 'op': task,
                 'user': user,
@@ -135,10 +136,10 @@ class NLPServiceRPC(object):
         data['message'] = message
 
         # service
-        api = 'http://{}:{}/k12ai/framework/message'.format(service['Address'], service['Port'])
+        api = 'http://{}:{}/k12ai/private/message'.format(service['Address'], service['Port'])
         requests.post(api, json=data)
         if self._debug:
-            client.kv.put('%s/%s/%s'%(user, uuid, task), json.dumps(data, indent=4))
+            client.kv.put('framework/%s/%s/%s'%(user, uuid, task), json.dumps(data, indent=4))
 
     def _run(self, task, user, uuid, command=None):
         message = {}
@@ -161,6 +162,9 @@ class NLPServiceRPC(object):
                 message['result'] = {'code': -1, 'err': str(err)}
         else: # start
             rm_flag = True
+            labels = {
+                    'k12ai.service.name': service_name
+                    }
             volumes = {
                     '/data': {'bind':'/data', 'mode':'rw'}
                     }
@@ -183,6 +187,7 @@ class NLPServiceRPC(object):
                     'network_mode': 'host',
                     'runtime': 'nvidia',
                     'shm_size': '2g',
+                    'labels': labels,
                     'volumes': volumes,
                     'environment': environs
                     }
@@ -352,7 +357,8 @@ if __name__ == "__main__":
 
     try:
         app = zerorpc.Server(NLPServiceRPC(
-            host=host, port=args.port, k12ai='k12ai',
+            host=host, port=args.port,
+            k12ai='{}-k12ai'.format(app_host_name),
             image=image, libs='hzcsnlp', debug=debug))
         app.bind('tcp://%s:%d' % (host, args.port))
         app.run()

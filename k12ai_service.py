@@ -49,7 +49,7 @@ consul_port = None
 
 ERRORS = {
         100000: 'No Error.',
-        100100: '100100', 
+        100100: '100100',
         100101: 'Json key not found.',
         100102: 'Json value is invalid.',
 
@@ -114,6 +114,33 @@ def _get_service_by_name(name):
 @app.route('/status', methods=['GET'])
 def _consul_check_status():
     return "1"
+
+### Platform resource manager
+platform_service_name = 'k12platform'
+@app.route('/k12ai/platform/stats', methods=['POST'])
+def _platform_stats():
+    logger.info('call _platform_stats')
+    try:
+        reqjson = json.loads(request.get_data().decode())
+        username = reqjson['username']
+        password = reqjson['password']
+    except Exception as err:
+        logger.error(err)
+        return _response_msg(100101)
+
+    # TODO check username and password
+
+    agent = _get_service_by_name(platform_service_name)
+    if not agent:
+        return _response_msg(100201, {"service_name": platform_service_name})
+
+    try:
+        code, detail = agent.stats()
+        if code < 0:
+            return _response_msg(100202, {"result": detail})
+        return _response_msg(100000, {"result": detail})
+    except Exception as err:
+        return _response_msg(100202)
 
 ### GPU Framework for train/evaluate/predict
 @app.route('/k12ai/framework/train', methods=['POST'])
@@ -198,7 +225,7 @@ def _framework_predict():
     except Exception as err:
         return _response_msg(100202)
 
-@app.route('/k12ai/framework/message', methods=['POST'])
+@app.route('/k12ai/private/message', methods=['POST'])
 def _framework_message():
     logger.info('call _framework_message')
     try:
