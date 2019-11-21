@@ -383,7 +383,7 @@ class Trainer(TrainerBase):
 
             # QRS: add
             if self._batch_num_total % 100 == 0:
-                hzcsk12_send_message(metrics)
+                hzcsk12_send_message('metrics', metrics)
 
             # Save model if needed.
             if self._model_save_interval is not None and (
@@ -533,7 +533,7 @@ class Trainer(TrainerBase):
                 dump_metrics(os.path.join(self._serialization_dir, f'metrics_epoch_{epoch}.json'), metrics)
 
             # QRS: add
-            hzcsk12_send_message(metrics)
+            hzcsk12_send_message('metrics', metrics)
 
             # The Scheduler API is agnostic to whether your schedule requires a validation metric -
             # if it doesn't, the validation metric passed here is ignored.
@@ -560,7 +560,7 @@ class Trainer(TrainerBase):
         self._tensorboard.close()
 
         # QRS: add
-        hzcsk12_send_message(metrics, True)
+        hzcsk12_send_message('metrics', metrics, True)
 
         # Load the best model state before returning
         best_model_state = self._checkpointer.best_model_state()

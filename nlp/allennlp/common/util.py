@@ -43,7 +43,7 @@ _RPCEnable = -1
 K12NLP_TASK, K12NLP_USER, K12NLP_UUID = None, None, None
 
 # QRS: send message to k12nlp service using zerorpc
-def hzcsk12_send_message(metrics: Dict[str, float], end = False):
+def hzcsk12_send_message(msgtype, message, end=False):
     global _RPCClient, _RPCEnable, K12NLP_TASK, K12NLP_USER, K12NLP_UUID
 
     if _RPCEnable == 0:
@@ -66,7 +66,7 @@ def hzcsk12_send_message(metrics: Dict[str, float], end = False):
 
     try:
         if metrics:
-            _RPCClient.send_message(K12NLP_TASK, K12NLP_USER, K12NLP_UUID, metrics)        
+            _RPCClient.send_message(K12NLP_TASK, K12NLP_USER, K12NLP_UUID, msgtype, message)
         if end:
             _RPCClient.close()
     except Exception as err:

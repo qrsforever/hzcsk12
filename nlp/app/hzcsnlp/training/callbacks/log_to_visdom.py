@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-@Callback.register("log_to_visdom")
+@Callback.register("k12log_to_visdom")
 class LogToVisdom(Callback):
     def __init__(self, server_pid: int, server_port: int, min_interval: int = 5) -> None:
         logger.info("visdom server_port: %d", server_port)

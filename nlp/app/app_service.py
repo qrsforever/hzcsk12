@@ -15,6 +15,7 @@ import zerorpc
 import requests
 import consul
 import docker
+import traceback
 from threading import Thread
 
 service_name = 'k12nlp'
@@ -31,16 +32,24 @@ logger = logging.getLogger(__name__)
 app_quit = False
 
 def _get_host_name():
-    return socket.gethostname()
+    val = os.environ.get('HOST_NAME', None)
+    if val:
+        return val
+    else:
+        return socket.gethostname()
 
 def _get_host_ip():
-    try:
-        s = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
-        s.connect(('8.8.8.8',80))
-        ip = s.getsockname()[0]
-    finally:
-        s.close()
-    return ip
+    val = os.environ.get('HOST_ADDR', None)
+    if val:
+        return val
+    else:
+        try:
+            s = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+            s.connect(('8.8.8.8',80))
+            ip = s.getsockname()[0]
+        finally:
+            s.close()
+        return ip
 
 app_host_name = _get_host_name()
 app_host_ip = _get_host_ip()
@@ -49,6 +58,27 @@ consul_addr = None
 consul_port = None
 
 users_cache_dir = '/data/users'
+
+ERRORS = {
+        100400: '100400', # k12nlp container inner process error
+        100401: 'Container is not found!',
+        100402: '',
+
+        100499: 'Exception'
+}
+
+def _err_msg(code=None, message=None, exc=None):
+    result = {}
+    if exc:
+        result['code'] = 100499
+        result['brief'] = str(exc)
+    else:
+        tmp = code if code else 999999
+        result['code'] = code
+        result['brief'] = ERRORS[code]
+    if message:
+        result['detail'] = message
+    return result
 
 def _delay_do_consul(host, port):
     time.sleep(3)
@@ -111,12 +141,13 @@ class NLPServiceRPC(object):
         self._image = image
         self._libs = libs
         self._docker = docker.from_env()
-        self._workdir = workdir
-        self._projdir = os.path.abspath(
-                os.path.dirname(os.path.abspath(__file__)) + os.path.sep + "..")
-        logger.info('workdir:%s, projdir:%s', self._workdir, self._projdir)
+        if debug:
+            self._workdir = workdir
+            self._projdir = os.path.abspath(
+                    os.path.dirname(os.path.abspath(__file__)) + os.path.sep + "..")
+            logger.info('workdir:%s, projdir:%s', self._workdir, self._projdir)
 
-    def send_message(self, task, user, uuid, message):
+    def send_message(self, task, user, uuid, msgtype, message):
         client = consul.Consul(consul_addr, port=consul_port)
         service = client.agent.services().get(self._k12ai)
         if not service:
@@ -125,6 +156,7 @@ class NLPServiceRPC(object):
 
         data = {
                 'version': '0.1.0',
+                'type': msgtype,
                 'tag': 'framework',
                 'op': task,
                 'user': user,
@@ -133,13 +165,13 @@ class NLPServiceRPC(object):
         now_time = time.time()
         data['timestamp'] = round(now_time * 1000)
         data['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(now_time))
-        data['message'] = message
+        data[msgtype] = message
 
         # service
         api = 'http://{}:{}/k12ai/private/message'.format(service['Address'], service['Port'])
         requests.post(api, json=data)
         if self._debug:
-            client.kv.put('framework/%s/%s/%s'%(user, uuid, task), json.dumps(data, indent=4))
+            client.kv.put('framework/%s/%s/%s/%s'%(user, uuid, task, msgtype), json.dumps(data, indent=4))
 
     def _run(self, task, user, uuid, command=None):
         message = {}
@@ -155,11 +187,10 @@ class NLPServiceRPC(object):
                 if con:
                     if con.status == 'running':
                         con.stop()
-                    message['result'] = {'code': 0, 'id': con.short_id}
                 else:
-                    message['result'] = {'code': -1, 'err': 'Container is not found!'}
+                    message = _err_msg(100401)
             except Exception as err:
-                message['result'] = {'code': -1, 'err': str(err)}
+                message = _err_msg(exc=err, message=traceback.format_exc())
         else: # start
             rm_flag = True
             labels = {
@@ -172,7 +203,6 @@ class NLPServiceRPC(object):
                 rm_flag = False
                 volumes['%s/app'%self._projdir] = {'bind':'%s/app'%self._workdir, 'mode':'rw'}
                 volumes['%s/allennlp'%self._projdir] = {'bind':'%s/allennlp'%self._workdir, 'mode':'rw'}
-            logger.info(volumes)
             environs = {
                     'K12NLP_RPC_HOST': '%s' % self._host,
                     'K12NLP_RPC_PORT': '%s' % self._port,
@@ -197,16 +227,13 @@ class NLPServiceRPC(object):
                         con.remove()
                     con = self._docker.containers.run(self._image,
                             command, **kwargs)
-                    message['result'] = {'code': 0, 'id': con.short_id}
                 else:
                     if con:
-                        message['result'] = {'code': -1,
-                                'err': 'Container [%s] is running!' % con.short_id}
+                        message = _err_msg(100402, 'Container[%s] is running!'%con.short_id)
             except Exception as err:
-                logger.error(err)
-                message['result'] = {'code': -1, 'err': str(err)}
+                message = _err_msg(exc=err, message=traceback.format_exc())
 
-        self.send_message(task, user, uuid, message)
+        self.send_message(task, user, uuid, "error", message)
 
     def train(self, op, user, uuid, params):
         logger.info("call train(%s, %s, %s)", op, user, uuid)
@@ -343,7 +370,7 @@ if __name__ == "__main__":
             help="image to run container")
     args = parser.parse_args()
 
-    image, debug = (args.image, False) if args.image else ('hzcsai_com/k12nlp-dev', True)
+    image = args.image if args.image else 'hzcsai_com/k12nlp-dev'
 
     host = args.host if args.host else app_host_ip
 
@@ -359,7 +386,7 @@ if __name__ == "__main__":
         app = zerorpc.Server(NLPServiceRPC(
             host=host, port=args.port,
             k12ai='{}-k12ai'.format(app_host_name),
-            image=image, libs='hzcsnlp', debug=debug))
+            image=image, libs='hzcsnlp', debug=LEVEL==logging.DEBUG))
         app.bind('tcp://%s:%d' % (host, args.port))
         app.run()
     finally:

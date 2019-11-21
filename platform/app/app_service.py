@@ -33,16 +33,24 @@ logger = logging.getLogger(__name__)
 app_quit = False
 
 def _get_host_name():
-    return socket.gethostname()
+    val = os.environ.get('HOST_NAME', None)
+    if val:
+        return val
+    else:
+        return socket.gethostname()
 
 def _get_host_ip():
-    try:
-        s = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
-        s.connect(('8.8.8.8',80))
-        ip = s.getsockname()[0]
-    finally:
-        s.close()
-    return ip
+    val = os.environ.get('HOST_ADDR', None)
+    if val:
+        return val
+    else:
+        try:
+            s = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+            s.connect(('8.8.8.8',80))
+            ip = s.getsockname()[0]
+        finally:
+            s.close()
+        return ip
 
 app_host_name = _get_host_name()
 app_host_ip = _get_host_ip()

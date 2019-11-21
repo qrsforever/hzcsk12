@@ -1,6 +1,7 @@
 from typing import Dict
 import argparse
 import logging
+import traceback
 
 from overrides import overrides
 
@@ -18,6 +19,7 @@ from allennlp.commands.find_learning_rate import FindLearningRate
 from allennlp.commands.train import Train
 from allennlp.commands.print_results import PrintResults
 from allennlp.common.util import import_submodules
+from allennlp.common.util import hzcsk12_send_message
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
@@ -99,6 +101,16 @@ def main(prog: str = None,
         # Import any additional modules needed (to register custom classes).
         for package_name in getattr(args, 'include_package', ()):
             import_submodules(package_name)
-        args.func(args)
+
+        # QRS: add for handle erros
+        try:
+            args.func(args)
+        except Exception as err:
+            logger.error(err)
+            error = {}
+            error['class'] = err.__class__
+            error['message'] = str(err)
+            error['traceback'] = traceback.format_exc()
+            hzcsk12_send_message('error', error, True)
     else:
         parser.print_help()

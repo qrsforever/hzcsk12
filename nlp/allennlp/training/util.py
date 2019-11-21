@@ -419,8 +419,8 @@ def evaluate(model: Model,
             generator_tqdm.set_description(description, refresh=False)
 
             # QRS: add
-            if batch_count % 100 == 0:
-                hzcsk12_send_message(metrics)
+            if batch_count % 120 == 0:
+                hzcsk12_send_message('metrics', metrics)
 
         final_metrics = model.get_metrics(reset=True)
         if loss_count > 0:
@@ -431,7 +431,7 @@ def evaluate(model: Model,
             final_metrics["loss"] = total_loss / total_weight
 
         # QRS: add
-        hzcsk12_send_message(metrics, True)
+        hzcsk12_send_message('metrics', metrics, True)
 
         return final_metrics
 

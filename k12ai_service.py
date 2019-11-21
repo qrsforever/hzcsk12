@@ -30,16 +30,24 @@ app = Flask(__name__)
 app_quit = False
 
 def _get_host_name():
-    return socket.gethostname()
+    val = os.environ.get('HOST_NAME', None)
+    if val:
+        return val
+    else:
+        return socket.gethostname()
 
 def _get_host_ip():
-    try:
-        s = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
-        s.connect(('8.8.8.8',80))
-        ip = s.getsockname()[0]
-    finally:
-        s.close()
-    return ip
+    val = os.environ.get('HOST_ADDR', None)
+    if val:
+        return val
+    else:
+        try:
+            s = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+            s.connect(('8.8.8.8',80))
+            ip = s.getsockname()[0]
+        finally:
+            s.close()
+        return ip
 
 app_host_name = _get_host_name()
 app_host_ip = _get_host_ip()
@@ -48,14 +56,28 @@ consul_addr = None
 consul_port = None
 
 ERRORS = {
-        100000: 'No Error.',
-        100100: '100100',
+        100000: 'Success',
+        100100: '100100', # k12ai service api params parse error
         100101: 'Json key not found.',
         100102: 'Json value is invalid.',
 
-        100200: '100200',
+        100200: '100200', # k12 services error (k12cv, k12nlp)
         100201: 'Service is not found.',
-        100202: 'Start one task failure.',
+        100202: 'Service start fail.',
+
+        100300: '100300', # k12cv container inner process error
+
+        100400: '100400', # k12nlp container inner process error
+
+        100500: '100500',
+
+        100600: '100600',
+
+        100700: '100700',
+
+        100800: '100800',
+
+        100900: '100900',
 
         999999: 'Unkown error!',
 }
@@ -113,7 +135,7 @@ def _get_service_by_name(name):
 ### Consul check the flask service health
 @app.route('/status', methods=['GET'])
 def _consul_check_status():
-    return "1"
+    return "Success"
 
 ### Platform resource manager
 platform_service_name = 'k12platform'
@@ -128,7 +150,7 @@ def _platform_stats():
         isasync = reqjson.get('async', False)
         query = reqjson.get('query', None)
     except Exception as err:
-        logger.error(err)
+        logger.error(str(err))
         return _response_msg(100101, str(err))
 
     # TODO check username and password
@@ -156,7 +178,7 @@ def _platform_control():
         isasync = reqjson.get('async', False)
         params = reqjson.get('params', None)
     except Exception as err:
-        logger.error(err)
+        logger.error(str(err))
         return _response_msg(100101, str(err))
 
     # TODO check username and password
@@ -186,7 +208,7 @@ def _framework_train():
         service_uuid = reqjson['service_uuid']
         service_params = reqjson.get('service_params', None)
     except Exception as err:
-        logger.error(err)
+        logger.error(str(err))
         return _response_msg(100101, str(err))
 
     agent = _get_service_by_name(service_name)
@@ -213,7 +235,7 @@ def _framework_evaluate():
         service_uuid = reqjson['service_uuid']
         service_params = reqjson.get('service_params', None)
     except Exception as err:
-        logger.error(err)
+        logger.error(str(err))
         return _response_msg(100101, str(err))
 
     agent = _get_service_by_name(service_name)
@@ -240,7 +262,7 @@ def _framework_predict():
         service_uuid = reqjson['service_uuid']
         service_params = reqjson.get('service_params', None)
     except Exception as err:
-        logger.error(err)
+        logger.error(str(err))
         return _response_msg(100101, str(err))
 
     agent = _get_service_by_name(service_name)
