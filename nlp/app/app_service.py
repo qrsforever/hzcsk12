@@ -124,8 +124,8 @@ class NLPServiceRPC(object):
             return
 
         data = {
-                'tag': 'framework',
                 'version': '0.1.0',
+                'tag': 'framework',
                 'op': task,
                 'user': user,
                 'service_uuid': uuid,
@@ -144,9 +144,9 @@ class NLPServiceRPC(object):
     def _run(self, task, user, uuid, command=None):
         message = {}
         stopcmd = command == None
-        container_id = '%s-%s-%s' % (task.split('.')[0], user, uuid)
+        container_name = '%s-%s-%s' % (task.split('.')[0], user, uuid)
         try:
-            con = self._docker.containers.get(container_id)
+            con = self._docker.containers.get(container_name)
         except docker.errors.NotFound as err1:
             con = None
 
@@ -181,7 +181,7 @@ class NLPServiceRPC(object):
                     'K12NLP_UUID': '%s' % uuid
                     }
             kwargs = {
-                    'name': container_id,
+                    'name': container_name,
                     'auto_remove': rm_flag,
                     'detach': True,
                     'network_mode': 'host',
