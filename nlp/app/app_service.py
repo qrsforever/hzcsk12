@@ -18,6 +18,18 @@ import docker
 import traceback
 from threading import Thread
 
+try:
+    from k12ai_errmsg import hzcsk12_error_message as _err_msg
+except:
+    try:
+        topdir = os.path.abspath(
+                os.path.dirname(os.path.abspath(__file__)) + "/../..")
+        sys.path.append(topdir)
+        from k12ai_errmsg import hzcsk12_error_message as _err_msg
+    except:
+        def _err_msg(code, message=None, detail=None, exc=None, exc_info=None):
+            return {'code': 999999}
+
 service_name = 'k12nlp'
 
 if os.environ.get("K12NLP_DEBUG"):
@@ -58,27 +70,6 @@ consul_addr = None
 consul_port = None
 
 users_cache_dir = '/data/users'
-
-ERRORS = {
-        100400: '100400', # k12nlp container inner process error
-        100401: 'Container is not found!',
-        100402: '',
-
-        100499: 'Exception'
-}
-
-def _err_msg(code=None, message=None, exc=None):
-    result = {}
-    if exc:
-        result['code'] = 100499
-        result['brief'] = str(exc)
-    else:
-        tmp = code if code else 999999
-        result['code'] = code
-        result['brief'] = ERRORS[code]
-    if message:
-        result['detail'] = message
-    return result
 
 def _delay_do_consul(host, port):
     time.sleep(3)
@@ -154,6 +145,17 @@ class NLPServiceRPC(object):
             logger.error("Not found %s service!" % self._k12ai)
             return
 
+        if msgtype == 'except' and isinstance(message, dict):
+            cls = message['exc_type']
+            if cls == 'ConfigurationError':
+                code = 100405
+            elif cls == 'MemoryError':
+                code = 100901
+            else:
+                code = 100499
+            message = _err_msg(code, exc_info=message)
+            msgtype = 'error'
+
         data = {
                 'version': '0.1.0',
                 'type': msgtype,
@@ -188,9 +190,9 @@ class NLPServiceRPC(object):
                     if con.status == 'running':
                         con.stop()
                 else:
-                    message = _err_msg(100401)
+                    message = _err_msg(100401, f'container name:{container_name}')
             except Exception as err:
-                message = _err_msg(exc=err, message=traceback.format_exc())
+                message = _err_msg(100403, f'container name:{container_name}', exc=True)
         else: # start
             rm_flag = True
             labels = {
@@ -229,9 +231,9 @@ class NLPServiceRPC(object):
                             command, **kwargs)
                 else:
                     if con:
-                        message = _err_msg(100402, 'Container[%s] is running!'%con.short_id)
+                        message = _err_msg(100404, 'container name: {}'.format(con.short_id))
             except Exception as err:
-                message = _err_msg(exc=err, message=traceback.format_exc())
+                message = _err_msg(100402, 'container image:{}'.format(self._image), exc=True)
 
         self.send_message(task, user, uuid, "error", message)
 
@@ -240,10 +242,10 @@ class NLPServiceRPC(object):
         if op == 'train.stop':
             Thread(target=lambda: self._run(task=op, user=user, uuid=uuid),
                     daemon=True).start()
-            return OP_SUCCESS, {'op': op, 'exec': 'success'}
+            return OP_SUCCESS, None
 
         if not params or not isinstance(params, dict):
-            return OP_FAILURE, {'op': op, 'exec': 'service params is invalid'}
+            return OP_FAILURE, 'parameter is none or not dict type'
 
         pro_dir = os.path.join(users_cache_dir, user, uuid)
         if not os.path.exists(pro_dir):
@@ -261,26 +263,26 @@ class NLPServiceRPC(object):
                 training_config, flag, output_dir, self._libs)
         Thread(target=lambda: self._run(task=op, user=user, uuid=uuid, command=command),
                 daemon=True).start()
-        return OP_SUCCESS, {'op': op, 'exec': 'success', 'cache_dir': pro_dir}
+        return OP_SUCCESS, f'{op} task cache directory: {pro_dir}'
 
     def evaluate(self, op, user, uuid, params):
         logger.info("call evaluate(%s, %s, %s)", op, user, uuid)
         if op == 'evaluate.stop':
             Thread(target=lambda: self._run(task=op, user=user, uuid=uuid),
                     daemon=True).start()
-            return OP_SUCCESS, {'op': op, 'exec': 'success'}
+            return OP_SUCCESS, None
 
         if not params or not isinstance(params, dict):
-            return OP_FAILURE, {'op': op, 'exec': 'service params is invalid'}
+            return OP_FAILURE, 'parameter is none or not dict type'
 
         input_file = params.get('input_file', None)
         if not input_file:
-            return OP_FAILURE, {'op': op, 'exec': 'no key: input_file'}
+            return OP_FAILURE, 'parameter have no key: input_file'
 
         pro_dir = os.path.join(users_cache_dir, user, uuid)
         archive_file = os.path.join(pro_dir, 'output', 'model.tar.gz')
         if not os.path.exists(archive_file):
-            return OP_FAILURE, {'op': op, 'exec': 'not found model.tar.gz'}
+            return OP_FAILURE, f'model.tar.gz is not found in {pro_dir}'
         output_file = params.get('output_file', None)
         if not output_file:
             output_file = os.path.join(pro_dir, 'evaluate_output.txt')
@@ -289,31 +291,31 @@ class NLPServiceRPC(object):
                 archive_file, input_file, output_file, self._libs)
         Thread(target=lambda: self._run(task=op, user=user, uuid=uuid, command=command),
                 daemon=True).start()
-        return OP_SUCCESS, {'op': op, 'exec': 'success', 'cache_dir': pro_dir}
+        return OP_SUCCESS, f'{op} task cache directory: {pro_dir}'
 
     def predict(self, op, user, uuid, params):
         logger.info("call predict(%s, %s, %s)", op, user, uuid)
         if op == 'predict.stop':
             Thread(target=lambda: self._run(task=op, user=user, uuid=uuid),
                     daemon=True).start()
-            return OP_SUCCESS, {'op': op, 'exec': 'success'}
+            return OP_SUCCESS, None
 
         if not params or not isinstance(params, dict):
-            return OP_FAILURE, {'op': op, 'exec': 'service params is invalid'}
+            return OP_FAILURE, 'params is none or not dict type'
 
         pro_dir = os.path.join(users_cache_dir, user, uuid)
         archive_file = os.path.join(pro_dir, 'output', 'model.tar.gz')
         if not os.path.exists(archive_file):
-            return OP_FAILURE, {'op': op, 'exec': 'not found model.tar.gz'}
+            return OP_FAILURE, f'model.tar.gz is not found in {pro_dir}'
 
         input_type = params.get('input_type', None)
         if not input_type:
-            return OP_FAILURE, {'op': op, 'exec': 'no key: input_type'}
+            return OP_FAILURE, 'parameter have no key: input_file'
 
         if input_type == 'text':
             input_text = params.get('input_text', None)
             if not input_text:
-                return OP_FAILURE, {'op': op, 'exec': 'no key: input_text'}
+                return OP_FAILURE, 'parameter have no key: input_file'
             input_file = os.path.join(pro_dir, 'predict_input.txt')
             with open(input_file, 'w') as fout:
                 fout.write(input_text)
@@ -334,7 +336,7 @@ class NLPServiceRPC(object):
                 archive_file, input_file, output_file, self._libs, other_args)
         Thread(target=lambda: self._run(task=op, user=user, uuid=uuid, command=command),
                 daemon=True).start()
-        return OP_SUCCESS, {'op': op, 'exec': 'success', 'cache_dir': pro_dir}
+        return OP_SUCCESS, f'{op} task cache directory: {pro_dir}'
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

@@ -17,6 +17,8 @@ import subprocess
 from flask import Flask, request, jsonify
 from threading import Thread
 
+from k12ai_errmsg import hzcsk12_error_message as _err_msg
+
 if os.environ.get("K12AI_DEBUG"):
     LEVEL = logging.DEBUG
 else:
@@ -54,42 +56,6 @@ app_host_ip = _get_host_ip()
 
 consul_addr = None
 consul_port = None
-
-ERRORS = {
-        100000: 'Success',
-        100100: '100100', # k12ai service api params parse error
-        100101: 'Json key not found.',
-        100102: 'Json value is invalid.',
-
-        100200: '100200', # k12 services error (k12cv, k12nlp)
-        100201: 'Service is not found.',
-        100202: 'Service start fail.',
-
-        100300: '100300', # k12cv container inner process error
-
-        100400: '100400', # k12nlp container inner process error
-
-        100500: '100500',
-
-        100600: '100600',
-
-        100700: '100700',
-
-        100800: '100800',
-
-        100900: '100900',
-
-        999999: 'Unkown error!',
-}
-
-def _response_msg(code, message=None):
-    result = {}
-    result['code'] = code
-    if code != 100000:
-        result['brief'] = ERRORS[code]
-    if message:
-        result['detail'] = message
-    return json.dumps(result)
 
 def _delay_do_consul(host, port):
     time.sleep(3)
@@ -150,22 +116,19 @@ def _platform_stats():
         isasync = reqjson.get('async', False)
         query = reqjson.get('query', None)
     except Exception as err:
-        logger.error(str(err))
-        return _response_msg(100101, str(err))
+        return json.dumps(_err_msg(100101, exc=True))
 
     # TODO check username and password
 
     agent = _get_service_by_name(platform_service_name)
     if not agent:
-        return _response_msg(100201, {"service_name": platform_service_name})
+        return json.dumps(_err_msg(100201, f'service name:{platform_service_name}'))
 
     try:
-        code, detail = agent.stats(query, isasync)
-        if code < 0:
-            return _response_msg(100202, detail)
-        return _response_msg(100000, detail)
+        code, msg = agent.stats(query, isasync)
+        return json.dumps(_err_msg(100202 if code < 0 else 100200, msg))
     except Exception as err:
-        return _response_msg(100202, str(err))
+        return json.dumps(_err_msg(100202, exc=True))
 
 @app.route('/k12ai/platform/control', methods=['POST'])
 def _platform_control():
@@ -178,21 +141,18 @@ def _platform_control():
         isasync = reqjson.get('async', False)
         params = reqjson.get('params', None)
     except Exception as err:
-        logger.error(str(err))
-        return _response_msg(100101, str(err))
+        return json.dumps(_err_msg(100101, exc=True))
 
     # TODO check username and password
 
     agent = _get_service_by_name(platform_service_name)
     if not agent:
-        return _response_msg(100201, {"service_name": platform_service_name})
+        return json.dumps(_err_msg(100201, f'service name:{platform_service_name}'))
     try:
-        code, detail = agent.control(op, params, isasync)
-        if code < 0:
-            return _response_msg(100202, detail)
-        return _response_msg(100000, detail)
+        code, msg = agent.control(op, params, isasync)
+        return json.dumps(_err_msg(100202 if code < 0 else 100200, msg))
     except Exception as err:
-        return _response_msg(100202, str(err))
+        return json.dumps(_err_msg(100202, exc=True))
 
 ### GPU Framework for train/evaluate/predict
 @app.route('/k12ai/framework/train', methods=['POST'])
@@ -203,24 +163,21 @@ def _framework_train():
         user = reqjson['user']
         op = reqjson['op']
         if op not in ('train.start', 'train.stop'):
-            return _response_msg(100102)
+            return json.dumps(_err_msg(100102, f'not support op:{op}'))
         service_name = reqjson['service_name']
         service_uuid = reqjson['service_uuid']
         service_params = reqjson.get('service_params', None)
     except Exception as err:
-        logger.error(str(err))
-        return _response_msg(100101, str(err))
+        return json.dumps(_err_msg(100101, exc=True))
 
     agent = _get_service_by_name(service_name)
     if not agent:
-        return _response_msg(100201, {"service_name": service_name})
+        return json.dumps(_err_msg(100201, f'service name:{service_name}'))
     try:
-        code, detail = agent.train(op, user, service_uuid, service_params)
-        if code < 0:
-            return _response_msg(100202, detail)
-        return _response_msg(100000, detail)
+        code, msg = agent.train(op, user, service_uuid, service_params)
+        return json.dumps(_err_msg(100202 if code < 0 else 100200, msg))
     except Exception as err:
-        return _response_msg(100202)
+        return json.dumps(_err_msg(100202, exc=True))
 
 @app.route('/k12ai/framework/evaluate', methods=['POST'])
 def _framework_evaluate():
@@ -230,24 +187,21 @@ def _framework_evaluate():
         user = reqjson['user']
         op = reqjson['op']
         if op not in ('evaluate.start', 'evaluate.stop'):
-            return _response_msg(100102)
+            return json.dumps(_err_msg(100102, f'not support op:{op}'))
         service_name = reqjson['service_name']
         service_uuid = reqjson['service_uuid']
         service_params = reqjson.get('service_params', None)
     except Exception as err:
-        logger.error(str(err))
-        return _response_msg(100101, str(err))
+        return json.dumps(_err_msg(100101, exc=True))
 
     agent = _get_service_by_name(service_name)
     if not agent:
-        return _response_msg(100201, {"service_name": service_name})
+        return json.dumps(_err_msg(100201, f'service name:{service_name}'))
     try:
-        code, detail = agent.evaluate(op, user, service_uuid, service_params)
-        if code < 0:
-            return _response_msg(100202, detail)
-        return _response_msg(100000, detail)
+        code, msg = agent.evaluate(op, user, service_uuid, service_params)
+        return json.dumps(_err_msg(100202 if code < 0 else 100200, msg))
     except Exception as err:
-        return _response_msg(100202, str(err))
+        return json.dumps(_err_msg(100202, exc=True))
 
 @app.route('/k12ai/framework/predict', methods=['POST'])
 def _framework_predict():
@@ -257,24 +211,21 @@ def _framework_predict():
         user = reqjson['user']
         op = reqjson['op']
         if op not in ('predict.start', 'predict.stop'):
-            return _response_msg(100102)
+            return json.dumps(_err_msg(100102, f'not support op:{op}'))
         service_name = reqjson['service_name']
         service_uuid = reqjson['service_uuid']
         service_params = reqjson.get('service_params', None)
     except Exception as err:
-        logger.error(str(err))
-        return _response_msg(100101, str(err))
+        return json.dumps(_err_msg(100101, exc=True))
 
     agent = _get_service_by_name(service_name)
     if not agent:
-        return _response_msg(100201, {"service_name": service_name})
+        return json.dumps(_err_msg(100201, f'service name:{service_name}'))
     try:
-        code, detail = agent.predict(op, user, service_uuid, service_params)
-        if code < 0:
-            return _response_msg(100202, detail)
-        return _response_msg(100000, detail)
+        code, msg = agent.predict(op, user, service_uuid, service_params)
+        return json.dumps(_err_msg(100202 if code else 100200, msg))
     except Exception as err:
-        return _response_msg(100202)
+        return json.dumps(_err_msg(100202, exc=True))
 
 @app.route('/k12ai/private/message', methods=['POST'])
 def _framework_message():

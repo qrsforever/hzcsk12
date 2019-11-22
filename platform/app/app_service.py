@@ -156,7 +156,7 @@ class PlatformServiceRPC(object):
         self._k12ai = k12ai
         self._docker = docker.from_env()
 
-    def send_message(self, token, op, message):
+    def send_message(self, op, msgtype, message):
         client = consul.Consul(consul_addr, port=consul_port)
         service = client.agent.services().get(self._k12ai)
         if not service:
@@ -165,21 +165,22 @@ class PlatformServiceRPC(object):
 
         data = {
                 'version': '0.1.0',
+                'type': msgtype,
                 'tag': 'platform',
                 'op': op
                 }
         now_time = time.time()
         data['timestamp'] = round(now_time * 1000)
         data['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(now_time))
-        data['message'] = message
+        data[msgtype] = message
 
         # service
         api = 'http://{}:{}/k12ai/private/message'.format(service['Address'], service['Port'])
         requests.post(api, json=data)
         if self._debug:
-            client.kv.put('platform/admin/%s/%s'%(token, op), json.dumps(data, indent=4))
+            client.kv.put('platform/admin/%s/%s'%(op, msgtype), json.dumps(data, indent=4))
 
-    def _run_stats(self, query):
+    def _run_stats(self, query, isasync=True):
         message = {}
         if not query:
             message = _get_cpu_infos()
@@ -196,26 +197,27 @@ class PlatformServiceRPC(object):
             if query.get('containers', True):
                 message['containers'] = _get_container_infos(self._docker)
         self.send_message('stats', 'info', message)
-        return OP_SUCCESS, message
+        if not isasync:
+            return OP_SUCCESS, message
 
     def stats(self, query, isasync):
         logger.info("call stats, isasync: {}".format(isasync))
         if not isasync:
-            return self._run_stats(query)
+            return self._run_stats(query, isasync)
         Thread(target=lambda: self._run_stats(query), daemon=True).start()
-        return OP_SUCCESS, {'exec': 'success'}
+        return OP_SUCCESS, None
 
     def _run_stop_container(self, op, cid):
-        message = {}
+        message = None
         code = OP_SUCCESS
         try:
             con = self._docker.containers.get(cid)
             if con.status == 'running':
                 con.stop()
-            message['result'] = {'code': 0, 'id': cid}
+            message = f'container id {cid} stop success'
         except docker.errors.NotFound as err:
             code = OP_FAILURE
-            message['result'] = {'code': -1, 'err': 'Not found container id %s'%cid}
+            message = f'container id {cid} is not found'
 
         self.send_message('control', op, message)
         return code, message
@@ -228,9 +230,9 @@ class PlatformServiceRPC(object):
                 return self._run_stop_container(op, cid)
             Thread(target=lambda: self._run_stop_container(op, cid), daemon=True).start()
         else:
-            return OP_FAILURE, {'exec': 'op: %s is not implement yet.' % op}
+            return OP_FAILURE, '{op} is not implemented ye'
 
-        return OP_SUCCESS, {'exec': 'success'}
+        return OP_SUCCESS, None
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

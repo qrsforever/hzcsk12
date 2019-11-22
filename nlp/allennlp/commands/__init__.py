@@ -105,12 +105,25 @@ def main(prog: str = None,
         # QRS: add for handle erros
         try:
             args.func(args)
+            logger.info("+++success+++")
         except Exception as err:
-            logger.error(err)
-            error = {}
-            error['class'] = err.__class__
-            error['message'] = str(err)
-            error['traceback'] = traceback.format_exc()
-            hzcsk12_send_message('error', error, True)
+            logger.info("+++fail+++")
+            import sys
+            exc_type, exc_value, exc_tb = sys.exc_info()
+            message = {
+                    'exc_type': exc_type.__name__,
+                    'exc_text': str(exc_value)
+                    }
+            message['trackback'] = []
+            tbs = traceback.extract_tb(exc_tb)
+            for tb in tbs:
+                err = {
+                        'filename': tb.filename,
+                        'linenum': tb.lineno,
+                        'funcname': tb.name,
+                        'souce': tb.line
+                        }
+                message['trackback'].append(err)
+            hzcsk12_send_message('except', message, True)
     else:
         parser.print_help()

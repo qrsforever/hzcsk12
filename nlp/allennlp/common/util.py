@@ -65,12 +65,12 @@ def hzcsk12_send_message(msgtype, message, end=False):
         _RPCEnable = 1
 
     try:
-        if metrics:
+        if message:
             _RPCClient.send_message(K12NLP_TASK, K12NLP_USER, K12NLP_UUID, msgtype, message)
         if end:
             _RPCClient.close()
-    except Exception as err:
-        logging.error(err)
+    except:
+        pass
 
 ################################ HZCSK12 ###########################
 

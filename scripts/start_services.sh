@@ -57,7 +57,7 @@ __service_health_check()
         return
     fi
     service_name=$1
-    try_count=5
+    try_count=3
     if [[ x$2 != x ]]
     then
         try_count=$2
