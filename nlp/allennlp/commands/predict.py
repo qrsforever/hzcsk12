@@ -177,7 +177,7 @@ class _PredictManager:
         message = {}
         message['index'] = index
         message['prediction'] = prediction
-        hzcsk12_send_message(message)
+        hzcsk12_send_message('predict', message)
 
     def _get_json_data(self) -> Iterator[JsonDict]:
         if self._input_file == "-":

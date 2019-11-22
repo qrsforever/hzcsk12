@@ -189,6 +189,7 @@ class NLPServiceRPC(object):
                 if con:
                     if con.status == 'running':
                         con.stop()
+                        message = _err_msg(100400, f'container name:{container_name}')
                 else:
                     message = _err_msg(100401, f'container name:{container_name}')
             except Exception as err:
