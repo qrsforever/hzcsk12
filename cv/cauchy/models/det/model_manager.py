@@ -20,6 +20,7 @@ from cauchy.models.det.loss.det_modules import (
     FRLoss,
 )
 from cauchy.utils.tools.logger import Logger as Log
+from cauchy.models.det.nets.custom_backbone_ssd import CustomBackboneSSD
 
 DET_MODEL_DICT = {
     "vgg300_ssd": Vgg300SSD,
@@ -45,8 +46,12 @@ class ModelManager(object):
         model_name = self.configer.get("network", "model_name")
 
         if model_name not in DET_MODEL_DICT:
-            Log.error("Model: {} not valid!".format(model_name))
-            exit(1)
+            # QRS: TODO only test
+            if model_name.split("_")[0] == "custom":
+                model_name = "_".join(model_name.split("_")[1:])
+                return CustomBackboneSSD(model_name, self.configer)
+            else:
+                raise RuntimeError('Model: {} not in dict'.format(model_name))
 
         model = DET_MODEL_DICT[model_name](self.configer)
 
