@@ -1,3 +1,4 @@
+pyhocon
 cython
 numpy
 cffi
@@ -16,6 +17,7 @@ torchvision
 GPUtil
 psutil
 six
+sklearn
 scikit-image
 imageio
 Shapely
