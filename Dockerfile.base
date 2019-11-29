@@ -39,17 +39,16 @@ WORKDIR /hzcsk12
 
 # apt install
 RUN sed -i 's/http:\/\/archive\.ubuntu\.com\/ubuntu\//http:\/\/mirrors\.intra\.didiyun\.com\/ubuntu\//g' /etc/apt/sources.list
-RUN apt-get update --fix-missing && apt-get install -y \
-    bzip2 unzip ca-certificates \
-    gcc git curl wget openssh-server openssh-client psmisc curl nfs-common htop \
-    libc-dev libevent-dev libglib2.0-0 libsm6 libxext6 libxrender1 libfontconfig1 \
-    build-essential && \
-    rm -rf /var/lib/apt/lists/*
+RUN apt-get update --fix-missing
+RUN apt-get install -y bzip2 unzip ca-certificates gcc git
+RUN apt-get install -y curl wget openssh-server openssh-client psmisc nfs-common htop
+RUN apt-get install -y libc-dev libevent-dev libglib2.0-0 libsm6 libxext6 libxrender1 libfontconfig1 build-essential
+RUN rm -rf /var/lib/apt/lists/*
 
 # pip install
 COPY external/docker/pip/pip.conf /root/.pip/pip.conf
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --timeout 120 -r requirements.txt
 RUN rm requirements.txt
 
 RUN mkdir -p external

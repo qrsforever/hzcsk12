@@ -1,14 +1,14 @@
 #!/bin/bash
 
-check=`python3 -c "import consul"`
+check=`python3 -c "import consul" 2>&1`
 if [[ x$check != x ]]
 then
-    pip3 install consul --user
+    pip3 install python-consul --user
 else
     echo "consul ok!"
 fi
 
-check=`python3 -c "import zerorpc"`
+check=`python3 -c "import zerorpc" 2>&1`
 if [[ x$check != x ]]
 then
     pip3 install zerorpc --user
@@ -16,15 +16,15 @@ else
     echo "zerorpc ok!"
 fi
 
-check=`python3 -c "import docker"`
+check=`python3 -c "import docker" 2>&1`
 if [[ x$check != x ]]
 then
-    pip3 install docker-py --user
+    pip3 install docker --user
 else
-    echo "docker-py ok!"
+    echo "py docker ok!"
 fi
 
-check=`python3 -c "import GPUtil"`
+check=`python3 -c "import GPUtil" 2>&1`
 if [[ x$check != x ]]
 then
     pip3 install GPUtil --user
@@ -32,7 +32,7 @@ else
     echo "GPUtil ok"
 fi
 
-check=`python3 -c "import psutil"`
+check=`python3 -c "import psutil" 2>&1`
 if [[ x$check != x ]]
 then
     pip3 install psutil --user
