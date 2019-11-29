@@ -51,6 +51,4 @@ ARG FORCE_CUDA="1"
 ENV FORCE_CUDA=${FORCE_CUDA}
 ENV PYTHONPATH=/hzcsk12/app:/hzcsk12/torchcv
 
-WORKDIR /hzcsk12/app
-
 CMD ["/bin/bash"]

@@ -58,5 +58,3 @@ COPY scripts/ai2-internal/resumable_train.sh /hzcsk12/app
 
 EXPOSE 8000
 CMD ["/bin/bash"]
-
-WORKDIR /hzcsk12/app

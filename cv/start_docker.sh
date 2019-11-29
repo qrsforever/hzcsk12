@@ -67,9 +67,9 @@ then
             --volume $CURDIR/torchcv:$WORKDIR/torchcv \
             --volume $CURDIR/app:$WORKDIR/app \
             --volume $WORKDIR/torchcv/exts \
-            --volume $ROOTDIR/hzcsnote:$WORKDIR/app/notebook \
+            --volume $ROOTDIR/hzcsnote:$WORKDIR/notebook \
             --network host --hostname $PROJECT ${REPOSITORY}-dev \
-            /bin/bash -c "umask 0000; jupyter notebook --no-browser --notebook-dir=$WORKDIR/app --allow-root --ip=0.0.0.0 --port=$DEVPORT"
+            /bin/bash -c "umask 0000; jupyter notebook --no-browser --notebook-dir=$WORKDIR/notebook --allow-root --ip=0.0.0.0 --port=$DEVPORT"
     else
         echo "$JNAME: already run!!!"
     fi

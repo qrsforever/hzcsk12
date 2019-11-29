@@ -9,6 +9,8 @@ RUN pip3 install -U jupyter \
         jupyter_nbextensions_configurator \
         -i https://pypi.tuna.tsinghua.edu.cn/simple
 
+RUN pip3 install python-consul
+
 ARG jupyter_data_dir=/root/.local/share/jupyter
 ARG jupyter_conf_dir=/root/.jupyter
 

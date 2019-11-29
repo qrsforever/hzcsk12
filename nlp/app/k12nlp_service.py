@@ -175,14 +175,18 @@ class NLPServiceRPC(object):
         if self._debug:
             client.kv.put('framework/%s/%s/%s/%s'%(user, uuid, task, msgtype), json.dumps(data, indent=4))
 
-    def _run(self, task, user, uuid, command=None):
-        message = {}
-        stopcmd = command == None
+    def _get_container(self, task, user, uuid):
         container_name = '%s-%s-%s' % (task.split('.')[0], user, uuid)
         try:
             con = self._docker.containers.get(container_name)
-        except docker.errors.NotFound as err1:
-            con = None
+            return container_name, con
+        except docker.errors.NotFound:
+            return container_name, None
+
+    def _run(self, task, user, uuid, command=None):
+        message = {}
+        stopcmd = command == None
+        container_name, con = self._get_container(task, user, uuid)
 
         if stopcmd: # stop
             try:
@@ -244,6 +248,10 @@ class NLPServiceRPC(object):
             Thread(target=lambda: self._run(task=op, user=user, uuid=uuid),
                     daemon=True).start()
             return OP_SUCCESS, None
+
+        container_name, con = self._get_container(op, user, uuid)
+        if con and con.status == 'running':
+            return OP_FAILURE, f'[{container_name}] same task is running!'
 
         if not params or not isinstance(params, dict):
             return OP_FAILURE, 'parameter is none or not dict type'
