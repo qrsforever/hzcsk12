@@ -9,8 +9,8 @@ export LANG="en_US.utf8"
 
 CURDIR=`pwd`
 
-MAJOR=0
-MINOR=4
+MAJOR=1
+MINOR=0
 PORT=8349
 DEVPORT=8348
 
@@ -85,7 +85,7 @@ __build_image()
         --build-arg COMMIT=$COMMIT \
         --build-arg BRANCH=$BRANCH \
         --build-arg PORT=$PORT \
-        .
+        --file Dockerfile.nlp .
 }
 
 items=($(docker images --filter "label=org.label-schema.name=$REPOSITORY" --format "{{.Tag}}"))
@@ -162,7 +162,7 @@ cmd=$(docker inspect ${imageName} --format '{{index .ContainerConfig.Labels "org
 if [[ x$cmd != x ]]
 then
     echo "run start..."
-    # $cmd
+    $cmd
 else
     echo "not found command in org.label-schema.docker.cmd"
 fi

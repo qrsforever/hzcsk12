@@ -9,8 +9,8 @@ export LANG="en_US.utf8"
 
 CURDIR=`pwd`
 
-MAJOR=0
-MINOR=4
+MAJOR=1
+MINOR=0
 PORT=8339
 DEVPORT=8338
 
@@ -64,8 +64,9 @@ then
             --runtime nvidia --shm-size=2g --ulimit memlock=-1 --ulimit stack=67108864 \
             --volume $DATADIR:$DATADIR \
             --volume $PRETRAINDIR:/root/.cache/torch/checkpoints \
-            --volume $CURDIR/cauchy:$WORKDIR/cauchy \
+            --volume $CURDIR/torchcv:$WORKDIR/torchcv \
             --volume $CURDIR/app:$WORKDIR/app \
+            --volume $WORKDIR/torchcv/exts \
             --volume $ROOTDIR/hzcsnote:$WORKDIR/app/notebook \
             --network host --hostname $PROJECT ${REPOSITORY}-dev \
             /bin/bash -c "umask 0000; jupyter notebook --no-browser --notebook-dir=$WORKDIR/app --allow-root --ip=0.0.0.0 --port=$DEVPORT"
@@ -89,7 +90,7 @@ __build_image()
         --build-arg COMMIT=$COMMIT \
         --build-arg BRANCH=$BRANCH \
         --build-arg PORT=$PORT \
-        .
+        --file Dockerfile.cv .
 }
 
 items=($(docker images --filter "label=org.label-schema.name=$REPOSITORY" --format "{{.Tag}}"))

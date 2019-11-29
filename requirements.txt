@@ -33,6 +33,7 @@ flaky
 responses>=0.7
 
 # cv
+pyhocon
 visdom
 GPUtil
 psutil
@@ -50,7 +51,5 @@ scikit-image
 imageio
 Shapely
 
-# rpc
-# zerorpc
-# python-consul
-# docker
+# hzcs
+zerorpc

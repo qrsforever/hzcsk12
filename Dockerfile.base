@@ -71,5 +71,3 @@ COPY external/docker/scripts/check_install.sh external/check_install.sh
 RUN chmod +x ./external/check_install.sh && ./external/check_install.sh
 
 RUN rm -rf external
-
-CMD ["/bin/bash"]
