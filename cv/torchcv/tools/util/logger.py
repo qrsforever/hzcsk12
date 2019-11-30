@@ -121,12 +121,12 @@ def hzcsk12_log_message(filename, message):
             elif message.startswith('Test Time'):
                 res = re.search(r'Test Time (?P<batch_time_sum>\d+\.?\d*)s, '
                         r'\((?P<batch_time_avg>\d+\.?\d*)\)\t'
-                        r'Loss (?P<loss_avg>\d+\.?\d*)\n')
+                        r'Loss (?P<loss_avg>\d+\.?\d*)\n', message)
                 if res:
                     result = res.groupdict()
                     _metrics_['validation_loss'] = float(result.get('loss_avg', '0'))
-            elif message.startwith('Val mAP:'):
-                res = re.search(r'Val mAP: (?P<mAP>\d+\.?\d*)')
+            elif message.startswith('Val mAP:'):
+                res = re.search(r'Val mAP: (?P<mAP>\d+\.?\d*)', message)
                 if res:
                     result = res.groupdict()
                     _metrics_['validation_mAP'] = float(result.get('mAP', '0'))
