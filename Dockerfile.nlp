@@ -1,4 +1,4 @@
-FROM hzcsai_com/hzcsk12-base
+FROM hzcsai_com/k12ai
 
 LABEL maintainer="k12nlp@hzcsai.com"
 
@@ -11,7 +11,6 @@ ARG VERSION
 ARG URL
 ARG COMMIT
 ARG BRANCH
-ARG PORT
 
 LABEL org.label-schema.schema-version="1.0" \
       org.label-schema.build-date=$DATE \
@@ -28,13 +27,17 @@ LABEL org.label-schema.schema-version="1.0" \
 --runtime nvidia --shm-size=2g --ulimit memlock=-1 --ulimit stack=67108864 \
 --volume /data:/data $REPOSITORY:$TAG"
 
-COPY requirements.txt .
-RUN pip install -i https://mirrors.aliyun.com/pypi/simple/ -r requirements.txt
+WORKDIR /hzcsk12/nlp
 
-COPY app app/
-COPY scripts/ scripts/
-COPY allennlp/ allennlp/
-COPY setup.py setup.py
+ADD nlp/requirements.txt requirements.txt
+RUN pip install -v --no-cache-dir --timeout 120 -i https://mirrors.aliyun.com/pypi/simple/ -r requirements.txt
+RUN rm requirements.txt
+
+
+COPY nlp/app app/
+COPY nlp/allennlp/ allennlp/
+COPY nlp/setup.py setup.py
+COPY nlp/README.md README.md
 
 RUN pip install --editable .
 
@@ -42,19 +45,6 @@ RUN pip install --editable .
 # EVALB produces scary looking c-level output which we don't
 # care about, so we redirect the output to /dev/null.
 RUN cd allennlp/tools/EVALB && make &> /dev/null && cd ../../../
-
-# Caching models when building the image makes a dockerized server start up faster, but is slow for
-# running tests and things, so we skip it by default.
-ARG CACHE_MODELS=false
-RUN ./scripts/cache_models.py
-
-
-# Optional argument to set an environment variable with the Git SHA
-ARG SOURCE_COMMIT
-ENV ALLENNLP_SOURCE_COMMIT $SOURCE_COMMIT
-
-# Copy wrapper script to allow beaker to run resumable training workloads.
-COPY scripts/ai2-internal/resumable_train.sh /hzcsk12/app
 
 EXPOSE 8000
 CMD ["/bin/bash"]

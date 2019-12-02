@@ -248,7 +248,7 @@ if __name__ == "__main__":
             help="host to run k12ai service")
     parser.add_argument(
             '--port',
-            default=8129,
+            default=8119,
             type=int,
             dest='port',
             help="port to run k12ai service")

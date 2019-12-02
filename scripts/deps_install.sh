@@ -5,8 +5,7 @@ if [[ x$check != x ]]
 then
     echo "############"
     echo "1. sudo apt-get install libreadline-gplv2-dev libncursesw5-dev libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev"
-    echo "2. build the source3.6.8: ./configure --prefix=/usr/local/python3.6; make; sudo make install"
-    echo "3. set env in bashrc: both PATH and LD_LIBRARY_PATH"
+    echo "2. build the python3.6.8: ./configure --enable-shared --enable-optimizations;  make; sudo make install"
     echo "more see: https://tecadmin.net/install-python-3-6-ubuntu-linuxmint/"
     echo "############"
     exit -1
@@ -17,7 +16,7 @@ fi
 check=`python3 -c "import flask" 2>&1`
 if [[ x$check != x ]]
 then
-    pip3 install flask --user
+    sudo pip3 install flask
 else
     echo "flask ok!"
 fi
@@ -25,7 +24,7 @@ fi
 check=`python3 -c "import consul" 2>&1`
 if [[ x$check != x ]]
 then
-    pip3 install python-consul --user
+    sudo pip3 install python-consul
 else
     echo "consul ok!"
 fi
@@ -33,7 +32,7 @@ fi
 check=`python3 -c "import zerorpc" 2>&1`
 if [[ x$check != x ]]
 then
-    pip3 install zerorpc --user
+    sudo pip3 install zerorpc
 else
     echo "zerorpc ok!"
 fi
@@ -41,7 +40,7 @@ fi
 check=`python3 -c "import docker" 2>&1`
 if [[ x$check != x ]]
 then
-    pip3 install docker --user
+    sudo pip3 install docker
 else
     echo "py docker ok!"
 fi
@@ -49,7 +48,7 @@ fi
 check=`python3 -c "import GPUtil" 2>&1`
 if [[ x$check != x ]]
 then
-    pip3 install GPUtil --user
+    sudo pip3 install GPUtil
 else
     echo "GPUtil ok"
 fi
@@ -57,7 +56,7 @@ fi
 check=`python3 -c "import psutil" 2>&1`
 if [[ x$check != x ]]
 then
-    pip3 install psutil --user
+    sudo pip3 install psutil
 else
     echo "psutil ok"
 fi

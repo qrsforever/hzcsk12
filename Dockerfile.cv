@@ -1,4 +1,4 @@
-FROM hzcsai_com/hzcsk12-base
+FROM hzcsai_com/k12ai
 
 LABEL maintainer="k12cv@hzcsai.com"
 
@@ -11,7 +11,6 @@ ARG VERSION
 ARG URL
 ARG COMMIT
 ARG BRANCH
-ARG PORT
 
 LABEL org.label-schema.schema-version="1.0" \
       org.label-schema.build-date=$DATE \
@@ -29,18 +28,20 @@ LABEL org.label-schema.schema-version="1.0" \
 --runtime nvidia --shm-size=2g --ulimit memlock=-1 --ulimit stack=67108864 \
 $REPOSITORY:$TAG"
 
-ADD requirements.txt requirements.txt
-RUN pip install -v --no-cache-dir -r requirements.txt
+WORKDIR /hzcsk12/cv
+
+ADD cv/requirements.txt requirements.txt
+RUN pip install -v --no-cache-dir --timeout 120 -r requirements.txt
 RUN rm requirements.txt
 
-COPY app app
-COPY torchcv/datasets torchcv/datasets 
-COPY torchcv/exts torchcv/exts
-COPY torchcv/metric torchcv/metric
-COPY torchcv/model torchcv/model
-COPY torchcv/runner torchcv/runner
-COPY torchcv/tools torchcv/tools
-COPY torchcv/main.py torchcv/main.py
+COPY cv/app app
+COPY cv/torchcv/datasets torchcv/datasets 
+COPY cv/torchcv/exts torchcv/exts
+COPY cv/torchcv/metric torchcv/metric
+COPY cv/torchcv/model torchcv/model
+COPY cv/torchcv/runner torchcv/runner
+COPY cv/torchcv/tools torchcv/tools
+COPY cv/torchcv/main.py torchcv/main.py
 
 # install torchcv extensions
 RUN cd torchcv/exts && \
@@ -49,6 +50,6 @@ RUN cd torchcv/exts && \
 
 ARG FORCE_CUDA="1"
 ENV FORCE_CUDA=${FORCE_CUDA}
-ENV PYTHONPATH=/hzcsk12/app:/hzcsk12/torchcv
+ENV PYTHONPATH=/hzcsk12/cv/app:/hzcsk12/cv/torchcv
 
 CMD ["/bin/bash"]

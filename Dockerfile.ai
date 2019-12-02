@@ -11,13 +11,12 @@ ARG VERSION
 ARG URL
 ARG COMMIT
 ARG BRANCH
-ARG PORT
 
 LABEL org.label-schema.schema-version="1.0" \
       org.label-schema.build-date=$DATE \
       org.label-schema.name=$REPOSITORY \
-      org.label-schema.description="HZCS K12 Base" \
-      org.label-schema.url=https://www.hzcsai.com/index.php?r=front \
+      org.label-schema.description="HZCS K12ai Base" \
+      org.label-schema.url=https://www.hzcsai.com
       org.label-schema.vcs-url=$URL \
       org.label-schema.vcs-ref=$COMMIT \
       org.label-schema.vcs-branch=$BRANCH \
@@ -40,8 +39,8 @@ WORKDIR /hzcsk12
 # apt install
 RUN sed -i 's/http:\/\/archive\.ubuntu\.com\/ubuntu\//http:\/\/mirrors\.intra\.didiyun\.com\/ubuntu\//g' /etc/apt/sources.list
 RUN apt-get update --fix-missing
-RUN apt-get install -y bzip2 unzip ca-certificates gcc git
-RUN apt-get install -y curl wget openssh-server openssh-client psmisc nfs-common htop
+RUN apt-get install -y bzip2 unzip ca-certificates gcc git curl wget nfs-common htop psmisc
+RUN apt-get install -y openssh-server openssh-client
 RUN apt-get install -y libc-dev libevent-dev libglib2.0-0 libsm6 libxext6 libxrender1 libfontconfig1 build-essential
 RUN rm -rf /var/lib/apt/lists/*
 
@@ -70,3 +69,20 @@ COPY external/docker/scripts/check_install.sh external/check_install.sh
 RUN chmod +x ./external/check_install.sh && ./external/check_install.sh
 
 RUN rm -rf external
+
+# install jupyter
+RUN pip3 install -U jupyter \
+        jupyter_contrib_nbextensions \
+        jupyter_nbextensions_configurator \
+        -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+ARG jupyter_data_dir=/root/.local/share/jupyter
+ARG jupyter_conf_dir=/root/.jupyter
+
+RUN jupyter contrib nbextension install
+RUN jupyter nbextensions_configurator enable
+RUN mkdir -p ${jupyter_data_dir}/nbextensions
+COPY .jupyter_config/vim_binding ${jupyter_data_dir}/nbextensions/vim_binding
+RUN jupyter nbextension enable vim_binding/vim_binding
+RUN jupyter notebook --generate-config -y
+COPY .jupyter_config/jupyter_notebook_config.json ${jupyter_conf_dir}/jupyter_notebook_config.json

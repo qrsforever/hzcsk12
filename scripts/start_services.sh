@@ -20,13 +20,13 @@ consul_name=${hostname}-consul
 consul_addr=$hostaddr
 consul_port=8500
 
-k12platform_service_name=${hostname}-k12platform
-k12platform_addr=$hostaddr
-k12platform_port=8119
-
 k12ai_service_name=${hostname}-k12ai
 k12ai_addr=$hostaddr
-k12ai_port=8129
+k12ai_port=8119
+
+k12platform_service_name=${hostname}-k12platform
+k12platform_addr=$hostaddr
+k12platform_port=8129
 
 k12cv_service_name=${hostname}-k12cv
 k12cv_addr=$hostaddr
