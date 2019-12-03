@@ -235,14 +235,8 @@ __start_k12cv_service()
     result=$(__service_health_check ${k12cv_service_name})
     if [[ $result != 1 ]]
     then
-        use_image=
-        if [[ x$debug == x1 ]]
-        then
-            use_image="hzcsai_com/k12cv-dev"
-        else
-            __service_image_check "hzcsai_com/k12cv"
-        fi
-        __run_command "nohup python3 ${top_dir}/cv/app/k12cv_service.py \
+        __service_image_check "hzcsai_com/k12cv"
+        __run_command "K12CV_DEBUG=$debug nohup python3 ${top_dir}/cv/app/k12cv_service.py \
             --host ${k12cv_addr} \
             --port ${k12cv_port} \
             --consul_addr ${consul_addr} \
@@ -260,14 +254,8 @@ __start_k12nlp_service()
     result=$(__service_health_check ${k12nlp_service_name})
     if [[ $result != 1 ]]
     then
-        use_image=
-        if [[ x$debug == x1 ]]
-        then
-            use_image="hzcsai_com/k12nlp-dev"
-        else
-            __service_image_check "hzcsai_com/k12nlp"
-        fi
-        __run_command "nohup python3 ${top_dir}/nlp/app/k12nlp_service.py \
+        __service_image_check "hzcsai_com/k12nlp"
+        __run_command "K12NLP_DEBUG=$debug nohup python3 ${top_dir}/nlp/app/k12nlp_service.py \
             --host ${k12nlp_addr} \
             --port ${k12nlp_port} \
             --consul_addr ${consul_addr} \

@@ -95,8 +95,8 @@ class CVServiceRPC(object):
     def __init__(self,
             host, port,
             k12ai='k12ai',
-            image='hzcsai_com/k12cv-dev',
-            workdir='/hzcsk12', debug=False):
+            image='hzcsai_com/k12cv',
+            workdir='/hzcsk12/cv', debug=False):
         self._debug = debug
         self._host = host
         self._port = port
@@ -182,7 +182,7 @@ class CVServiceRPC(object):
                 rm_flag = False
                 volumes['%s/app'%self._projdir] = {'bind':'%s/app'%self._workdir, 'mode':'rw'}
                 volumes['%s/torchcv/datasets'%self._projdir] = {'bind':'%s/torchcv/datasets'%self._workdir, 'mode':'rw'}
-                volumes['%s/torchcv/metric'%self._projdir] = {'bind':'%s/torchcv/metric'%self._workdir, 'mode':'rw'} 
+                volumes['%s/torchcv/metric'%self._projdir] = {'bind':'%s/torchcv/metric'%self._workdir, 'mode':'rw'}
                 volumes['%s/torchcv/model'%self._projdir] = {'bind':'%s/torchcv/model'%self._workdir, 'mode':'rw'}
                 volumes['%s/torchcv/runner'%self._projdir] = {'bind':'%s/torchcv/runner'%self._workdir, 'mode':'rw'}
                 volumes['%s/torchcv/tools'%self._projdir] = {'bind':'%s/torchcv/tools'%self._workdir, 'mode':'rw'}
@@ -237,12 +237,36 @@ class CVServiceRPC(object):
         pro_dir = os.path.join(users_cache_dir, user, uuid)
         if not os.path.exists(pro_dir):
             os.makedirs(pro_dir)
-        training_config = os.path.join(pro_dir, 'config.json')
-        with open(training_config, 'w') as fout:
+
+        dataset_name = params['dataset']
+        dataset_path = params['data']['data_dir']
+
+        if not os.path.exists(dataset_path):
+            return OP_FAILURE, f'path[{dataset_path}] is not exist!'
+
+        params['network']['checkpoints_dir'] = 'ckpts/' + dataset_name
+        training_conf = os.path.join(pro_dir, 'config.json')
+        with open(training_conf, 'w') as fout:
             fout.write(json.dumps(params))
 
-        command = "python {} /hzcsk12/torchcv/main.py --config_file {} --checkpoints_root {} --dist y --phase train".format(
-                "-m torch.distributed.launch --nproc_per_node=1", training_config, '%s/%s/%s'%(users_cache_dir, user, uuid))
+        ckpt_root = '%s/%s/%s'%(users_cache_dir, user, uuid)
+        ckpt_dirx = params['network']['checkpoints_dir']
+        ckpt_name = params['network']['model_name']
+        resume_path = os.path.join(ckpt_root, ckpt_dirx, ckpt_name + '_latest.pth')
+        resume_flag = True
+        if not os.path.exists(resume_path):
+            resume_flag = False
+
+        command = 'python {} {} {} {} {} {} --dist y --gather y --phase train'.format(
+                '-m torch.distributed.launch --nproc_per_node=1',
+                '/hzcsk12/cv/torchcv/main.py',
+                '--config_file %s' % training_conf,
+                '--checkpoints_root %s' % ckpt_root,
+                '--checkpoints_name %s' % ckpt_name,
+                '{}'.format('--resume %s' % resume_path if resume_flag else ' ')
+                )
+
+        logger.info(command)
 
         Thread(target=lambda: self._run(task=op, user=user, uuid=uuid, command=command),
                 daemon=True).start()
@@ -258,9 +282,43 @@ class CVServiceRPC(object):
         if not params or not isinstance(params, dict):
             return OP_FAILURE, 'parameter is none or not dict type'
 
+        training_conf = os.path.join(users_cache_dir, user, uuid, 'config.json')
+        with open(training_conf, 'w') as fout:
+            fout.write(json.dumps(params))
+
+        dataset_name = params['dataset']
+        dataset_path = params['data']['data_dir']
+
+        if not os.path.exists(dataset_path):
+            return OP_FAILURE, f'path[{dataset_path}] is not exist!'
+
+        ckpt_root = '%s/%s/%s'%(users_cache_dir, user, uuid)
+        ckpt_dirx = params['network']['checkpoints_dir']
+        ckpt_name = params['network']['model_name']
+        resume_path = os.path.join(ckpt_root, ckpt_dirx, ckpt_name + '_latest.pth')
+        resume_flag = True
+        if not os.path.exists(resume_path):
+            return OP_FAILURE, f'path[{resume_path}] is not exist!'
+
+        test_dir = os.path.join(dataset_path, 'imgs', 'test')
+        if not os.path.exists(test_dir):
+            return OP_FAILURE, f'path[{test_path}] is not exist!'
+
+        command = 'python {} {} {} {} {} {} {} --gather n --phase test'.format(
+                '-m torch.distributed.launch --nproc_per_node=1',
+                '/hzcsk12/cv/torchcv/main.py',
+                '--config_file %s' % training_conf,
+                '--checkpoints_root %s' % ckpt_root,
+                '--checkpoints_name %s' % ckpt_name,
+                '--resume %s' % resume_path,
+                '--test_dir %s' % test_dir
+                )
+
+        logger.info(command)
+
         Thread(target=lambda: self._run(task=op, user=user, uuid=uuid, command=command),
                 daemon=True).start()
-        return OP_SUCCESS, f'{op} task cache directory: {pro_dir}'
+        return OP_SUCCESS, None
 
     def predict(self, op, user, uuid, params):
         logger.info("call predict(%s, %s, %s)", op, user, uuid)
@@ -310,7 +368,7 @@ if __name__ == "__main__":
             help="image to run container")
     args = parser.parse_args()
 
-    image = args.image if args.image else 'hzcsai_com/k12cv-dev'
+    image = args.image if args.image else 'hzcsai_com/k12cv'
 
     host = args.host if args.host else app_host_ip
 

@@ -17,6 +17,12 @@ from runner.tools.controller import Controller
 from tools.util.configer import Configer
 from tools.util.logger import Logger as Log
 
+# QRS: add
+try:
+    from k12cv.k12cv_init import hzcsk12_cv_init
+except:
+    def hzcsk12_cv_init():
+        pass
 
 def str2bool(v):
     """ Usage:
@@ -162,6 +168,9 @@ if __name__ == "__main__":
 
     Log.info('BN Type is {}.'.format(configer.get('network', 'norm_type')))
     Log.info('Config Dict: {}'.format(json.dumps(configer.to_dict(), indent=2)))
+
+    # QRS: add
+    hzcsk12_cv_init()
 
     runner_selector = RunnerSelector(configer)
     runner = None
