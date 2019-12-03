@@ -18,7 +18,7 @@ RE_DET_COM_TRAIN = None
 def hzcsk12_log_parser(filename, message):
     global _metrics_
     try:
-        if filename == 'image_classifier.py':
+        if filename in ['image_classifier.py']:
             if message.startswith('Train Epoch:'):
                 global RE_CLS_IC_TRAIN
                 if RE_CLS_IC_TRAIN is None:

@@ -20,6 +20,7 @@ ERRORS = {
         100200: 'task service success', # k12 services error (k12cv, k12nlp)
         100201: 'task service is not found',
         100202: 'task service start fails',
+        100203: 'task service parameters is invalid',
         100299: 'task service unkown exception',
 
         100300: 'k12cv container success', # k12cv container inner process error

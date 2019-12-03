@@ -12,10 +12,10 @@ import zerorpc
 
 _RPCClient = None
 _RPCEnable = -1
-K12CV_TASK, K12CV_USER, K12CV_UUID = None, None, None
+K12CV_OP, K12CV_USER, K12CV_UUID = None, None, None
 
 def hzcsk12_send_message(msgtype, message, end=False):
-    global _RPCClient, _RPCEnable, K12CV_TASK, K12CV_USER, K12CV_UUID
+    global _RPCClient, _RPCEnable, K12CV_OP, K12CV_USER, K12CV_UUID
 
     if _RPCEnable == 0:
         return
@@ -27,7 +27,7 @@ def hzcsk12_send_message(msgtype, message, end=False):
         if not host or not port:
             _RPCEnable = 0
             return
-        K12CV_TASK = os.environ.get('K12CV_TASK', 'Unkown')
+        K12CV_OP = os.environ.get('K12CV_OP', 'Unkown')
         K12CV_USER = os.environ.get('K12CV_USER', 'Unkown')
         K12CV_UUID = os.environ.get('K12CV_UUID', 'Unkown')
         _RPCClient = zerorpc.Client(
@@ -38,7 +38,7 @@ def hzcsk12_send_message(msgtype, message, end=False):
 
     try:
         if message:
-            _RPCClient.send_message(K12CV_TASK, K12CV_USER, K12CV_UUID, msgtype, message)
+            _RPCClient.send_message(K12CV_OP, K12CV_USER, K12CV_UUID, msgtype, message)
         if end:
             _RPCClient.close()
     except Exception:

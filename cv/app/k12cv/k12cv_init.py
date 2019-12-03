@@ -16,4 +16,3 @@ from runner.runner_selector import CLS_TEST_DICT
 def hzcsk12_cv_init():
     # Change the image_classifier test hander
     CLS_TEST_DICT['image_classifier'] = ImageClassifierTest
-

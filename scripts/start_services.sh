@@ -188,7 +188,7 @@ __start_consule_service()
             -http-port=${consul_port} \
             -node=${hostname} \
             -data-dir=/srv/consul \
-            -datacenter=${hostname} -client='0.0.0.0' -ui
+            -datacenter=k12ai -client='0.0.0.0' -ui
         __script_logout "start consul service"
     else
         __script_logout "check consul service"
@@ -201,6 +201,7 @@ __start_k12ai_service()
     result=$(__service_health_check ${k12ai_service_name})
     if [[ $result != 1 ]]
     then
+        export K12AI_DEBUG=$debug
         __run_command "nohup python3 ${top_dir}/k12ai_service.py \
             --host ${k12ai_addr} \
             --port ${k12ai_port} \
@@ -218,6 +219,7 @@ __start_k12platform_service()
     result=$(__service_health_check ${k12platform_service_name})
     if [[ $result != 1 ]]
     then
+        export K12PLATFORM_DEBUG=$debug
         __run_command "nohup python3 ${top_dir}/platform/app/k12platform_service.py \
             --host ${k12platform_addr} \
             --port ${k12platform_port} \
@@ -235,8 +237,9 @@ __start_k12cv_service()
     result=$(__service_health_check ${k12cv_service_name})
     if [[ $result != 1 ]]
     then
+        export K12CV_DEBUG=$debug
         __service_image_check "hzcsai_com/k12cv"
-        __run_command "K12CV_DEBUG=$debug nohup python3 ${top_dir}/cv/app/k12cv_service.py \
+        __run_command "nohup python3 ${top_dir}/cv/app/k12cv_service.py \
             --host ${k12cv_addr} \
             --port ${k12cv_port} \
             --consul_addr ${consul_addr} \
@@ -254,8 +257,9 @@ __start_k12nlp_service()
     result=$(__service_health_check ${k12nlp_service_name})
     if [[ $result != 1 ]]
     then
+        export K12NLP_DEBUG=$debug
         __service_image_check "hzcsai_com/k12nlp"
-        __run_command "K12NLP_DEBUG=$debug nohup python3 ${top_dir}/nlp/app/k12nlp_service.py \
+        __run_command "nohup python3 ${top_dir}/nlp/app/k12nlp_service.py \
             --host ${k12nlp_addr} \
             --port ${k12nlp_port} \
             --consul_addr ${consul_addr} \
