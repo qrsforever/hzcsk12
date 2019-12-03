@@ -245,7 +245,7 @@ class CVServiceRPC(object):
                     'name': container_name,
                     'auto_remove': rm_flag,
                     'detach': True,
-                    'network_mode': 'host',
+                    # 'network_mode': 'host',
                     'runtime': 'nvidia',
                     'shm_size': '2g',
                     'labels': labels,
