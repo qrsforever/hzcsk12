@@ -80,14 +80,13 @@ class RPCServiceAgent(object):
     def __getattr__(self, method):
         def __wrapper(*args, **kwargs):
             try:
-                client = zerorpc.Client(timeout=3)
+                client = zerorpc.Client(timeout=15)
                 client.connect('tcp://{}:{}'.format(self._addr, self._port))
                 result = client(method, *args, **kwargs)
                 client.close()
                 return result
             except Exception as err:
-                logger.info(err)
-                return None
+                raise err
         return __wrapper
 
 def _get_service_by_name(name):

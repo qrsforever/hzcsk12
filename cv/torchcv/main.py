@@ -20,8 +20,9 @@ from tools.util.logger import Logger as Log
 # QRS: add
 try:
     from k12cv.k12cv_init import hzcsk12_cv_init
-except:
-    def hzcsk12_cv_init():
+except Exception as err:
+    print(err)
+    def hzcsk12_cv_init(configer):
         pass
 
 def str2bool(v):
@@ -170,7 +171,7 @@ if __name__ == "__main__":
     Log.info('Config Dict: {}'.format(json.dumps(configer.to_dict(), indent=2)))
 
     # QRS: add
-    hzcsk12_cv_init()
+    hzcsk12_cv_init(configer)
 
     runner_selector = RunnerSelector(configer)
     runner = None

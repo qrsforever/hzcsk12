@@ -174,12 +174,13 @@ class CVServiceRPC(object):
             if not os.path.exists(dataset_path):
                 return OP_FAILURE, _err_msg(100203, f'dataset [{dataset_path}] is not exist!')
 
+            params['cache_dir'] = os.path.join(users_cache_dir, user, uuid)
             params['network']['checkpoints_dir'] = 'ckpts/' + dataset_name
             config_path = os.path.join(pro_dir, 'config.json')
             with open(config_path, 'w') as fout:
                 fout.write(json.dumps(params))
 
-            ckpts_root = '%s/%s/%s'%(users_cache_dir, user, uuid)
+            ckpts_root = params['cache_dir']
             ckpts_dirx = params['network']['checkpoints_dir']
             ckpts_name = params['network']['model_name']
             resume_path = os.path.join(ckpts_root, ckpts_dirx, ckpts_name + '_latest.pth')
@@ -188,14 +189,17 @@ class CVServiceRPC(object):
                 test_dir = os.path.join(dataset_path, 'imgs', 'test')
             else:
                 test_dir = dataset_path
-            
+
+            out_dir = os.path.join(ckpts_root, 'out')
+
             return OP_SUCCESS, {
                     'config_path': config_path,
                     'resume_path': resume_path,
                     'dataset_path': dataset_path,
                     'ckpts_root': ckpts_root,
                     'ckpts_name': ckpts_name,
-                    'test_dir': test_dir
+                    'test_dir': test_dir,
+                    'out_dir' : out_dir
                     }
         except Exception:
             return OP_FAILURE, _err_msg(100203, 'prepare environ occur exception', exc=True)
@@ -210,7 +214,6 @@ class CVServiceRPC(object):
             try:
                 if con:
                     if con.status == 'running':
-                        # con.stop()
                         con.kill()
                         message = _err_msg(100300, f'container name:{container_name}')
                 else:
@@ -245,9 +248,7 @@ class CVServiceRPC(object):
                     'name': container_name,
                     'auto_remove': rm_flag,
                     'detach': True,
-                    # 'network_mode': 'host',
                     'runtime': 'nvidia',
-                    'shm_size': '2g',
                     'labels': labels,
                     'volumes': volumes,
                     'environment': environs
@@ -311,16 +312,17 @@ class CVServiceRPC(object):
             return OP_FAILURE, json.dumps(result)
 
         if not os.path.exists(result['resume_path']):
-            return OP_FAILURE, json.dumps(_err_msg(100203, 'resume path[%s] is not found!' % result['resume_path'])) 
+            return OP_FAILURE, json.dumps(_err_msg(100203, 'resume path[%s] is not found!' % result['resume_path']))
 
-        command = 'python {} {} {} {} {} {} {} --dist y --gather n --phase test'.format(
+        command = 'python {} {} {} {} {} {} {} {} --dist y --gather y --phase test'.format(
                 '-m torch.distributed.launch --nproc_per_node=1',
                 '/hzcsk12/cv/torchcv/main.py',
                 '--config_file %s' % result['config_path'],
                 '--checkpoints_root %s' % result['ckpts_root'],
                 '--checkpoints_name %s' % result['ckpts_name'],
                 '--resume %s' % result['resume_path'],
-                '--test_dir %s' % result['test_dir']
+                '--test_dir %s' % result['test_dir'],
+                '--out_dir %s' % result['out_dir']
                 )
 
         Thread(target=lambda: self._run(op=op, user=user, uuid=uuid, command=command),

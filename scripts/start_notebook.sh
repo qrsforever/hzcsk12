@@ -9,6 +9,7 @@ export LANG="en_US.utf8"
 
 CUR_FIL=${BASH_SOURCE[0]}
 TOP_DIR=`cd $(dirname $CUR_FIL)/..; pwd`
+DST_DIR='/hzcsk12'
 
 VENDOR=hzcsai_com
 
@@ -52,8 +53,8 @@ __start_notebook()
             subdir=
         fi
         SOURCE_NOTE_DIR=`cd $TOP_DIR/../hzcsnote/$subdir; pwd`
-        TARGET_NOTE_DIR=/hzcsk12/hzcsnote
-        docker run -dit --name ${JNAME} --restart unless-stopped \
+        TARGET_NOTE_DIR=$DST_DIR/hzcsnote
+        docker run -dit --name ${JNAME} --restart unless-stopped ${@:3:$#} \
             --volume $SOURCE_NOTE_DIR:$TARGET_NOTE_DIR \
             --network host --hostname ${JNAME} ${REPOSITORY} \
             /bin/bash -c "umask 0000; jupyter notebook --no-browser --notebook-dir=$TARGET_NOTE_DIR --allow-root --ip=0.0.0.0 --port=$PORT"
@@ -66,8 +67,15 @@ __start_notebook()
 __main()
 {
     __start_notebook $K12AI_PROJECT $K12AI_PORT
-    __start_notebook $K12CV_PROJECT $K12CV_PORT
-    __start_notebook $K12NLP_PROJECT $K12NLP_PORT
+
+    __start_notebook $K12CV_PROJECT $K12CV_PORT \
+        --volume $TOP_DIR/cv/app:$DST_DIR/cv/app \
+        --volume $TOP_DIR/cv/torchcv:$DST_DIR/cv/torchcv \
+        --volume $DST_DIR/cv/torchcv/exts \
+
+    __start_notebook $K12NLP_PROJECT $K12NLP_PORT \
+        --volume $TOP_DIR/nlp/app:$DST_DIR/nlp/app \
+        --volume $TOP_DIR/nlp/allennlp:$DST_DIR/nlp/allennlp \
 }
 
 __main

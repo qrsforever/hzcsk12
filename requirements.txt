@@ -54,3 +54,4 @@ Shapely
 # hzcs
 zerorpc
 python-consul
+protobuf
