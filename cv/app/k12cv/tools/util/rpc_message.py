@@ -23,7 +23,6 @@ def hzcsk12_send_message(msgtype, message, end=False):
     if _RPCEnable == -1:
         host = os.environ.get('K12CV_RPC_HOST', None)
         port = os.environ.get('K12CV_RPC_PORT', None)
-        print(host, port)
         if not host or not port:
             _RPCEnable = 0
             return
@@ -31,7 +30,7 @@ def hzcsk12_send_message(msgtype, message, end=False):
         K12CV_USER = os.environ.get('K12CV_USER', 'Unkown')
         K12CV_UUID = os.environ.get('K12CV_UUID', 'Unkown')
         _RPCClient = zerorpc.Client(
-                connect_to='tcp://{}:{}'.format(host, port),
+                connect_to='tcp://{}:{}'.format(host, port),  # noqa
                 timeout=2,
                 passive_heartbeat=True)
         _RPCEnable = 1
@@ -43,4 +42,3 @@ def hzcsk12_send_message(msgtype, message, end=False):
             _RPCClient.close()
     except Exception:
         pass
-

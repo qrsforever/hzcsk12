@@ -87,6 +87,8 @@ class Logger(object):
         lineno = sys._getframe().f_back.f_lineno
         prefix = '[{}, {}]'.format(filename,lineno)
         Logger.logger.warn('{} {}'.format(prefix, message))
+        # QRS: add
+        hzcsk12_log_parser('warn', filename, message)
 
     @staticmethod
     def error(message):
@@ -105,6 +107,8 @@ class Logger(object):
         lineno = sys._getframe().f_back.f_lineno
         prefix = '[{}, {}]'.format(filename,lineno)
         Logger.logger.critical('{} {}'.format(prefix, message))
+        # QRS: add
+        hzcsk12_log_parser('critical', filename, message)
 
 
 if __name__ == "__main__":

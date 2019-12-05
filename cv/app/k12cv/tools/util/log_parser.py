@@ -7,7 +7,10 @@
 # @version 1.0
 # @date 2019-12-02 18:47:50
 
+import sys
 import re
+import traceback
+
 from k12cv.tools.util.rpc_message import hzcsk12_send_message
 
 _metrics_ = {}
@@ -34,7 +37,7 @@ def _parse_metrics(filename, message):
                 if res:
                     result = res.groupdict()
                     _metrics_['training_epochs'] = int(result.get('epoch', '0'))
-                    _metrics_['training_loss'] =  float(result.get('train_loss', '0'))
+                    _metrics_['training_loss'] = float(result.get('train_loss', '0'))
                     _metrics_['training_speed'] = float(result.get('batch_time_avg', '0'))
                     _metrics_['lr'] = eval(result.get('learning_rate', '0'))
             elif message.startswith('TestLoss = '):
@@ -78,7 +81,7 @@ def _parse_metrics(filename, message):
                 if res:
                     result = res.groupdict()
                     _metrics_['training_epochs'] = int(result.get('epoch', '0'))
-                    _metrics_['training_loss'] =  float(result.get('train_loss', '0'))
+                    _metrics_['training_loss'] = float(result.get('train_loss', '0'))
                     _metrics_['training_speed'] = float(result.get('batch_time_avg', '0'))
                     _metrics_['lr'] = eval(result.get('learning_rate', '0'))
             elif message.startswith('Test Time'):
@@ -102,13 +105,74 @@ def _parse_metrics(filename, message):
     except Exception as err:
         print(err)
 
+def _parse_error(filename, message):
+
+    def _err_msg(err_type):
+        _message = {}
+        _message['filename'] = filename
+        _message['err_type'] = err_type
+        _message['err_text'] = message
+        hzcsk12_send_message('error', _message, True)
+
+    if message == 'Image type is invalid.':
+        return _err_msg('ImageTypeError')
+
+    if message == 'Tensor size is not valid.':
+        return _err_msg('TensorSizeError')
+
+    if re.search(r'\w+ Method: \w+ is not valid.', message):
+        return _err_msg('ConfigurationError')
+
+    if re.search(r'Not support BN type: \w+.', message):
+        return _err_msg('ConfigurationError')
+
+    if re.search(r'Model: \w+ not valid!', message):
+        return _err_msg('ConfigurationError')
+
+    if re.search(r'Optimizer \w+ is not valid.', message):
+        return _err_msg('ConfigurationError')
+
+    if re.search(r'Policy:\w+ is not valid.', message):
+        return _err_msg('ConfigurationError')
+
+    if re.search(r'Not support \w+ image tool.', message):
+        return _err_msg('ConfigurationError')
+
+    if re.search(r'Not support mode \w+', message):
+        return _err_msg('ConfigurationError')
+
+    if re.search(r'Invalid pad mode: \w+', message):
+        return _err_msg('ConfigurationError')
+
+    if re.search(r'Anchor Method \w+ not valid.', message):
+        return _err_msg('ConfigurationError')
+
+    return _err_msg('UnkownError')
+
 def _parse_except(filename, message):
-    pass
+        exc_type, exc_value, exc_tb = sys.exc_info()
+        message = { # noqa: E126
+                'err_type': exc_type.__name__,
+                'err_text': str(exc_value)
+                }
+        message['trackback'] = []
+        tbs = traceback.extract_tb(exc_tb)
+        for tb in tbs:
+            err = { # noqa: E126
+                    'filename': tb.filename,
+                    'linenum': tb.lineno,
+                    'funcname': tb.name,
+                    'souce': tb.line
+                    }
+            message['trackback'].append(err)
+        hzcsk12_send_message('except', message, True)
 
 def hzcsk12_log_parser(level, filename, message):
     if level == 'info':
         _parse_metrics(filename, message)
     elif level == 'error':
+        _parse_error(filename, message)
+    elif level == 'critical':
         _parse_except(filename, message)
     else:
         print('Not impl yet!')

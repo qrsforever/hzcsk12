@@ -21,9 +21,9 @@ from tools.util.logger import Logger as Log
 try:
     from k12cv.k12cv_init import hzcsk12_cv_init
 except Exception as err:
-    print(err)
     def hzcsk12_cv_init(configer):
         pass
+    print(err)
 
 def str2bool(v):
     """ Usage:
@@ -188,13 +188,17 @@ if __name__ == "__main__":
     else:
         Log.error('Task: {} is not valid.'.format(configer.get('task')))
         exit(1)
-    if configer.get('phase') == 'train':
-        if configer.get('network', 'resume') is None or not configer.get('network.resume_continue'):
-            Controller.init(runner)
+    try:
+        if configer.get('phase') == 'train':
+            if configer.get('network', 'resume') is None or not configer.get('network.resume_continue'):
+                Controller.init(runner)
 
-        Controller.train(runner)
-    elif configer.get('phase') == 'test' and configer.get('network', 'resume') is not None:
-        Controller.test(runner)
-    else:
-        Log.error('Phase: {} is not valid.'.format(configer.get('phase')))
-        exit(1)
+            Controller.train(runner)
+        elif configer.get('phase') == 'test' and configer.get('network', 'resume') is not None:
+            Controller.test(runner)
+        else:
+            Log.error('Phase: {} is not valid.'.format(configer.get('phase')))
+            exit(1)
+    except Exception as err:
+        # QRS: add for catch internal except
+        Log.critical('except: {}'.format(err))

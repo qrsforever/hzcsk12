@@ -111,8 +111,8 @@ def main(prog: str = None,
             import sys
             exc_type, exc_value, exc_tb = sys.exc_info()
             message = {
-                    'exc_type': exc_type.__name__,
-                    'exc_text': str(exc_value)
+                    'err_type': exc_type.__name__,
+                    'err_text': str(exc_value)
                     }
             message['trackback'] = []
             tbs = traceback.extract_tb(exc_tb)

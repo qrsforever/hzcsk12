@@ -28,6 +28,9 @@ ERRORS = {
         100302: 'k12cv container start fail',
         100303: 'k12cv container stop fail',
         100304: 'k12cv container is already running',
+        100305: 'k12cv configuration error',
+        100306: 'k12cv image type error',
+        100307: 'k12cv tensor size error',
         100399: 'k12cv container unkown exception',
 
         100400: 'k12nlp container success', # k12nlp container inner process error
@@ -52,7 +55,7 @@ ERRORS = {
         999999: 'Unkown error!',
 }
 
-def hzcsk12_error_message(code, message=None, detail=False, exc=False, exc_info=None):
+def hzcsk12_error_message(code, message=None, detail=False, exc=False, ext_info=None):
     msg = {}
     msg['code'] = code
     txt = ERRORS.get(code, None)
@@ -60,15 +63,15 @@ def hzcsk12_error_message(code, message=None, detail=False, exc=False, exc_info=
         msg['descr'] = txt
     if message:
         msg['message'] = message
-    if exc or exc_info:
-        if exc_info:
-            msg['detail'] = exc_info
+    if exc or ext_info:
+        if ext_info:
+            msg['detail'] = ext_info
         else:
             exc_type, exc_value, exc_tb = sys.exc_info()
             msg['detail'] = {
                     'exc_type': exc_type.__name__,
                     'exc_text': str(exc_value)
-                    }
+                    } # noqa
             if exc_tb:
                 msg['detail']['trackback'] = []
                 tbs = traceback.extract_tb(exc_tb)
@@ -78,7 +81,7 @@ def hzcsk12_error_message(code, message=None, detail=False, exc=False, exc_info=
                             'linenum': tb.lineno,
                             'funcname': tb.name,
                             'souce': tb.line
-                            }
+                            } # noqa
                     msg['detail']['trackback'].append(err)
 
     else:
@@ -88,5 +91,5 @@ def hzcsk12_error_message(code, message=None, detail=False, exc=False, exc_info=
                     'filename': stack[0],
                     'linenum': stack[1],
                     'funcname': stack[2]
-                    }
+                    } # noqa
     return msg

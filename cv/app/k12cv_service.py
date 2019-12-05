@@ -16,19 +16,18 @@ import zerorpc
 import requests
 import consul
 import docker
-import traceback
 from threading import Thread
 
 try:
     from k12ai_errmsg import hzcsk12_error_message as _err_msg
-except:
+except Exception:
     try:
         topdir = os.path.abspath(
                 os.path.dirname(os.path.abspath(__file__)) + "/../..")
         sys.path.append(topdir)
         from k12ai_errmsg import hzcsk12_error_message as _err_msg
-    except:
-        def _err_msg(code, message=None, detail=None, exc=None, exc_info=None):
+    except Exception:
+        def _err_msg(code, message=None, detail=None, exc=None, ext_info=None):
             return {'code': 999999}
 
 service_name = 'k12cv'
@@ -106,7 +105,7 @@ class CVServiceRPC(object):
         if debug:
             logger.info('debug mode')
             self._workdir = workdir
-            self._projdir = os.path.abspath(
+            self._projdir = os.path.abspath( # noqa: E126
                     os.path.dirname(os.path.abspath(__file__)) + os.path.sep + "..")
             logger.info('workdir:%s, projdir:%s', self._workdir, self._projdir)
 
@@ -117,18 +116,21 @@ class CVServiceRPC(object):
             logger.error("Not found %s service!" % self._k12ai)
             return
 
-        if msgtype == 'except' and isinstance(message, dict):
-            cls = message['exc_type']
-            if cls == 'ConfigurationError':
+        if isinstance(message, dict):
+            errtype = message['err_type']
+            if errtype == 'ConfigurationError':
                 code = 100305
-            elif cls == 'MemoryError':
+            elif errtype == 'ImageTypeError':
+                code = 100306
+            elif errtype == 'TensorSizeError':
+                code = 100307
+            elif errtype == 'MemoryError':
                 code = 100901
             else:
                 code = 100399
-            message = _err_msg(code, exc_info=message)
-            msgtype = 'error'
+            message = _err_msg(code, ext_info=message)
 
-        data = {
+        data = { # noqa: E126
                 'version': '0.1.0',
                 'type': msgtype,
                 'tag': 'framework',
@@ -145,7 +147,8 @@ class CVServiceRPC(object):
         api = 'http://{}:{}/k12ai/private/message'.format(service['Address'], service['Port'])
         requests.post(api, json=data)
         if self._debug:
-            client.kv.put('framework/%s/%s/%s/%s'%(user, uuid, op, msgtype), json.dumps(data, indent=4))
+            client.kv.put('framework/%s/%s/%s/%s'%(user, uuid, op, msgtype), # noqa
+                    json.dumps(data, indent=4))
 
     def _get_container(self, op, user, uuid):
         container_name = '%s-%s-%s' % (op.split('.')[0], user, uuid)
@@ -192,14 +195,14 @@ class CVServiceRPC(object):
 
             out_dir = os.path.join(ckpts_root, 'out')
 
-            return OP_SUCCESS, {
+            return OP_SUCCESS, { # noqa: E126
                     'config_path': config_path,
                     'resume_path': resume_path,
                     'dataset_path': dataset_path,
                     'ckpts_root': ckpts_root,
                     'ckpts_name': ckpts_name,
                     'test_dir': test_dir,
-                    'out_dir' : out_dir
+                    'out_dir': out_dir
                     }
         except Exception:
             return OP_FAILURE, _err_msg(100203, 'prepare environ occur exception', exc=True)
@@ -207,7 +210,7 @@ class CVServiceRPC(object):
     def _run(self, op, user, uuid, command=None):
         logger.info(command)
         message = {}
-        stopcmd = command == None
+        stopcmd = True if command else False
         container_name, con = self._get_container(op, user, uuid)
 
         if stopcmd: # stop
@@ -218,14 +221,14 @@ class CVServiceRPC(object):
                         message = _err_msg(100300, f'container name:{container_name}')
                 else:
                     message = _err_msg(100301, f'container name:{container_name}')
-            except Exception as err:
+            except Exception:
                 message = _err_msg(100303, f'container name:{container_name}', exc=True)
         else: # start
             rm_flag = True
-            labels = {
+            labels = { # noqa
                     'k12ai.service.name': service_name
                     }
-            volumes = {
+            volumes = { # noqa
                     '/data': {'bind':'/data', 'mode':'rw'}
                     }
             if self._debug:
@@ -243,7 +246,7 @@ class CVServiceRPC(object):
                     'K12CV_OP': '%s' % op,
                     'K12CV_USER': '%s' % user,
                     'K12CV_UUID': '%s' % uuid
-                    }
+                    } # noqa
             kwargs = {
                     'name': container_name,
                     'auto_remove': rm_flag,
@@ -252,7 +255,7 @@ class CVServiceRPC(object):
                     'labels': labels,
                     'volumes': volumes,
                     'environment': environs
-                    }
+                    } # noqa
             try:
                 if not con or con.status != 'running':
                     if con:
@@ -263,7 +266,7 @@ class CVServiceRPC(object):
                 else:
                     if con:
                         message = _err_msg(100304, 'container name: {}'.format(con.short_id))
-            except Exception as err:
+            except Exception:
                 message = _err_msg(100302, 'container image:{}'.format(self._image), exc=True)
 
         self.send_message(op, user, uuid, "error", message)
@@ -294,7 +297,7 @@ class CVServiceRPC(object):
                 '--checkpoints_root %s' % result['ckpts_root'],
                 '--checkpoints_name %s' % result['ckpts_name'],
                 '{}'.format('--resume %s' % result['resume_path'] if resume_flag else ' ')
-                )
+                ) # noqa
 
         Thread(target=lambda: self._run(op=op, user=user, uuid=uuid, command=command),
                 daemon=True).start()
@@ -323,7 +326,7 @@ class CVServiceRPC(object):
                 '--resume %s' % result['resume_path'],
                 '--test_dir %s' % result['test_dir'],
                 '--out_dir %s' % result['out_dir']
-                )
+                ) # noqa
 
         Thread(target=lambda: self._run(op=op, user=user, uuid=uuid, command=command),
                 daemon=True).start()
@@ -339,9 +342,9 @@ class CVServiceRPC(object):
         if not params or not isinstance(params, dict):
             return OP_FAILURE, 'params is none or not dict type'
 
-        Thread(target=lambda: self._run(op=op, user=user, uuid=uuid, command=command),
-                daemon=True).start()
-        return OP_SUCCESS, f'{op} op cache directory: {pro_dir}'
+        # Thread(target=lambda: self._run(op=op, user=user, uuid=uuid, command=command),
+        #         daemon=True).start()
+        return OP_SUCCESS, None
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -393,7 +396,7 @@ if __name__ == "__main__":
         app = zerorpc.Server(CVServiceRPC(
             host=host, port=args.port,
             k12ai='{}-k12ai'.format(app_host_name),
-            image=image, debug=LEVEL==logging.DEBUG))
+            image=image, debug=LEVEL==logging.DEBUG)) # noqa
         app.bind('tcp://%s:%d' % (host, args.port))
         app.run()
     finally:
