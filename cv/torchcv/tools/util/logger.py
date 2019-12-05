@@ -13,7 +13,7 @@ import sys
 try:
     from k12cv.tools.util.log_parser import hzcsk12_log_parser
 except:
-    def hzcsk12_log_parser(filename, message):
+    def hzcsk12_log_parser(level, filename, message):
         pass
 
 
@@ -75,10 +75,10 @@ class Logger(object):
         Logger.check_logger()
         filename = os.path.basename(sys._getframe().f_back.f_code.co_filename)
         lineno = sys._getframe().f_back.f_lineno
-        # QRS: add
-        hzcsk12_log_parser(filename, message)
         prefix = '[{}, {}]'.format(filename,lineno)
         Logger.logger.info('{} {}'.format(prefix, message))
+        # QRS: add
+        hzcsk12_log_parser('info', filename, message)
 
     @staticmethod
     def warn(message):
@@ -95,6 +95,8 @@ class Logger(object):
         lineno = sys._getframe().f_back.f_lineno
         prefix = '[{}, {}]'.format(filename,lineno)
         Logger.logger.error('{} {}'.format(prefix, message))
+        # QRS: add
+        hzcsk12_log_parser('error', filename, message)
 
     @staticmethod
     def critical(message):

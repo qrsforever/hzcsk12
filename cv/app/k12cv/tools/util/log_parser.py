@@ -15,7 +15,7 @@ _metrics_ = {}
 RE_CLS_IC_TRAIN = None
 RE_DET_COM_TRAIN = None
 
-def hzcsk12_log_parser(filename, message):
+def _parse_metrics(filename, message):
     global _metrics_
     try:
         if filename in ['image_classifier.py']:
@@ -101,3 +101,14 @@ def hzcsk12_log_parser(filename, message):
         hzcsk12_send_message('metrics', _metrics_)
     except Exception as err:
         print(err)
+
+def _parse_except(filename, message):
+    pass
+
+def hzcsk12_log_parser(level, filename, message):
+    if level == 'info':
+        _parse_metrics(filename, message)
+    elif level == 'error':
+        _parse_except(filename, message)
+    else:
+        print('Not impl yet!')

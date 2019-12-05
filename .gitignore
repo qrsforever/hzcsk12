@@ -10,3 +10,4 @@
 **/**/.Dockerfile.dev
 **/**/.jupyter_config
 **/**/.ycm_extra_conf.py
+**/**/.grepignore
