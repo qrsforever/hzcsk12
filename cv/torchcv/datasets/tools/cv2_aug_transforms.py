@@ -418,7 +418,8 @@ class RandomResizedCrop(object):
         Returns:
             Numpy Image: Randomly cropped and resized image.
         """
-        assert labelmap is None and maskmap is None and kpts is None and bboxes is None and labels is None
+        # QRS: comment
+        # assert labelmap is None and maskmap is None and kpts is None and bboxes is None and labels is None
         i, j, h, w = self.get_params(img, self.scale, self.ratio)
         img = img[i:i+h, j:j+w]
         img = cv2.resize(img, self.size, interpolation=cv2.INTER_LINEAR)

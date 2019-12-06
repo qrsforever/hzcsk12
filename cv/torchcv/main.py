@@ -172,23 +172,22 @@ if __name__ == "__main__":
 
     # QRS: add
     hzcsk12_cv_init(configer)
-
-    runner_selector = RunnerSelector(configer)
-    runner = None
-    if configer.get('task') == 'pose':
-        runner = runner_selector.pose_runner()
-    elif configer.get('task') == 'seg':
-        runner = runner_selector.seg_runner()
-    elif configer.get('task') == 'det':
-        runner = runner_selector.det_runner()
-    elif configer.get('task') == 'cls':
-        runner = runner_selector.cls_runner()
-    elif configer.get('task') == 'gan':
-        runner = runner_selector.gan_runner()
-    else:
-        Log.error('Task: {} is not valid.'.format(configer.get('task')))
-        exit(1)
     try:
+        runner_selector = RunnerSelector(configer)
+        runner = None
+        if configer.get('task') == 'pose':
+            runner = runner_selector.pose_runner()
+        elif configer.get('task') == 'seg':
+            runner = runner_selector.seg_runner()
+        elif configer.get('task') == 'det':
+            runner = runner_selector.det_runner()
+        elif configer.get('task') == 'cls':
+            runner = runner_selector.cls_runner()
+        elif configer.get('task') == 'gan':
+            runner = runner_selector.gan_runner()
+        else:
+            Log.error('Task: {} is not valid.'.format(configer.get('task')))
+            exit(1)
         if configer.get('phase') == 'train':
             if configer.get('network', 'resume') is None or not configer.get('network.resume_continue'):
                 Controller.init(runner)
@@ -202,3 +201,7 @@ if __name__ == "__main__":
     except Exception as err:
         # QRS: add for catch internal except
         Log.critical('except: {}'.format(err))
+    else:
+        Log.info('k12cv finish')
+    finally:
+        pass

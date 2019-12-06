@@ -9,17 +9,16 @@
 
 import os
 
-from tools.util.configer import Configer
 from tools.util.logger import Logger as Log
 
 from k12cv.runner.cls.image_classifier_test import ImageClassifierTest
 from k12cv.runner.det.single_shot_detector_test import SingleShotDetectorTest
 from k12cv.model.det.nets.custom_ssd300 import CustomSSD300
-
 from k12cv.tools.util.net_def import build_custom_model
+from k12cv.tools.util.rpc_message import hzcsk12_send_message
 
 from runner.runner_selector import CLS_TEST_DICT, DET_TEST_DICT
-from model.det.model_manager import DET_MODEL_DICT 
+from model.det.model_manager import DET_MODEL_DICT
 
 # change the original method to hzcsk12 hook
 def _hook_runner_selector(configer):
@@ -52,3 +51,5 @@ def hzcsk12_cv_init(configer):
     _check_custom_model(configer)
 
     _hook_runner_selector(configer)
+
+    hzcsk12_send_message('status', {'value': 'running'})

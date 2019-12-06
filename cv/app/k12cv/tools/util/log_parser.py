@@ -18,7 +18,7 @@ _metrics_ = {}
 RE_CLS_IC_TRAIN = None
 RE_DET_COM_TRAIN = None
 
-def _parse_metrics(filename, message):
+def _parse_metrics(filename, lineno, message):
     global _metrics_
     try:
         if filename in ['image_classifier.py']:
@@ -98,6 +98,10 @@ def _parse_metrics(filename, message):
                     _metrics_['validation_mAP'] = float(result.get('mAP', '0'))
             else:
                 return
+        elif filename == 'main.py':
+            if message.startswith('k12cv finish'):
+                hzcsk12_send_message('status', {'value': 'exit', 'way': 'finish'})
+                return
         else:
             return
         # send message to k12cv service
@@ -105,14 +109,16 @@ def _parse_metrics(filename, message):
     except Exception as err:
         print(err)
 
-def _parse_error(filename, message):
+def _parse_error(filename, lineno, message):
 
     def _err_msg(err_type):
         _message = {}
         _message['filename'] = filename
+        _message['linenum'] = lineno
         _message['err_type'] = err_type
         _message['err_text'] = message
-        hzcsk12_send_message('error', _message, True)
+        hzcsk12_send_message('error', _message)
+        hzcsk12_send_message('status', {'value': 'exit', 'way': 'error'})
 
     if message == 'Image type is invalid.':
         return _err_msg('ImageTypeError')
@@ -149,9 +155,11 @@ def _parse_error(filename, message):
 
     return _err_msg('UnkownError')
 
-def _parse_except(filename, message):
+def _parse_except(filename, lineno, message):
         exc_type, exc_value, exc_tb = sys.exc_info()
         message = { # noqa: E126
+                'filename': filename,
+                'linenum': lineno,
                 'err_type': exc_type.__name__,
                 'err_text': str(exc_value)
                 }
@@ -165,14 +173,15 @@ def _parse_except(filename, message):
                     'souce': tb.line
                     }
             message['trackback'].append(err)
-        hzcsk12_send_message('except', message, True)
+        hzcsk12_send_message('error', message)
+        hzcsk12_send_message('status', {'value': 'exit', 'way': 'crash'})
 
-def hzcsk12_log_parser(level, filename, message):
+def hzcsk12_log_parser(level, filename, lineno, message):
     if level == 'info':
-        _parse_metrics(filename, message)
+        _parse_metrics(filename, lineno, message)
     elif level == 'error':
-        _parse_error(filename, message)
+        _parse_error(filename, lineno, message)
     elif level == 'critical':
-        _parse_except(filename, message)
+        exit(-1)
     else:
         print('Not impl yet!')

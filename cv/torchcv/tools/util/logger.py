@@ -13,7 +13,7 @@ import sys
 try:
     from k12cv.tools.util.log_parser import hzcsk12_log_parser
 except:
-    def hzcsk12_log_parser(level, filename, message):
+    def hzcsk12_log_parser(level, filename, lineno, message):
         pass
 
 
@@ -76,9 +76,9 @@ class Logger(object):
         filename = os.path.basename(sys._getframe().f_back.f_code.co_filename)
         lineno = sys._getframe().f_back.f_lineno
         prefix = '[{}, {}]'.format(filename,lineno)
-        Logger.logger.info('{} {}'.format(prefix, message))
         # QRS: add
-        hzcsk12_log_parser('info', filename, message)
+        hzcsk12_log_parser('info', filename, lineno, message)
+        Logger.logger.info('{} {}'.format(prefix, message))
 
     @staticmethod
     def warn(message):
@@ -86,9 +86,9 @@ class Logger(object):
         filename = os.path.basename(sys._getframe().f_back.f_code.co_filename)
         lineno = sys._getframe().f_back.f_lineno
         prefix = '[{}, {}]'.format(filename,lineno)
-        Logger.logger.warn('{} {}'.format(prefix, message))
         # QRS: add
-        hzcsk12_log_parser('warn', filename, message)
+        hzcsk12_log_parser('warn', filename, lineno, message)
+        Logger.logger.warn('{} {}'.format(prefix, message))
 
     @staticmethod
     def error(message):
@@ -96,9 +96,9 @@ class Logger(object):
         filename = os.path.basename(sys._getframe().f_back.f_code.co_filename)
         lineno = sys._getframe().f_back.f_lineno
         prefix = '[{}, {}]'.format(filename,lineno)
-        Logger.logger.error('{} {}'.format(prefix, message))
         # QRS: add
-        hzcsk12_log_parser('error', filename, message)
+        hzcsk12_log_parser('error', filename, lineno, message)
+        Logger.logger.error('{} {}'.format(prefix, message))
 
     @staticmethod
     def critical(message):
@@ -106,9 +106,9 @@ class Logger(object):
         filename = os.path.basename(sys._getframe().f_back.f_code.co_filename)
         lineno = sys._getframe().f_back.f_lineno
         prefix = '[{}, {}]'.format(filename,lineno)
-        Logger.logger.critical('{} {}'.format(prefix, message))
         # QRS: add
-        hzcsk12_log_parser('critical', filename, message)
+        hzcsk12_log_parser('critical', filename, lineno, message)
+        Logger.logger.critical('{} {}'.format(prefix, message))
 
 
 if __name__ == "__main__":

@@ -115,20 +115,22 @@ class CVServiceRPC(object):
         if not service:
             logger.error("Not found %s service!" % self._k12ai)
             return
-
+        if not msgtype:
+            return
         if isinstance(message, dict):
-            errtype = message['err_type']
-            if errtype == 'ConfigurationError':
-                code = 100305
-            elif errtype == 'ImageTypeError':
-                code = 100306
-            elif errtype == 'TensorSizeError':
-                code = 100307
-            elif errtype == 'MemoryError':
-                code = 100901
-            else:
-                code = 100399
-            message = _err_msg(code, ext_info=message)
+            if 'err_type' in message:
+                errtype = message['err_type']
+                if errtype == 'ConfigurationError':
+                    code = 100305
+                elif errtype == 'ImageTypeError':
+                    code = 100306
+                elif errtype == 'TensorSizeError':
+                    code = 100307
+                elif errtype == 'MemoryError':
+                    code = 100901
+                else:
+                    code = 100399
+                message = _err_msg(code, ext_info=message)
 
         data = { # noqa: E126
                 'version': '0.1.0',
@@ -140,15 +142,17 @@ class CVServiceRPC(object):
                 }
         now_time = time.time()
         data['timestamp'] = round(now_time * 1000)
-        data['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(now_time))
+        data['datetime'] = time.strftime('%Y%m%d%H%M%S', time.localtime(now_time))
         data[msgtype] = message
 
         # service
         api = 'http://{}:{}/k12ai/private/message'.format(service['Address'], service['Port'])
         requests.post(api, json=data)
         if self._debug:
-            client.kv.put('framework/%s/%s/%s/%s'%(user, uuid, op, msgtype), # noqa
-                    json.dumps(data, indent=4))
+            key = 'framework/%s/%s/%s/%s' % (user, uuid, op, msgtype)
+            if msgtype != 'status':
+                key = '%s/%s' % (key, data['datetime'][:-2])
+            client.kv.put(key, json.dumps(data, indent=4))
 
     def _get_container(self, op, user, uuid):
         container_name = '%s-%s-%s' % (op.split('.')[0], user, uuid)
@@ -209,16 +213,17 @@ class CVServiceRPC(object):
 
     def _run(self, op, user, uuid, command=None):
         logger.info(command)
-        message = {}
-        stopcmd = True if command else False
+        message = None
         container_name, con = self._get_container(op, user, uuid)
 
-        if stopcmd: # stop
+        if not command: # stop
             try:
                 if con:
                     if con.status == 'running':
                         con.kill()
                         message = _err_msg(100300, f'container name:{container_name}')
+                        xop = op.replace('stop', 'start')
+                        self.send_message(xop, user, uuid, "status", {'value':'exit', 'way': 'manual'})
                 else:
                     message = _err_msg(100301, f'container name:{container_name}')
             except Exception:
@@ -256,20 +261,23 @@ class CVServiceRPC(object):
                     'volumes': volumes,
                     'environment': environs
                     } # noqa
-            try:
-                if not con or con.status != 'running':
+
+            if con and con.status == 'running':
+                message = _err_msg(100304, 'container name: {}'.format(con.short_id))
+            else:
+                self.send_message(op, user, uuid, "status", {'value':'starting'})
+                try:
                     if con:
                         con.remove()
                     con = self._docker.containers.run(self._image,
                             command, **kwargs)
                     return
-                else:
-                    if con:
-                        message = _err_msg(100304, 'container name: {}'.format(con.short_id))
-            except Exception:
-                message = _err_msg(100302, 'container image:{}'.format(self._image), exc=True)
+                except Exception:
+                    message = _err_msg(100302, 'container image:{}'.format(self._image), exc=True)
+                    self.send_message(op, user, uuid, "status", {'value':'exit', 'way': 'docker'})
 
-        self.send_message(op, user, uuid, "error", message)
+        if message:
+            self.send_message(op, user, uuid, "error", message)
 
     def train(self, op, user, uuid, params):
         logger.info("call train(%s, %s, %s)", op, user, uuid)
