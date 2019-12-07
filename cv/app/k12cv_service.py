@@ -11,7 +11,6 @@
 import os, sys, time
 import argparse
 import logging, json
-import socket
 import zerorpc
 import requests
 import consul
@@ -19,16 +18,16 @@ import docker
 from threading import Thread
 
 try:
-    from k12ai_errmsg import hzcsk12_error_message as _err_msg
+    from k12ai_errmsg import k12ai_error_message as _err_msg
+    from k12ai_utils import k12ai_get_hostname as _get_hostname
+    from k12ai_utils import k12ai_get_hostip as _get_hostip
 except Exception:
-    try:
-        topdir = os.path.abspath(
-                os.path.dirname(os.path.abspath(__file__)) + "/../..")
-        sys.path.append(topdir)
-        from k12ai_errmsg import hzcsk12_error_message as _err_msg
-    except Exception:
-        def _err_msg(code, message=None, detail=None, exc=None, ext_info=None):
-            return {'code': 999999}
+    topdir = os.path.abspath(
+            os.path.dirname(os.path.abspath(__file__)) + "/../..")
+    sys.path.append(topdir)
+    from k12ai_errmsg import k12ai_error_message as _err_msg
+    from k12ai_utils import k12ai_get_hostname as _get_hostname
+    from k12ai_utils import k12ai_get_hostip as _get_hostip
 
 service_name = 'k12cv'
 
@@ -42,29 +41,8 @@ logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s
 logger = logging.getLogger(__name__)
 
 app_quit = False
-
-def _get_host_name():
-    val = os.environ.get('HOST_NAME', None)
-    if val:
-        return val
-    else:
-        return socket.gethostname()
-
-def _get_host_ip():
-    val = os.environ.get('HOST_ADDR', None)
-    if val:
-        return val
-    else:
-        try:
-            s = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
-            s.connect(('8.8.8.8',80))
-            ip = s.getsockname()[0]
-        finally:
-            s.close()
-        return ip
-
-app_host_name = _get_host_name()
-app_host_ip = _get_host_ip()
+app_host_name = _get_hostname()
+app_host_ip = _get_hostip()
 
 consul_addr = None
 consul_port = None

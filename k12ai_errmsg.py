@@ -55,7 +55,7 @@ ERRORS = {
         999999: 'Unkown error!',
 }
 
-def hzcsk12_error_message(code, message=None, detail=False, exc=False, ext_info=None):
+def k12ai_error_message(code, message=None, detail=False, exc=False, ext_info=None):
     msg = {}
     msg['code'] = code
     txt = ERRORS.get(code, None)

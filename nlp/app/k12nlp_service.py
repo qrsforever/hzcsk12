@@ -10,25 +10,23 @@
 import os, sys, time
 import argparse
 import logging, json
-import socket
 import zerorpc
 import requests
 import consul
 import docker
-import traceback
 from threading import Thread
 
 try:
-    from k12ai_errmsg import hzcsk12_error_message as _err_msg
-except:
-    try:
-        topdir = os.path.abspath(
-                os.path.dirname(os.path.abspath(__file__)) + "/../..")
-        sys.path.append(topdir)
-        from k12ai_errmsg import hzcsk12_error_message as _err_msg
-    except:
-        def _err_msg(code, message=None, detail=None, exc=None, exc_info=None):
-            return {'code': 999999}
+    from k12ai_errmsg import k12ai_error_message as _err_msg
+    from k12ai_utils import k12ai_get_hostname as _get_hostname
+    from k12ai_utils import k12ai_get_hostip as _get_hostip
+except Exception:
+    topdir = os.path.abspath(
+            os.path.dirname(os.path.abspath(__file__)) + "/../..")
+    sys.path.append(topdir)
+    from k12ai_errmsg import k12ai_error_message as _err_msg
+    from k12ai_utils import k12ai_get_hostname as _get_hostname
+    from k12ai_utils import k12ai_get_hostip as _get_hostip
 
 service_name = 'k12nlp'
 
@@ -42,29 +40,8 @@ logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s
 logger = logging.getLogger(__name__)
 
 app_quit = False
-
-def _get_host_name():
-    val = os.environ.get('HOST_NAME', None)
-    if val:
-        return val
-    else:
-        return socket.gethostname()
-
-def _get_host_ip():
-    val = os.environ.get('HOST_ADDR', None)
-    if val:
-        return val
-    else:
-        try:
-            s = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
-            s.connect(('8.8.8.8',80))
-            ip = s.getsockname()[0]
-        finally:
-            s.close()
-        return ip
-
-app_host_name = _get_host_name()
-app_host_ip = _get_host_ip()
+app_host_name = _get_hostname()
+app_host_ip = _get_hostip()
 
 consul_addr = None
 consul_port = None
@@ -123,7 +100,7 @@ class NLPServiceRPC(object):
             host, port,
             k12ai='k12ai',
             image='hzcsai_com/k12nlp-dev',
-            libs='hzcsnlp',
+            libs='k12nlp',
             workdir='/hzcsk12', debug=False):
         self._debug = debug
         self._host = host
@@ -138,65 +115,71 @@ class NLPServiceRPC(object):
                     os.path.dirname(os.path.abspath(__file__)) + os.path.sep + "..")
             logger.info('workdir:%s, projdir:%s', self._workdir, self._projdir)
 
-    def send_message(self, task, user, uuid, msgtype, message):
+    def send_message(self, op, user, uuid, msgtype, message):
         client = consul.Consul(consul_addr, port=consul_port)
         service = client.agent.services().get(self._k12ai)
         if not service:
             logger.error("Not found %s service!" % self._k12ai)
             return
-
-        if msgtype == 'except' and isinstance(message, dict):
-            cls = message['exc_type']
-            if cls == 'ConfigurationError':
+        if not msgtype:
+            return
+        if isinstance(message, dict):
+            if 'err_type' in message:
+                errtype = message['err_type']
+            if errtype == 'ConfigurationError':
                 code = 100405
-            elif cls == 'MemoryError':
+            elif errtype == 'MemoryError':
                 code = 100901
             else:
                 code = 100499
-            message = _err_msg(code, exc_info=message)
-            msgtype = 'error'
+            message = _err_msg(code, ext_info=message)
 
         data = {
                 'version': '0.1.0',
                 'type': msgtype,
                 'tag': 'framework',
-                'op': task,
+                'op': op,
                 'user': user,
                 'service_uuid': uuid,
                 }
         now_time = time.time()
         data['timestamp'] = round(now_time * 1000)
-        data['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(now_time))
+        data['datetime'] = time.strftime('%Y%m%d%H%M%S', time.localtime(now_time))
         data[msgtype] = message
 
         # service
         api = 'http://{}:{}/k12ai/private/message'.format(service['Address'], service['Port'])
         requests.post(api, json=data)
         if self._debug:
-            client.kv.put('framework/%s/%s/%s/%s'%(user, uuid, task, msgtype), json.dumps(data, indent=4))
+            key = 'framework/%s/%s/%s/%s' % (user, uuid, op, msgtype)
+            if msgtype != 'status':
+                key = '%s/%s' % (key, data['datetime'][:-2])
+            client.kv.put(key, json.dumps(data, indent=4))
 
-    def _get_container(self, task, user, uuid):
-        container_name = '%s-%s-%s' % (task.split('.')[0], user, uuid)
+    def _get_container(self, op, user, uuid):
+        container_name = '%s-%s-%s' % (op.split('.')[0], user, uuid)
         try:
             con = self._docker.containers.get(container_name)
             return container_name, con
         except docker.errors.NotFound:
             return container_name, None
 
-    def _run(self, task, user, uuid, command=None):
-        message = {}
-        stopcmd = command == None
-        container_name, con = self._get_container(task, user, uuid)
+    def _run(self, op, user, uuid, command=None):
+        logger.info(command)
+        message = None
+        container_name, con = self._get_container(op, user, uuid)
 
-        if stopcmd: # stop
+        if not command: # stop
             try:
                 if con:
                     if con.status == 'running':
-                        con.stop()
+                        con.kill()
                         message = _err_msg(100400, f'container name:{container_name}')
+                        xop = op.replace('stop', 'start')
+                        self.send_message(xop, user, uuid, "status", {'value':'exit', 'way': 'manual'})
                 else:
                     message = _err_msg(100401, f'container name:{container_name}')
-            except Exception as err:
+            except Exception:
                 message = _err_msg(100403, f'container name:{container_name}', exc=True)
         else: # start
             rm_flag = True
@@ -213,7 +196,7 @@ class NLPServiceRPC(object):
             environs = {
                     'K12NLP_RPC_HOST': '%s' % self._host,
                     'K12NLP_RPC_PORT': '%s' % self._port,
-                    'K12NLP_TASK': '%s' % task,
+                    'K12NLP_OP': '%s' % op,
                     'K12NLP_USER': '%s' % user,
                     'K12NLP_UUID': '%s' % uuid
                     }
@@ -221,37 +204,39 @@ class NLPServiceRPC(object):
                     'name': container_name,
                     'auto_remove': rm_flag,
                     'detach': True,
-                    'network_mode': 'host',
                     'runtime': 'nvidia',
-                    'shm_size': '2g',
                     'labels': labels,
                     'volumes': volumes,
                     'environment': environs
                     }
-            try:
-                if not con or con.status != 'running':
+
+            if con and con.status == 'running':
+                message = _err_msg(100404, 'container name: {}'.format(con.short_id))
+            else:
+                self.send_message(op, user, uuid, "status", {'value':'starting'})
+                try:
                     if con:
                         con.remove()
                     con = self._docker.containers.run(self._image,
                             command, **kwargs)
-                else:
-                    if con:
-                        message = _err_msg(100404, 'container name: {}'.format(con.short_id))
-            except Exception as err:
-                message = _err_msg(100402, 'container image:{}'.format(self._image), exc=True)
+                    return
+                except Exception:
+                    message = _err_msg(100402, 'container image:{}'.format(self._image), exc=True)
+                    self.send_message(op, user, uuid, "status", {'value':'exit', 'way': 'docker'})
 
-        self.send_message(task, user, uuid, "error", message)
+        if message:
+            self.send_message(op, user, uuid, "error", message)
 
     def train(self, op, user, uuid, params):
         logger.info("call train(%s, %s, %s)", op, user, uuid)
         if op == 'train.stop':
-            Thread(target=lambda: self._run(task=op, user=user, uuid=uuid),
+            Thread(target=lambda: self._run(op=op, user=user, uuid=uuid),
                     daemon=True).start()
             return OP_SUCCESS, None
 
         container_name, con = self._get_container(op, user, uuid)
         if con and con.status == 'running':
-            return OP_FAILURE, f'[{container_name}] same task is running!'
+            return OP_FAILURE, f'[{container_name}] same op is running!'
 
         if not params or not isinstance(params, dict):
             return OP_FAILURE, 'parameter is none or not dict type'
@@ -270,14 +255,14 @@ class NLPServiceRPC(object):
                 flag = '--recover'
         command = 'allennlp train {} {} -s {} --include-package {}'.format(
                 training_config, flag, output_dir, self._libs)
-        Thread(target=lambda: self._run(task=op, user=user, uuid=uuid, command=command),
+        Thread(target=lambda: self._run(op=op, user=user, uuid=uuid, command=command),
                 daemon=True).start()
-        return OP_SUCCESS, f'{op} task cache directory: {pro_dir}'
+        return OP_SUCCESS, None
 
     def evaluate(self, op, user, uuid, params):
         logger.info("call evaluate(%s, %s, %s)", op, user, uuid)
         if op == 'evaluate.stop':
-            Thread(target=lambda: self._run(task=op, user=user, uuid=uuid),
+            Thread(target=lambda: self._run(op=op, user=user, uuid=uuid),
                     daemon=True).start()
             return OP_SUCCESS, None
 
@@ -298,14 +283,14 @@ class NLPServiceRPC(object):
 
         command = 'allennlp evaluate {} {} --output-file {} --include-package {}'.format(
                 archive_file, input_file, output_file, self._libs)
-        Thread(target=lambda: self._run(task=op, user=user, uuid=uuid, command=command),
+        Thread(target=lambda: self._run(op=op, user=user, uuid=uuid, command=command),
                 daemon=True).start()
-        return OP_SUCCESS, f'{op} task cache directory: {pro_dir}'
+        return OP_SUCCESS, None
 
     def predict(self, op, user, uuid, params):
         logger.info("call predict(%s, %s, %s)", op, user, uuid)
         if op == 'predict.stop':
-            Thread(target=lambda: self._run(task=op, user=user, uuid=uuid),
+            Thread(target=lambda: self._run(op=op, user=user, uuid=uuid),
                     daemon=True).start()
             return OP_SUCCESS, None
 
@@ -343,9 +328,9 @@ class NLPServiceRPC(object):
 
         command = 'allennlp predict {} {} --output-file {} --include-package {} {}'.format(
                 archive_file, input_file, output_file, self._libs, other_args)
-        Thread(target=lambda: self._run(task=op, user=user, uuid=uuid, command=command),
+        Thread(target=lambda: self._run(op=op, user=user, uuid=uuid, command=command),
                 daemon=True).start()
-        return OP_SUCCESS, f'{op} task cache directory: {pro_dir}'
+        return OP_SUCCESS, None
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -397,7 +382,7 @@ if __name__ == "__main__":
         app = zerorpc.Server(NLPServiceRPC(
             host=host, port=args.port,
             k12ai='{}-k12ai'.format(app_host_name),
-            image=image, libs='hzcsnlp', debug=LEVEL==logging.DEBUG))
+            image=image, libs='k12nlp', debug=LEVEL == logging.DEBUG))
         app.bind('tcp://%s:%d' % (host, args.port))
         app.run()
     finally:

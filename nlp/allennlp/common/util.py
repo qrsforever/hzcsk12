@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 import zerorpc
 _RPCClient = None
 _RPCEnable = -1
-K12NLP_TASK, K12NLP_USER, K12NLP_UUID = None, None, None
+K12NLP_OP, K12NLP_USER, K12NLP_UUID = None, None, None
 
 # QRS: send message to k12nlp service using zerorpc
 def hzcsk12_send_message(msgtype, message, end=False):
@@ -55,7 +55,7 @@ def hzcsk12_send_message(msgtype, message, end=False):
         if not host or not port:
             _RPCEnable = 0
             return
-        K12NLP_TASK = os.environ.get('K12NLP_TASK', 'Unkown')
+        K12NLP_TASK = os.environ.get('K12NLP_OP', 'Unkown')
         K12NLP_USER = os.environ.get('K12NLP_USER', 'Unkown')
         K12NLP_UUID = os.environ.get('K12NLP_UUID', 'Unkown')
         _RPCClient = zerorpc.Client(
@@ -66,7 +66,7 @@ def hzcsk12_send_message(msgtype, message, end=False):
 
     try:
         if message:
-            _RPCClient.send_message(K12NLP_TASK, K12NLP_USER, K12NLP_UUID, msgtype, message)
+            _RPCClient.send_message(K12NLP_OP, K12NLP_USER, K12NLP_UUID, msgtype, message)
         if end:
             _RPCClient.close()
     except:
