@@ -2,3 +2,4 @@
 cauchy/extensions/**/*.so
 cauchy.egg-info
 dist
+.torchcv

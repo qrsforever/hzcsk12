@@ -182,6 +182,6 @@ def hzcsk12_log_parser(level, filename, lineno, message):
     elif level == 'error':
         _parse_error(filename, lineno, message)
     elif level == 'critical':
-        exit(-1)
+        _parse_except(filename, lineno, message)
     else:
         print('Not impl yet!')

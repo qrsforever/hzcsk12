@@ -15,7 +15,7 @@ import consul
 from flask import Flask, request
 from threading import Thread
 
-from k12ai_errmsg import sk12ai_error_message as _err_msg
+from k12ai_errmsg import k12ai_error_message as _err_msg
 from k12ai_utils import k12ai_get_hostname as _get_hostname
 from k12ai_utils import k12ai_get_hostip as _get_hostip
 

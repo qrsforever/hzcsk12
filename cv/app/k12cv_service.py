@@ -217,7 +217,7 @@ class CVServiceRPC(object):
             if self._debug:
                 rm_flag = False
                 volumes['%s/app'%self._projdir] = {'bind':'%s/app'%self._workdir, 'mode':'rw'}
-                volumes['%s/torchcv/datasets'%self._projdir] = {'bind':'%s/torchcv/datasets'%self._workdir, 'mode':'rw'}
+                volumes['%s/torchcv/data'%self._projdir] = {'bind':'%s/torchcv/data'%self._workdir, 'mode':'rw'}
                 volumes['%s/torchcv/metric'%self._projdir] = {'bind':'%s/torchcv/metric'%self._workdir, 'mode':'rw'}
                 volumes['%s/torchcv/model'%self._projdir] = {'bind':'%s/torchcv/model'%self._workdir, 'mode':'rw'}
                 volumes['%s/torchcv/runner'%self._projdir] = {'bind':'%s/torchcv/runner'%self._workdir, 'mode':'rw'}
