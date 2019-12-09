@@ -109,7 +109,7 @@ def _platform_stats():
 
     try:
         code, msg = agent.stats(op, user, service_uuid, service_params, isasync)
-        return json.dumps(_err_msg(100202 if code < 0 else 100100, msg))
+        return json.dumps(_err_msg(100202 if code < 0 else 100000, msg))
     except Exception:
         return json.dumps(_err_msg(100202, exc=True))
 
