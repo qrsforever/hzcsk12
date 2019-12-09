@@ -89,23 +89,27 @@ def _platform_stats():
     logger.info('call _platform_stats')
     try:
         reqjson = json.loads(request.get_data().decode())
-        username = reqjson['username']
-        password = reqjson['password']
+        user = reqjson['user']
+        op = reqjson['op']
+        if op not in ('query'):
+            return json.dumps(_err_msg(100102, f'not support op:{op}'))
+        service_name = reqjson['service_name']
+        service_uuid = reqjson['service_uuid']
+        service_params = reqjson.get('service_params', None)
         isasync = reqjson.get('async', False)
-        query = reqjson.get('query', None)
     except Exception:
         return json.dumps(_err_msg(100101, exc=True))
 
     # TODO check username and password
-    logger.info('user: %s, passwd: %s' % (username, password))
+    # logger.info('user: %s, passwd: %s' % (username, password))
 
-    agent = _get_service_by_name(platform_service_name)
+    agent = _get_service_by_name(service_name)
     if not agent:
-        return json.dumps(_err_msg(100201, f'service name:{platform_service_name}'))
+        return json.dumps(_err_msg(100201, f'service name:{service_name}'))
 
     try:
-        code, msg = agent.stats(query, isasync)
-        return json.dumps(_err_msg(100202 if code < 0 else 100200, msg))
+        code, msg = agent.stats(op, user, service_uuid, service_params, isasync)
+        return json.dumps(_err_msg(100202 if code < 0 else 100100, msg))
     except Exception:
         return json.dumps(_err_msg(100202, exc=True))
 
@@ -114,23 +118,26 @@ def _platform_control():
     logger.info('call _platform_control')
     try:
         reqjson = json.loads(request.get_data().decode())
-        username = reqjson['username']
-        password = reqjson['password']
+        user = reqjson['user']
         op = reqjson['op']
+        if op not in ('container.stop'):
+            return json.dumps(_err_msg(100102, f'not support op:{op}'))
+        service_name = reqjson['service_name']
+        service_uuid = reqjson['service_uuid']
+        service_params = reqjson.get('service_params', None)
         isasync = reqjson.get('async', False)
-        params = reqjson.get('params', None)
     except Exception:
         return json.dumps(_err_msg(100101, exc=True))
 
     # TODO check username and password
-    logger.info('user: %s, passwd: %s' % (username, password))
+    # logger.info('user: %s, passwd: %s' % (username, password))
 
-    agent = _get_service_by_name(platform_service_name)
+    agent = _get_service_by_name(service_name)
     if not agent:
-        return json.dumps(_err_msg(100201, f'service name:{platform_service_name}'))
+        return json.dumps(_err_msg(100201, f'service name:{service_name}'))
     try:
-        code, msg = agent.control(op, params, isasync)
-        return json.dumps(_err_msg(100202 if code < 0 else 100200, msg))
+        code, msg = agent.control(op, user, service_uuid, service_params, isasync)
+        return json.dumps(_err_msg(100202 if code < 0 else 100000, msg))
     except Exception:
         return json.dumps(_err_msg(100202, exc=True))
 
@@ -155,7 +162,7 @@ def _framework_train():
         return json.dumps(_err_msg(100201, f'service name:{service_name}'))
     try:
         code, msg = agent.train(op, user, service_uuid, service_params)
-        return json.dumps(_err_msg(100202 if code < 0 else 100200, msg))
+        return json.dumps(_err_msg(100202 if code < 0 else 100000, msg))
     except Exception:
         return json.dumps(_err_msg(100202, exc=True))
 
@@ -179,7 +186,7 @@ def _framework_evaluate():
         return json.dumps(_err_msg(100201, f'service name:{service_name}'))
     try:
         code, msg = agent.evaluate(op, user, service_uuid, service_params)
-        return json.dumps(_err_msg(100202 if code < 0 else 100200, msg))
+        return json.dumps(_err_msg(100202 if code < 0 else 100000, msg))
     except Exception:
         return json.dumps(_err_msg(100202, exc=True))
 
@@ -203,7 +210,7 @@ def _framework_predict():
         return json.dumps(_err_msg(100201, f'service name:{service_name}'))
     try:
         code, msg = agent.predict(op, user, service_uuid, service_params)
-        return json.dumps(_err_msg(100202 if code else 100200, msg))
+        return json.dumps(_err_msg(100202 if code else 100000, msg))
     except Exception:
         return json.dumps(_err_msg(100202, exc=True))
 

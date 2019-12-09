@@ -19,6 +19,18 @@ import GPUtil
 import psutil
 from threading import Thread
 
+try:
+    from k12ai_errmsg import k12ai_error_message as _err_msg
+    from k12ai_utils import k12ai_get_hostname as _get_hostname
+    from k12ai_utils import k12ai_get_hostip as _get_hostip
+except Exception:
+    topdir = os.path.abspath(
+            os.path.dirname(os.path.abspath(__file__)) + "/../..")
+    sys.path.append(topdir)
+    from k12ai_errmsg import k12ai_error_message as _err_msg
+    from k12ai_utils import k12ai_get_hostname as _get_hostname
+    from k12ai_utils import k12ai_get_hostip as _get_hostip
+
 platform_service_name = 'k12platform'
 
 if os.environ.get("K12PLATFORM_DEBUG"):
@@ -32,28 +44,8 @@ logger = logging.getLogger(__name__)
 
 app_quit = False
 
-def _get_host_name():
-    val = os.environ.get('HOST_NAME', None)
-    if val:
-        return val
-    else:
-        return socket.gethostname()
-
-def _get_host_ip():
-    val = os.environ.get('HOST_ADDR', None)
-    if val:
-        return val
-    else:
-        try:
-            s = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
-            s.connect(('8.8.8.8',80))
-            ip = s.getsockname()[0]
-        finally:
-            s.close()
-        return ip
-
-app_host_name = _get_host_name()
-app_host_ip = _get_host_ip()
+app_host_name = _get_hostname()
+app_host_ip = _get_hostip()
 
 consul_addr = None
 consul_port = None
@@ -156,7 +148,7 @@ class PlatformServiceRPC(object):
         self._k12ai = k12ai
         self._docker = docker.from_env()
 
-    def send_message(self, op, msgtype, message):
+    def send_message(self, op, user, uuid, msgtype, message):
         client = consul.Consul(consul_addr, port=consul_port)
         service = client.agent.services().get(self._k12ai)
         if not service:
@@ -167,6 +159,8 @@ class PlatformServiceRPC(object):
                 'version': '0.1.0',
                 'type': msgtype,
                 'tag': 'platform',
+                'user': user,
+                'service_uuid': uuid,
                 'op': op
                 }
         now_time = time.time()
@@ -178,59 +172,64 @@ class PlatformServiceRPC(object):
         api = 'http://{}:{}/k12ai/private/message'.format(service['Address'], service['Port'])
         requests.post(api, json=data)
         if self._debug:
-            client.kv.put('platform/admin/%s/%s'%(op, msgtype), json.dumps(data, indent=4))
+            key = 'platform/%s/%s/%s/%s' % (user, uuid, op, msgtype)
+            client.kv.put(key, json.dumps(data, indent=4))
 
-    def _run_stats(self, query, isasync=True):
+    def _run_stats(self, op, user, uuid, params):
         message = {}
-        if not query:
-            message = _get_cpu_infos()
-            message['gpus'] = _get_gpu_infos()
-            message['disks'] = _get_disk_infos()
-            message['containers'] = _get_container_infos(self._docker)
-        elif isinstance(query, dict):
-            if query.get('cpus', True):
+        if op == 'query':
+            if not params:
                 message = _get_cpu_infos()
-            if query.get('gpus', True):
                 message['gpus'] = _get_gpu_infos()
-            if query.get('disks', True):
                 message['disks'] = _get_disk_infos()
-            if query.get('containers', True):
                 message['containers'] = _get_container_infos(self._docker)
-        self.send_message('stats', 'info', message)
-        if not isasync:
-            return OP_SUCCESS, message
+            elif isinstance(params, dict):
+                if params.get('cpus', True):
+                    message = _get_cpu_infos()
+                if params.get('gpus', True):
+                    message['gpus'] = _get_gpu_infos()
+                if params.get('disks', True):
+                    message['disks'] = _get_disk_infos()
+                if params.get('containers', True):
+                    message['containers'] = _get_container_infos(self._docker)
+            self.send_message(op, user, uuid, 'result', _err_msg(message=message))
+        else:
+            message['todo'] = 'TODO'
+            self.send_message(op, user, uuid, 'error', message)
+            return OP_FAILURE, message
+        return OP_SUCCESS, message
 
-    def stats(self, query, isasync):
+    def stats(self, op, user, uuid, params, isasync):
         logger.info("call stats, isasync: {}".format(isasync))
         if not isasync:
-            return self._run_stats(query, isasync)
-        Thread(target=lambda: self._run_stats(query), daemon=True).start()
+            return self._run_stats(op, user, uuid, params)
+        Thread(target=lambda: self._run_stats(op, user, uuid, params), daemon=True).start()
         return OP_SUCCESS, None
 
-    def _run_stop_container(self, op, cid):
+    def _run_stop_container(self, op, user, uuid, params):
         message = None
         code = OP_SUCCESS
         try:
+            cid = params.get('id', None)
             con = self._docker.containers.get(cid)
             if con.status == 'running':
-                con.stop()
+                con.kill()
             message = f'container id {cid} stop success'
         except docker.errors.NotFound as err:
             code = OP_FAILURE
             message = f'container id {cid} is not found'
 
-        self.send_message('control', op, message)
+        self.send_message(op, user, uuid, 'result', message)
         return code, message
 
-    def control(self, op, params, isasync):
+    def control(self, op, user, uuid, params, isasync):
         logger.info("call control op:{}, isasync:{}".format(op, isasync))
         if op == 'container.stop':
-            cid = params.get('id', None)
             if not isasync:
-                return self._run_stop_container(op, cid)
-            Thread(target=lambda: self._run_stop_container(op, cid), daemon=True).start()
+                return self._run_stop_container(op, user, uuid, params)
+            Thread(target=lambda: self._run_stop_container(op, user, uuid, params), daemon=True).start()
         else:
-            return OP_FAILURE, '{op} is not implemented ye'
+            return OP_FAILURE, '{op} is not implemented yet'
 
         return OP_SUCCESS, None
 

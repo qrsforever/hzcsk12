@@ -17,13 +17,13 @@ ERRORS = {
         100102: 'api parameter value is invalid',
         100199: 'api parameter unkown exception',
 
-        100200: 'task service success', # k12 services error (k12cv, k12nlp)
+        100200: 'success', # k12 services error (k12cv, k12nlp)
         100201: 'task service is not found',
         100202: 'task service start fails',
         100203: 'task service parameters is invalid',
         100299: 'task service unkown exception',
 
-        100300: 'k12cv container success', # k12cv container inner process error
+        100300: 'success', # k12cv container inner process error
         100301: 'k12cv container is not found!',
         100302: 'k12cv container start fail',
         100303: 'k12cv container stop fail',
@@ -33,7 +33,7 @@ ERRORS = {
         100307: 'k12cv tensor size error',
         100399: 'k12cv container unkown exception',
 
-        100400: 'k12nlp container success', # k12nlp container inner process error
+        100400: 'success', # k12nlp container inner process error
         100401: 'k12nlp container is not found',
         100402: 'k12nlp container start fail',
         100403: 'k12nlp container stop fail',
@@ -55,7 +55,7 @@ ERRORS = {
         999999: 'Unkown error!',
 }
 
-def k12ai_error_message(code, message=None, detail=False, exc=False, ext_info=None):
+def k12ai_error_message(code=100000, message=None, detail=False, exc=False, ext_info=None):
     msg = {}
     msg['code'] = code
     txt = ERRORS.get(code, None)
