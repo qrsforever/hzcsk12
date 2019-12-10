@@ -35,7 +35,7 @@ RUN pip install -v --no-cache-dir --timeout 120 -r requirements.txt
 RUN rm requirements.txt
 
 COPY cv/app app
-COPY cv/torchcv/datasets torchcv/datasets 
+COPY cv/torchcv/data torchcv/data 
 COPY cv/torchcv/exts torchcv/exts
 COPY cv/torchcv/metric torchcv/metric
 COPY cv/torchcv/model torchcv/model

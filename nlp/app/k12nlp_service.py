@@ -184,7 +184,10 @@ class NLPServiceRPC(object):
         else: # start
             rm_flag = True
             labels = {
-                    'k12ai.service.name': service_name
+                    'k12ai.service.name': service_name,
+                    'k12ai.service.op': op,
+                    'k12ai.service.user': user,
+                    'k12ai.service.uuid': uuid
                     }
             volumes = {
                     '/data': {'bind':'/data', 'mode':'rw'}

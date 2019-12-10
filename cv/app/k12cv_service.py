@@ -209,7 +209,10 @@ class CVServiceRPC(object):
         else: # start
             rm_flag = True
             labels = { # noqa
-                    'k12ai.service.name': service_name
+                    'k12ai.service.name': service_name,
+                    'k12ai.service.op': op,
+                    'k12ai.service.user': user,
+                    'k12ai.service.uuid': uuid
                     }
             volumes = { # noqa
                     '/data': {'bind':'/data', 'mode':'rw'}

@@ -10,13 +10,13 @@
 import os, sys, time
 import argparse
 import logging, json
-import socket
 import zerorpc
 import requests
 import consul
 import docker
 import GPUtil
 import psutil
+from subprocess import Popen, PIPE
 from threading import Thread
 
 try:
@@ -116,24 +116,53 @@ def _get_disk_infos():
         infos.append(info)
     return infos
 
+def _get_process_infos():
+    infos = []
+    try:
+        process = Popen(['nvidia-smi', "pmon", "--count", "1", "--select", "mu"], stdout=PIPE)
+        stdout, stderr = process.communicate() 
+        output = stdout.decode('UTF-8').split('\n')
+        for i in range(2, len(output)-1):
+            info = {}
+            result = output[i].split()
+            if len(result) > 5:
+                info['pid'] = result[1]
+                info['gpu_percent'] = float(result[4])
+                info['gpu_memory_usage'] = int(result[3])
+                info['gpu_memory_percent'] = float(result[5])
+            infos.append(info)
+    except Exception as err:
+        logger.error(str(err))
+    return infos
+
 def _get_container_infos(client):
     infos = []
     try:
         cons = client.containers.list(filters={'label': 'k12ai.service.name'})
+        if len(cons) == 0:
+            return infos
+        gpu_process_infos = _get_process_infos()
         for c in cons:
             info = {}
             stats = c.stats(stream=False)
             info['id'] = stats['id'][0:12]
+            info['op'] = c.labels.get('k12ai.service.op', '')
+            info['user'] = c.labels.get('k12ai.service.user', '')
+            info['service_uuid'] = c.labels.get('k12ai.service.uuid', '')
             info['cpu_percent'] = _get_container_cpu_pct(stats)
             info['cpu_memory_total'] = stats['memory_stats']['limit']
             info['cpu_memory_usage'] = stats['memory_stats']['usage']
             info['cpu_memory_percent'] = _get_container_mem_pct(stats)
-
-            tokens = stats['name'][1:].split('-')
-            if len(tokens) == 3:
-                info['op'] = tokens[0]
-                info['user'] = tokens[1]
-                info['service_uuid'] = tokens[2]
+            info['gpu_percent'] = 0.00
+            info['gpu_memory_usage'] = 0
+            info['gpu_memory_percent'] = 0.00
+            
+            pids = sum(c.top(ps_args='eo pid')['Processes'], [])
+            for ginfo in gpu_process_infos:
+                if ginfo['pid'] in pids:
+                    info['gpu_percent'] += ginfo['gpu_percent']
+                    info['gpu_memory_usage'] += ginfo['gpu_memory_usage']
+                    info['gpu_memory_percent'] += ginfo['gpu_memory_percent']
             infos.append(info)
     except Exception as err:
         logger.error(str(err))
@@ -215,7 +244,7 @@ class PlatformServiceRPC(object):
             if con.status == 'running':
                 con.kill()
             message = f'container id {cid} stop success'
-        except docker.errors.NotFound as err:
+        except docker.errors.NotFound:
             code = OP_FAILURE
             message = f'container id {cid} is not found'
 
@@ -276,7 +305,7 @@ if __name__ == "__main__":
         app = zerorpc.Server(PlatformServiceRPC(
             host=host, port=args.port,
             k12ai='{}-k12ai'.format(app_host_name),
-            debug=LEVEL==logging.DEBUG))
+            debug=LEVEL==logging.DEBUG)) # noqa
         app.bind('tcp://%s:%d' % (host, args.port))
         app.run()
     finally:
