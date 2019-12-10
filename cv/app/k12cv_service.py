@@ -4,7 +4,6 @@
 # @file k12cv_service.py
 # @brief
 # @author QRS
-# @blog qrsforever.github.io
 # @version 1.0
 # @date 2019-11-27 17:08:18
 
