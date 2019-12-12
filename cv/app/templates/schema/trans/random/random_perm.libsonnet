@@ -4,15 +4,13 @@
 // @version 1.0
 // @date 2019-12-11 23:50
 
-local _ratio_ = import 'radio.libsonnet';
+local lib = import 'common.libsonnet';
 
-{
-    object(prefix):: {
-        local this = self,
-        _id_: prefix + '.aug_trans.random_perm',
-        type: 'object',
-        name: 'Random Perm Parameters',
-        object: ['ratio', 'delta'],
-        ratio: _ratio_ { _id_: this._id_ + '.ratio' },
-    },
+function(prefix) {
+    local this = self,
+    _id_:: prefix + '.aug_trans.random_perm',
+    name: 'Random Perm Parameters',
+    type: 'object',
+    objs: ['ratio', 'delta'],
+    ratio: lib.radio(this._id_ + '.ratio'),
 }

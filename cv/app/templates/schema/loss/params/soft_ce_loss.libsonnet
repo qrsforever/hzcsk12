@@ -8,9 +8,9 @@ local CE_LOSS = import 'ce_loss.libsonnet';
 
 {
     local this = self,
-    _id_: 'loss.params.ce_loss',
-    type: 'object',
+    _id_:: 'loss.params.ce_loss',
     name: { en: 'CE Loss Parameters', cn: 'CE Loss 函数参数' },
+    type: 'object',
     objs: ['reduction', 'label_smooth'],
     reduction: CE_LOSS.reduction {
         _id_: this._id_ + '.reduction',

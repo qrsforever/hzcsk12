@@ -4,25 +4,15 @@
 // @version 1.0
 // @date 2019-12-11 23:52
 
-local _ratio_ = import 'radio.libsonnet';
+local lib = import 'common.libsonnet';
 
-{
-    object(prefix):: {
-        local this = self,
-        _id_: prefix + '.aug_trans.random_saturation',
-        type: 'object',
-        name: 'Random Saturation Parameters',
-        objs: ['ratio', 'lower', 'upper'],
-        ratio: _ratio_ { _id_: this._id_ + '.ratio' },
-        lower: {
-            _id_: this._id_ + '.lower',
-            type: 'float',
-            default: 0.5,
-        },
-        upper: {
-            _id_: this._id_ + '.upper',
-            type: 'float',
-            default: 1.5,
-        },
-    },
+function(prefix) {
+    local this = self,
+    _id_:: prefix + '.aug_trans.random_saturation',
+    name: 'Random Saturation Parameters',
+    type: 'object',
+    objs: ['ratio', 'lower', 'upper'],
+    ratio: lib.radio(this._id_ + '.ratio'),
+    lower: lib.lower(this._id_ + '.lower'),
+    upper: lib.upper(this._id_ + '.upper'),
 }
