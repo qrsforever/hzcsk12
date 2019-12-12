@@ -85,6 +85,7 @@ def _get_container_cpu_pct(stats):
 
 def _get_cpu_infos():
     info = {}
+    info['ip'] = app_host_ip
     info['cpu_percent'] = psutil.cpu_percent()
     info['cpu_percent_list'] = psutil.cpu_percent(percpu=True)
     info['cpu_memory_total'] = psutil.virtual_memory().total
