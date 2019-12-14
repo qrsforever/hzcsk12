@@ -7,25 +7,17 @@
 {
     _id_: 'lr.lr_policy',
     name: { en: 'LR Policy', cn: self.en },
-    type: 'string-enum',
-    items: [
+    type: 'string-enum-trigger',
+    objs: [
         {
             name: { en: 'Step', cn: self.en },
             value: 'step',
-            trigger: {
-                type: 'object',
-                objs: ['step'],
-                step: import 'policy/step.libsonnet',
-            },
+            trigger: import 'policy/step.libsonnet',
         },
         {
             name: { en: 'MultiStep', cn: self.en },
             value: 'multistep',
-            trigger: {
-                type: 'object',
-                objs: ['multistep'],
-                step: import 'policy/multistep.libsonnet',
-            },
+            trigger: import 'policy/multistep.libsonnet',
         },
     ],
     default: 'multistep',

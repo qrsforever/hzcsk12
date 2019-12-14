@@ -6,10 +6,16 @@
 
 {
     description: |||
-        k12cv configure
+        k12cv configure test
     |||,
 
+    type: 'page',
+    objs: ['data', 'model', 'hypes'],
+
     data: {
+        name: { en: 'data', cn: self.en },
+        type: 'tab',
+        objs: ['dataset', 'loader'],
 
         dataset: {
 
@@ -34,16 +40,21 @@
     },
 
     model: {
-
+        name: { en: 'model', cn: self.en },
+        type: 'tab',
     },
 
     hypes: {
+        name: { en: 'hypes', cn: self.en },
+        type: 'tab',
+        objs: ['lr', 'iterator', 'optimizer', 'loss'],
+
         lr: import 'lr/lr.jsonnet',
         optimizer: import 'optimizer/optimizer.jsonnet',
         loss: import 'loss/loss.jsonnet',
         iterator: {
             name: { en: 'Iterator', cn: self.en },
-            type: 'object',
+            type: 'accordion',
             objs: ['max_iters', 'display_iter', 'save_iters', 'test_interval'],
             max_iters: {
                 _id_: 'solver.max_iters',

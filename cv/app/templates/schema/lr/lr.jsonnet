@@ -8,13 +8,13 @@
     local this = self,
     _id_:: 'lr',
     name: { en: 'Learn Rate', cn: self.en },
-    type: 'object',
+    type: 'accordion',
     objs: ['metric', 'base_lr', 'is_warm', 'lr_policy'],
     metric: {
         _id_: this._id_ + '.metric',
         name: { en: 'metric', cn: self.en },
         type: 'string-enum',
-        items: [
+        objs: [
             {
                 name: { en: 'epoch', cn: self.en },
                 value: 'epoch',
@@ -35,8 +35,8 @@
     is_warm: {
         _id_: this._id_ + '.is_warm',
         name: { en: 'Warm up', cn: self.en },
-        type: 'bool-enum',
-        items: [
+        type: 'bool-trigger',
+        objs: [
             {
                 name: { en: 'True', cn: self.en },
                 value: true,
@@ -68,6 +68,7 @@
                 value: false,
             },
         ],
+        default: false,
     },
     lr_policy: import 'lr_policy.jsonnet',
 }
