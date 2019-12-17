@@ -11,16 +11,17 @@ local lib = import 'common.libsonnet';
     _id_:: 'solver.optim.sgd',
     name: { en: 'SGD Parameters', cn: self.en },
     type: 'object',
-    objs: ['weight_decay', 'momentum', 'nesterov'],
-    weight_decay: lib.weight_decay(this._id_ + '.weight_decay'),
-    momentum: {
-        type: 'float',
-        name: { en: 'momentum', cn: self.en },
-        default: 0.9,
-    },
-    nesterov: {
-        type: 'bool',
-        name: { en: 'nesterov', cn: self.en },
-        default: false,
-    },
+    objs: [
+        lib.weight_decay(this._id_ + '.weight_decay'),
+        {
+            type: 'float',
+            name: { en: 'momentum', cn: self.en },
+            default: 0.9,
+        },
+        {
+            type: 'bool',
+            name: { en: 'nesterov', cn: self.en },
+            default: false,
+        },
+    ],
 }

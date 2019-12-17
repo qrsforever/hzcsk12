@@ -6,16 +6,22 @@
 
 local lib = import 'common.libsonnet';
 
-function(prefix) {
-    local this = self,
-    _id_:: prefix + '.aug_trans.random_brightness',
-    name: 'Random Brightness Parameters',
-    type: 'object',
-    objs: ['ratio', 'shift_value'],
-    ratio: lib.radio(this._id_ + '.ratio'),
-    shift_value: {
-        _id_: this._id_ + '.shift_value',
-        type: 'int',
-        default: 32,
+{
+    // string enum
+    get(prefix): {
+        name: { en: 'Random Brightness', cn: self.en },
+        value: 'random_brightness',
+        trigger: {
+            type: 'object',
+            objs: [
+                lib.radio(prefix + '.aug_trans.random_brightness.ratio'),
+                {
+                    name: { en: 'shift_value', cn: self.en },
+                    _id_: prefix + '.aug_trans.random_brightness.shift_value',
+                    type: 'int',
+                    default: 32,
+                },
+            ],
+        },
     },
 }

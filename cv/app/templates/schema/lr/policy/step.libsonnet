@@ -11,12 +11,13 @@ local lib = import 'common.libsonnet';
     _id_:: 'solver.lr.step',
     name: { en: 'Learning Rate Policy: Step', cn: self.en },
     type: 'object',
-    objs: ['gamma', 'step_size'],
-    gamma: lib.gamma(this._id_ + '.gamma'),
-    step_size: {
-        _id_: this._id_ + '.step_size',
-        type: 'int',
-        name: { en: 'step size', cn: self.en },
-        default: 50,
-    },
+    objs: [
+        lib.gamma(this._id_ + '.gamma'),
+        {
+            _id_: this._id_ + '.step_size',
+            name: { en: 'step size', cn: self.en },
+            type: 'int',
+            default: 50,
+        },
+    ],
 }

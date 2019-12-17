@@ -6,17 +6,19 @@
 
 local lib = import 'common.libsonnet';
 
-function(prefix) {
-    local this = self,
-    _id_:: prefix + '.aug_trans.random_hue',
-    name: 'Random Hue Parameters',
-    type: 'object',
-    object: ['ratio', 'delta'],
-    ratio: lib.radio(this._id_ + '.ratio'),
-    delta: {
-        _id_: this._id_ + '.delta',
-        type: 'int',
-        name: { en: 'delta', cn: self.en },
-        default: 18,
+{
+    random(prefix): {
+        local this = self,
+        _id_:: prefix + '.aug_trans.random_hue',
+        name: { en: 'Random Hue Parameters', cn: self.en },
+        type: 'object',
+        objs: ['ratio', 'delta'],
+        ratio: lib.radio(this._id_ + '.ratio'),
+        delta: {
+            _id_: this._id_ + '.delta',
+            type: 'int',
+            name: { en: 'delta', cn: self.en },
+            default: 18,
+        },
     },
 }

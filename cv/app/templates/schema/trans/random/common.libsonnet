@@ -7,7 +7,7 @@
 {
     radio(id): {
         _id_: id,
-        name: { en: 'Ratio', cn: self.en },
+        name: { en: 'ratio', cn: self.en },
         type: 'float',
         default: 0.5,
     },

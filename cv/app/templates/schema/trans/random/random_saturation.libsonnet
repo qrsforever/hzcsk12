@@ -6,13 +6,15 @@
 
 local lib = import 'common.libsonnet';
 
-function(prefix) {
-    local this = self,
-    _id_:: prefix + '.aug_trans.random_saturation',
-    name: 'Random Saturation Parameters',
-    type: 'object',
-    objs: ['ratio', 'lower', 'upper'],
-    ratio: lib.radio(this._id_ + '.ratio'),
-    lower: lib.lower(this._id_ + '.lower'),
-    upper: lib.upper(this._id_ + '.upper'),
+{
+    random(prefix): {
+        local this = self,
+        _id_:: prefix + '.aug_trans.random_saturation',
+        name: { en: 'Random Saturation Parameters', cn: self.en },
+        type: 'object',
+        objs: ['ratio', 'lower', 'upper'],
+        ratio: lib.radio(this._id_ + '.ratio'),
+        lower: lib.lower(this._id_ + '.lower'),
+        upper: lib.upper(this._id_ + '.upper'),
+    },
 }

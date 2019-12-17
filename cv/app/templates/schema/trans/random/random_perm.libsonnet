@@ -6,11 +6,13 @@
 
 local lib = import 'common.libsonnet';
 
-function(prefix) {
-    local this = self,
-    _id_:: prefix + '.aug_trans.random_perm',
-    name: 'Random Perm Parameters',
-    type: 'object',
-    objs: ['ratio', 'delta'],
-    ratio: lib.radio(this._id_ + '.ratio'),
+{
+    random(prefix): {
+        local this = self,
+        _id_:: prefix + '.aug_trans.random_perm',
+        name: { en: 'Random Perm Parameters', cn: self.en },
+        type: 'object',
+        objs: ['ratio'],
+        ratio: lib.radio(this._id_ + '.ratio'),
+    },
 }

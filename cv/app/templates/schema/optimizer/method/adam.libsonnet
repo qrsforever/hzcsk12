@@ -11,20 +11,21 @@ local lib = import 'common.libsonnet';
     _id_:: 'solver.optim.adam',
     name: { en: 'Adam Parameters', cn: self.en },
     type: 'object',
-    objs: ['weight_decay', 'betas', 'eps'],
-    weight_decay: lib.weight_decay(this._id_ + '.weight_decay'),
-    betas: {
-        _id_: this._id_ + '.betas',
-        type: 'float-array',
-        name: 'Betas',
-        minnum: 2,
-        maxnum: 2,
-        default: [0.5, 0.999],
-    },
-    eps: {
-        _id_: this._id_ + '.eps',
-        type: 'float',
-        name: 'EPS',
-        default: 1e-08,
-    },
+    objs: [
+        lib.weight_decay(this._id_ + '.weight_decay'),
+        {
+            _id_: this._id_ + '.betas',
+            name: { en: 'Betas', cn: self.en },
+            type: 'float-array',
+            minnum: 2,
+            maxnum: 2,
+            default: [0.5, 0.999],
+        },
+        {
+            _id_: this._id_ + '.eps',
+            name: { en: 'EPS', cn: self.en },
+            type: 'float',
+            default: 1e-08,
+        },
+    ],
 }

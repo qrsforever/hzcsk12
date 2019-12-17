@@ -11,13 +11,14 @@ local lib = import 'common.libsonnet';
     _id_:: 'solver.lr.multistep',
     name: { en: 'Learning Rate Policy: MultiStep', cn: self.en },
     type: 'object',
-    objs: ['gamma', 'stepvalue'],
-    gamma: lib.gamma(this._id_ + '.gamma'),
-    stepvalue: {
-        _id_: this._id_ + '.stepvalue',
-        name: { en: 'multistep size', cn: self.en },
-        type: 'int-array',
-        minnum: 2,
-        default: [90, 120],
-    },
+    objs: [
+        lib.gamma(this._id_ + '.gamma'),
+        {
+            _id_: this._id_ + '.stepvalue',
+            name: { en: 'multistep size', cn: self.en },
+            type: 'int-array',
+            minnum: 2,
+            default: [90, 120],
+        },
+    ],
 }
