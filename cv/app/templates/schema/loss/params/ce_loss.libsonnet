@@ -7,7 +7,7 @@
 {
     local this = self,
     _id_:: 'loss.params.ce_loss',
-    name: { en: 'CE Parameters', cn: 'CE Loss 函数参数' },
+    name: { en: 'CE Parameters', cn: self.en },
     type: 'object',
     objs: [
         {

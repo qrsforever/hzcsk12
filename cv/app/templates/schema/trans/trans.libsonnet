@@ -7,23 +7,31 @@
 {
     get(prefix): {
         name: { en: '%s' % prefix, cn: self.en },
-        type: 'object',
+        type: 'HV',
         objs: [
             {
-                name: { en: 'random sequence', cn: self.en },
+                _id_: prefix + '.batch_size',
+                name: { en: 'batch size', cn: self.en },
+                type: 'int',
+                default: 128,
+            },
+            {
+                name: { en: 'Random Transform Method', cn: self.en },
                 type: 'string-enum-group-trigger',
                 objs: [
                     (import 'random/random_contrast.libsonnet').get(prefix),
                     (import 'random/random_brightness.libsonnet').get(prefix),
+                    (import 'random/random_hue.libsonnet').get(prefix),
+                    (import 'random/random_perm.libsonnet').get(prefix),
+                    (import 'random/random_saturation.libsonnet').get(prefix),
                 ],
-                // button
                 groups: [
                     {
                         name: { en: 'None', cn: self.en },
                         value: 'none',
                     },
                     {
-                        name: { en: 'Normal', cn: self.en },
+                        name: { en: 'Order', cn: self.en },
                         value: prefix + '.aug_trans.trans_seq',
                     },
                     {
@@ -36,14 +44,3 @@
         ],
     },
 }
-// train.aug_trans.trans_seq = [ ]
-
-//            {
-//                _id_: this._id_ + '.batch_size',
-//                name: { en: 'batch size', cn: self.en },
-//                type: 'int',
-//                default: '128',
-//            },
-
-
-

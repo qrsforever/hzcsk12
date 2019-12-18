@@ -7,12 +7,17 @@
 local lib = import 'common.libsonnet';
 
 {
-    random(prefix): {
+    get(prefix): {
         local this = self,
         _id_:: prefix + '.aug_trans.random_perm',
-        name: { en: 'Random Perm Parameters', cn: self.en },
-        type: 'object',
-        objs: ['ratio'],
-        ratio: lib.radio(this._id_ + '.ratio'),
+        name: { en: 'Permutation', cn: self.en },
+        value: 'random_perm',
+        trigger: {
+            name: this.name,
+            type: 'object',
+            objs: [
+                lib.radio(this._id_ + '.ratio'),
+            ],
+        },
     },
 }

@@ -7,7 +7,7 @@
 {
     local this = self,
     _id_:: 'loss.params.ce_loss',
-    name: { en: 'SoftCE Parameters', cn: 'CE Loss 函数参数' },
+    name: { en: 'SoftCE Parameters', cn: self.en },
     type: 'object',
     objs: [
         {
@@ -15,10 +15,10 @@
             type: 'string-enum',
             name: { en: 'reduction', cn: '简化方式' },
             objs: [
+                { name: { en: 'batchmean', cn: self.en }, value: 'batchmean' },
                 { name: { en: 'mean', cn: '平均' }, value: 'mean' },
                 { name: { en: 'sum', cn: '求和' }, value: 'sum' },
                 { name: { en: 'none', cn: '无' }, value: 'none' },
-                { name: { en: 'batchmean', cn: self.en }, value: 'batchmean' },
             ],
             default: 'batchmean',
         },

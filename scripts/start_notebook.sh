@@ -54,9 +54,9 @@ __start_notebook()
         fi
         SOURCE_NOTE_DIR=`cd $TOP_DIR/../hzcsnote/$subdir; pwd`
         TARGET_NOTE_DIR=$DST_DIR/hzcsnote
-        docker run -dit --name ${JNAME} --restart unless-stopped ${@:3:$#} \
+        docker run -dit --name ${JNAME} --restart unless-stopped \
             --volume $SOURCE_NOTE_DIR:$TARGET_NOTE_DIR \
-            --network host --hostname ${JNAME} ${REPOSITORY} \
+            ${@:3:$#} --network host --hostname ${JNAME} ${REPOSITORY} \
             /bin/bash -c "umask 0000; jupyter notebook --no-browser --notebook-dir=$TARGET_NOTE_DIR --allow-root --ip=0.0.0.0 --port=$PORT"
 
     else
@@ -68,7 +68,9 @@ __main()
 {
     __start_notebook $K12AI_PROJECT $K12AI_PORT \
         --env PYTHONPATH=$DST_DIR/hzcsnote \
-        --volume /data:/data
+        --volume /data:/data \
+        --volume $TOP_DIR/cv/app:$DST_DIR/hzcsnote/cv/app \
+        --volume $TOP_DIR/cv/app:$DST_DIR/hzcsnote/nlp/app \
 
     __start_notebook $K12CV_PROJECT $K12CV_PORT \
         --volume $TOP_DIR/cv/app:$DST_DIR/cv/app \

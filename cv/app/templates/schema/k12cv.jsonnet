@@ -27,7 +27,7 @@
                     objs: [
                         {
                             name: { en: 'Phase', cn: self.en },
-                            type: 'object-trigger',
+                            type: 'navigation',
                             objs: [
                                 (import 'trans/trans.libsonnet').get('train'),
                                 (import 'trans/trans.libsonnet').get('validate'),
@@ -55,28 +55,36 @@
                     type: 'accordion',
                     objs: [
                         {
-                            _id_: 'solver.max_iters',
-                            name: { en: 'Max Iterator', cn: self.en },
-                            type: 'int',
-                            default: 20000,
-                        },
-                        {
-                            _id_: 'solver.display_iter',
-                            name: { en: 'Display Iter', cn: self.en },
-                            type: 'int',
-                            default: 200,
-                        },
-                        {
-                            _id_: 'solver.save_iters',
-                            name: { en: 'Save Iter', cn: self.en },
-                            type: 'int',
-                            default: 2000,
-                        },
-                        {
-                            _id_: 'solver.test_interval',
-                            name: { en: 'test interval', cn: self.en },
-                            type: 'int',
-                            default: 2000,
+                            type: 'HV',
+                            objs: [
+                                {
+                                    _id_: 'solver.max_iters',
+                                    name: { en: 'Max Iters', cn: self.en },
+                                    type: 'int',
+                                    min: 0,
+                                    max: 1000000,
+                                    width: 200,
+                                    default: 20000,
+                                },
+                                {
+                                    _id_: 'solver.display_iter',
+                                    name: { en: 'Display Iters', cn: self.en },
+                                    type: 'int',
+                                    default: 200,
+                                },
+                                {
+                                    _id_: 'solver.save_iters',
+                                    name: { en: 'Save Iters', cn: self.en },
+                                    type: 'int',
+                                    default: 2000,
+                                },
+                                {
+                                    _id_: 'solver.test_interval',
+                                    name: { en: 'Test Interval', cn: self.en },
+                                    type: 'int',
+                                    default: 2000,
+                                },
+                            ],  // objs
                         },
                     ],  // objs
                 },

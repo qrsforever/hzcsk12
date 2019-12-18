@@ -7,16 +7,18 @@
 local lib = import 'common.libsonnet';
 
 {
-    // string enum
     get(prefix): {
-        name: { en: 'Random Contrast', cn: self.en },
+        local this = self,
+        _id_:: prefix + '.aug_trans.random_contrast',
+        name: { en: 'Contrast', cn: self.en },
         value: 'random_contrast',
         trigger: {
+            name: this.name,
             type: 'object',
             objs: [
-                lib.radio(prefix + '.aug_trans.random_contrast.ratio'),
-                lib.lower(prefix + '.aug_trans.random_contrast.lower'),
-                lib.upper(prefix + '.aug_trans.random_contrast.upper'),
+                lib.radio(this._id_ + '.ratio'),
+                lib.lower(this._id_ + '.lower'),
+                lib.upper(this._id_ + '.upper'),
             ],
         },
     },

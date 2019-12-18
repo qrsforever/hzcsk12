@@ -22,9 +22,10 @@ local lib = import 'params/common.libsonnet';
                     value: 'ce_loss',
                     trigger: {
                         type: 'object',
-                        objs: ['weight', 'ce_loss_param'],
-                        weight: lib.weight(this._id_ + '.loss_weights.ce_loss.ce_loss'),
-                        ce_loss_param: import 'params/ce_loss.libsonnet',
+                        objs: [
+                            lib.weight(this._id_ + '.loss_weights.ce_loss.ce_loss'),
+                            import 'params/ce_loss.libsonnet',
+                        ],
                     },
                 },
                 {
@@ -32,9 +33,10 @@ local lib = import 'params/common.libsonnet';
                     value: 'soft_ce_loss',
                     trigger: {
                         type: 'object',
-                        objs: ['weight', 'soft_ce_loss_param'],
-                        weight: lib.weight(this._id_ + '.loss_weights.soft_ce_loss.soft_ce_loss'),
-                        soft_ce_loss_param: import 'params/soft_ce_loss.libsonnet',
+                        objs: [
+                            lib.weight(this._id_ + '.loss_weights.soft_ce_loss.soft_ce_loss'),
+                            import 'params/soft_ce_loss.libsonnet',
+                        ],
                     },
                 },
             ],

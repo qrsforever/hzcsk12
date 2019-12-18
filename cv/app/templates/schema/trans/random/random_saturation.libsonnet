@@ -7,14 +7,19 @@
 local lib = import 'common.libsonnet';
 
 {
-    random(prefix): {
+    get(prefix): {
         local this = self,
         _id_:: prefix + '.aug_trans.random_saturation',
-        name: { en: 'Random Saturation Parameters', cn: self.en },
-        type: 'object',
-        objs: ['ratio', 'lower', 'upper'],
-        ratio: lib.radio(this._id_ + '.ratio'),
-        lower: lib.lower(this._id_ + '.lower'),
-        upper: lib.upper(this._id_ + '.upper'),
+        name: { en: 'Saturation', cn: self.en },
+        value: 'random_saturation',
+        trigger: {
+            name: this.name,
+            type: 'object',
+            objs: [
+                lib.radio(this._id_ + '.ratio'),
+                lib.lower(this._id_ + '.lower'),
+                lib.upper(this._id_ + '.upper'),
+            ],
+        },
     },
 }

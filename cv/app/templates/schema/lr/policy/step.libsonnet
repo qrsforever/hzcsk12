@@ -9,13 +9,12 @@ local lib = import 'common.libsonnet';
 {
     local this = self,
     _id_:: 'solver.lr.step',
-    name: { en: 'Learning Rate Policy: Step', cn: self.en },
     type: 'object',
     objs: [
         lib.gamma(this._id_ + '.gamma'),
         {
             _id_: this._id_ + '.step_size',
-            name: { en: 'step size', cn: self.en },
+            name: { en: 'Step Size', cn: self.en },
             type: 'int',
             default: 50,
         },
