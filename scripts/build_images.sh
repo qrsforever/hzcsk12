@@ -40,7 +40,9 @@ __build_image()
     PROJECT=$1
     MAJOR=$2
     MINOR=$3
-    DOCKERFILE=$4
+
+    DESTDIR=$(dirname $4)
+    DOCKERFILE=$(basename $4)
 
     TAG=$MAJOR.$MINOR.$NUMBER
     REPOSITORY=$VENDOR/$PROJECT
@@ -77,7 +79,9 @@ __build_image()
     if (( build_flag == 1 ))
     then
         echo "build image: $REPOSITORY:$TAG"
-        cd $TOP_DIR
+
+        cd $TOP_DIR/$DESTDIR
+
         if [[ ! -d .jupyter_config ]]
         then
             git clone https://gitee.com/lidongai/jupyter_config.git .jupyter_config
@@ -103,8 +107,8 @@ __build_image()
 __main()
 {
     __build_image "k12ai" $MAJOR_K12AI $MINOR_K12AI Dockerfile.ai
-    __build_image "k12cv" $MAJOR_K12CV $MINOR_K12CV Dockerfile.cv
-    __build_image "k12nlp" $MAJOR_K12NLP $MINOR_K12NLP Dockerfile.nlp
+    __build_image "k12cv" $MAJOR_K12CV $MINOR_K12CV cv/Dockerfile.cv
+    __build_image "k12nlp" $MAJOR_K12NLP $MINOR_K12NLP nlp/Dockerfile.nlp
 }
 
 __main

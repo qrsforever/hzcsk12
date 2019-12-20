@@ -30,18 +30,18 @@ $REPOSITORY:$TAG"
 
 WORKDIR /hzcsk12/cv
 
-ADD cv/requirements.txt requirements.txt
+ADD torchcv/requirements.txt requirements.txt
 RUN pip install -v --no-cache-dir --timeout 120 -r requirements.txt
 RUN rm requirements.txt
 
-COPY cv/app app
-COPY cv/torchcv/data torchcv/data 
-COPY cv/torchcv/exts torchcv/exts
-COPY cv/torchcv/metric torchcv/metric
-COPY cv/torchcv/model torchcv/model
-COPY cv/torchcv/runner torchcv/runner
-COPY cv/torchcv/tools torchcv/tools
-COPY cv/torchcv/main.py torchcv/main.py
+COPY app app
+COPY torchcv/data torchcv/data 
+COPY torchcv/exts torchcv/exts
+COPY torchcv/metric torchcv/metric
+COPY torchcv/model torchcv/model
+COPY torchcv/runner torchcv/runner
+COPY torchcv/tools torchcv/tools
+COPY torchcv/main.py torchcv/main.py
 
 # install torchcv extensions
 RUN cd torchcv/exts && \
