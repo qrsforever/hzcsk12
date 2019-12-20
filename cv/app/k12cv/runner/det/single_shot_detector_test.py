@@ -10,7 +10,7 @@
 import torch
 
 from tools.util.logger import Logger as Log
-from datasets.det.data_loader import DataLoader
+from data.det.data_loader import DataLoader
 from runner.tools.runner_helper import RunnerHelper
 from model.det.model_manager import ModelManager
 from metric.det.det_running_score import DetRunningScore

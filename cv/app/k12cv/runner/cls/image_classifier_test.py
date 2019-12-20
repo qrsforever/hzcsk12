@@ -7,13 +7,11 @@
 # @version 1.0
 # @date 2019-12-02 22:26:03
 
-import time
 import torch
 
-from datasets.cls.data_loader import DataLoader
+from data.cls.data_loader import DataLoader
 from runner.tools.runner_helper import RunnerHelper
 from model.cls.model_manager import ModelManager
-from tools.util.average_meter import DictAverageMeter
 from metric.cls.cls_running_score import ClsRunningScore
 from tools.util.logger import Logger as Log
 

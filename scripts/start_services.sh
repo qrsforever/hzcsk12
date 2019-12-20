@@ -8,7 +8,8 @@
 cur_fil=${BASH_SOURCE[0]}
 top_dir=`cd $(dirname $cur_fil)/..; pwd`
 
-debug=0
+debug=1
+use_image='unkown'
 
 hostname=`hostname`
 hostaddr=`ifconfig eth0| grep inet\ | awk '{print $2}' | awk -F: '{print $2}'`
@@ -42,7 +43,7 @@ export HOST_ADDR=${hostaddr}
 # global function
 __script_logout()
 {
-    dt=`date +"%Y-%m-%d %H:%m:%S"`
+    dt=`date +"%Y-%m-%d %H:%M:%S"`
     echo $dt: $* | tee -a $log_fil
 }
 
@@ -234,11 +235,15 @@ __start_k12platform_service()
 # 4. check or start k12cv service
 __start_k12cv_service()
 {
+    use_image="hzcsai_com/k12cv"
     result=$(__service_health_check ${k12cv_service_name})
     if [[ $result != 1 ]]
     then
         export K12CV_DEBUG=$debug
-        __service_image_check "hzcsai_com/k12cv"
+        if [[ x$1 == xcheck ]]
+        then
+            __service_image_check $use_image 
+        fi
         __run_command "nohup python3 ${top_dir}/cv/app/k12cv_service.py \
             --host ${k12cv_addr} \
             --port ${k12cv_port} \
@@ -254,11 +259,15 @@ __start_k12cv_service()
 # 5. check or start k12nlp service
 __start_k12nlp_service()
 {
+    use_image="hzcsai_com/k12nlp"
     result=$(__service_health_check ${k12nlp_service_name})
     if [[ $result != 1 ]]
     then
         export K12NLP_DEBUG=$debug
-        __service_image_check "hzcsai_com/k12nlp"
+        if [[ x$1 == xcheck ]]
+        then
+            __service_image_check $use_image 
+        fi
         __run_command "nohup python3 ${top_dir}/nlp/app/k12nlp_service.py \
             --host ${k12nlp_addr} \
             --port ${k12nlp_port} \
@@ -273,9 +282,9 @@ __start_k12nlp_service()
 
 __main()
 {
-    if [[ x$1 == xdev ]]
+    if [[ x$1 == xrelease ]]
     then
-        debug=1
+        debug=0
     fi
     __service_environment_check
 
@@ -287,8 +296,8 @@ __main()
     __start_consule_service
     __start_k12ai_service
     __start_k12platform_service
-    __start_k12cv_service
-    __start_k12nlp_service
+    __start_k12cv_service $2
+    __start_k12nlp_service $2
     cd - > /dev/null
 }
 

@@ -152,11 +152,12 @@ class CVServiceRPC(object):
             if not os.path.exists(pro_dir):
                 os.makedirs(pro_dir)
 
-            dataset_name = params['dataset']
             dataset_path = params['data']['data_dir']
 
             if not os.path.exists(dataset_path):
                 return OP_FAILURE, _err_msg(100203, f'dataset [{dataset_path}] is not exist!')
+
+            dataset_name = dataset_path.split('/')[-1]
 
             params['cache_dir'] = os.path.join(users_cache_dir, user, uuid)
             params['network']['checkpoints_dir'] = 'ckpts/' + dataset_name
@@ -289,7 +290,7 @@ class CVServiceRPC(object):
 
         Thread(target=lambda: self._run(op=op, user=user, uuid=uuid, command=command),
                 daemon=True).start()
-        return OP_SUCCESS, None
+        return OP_SUCCESS, result
 
     def evaluate(self, op, user, uuid, params):
         logger.info("call evaluate(%s, %s, %s)", op, user, uuid)
@@ -318,7 +319,7 @@ class CVServiceRPC(object):
 
         Thread(target=lambda: self._run(op=op, user=user, uuid=uuid, command=command),
                 daemon=True).start()
-        return OP_SUCCESS, None
+        return OP_SUCCESS, result
 
     def predict(self, op, user, uuid, params):
         logger.info("call predict(%s, %s, %s)", op, user, uuid)
