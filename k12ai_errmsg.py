@@ -69,8 +69,8 @@ def k12ai_error_message(code=100000, message=None, detail=False, exc=False, ext_
         else:
             exc_type, exc_value, exc_tb = sys.exc_info()
             msg['detail'] = {
-                    'exc_type': exc_type.__name__,
-                    'exc_text': str(exc_value)
+                    'err_type': exc_type.__name__,
+                    'err_text': str(exc_value)
                     } # noqa
             if exc_tb:
                 msg['detail']['trackback'] = []

@@ -48,33 +48,40 @@ __build_image()
     REPOSITORY=$VENDOR/$PROJECT
 
     build_flag=0
-    items=($(docker images --filter "label=org.label-schema.name=$REPOSITORY" --format "{{.Tag}}"))
-    count=${#items[@]}
-    if (( $count == 0 ))
+
+    force=$5
+    if [[ x$force == x ]]
     then
-        build_flag=1
-    else
-        lastest=0
-        i=0
-        echo "Already exist images:"
-        while (( i < $count ))
-        do
-            echo -e "\t$(expr 1 + $i). $REPOSITORY:${items[$i]}"
-            if [[ $lastest != 1 ]] && [[ $(echo ${items[$i]} | cut -d \. -f1-2) == $MAJOR.$MINOR ]]
-            then
-                lastest=1
-            fi
-            (( i = i + 1 ))
-        done
-        if (( $lastest == 0 ))
+        items=($(docker images --filter "label=org.label-schema.name=$REPOSITORY" --format "{{.Tag}}"))
+        count=${#items[@]}
+        if (( $count == 0 ))
         then
-            echo -ne "\nBuild new image: $REPOSITORY:$TAG (y/N): "
-            read result
-            if [[ x$result == xy ]] || [[ x$result == xY ]]
+            build_flag=1
+        else
+            lastest=0
+            i=0
+            echo "Already exist images:"
+            while (( i < $count ))
+            do
+                echo -e "\t$(expr 1 + $i). $REPOSITORY:${items[$i]}"
+                if [[ $lastest != 1 ]] && [[ $(echo ${items[$i]} | cut -d \. -f1-2) == $MAJOR.$MINOR ]]
+                then
+                    lastest=1
+                fi
+                (( i = i + 1 ))
+            done
+            if (( $lastest == 0 ))
             then
-                build_flag=1
+                echo -ne "\nBuild new image: $REPOSITORY:$TAG (y/N): "
+                read result
+                if [[ x$result == xy ]] || [[ x$result == xY ]]
+                then
+                    build_flag=1
+                fi
             fi
         fi
+    else
+        build_flag=1
     fi
     if (( build_flag == 1 ))
     then
@@ -97,6 +104,8 @@ __build_image()
             --build-arg COMMIT=$COMMIT \
             --build-arg BRANCH=$BRANCH \
             --file $DOCKERFILE .
+
+        echo "###########$?"
         docker tag $REPOSITORY:$TAG $REPOSITORY
         cd - >/dev/null
     else
@@ -106,9 +115,10 @@ __build_image()
 
 __main()
 {
-    __build_image "k12ai" $MAJOR_K12AI $MINOR_K12AI Dockerfile.ai
-    __build_image "k12cv" $MAJOR_K12CV $MINOR_K12CV cv/Dockerfile.cv
-    __build_image "k12nlp" $MAJOR_K12NLP $MINOR_K12NLP nlp/Dockerfile.nlp
+    force=$1
+    __build_image "k12ai" $MAJOR_K12AI $MINOR_K12AI Dockerfile.ai $force
+    __build_image "k12cv" $MAJOR_K12CV $MINOR_K12CV cv/Dockerfile.cv $force
+    __build_image "k12nlp" $MAJOR_K12NLP $MINOR_K12NLP nlp/Dockerfile.nlp $force
 }
 
-__main
+__main $@

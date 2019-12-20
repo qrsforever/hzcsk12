@@ -16,7 +16,7 @@ LABEL org.label-schema.schema-version="1.0" \
       org.label-schema.build-date=$DATE \
       org.label-schema.name=$REPOSITORY \
       org.label-schema.description="NLP Backend" \
-      org.label-schema.url=https://www.hzcsai.com/index.php?r=front \
+      org.label-schema.url="https://www.hzcsai.com/index.php?r=front" \
       org.label-schema.vcs-url=$URL \
       org.label-schema.vcs-ref=$COMMIT \
       org.label-schema.vcs-branch=$BRANCH \
@@ -44,6 +44,8 @@ RUN pip install --editable .
 # EVALB produces scary looking c-level output which we don't
 # care about, so we redirect the output to /dev/null.
 RUN cd allennlp/tools/EVALB && make &> /dev/null && cd ../../../
+
+ENV PYTHONPATH=/hzcsk12/nlp/app:/hzcsk12/nlp/allennlp:$PYTHONPATH
 
 EXPOSE 8000
 CMD ["/bin/bash"]

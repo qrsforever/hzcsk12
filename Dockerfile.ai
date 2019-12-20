@@ -16,7 +16,7 @@ LABEL org.label-schema.schema-version="1.0" \
       org.label-schema.build-date=$DATE \
       org.label-schema.name=$REPOSITORY \
       org.label-schema.description="HZCS K12ai Base" \
-      org.label-schema.url=https://www.hzcsai.com
+      org.label-schema.url="https://www.hzcsai.com" \
       org.label-schema.vcs-url=$URL \
       org.label-schema.vcs-ref=$COMMIT \
       org.label-schema.vcs-branch=$BRANCH \
@@ -40,7 +40,7 @@ WORKDIR /hzcsk12
 RUN sed -i 's/http:\/\/archive\.ubuntu\.com\/ubuntu\//http:\/\/mirrors\.intra\.didiyun\.com\/ubuntu\//g' /etc/apt/sources.list
 RUN apt-get update --fix-missing
 RUN apt-get install -y bzip2 unzip ca-certificates gcc git curl wget nfs-common htop psmisc
-RUN apt-get install -y openssh-server openssh-client
+# RUN apt-get install -y openssh-server openssh-client
 RUN apt-get install -y libc-dev libevent-dev libglib2.0-0 libsm6 libxext6 libxrender1 libfontconfig1 build-essential
 RUN rm -rf /var/lib/apt/lists/*
 

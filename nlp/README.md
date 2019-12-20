@@ -18,4 +18,6 @@ QRS
 
 | 文件 | 原因 |
 |:----:|:----:|
-| | |
+| `commands/__init__.py` | 捕获异常 |
+| `training/util.py` | 收集metrics |
+| `training/trainer.py` | 收集metrics |

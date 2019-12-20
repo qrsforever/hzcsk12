@@ -99,15 +99,14 @@ class NLPServiceRPC(object):
     def __init__(self,
             host, port,
             k12ai='k12ai',
-            image='hzcsai_com/k12nlp-dev',
-            libs='k12nlp',
-            workdir='/hzcsk12', debug=False):
+            image='hzcsai_com/k12nlp',
+            workdir='/hzcsk12/nlp', debug=False):
         self._debug = debug
         self._host = host
         self._port = port
         self._k12ai = k12ai
         self._image = image
-        self._libs = libs
+        self._libs = 'app/k12nlp' 
         self._docker = docker.from_env()
         if debug:
             self._workdir = workdir

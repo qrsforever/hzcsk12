@@ -17,6 +17,13 @@ from allennlp.commands.train import Train
 from allennlp.commands.print_results import PrintResults
 from allennlp.common.util import import_submodules
 
+# QRS: add for catch except info
+try:
+    from k12nlp.common.util import hzcsk12_error_message
+except:
+    def hzcsk12_error_message(errmsg=None, exc=False):
+        pass
+
 logger = logging.getLogger(__name__)
 
 
@@ -114,6 +121,13 @@ def main(prog: str = None, subcommand_overrides: Dict[str, Subcommand] = None) -
         # Import any additional modules needed (to register custom classes).
         for package_name in getattr(args, "include_package", ()):
             import_submodules(package_name)
-        args.func(args)
+
+        # QRS: add for catch execpt info
+        try:
+            args.func(args)
+            logger.info("+++success+++")
+        except Exception as err:
+            logger.info("+++fail+++")
+            hzcsk12_error_message(exc=True)
     else:
         parser.print_help()
