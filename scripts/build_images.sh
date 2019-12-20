@@ -13,13 +13,13 @@ TOP_DIR=`cd $(dirname $CUR_FIL)/..; pwd`
 VENDOR=hzcsai_com
 
 MAJOR_K12AI=1
-MINOR_K12AI=0
+MINOR_K12AI=1
 
 MAJOR_K12CV=1
-MINOR_K12CV=0
+MINOR_K12CV=1
 
 MAJOR_K12NLP=1
-MINOR_K12NLP=0
+MINOR_K12NLP=1
 
 DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
 VERSION=$(git describe --tags --always)
