@@ -92,7 +92,9 @@ __service_environment_check()
     then
         echo "##############"
         echo "1. sudo apt install -y nfs-common"
-        echo "2. if client: sudo mount -t nfs server_ip:/data /data"
+        echo "2. add dataserver host, eg: "10.255.0.229 dataserver" in /etc/hosts"
+        echo "3. if client: sudo mount -t nfs server_ip:/data /data"
+        echo "Tips: ip must be lan address, like 10.xxx.xxx.xx"
         echo "##############"
         exit -1
     fi
@@ -290,7 +292,10 @@ __main()
 
     if [[ -f ${log_fil} ]]
     then
-        mv ${log_fil} ${log_fil}_bak
+        sudo mv ${log_fil} ${log_fil}_bak
+    else
+        sudo touch ${log_fil}
+        sudo chmod 777 ${log_fil}
     fi
     cd /tmp
     __start_consule_service
