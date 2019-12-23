@@ -105,7 +105,11 @@ __build_image()
             --build-arg BRANCH=$BRANCH \
             --file $DOCKERFILE .
 
-        echo "###########$?"
+        if [[ $? != 0 ]]
+        then
+            echo "docker build $REPOSITORY:$TAG fail"
+            exit $?
+        fi
         docker tag $REPOSITORY:$TAG $REPOSITORY
         cd - >/dev/null
     else
