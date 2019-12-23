@@ -10,11 +10,13 @@
 import socket
 import os
 
+
 def k12ai_get_hostname():
     val = os.environ.get('HOST_NAME', None)
     if not val:
         return socket.gethostname()
     return val
+
 
 def k12ai_get_hostip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -24,6 +26,7 @@ def k12ai_get_hostip():
     finally:
         s.close()
     return ''
+
 
 def k12ai_get_netip():
     result = os.popen('curl -s http://txt.go.sohu.com/ip/soip| grep -P -o -i "(\d+\.\d+.\d+.\d+)"', 'r') # noqa

@@ -2,9 +2,11 @@
 
 # 目录
 
+```
    nlp 
     ├── app      # hzcsai对allennlp框架的补充修改
     └── allennlp # 源码: https://github.com/allenai/allennlp/
+```
 
 # allennlp修改原则
 
@@ -17,7 +19,7 @@ QRS
 # allennlp修改记录
 
 | 文件 | 原因 |
-|:----:|:----:|
+|:----|:----|
 | `commands/__init__.py` | 捕获异常 |
 | `training/util.py` | 收集metrics |
 | `training/trainer.py` | 收集metrics |
