@@ -8,6 +8,7 @@
 # @date 2019-11-15 18:53:37
 
 import os, time, json
+import _jsonnet
 import argparse
 import logging
 import zerorpc
@@ -141,7 +142,33 @@ def _platform_control():
     except Exception:
         return json.dumps(_err_msg(100202, exc=True))
 
-### GPU Framework for train/evaluate/predict
+### GPU Framework for schema/train/evaluate/predict
+topdir = '/home/lidong/workspace/codes/hzcsai_com/hzcsnote/'
+@app.route('/k12ai/framework/schema', methods=['POST'])
+def _framework_schema():
+    logger.info('call _framework_schema')
+    schema_dir = os.path.join(topdir, 'k12libs', 'templates', 'schema')
+    try:
+        reqjson = json.loads(request.get_data().decode())
+        file = reqjson['file']
+        if file not in ('k12ai_basic_type.jsonnet', 
+                'k12ai_complex_type.jsonnet',
+                'k12ai_layout_type.jsonnet'
+                ):
+            return json.dumps(_err_msg(100102, f'file error :{file}'))
+
+        basic_file = os.path.join(schema_dir, file) 
+        if not os.path.exists(basic_file):
+            return json.dumps(_err_msg(100102, f'{file} is not exist'))
+
+        basic_json = _jsonnet.evaluate_file(basic_file)
+        print(reqjson)
+
+    except Exception:
+        return json.dumps(_err_msg(100101, exc=True))
+
+    return basic_json
+
 @app.route('/k12ai/framework/train', methods=['POST'])
 def _framework_train():
     logger.info('call _framework_train')
