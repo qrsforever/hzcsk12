@@ -18,7 +18,7 @@ if [[ -d $tmp_dir/callback_bidaf_squad ]]
 then
     flags='--recover'
 fi
-__run allennlp train config/callback_bidaf_squad.jsonnet --serialization-dir $tmp_dir/callback_bidaf_squad  --include-package hzcsnlp $flags
+__run allennlp train callback_bidaf_squad.jsonnet --serialization-dir $tmp_dir/callback_bidaf_squad  --include-package hzcsnlp $flags
 
 
 cd - >/dev/null
