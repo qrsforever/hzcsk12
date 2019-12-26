@@ -13,7 +13,7 @@ categories: [k12ai]
                                     |                       ccgbank |
                                     |                           sst |
                                     v                          quac |
-                                 datasets                       srl |
+             constants <-------- datasets                       srl |
                                     |             language_modeling |
                                     |                         coref |
                                     v                               |
@@ -32,10 +32,4 @@ categories: [k12ai]
    |          |               |           |       |
    v          v               v           v       |
 pos_tag   single_id   token_characters  ner_tag   +-----> character
-
-
-
-
-
-
 ```

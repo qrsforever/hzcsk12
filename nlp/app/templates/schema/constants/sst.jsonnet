@@ -4,9 +4,10 @@
 // @version 1.0
 // @date 2019-12-25 23:33
 
-local CONSTANTS = import 'constants.libsonnet';
+function(dataset_path='/data/datasets/nlp', dataset_name='sst') {
+    local dpath = dataset_path,
+    local dname = dataset_name,
 
-{
     dataset_reader: {
         type: 'sst_tokens',
         use_subtrees: true,
@@ -17,9 +18,9 @@ local CONSTANTS = import 'constants.libsonnet';
         use_subtrees: false,
         granularity: '5-class',
     },
-    train_data_path: CONSTANTS.dataset_root_path + '/sst/train.txt',
-    validation_data_path: CONSTANTS.dataset_root_path + '/sst/dev.txt',
-    test_data_path: CONSTANTS.dataset_root_path + '/sst/test.txt',
+    train_data_path: dpath + '/sst/train.txt',
+    validation_data_path: dpath + '/sst/dev.txt',
+    test_data_path: dpath + '/sst/test.txt',
     model: {
         type: 'basic_classifier',
         text_field_embedder: {
@@ -27,7 +28,7 @@ local CONSTANTS = import 'constants.libsonnet';
                 tokens: {
                     type: 'embedding',
                     embedding_dim: 200,
-                    pretrained_file: '/data/datasets/nlp/glove/glove.6B.200d.txt.gz',
+                    pretrained_file: dpath + '/glove/glove.6B.200d.txt.gz',
                     trainable: false,
                 },
             },
