@@ -48,4 +48,14 @@
         [if height > 0 then 'height']: height,
         [if readonly then 'readonly']: readonly,
     },
+
+    stringarray(id, en, cn='', def='', width=-1, height=-1, readonly=false): {
+        _id_: id,
+        name: { en: en, cn: if std.length(cn) == 0 then self.en else cn },
+        type: 'string-array',
+        default: def,
+        [if width > 0 then 'width']: width,
+        [if height > 0 then 'height']: height,
+        [if readonly then 'readonly']: readonly,
+    },
 }

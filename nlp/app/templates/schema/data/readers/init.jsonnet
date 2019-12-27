@@ -22,6 +22,25 @@ local _READERS = {
                                 _BASIC.string(jid + '.granularity', 'granularity', def='5-class'),
                             ],
                         },
+                        {
+                            local tokenid = jid + 'token_indexers.tokens',
+                            _id_: '_k12.token_indexers.single_id',
+                            name: { en: 'single_id', cn: self.en },
+                            type: 'bool-trigger',
+                            objs: [
+                                {
+                                    value: true,
+                                    trigger: {
+                                        objs: (import 'indexers/single_id.libsonnet').get(tokenid),
+                                    },
+                                },
+                                {
+                                    value: false,
+                                    trigger: {},
+                                },
+                            ],
+                            default: false,
+                        },
                     ],
                 },
             },
@@ -31,7 +50,6 @@ local _READERS = {
 
 {
     get(dataset): {
-        assert std.length(dataset) != 0,
         name: { en: 'Phase', cn: self.en },
         type: 'navigation',
         objs: [

@@ -4,34 +4,32 @@
 // @version 1.0
 // @date 2019-12-26 00:09
 
+local _BASIC = import '../../../utils/basic_type.libsonnet';
+
+local _KEYS = {
+    sst: [['tokens', 'num_tokens']],
+};
+
 {
-    type: '_ignore_',
-    objs: [
-        {
-            _id_: 'iterator.sorting_keys',
-            name: { en: 'sorting keys', cn: self.en },
-            type: 'string-array',
-            default: [],
-        },
-        {
-            _id_: 'iterator.padding_noise',
-            name: { en: 'padding noise', cn: self.en },
-            min: 0.0001,
-            max: 0.9999,
-            type: 'float',
-            default: 0.1,
-        },
-        {
-            _id_: 'iterator.biggest_batch_first',
-            name: { en: 'biggest batch first', cn: self.en },
-            type: 'bool',
-            default: false,
-        },
-        {
-            _id_: 'iterator.skip_smaller_batches',
-            name: { en: 'skip smaller batches', cn: self.en },
-            type: 'bool',
-            default: false,
-        },
-    ] + import 'common.libsonnet',
+    get(dataset): {
+        objs: [
+            {
+                type: 'H',
+                objs: import 'common.libsonnet',
+            },
+            {
+                type: 'H',
+                objs: [
+                    _BASIC.stringarray('iterator.sorting_keys',
+                                       'sorting keys',
+                                       def=_KEYS[dataset],
+                                       width=600,
+                                       readonly=true),
+                    _BASIC.float('iterator.padding_noise', 'padding noise', def=0.1),
+                    _BASIC.bool('iterator.biggest_batch_first', 'biggest batch first', def=false),
+                    _BASIC.bool('iterator.skip_smaller_batches', 'skip smaller batches', def=false),
+                ],
+            },
+        ],
+    },
 }

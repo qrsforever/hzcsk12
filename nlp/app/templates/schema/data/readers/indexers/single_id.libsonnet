@@ -7,13 +7,14 @@
 local _BASIC = import '../../../utils/basic_type.libsonnet';
 
 {
-    get(jid): {
-
-    },
-    // type single_id
-    // namespace (str)
-    // lowercase_tokens (bool)
-    // start_tokens (List[str])
-    // end_tokens (List[str])
-    // token_min_padding_length
+    get(jid): [
+        {
+            type: 'H',
+            objs: [
+                _BASIC.string(jid + '.type', 'type', def='single_id', readonly=true),
+                _BASIC.bool(jid + '.lowercase_tokens', 'lowercase', def=false),
+                _BASIC.int(jid + '.token_min_padding_length', 'min padding length', def=0),
+            ],
+        },
+    ],
 }

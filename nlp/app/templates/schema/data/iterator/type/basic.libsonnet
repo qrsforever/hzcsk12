@@ -5,6 +5,8 @@
 // @date 2019-12-26 00:02
 
 {
-    type: '_ignore_',
-    objs: import 'common.libsonnet',
+    get(dataset): {
+        type: 'H',
+        objs: import 'common.libsonnet',
+    },
 }

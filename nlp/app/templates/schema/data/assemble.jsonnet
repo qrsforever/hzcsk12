@@ -29,6 +29,7 @@ local _DATASETS = {
                 trigger: {
                     objs: [
                         (import 'readers/init.jsonnet').get('sst'),
+                        (import 'iterator/init.jsonnet').get('sst'),
                     ],
                 },
             },
