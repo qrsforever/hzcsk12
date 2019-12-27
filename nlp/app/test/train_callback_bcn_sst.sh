@@ -18,7 +18,7 @@ if [[ -d $tmp_dir/callback_bcn_sst ]]
 then
     flags='--recover'
 fi
-__run allennlp train config/callback_bcn_sst.jsonnet --serialization-dir $tmp_dir/callback_bcn_sst --include-package hzcsnlp $flags
+__run allennlp train callback_bcn_sst.jsonnet --serialization-dir $tmp_dir/callback_bcn_sst --include-package hzcsnlp $flags
 
 
 cd - >/dev/null

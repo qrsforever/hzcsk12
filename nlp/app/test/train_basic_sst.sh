@@ -18,7 +18,7 @@ if [[ -d $tmp_dir/basic_sst ]]
 then
     flags='--recover'
 fi
-__run allennlp train config/basic_sst.jsonnet --serialization-dir $tmp_dir/basic_sst --include-package hzcsnlp $flags
+__run allennlp train basic_sst.jsonnet --serialization-dir $tmp_dir/basic_sst --include-package hzcsnlp $flags
 
 
 cd - >/dev/null
