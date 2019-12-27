@@ -71,7 +71,7 @@ __main()
         __start_notebook $K12AI_PROJECT $K12AI_PORT \
             --env PYTHONPATH=$DST_DIR/hzcsnote \
             --volume $TOP_DIR/cv/app:$DST_DIR/hzcsnote/cv/app \
-            --volume $TOP_DIR/cv/app:$DST_DIR/hzcsnote/nlp/app \
+            --volume $TOP_DIR/nlp/app:$DST_DIR/hzcsnote/nlp/app \
             --volume /data:/data
     fi
     

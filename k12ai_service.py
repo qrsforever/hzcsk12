@@ -14,6 +14,7 @@ import logging
 import zerorpc
 import consul
 from flask import Flask, request
+from flask_cors import CORS
 from threading import Thread
 
 from k12ai_errmsg import k12ai_error_message as _err_msg
@@ -30,6 +31,8 @@ logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
+CORS(app, supports_credentials=True)
+
 app_quit = False
 app_host_name = _get_hostname()
 app_host_ip = _get_hostip()
