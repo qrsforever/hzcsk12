@@ -24,5 +24,10 @@
                 },
             ],
         },
+        {
+            name: { en: 'Debug Output', cn: '调试输出: ' },
+            type: 'output',
+            objs: [],
+        },
     ],
 }

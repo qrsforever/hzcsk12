@@ -1,3 +1,6 @@
 #!/bin/bash
 
-jsonnet --ext-str task='sa' k12nlp.jsonnet
+cur_fil=${BASH_SOURCE[0]}
+cur_dir=`dirname $cur_fil`
+
+jsonnet --ext-str task='sentiment_analysis' $cur_dir/k12nlp.jsonnet
