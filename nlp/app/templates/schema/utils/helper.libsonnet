@@ -1,11 +1,39 @@
-// @file basic_type.libsonnet
+// @file helper.libsonnet
 // @brief
 // @author QRS
 // @version 1.0
-// @date 2019-12-27 17:16
+// @date 2019-12-30 12:14
 
 {
-    bool(id, en, cn='', def=false, width=-1, height=-1, readonly=false): {
+    version: '0.0.1b',
+    task: std.extVar('task'),
+    dataset_path: std.extVar('dataset_path'),
+    dataset_name: std.extVar('dataset_name'),
+
+    // usage: get_value(confg, 'a.b.c', 100)
+    get_value(obj, keystr, def)::
+        if std.type(obj) == 'object' && std.length(keystr) > 1
+        then
+            local keys = std.splitLimit(keystr, '.', 1);
+            if std.objectHas(obj, keys[0])
+            then
+                if std.length(keys) > 1
+                then
+                    $.get_value(obj[keys[0]], keys[1], def)
+                else
+                    obj[keys[0]]
+            else
+                def
+        else
+            def,
+
+    // default dataset, can set default value
+    datasets:: {
+        sst: (import '../constants/datasets/sst.jsonnet').get($.dataset_path),
+    },
+
+    // basic type node generator function
+    bool(id, en, cn='', def=false, width=-1, height=-1, readonly=false):: {
         _id_: id,
         name: { en: en, cn: if std.length(cn) == 0 then self.en else cn },
         type: 'bool',

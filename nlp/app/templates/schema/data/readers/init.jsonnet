@@ -4,7 +4,7 @@
 // @version 1.0
 // @date 2019-12-27 15:04
 
-local _BASIC = import '../../utils/basic_type.libsonnet';
+local _Utils = import '../../utils/helper.libsonnet';
 
 local _READERS = {
     sst: {
@@ -13,61 +13,33 @@ local _READERS = {
                 name: { en: 'SST Tokens', cn: self.en },
                 value: 'sst_tokens',
                 trigger: {
-                    objs: [
-                        {
-                            type: 'H',
-                            objs: [
-                                _BASIC.bool(jid + '.layz', 'lazy', def=true),
-                                _BASIC.bool(jid + '.use_subtrees', 'use subtrees', def=false),
-                                _BASIC.string(jid + '.granularity', 'granularity', def='5-class'),
-                            ],
-                        },
-                        {
-                            local tokenid = jid + 'token_indexers.tokens',
-                            _id_: '_k12.token_indexers.single_id',
-                            name: { en: 'single_id', cn: self.en },
-                            type: 'bool-trigger',
-                            objs: [
-                                {
-                                    value: true,
-                                    trigger: {
-                                        objs: (import 'indexers/single_id.libsonnet').get(tokenid),
-                                    },
-                                },
-                                {
-                                    value: false,
-                                    trigger: {},
-                                },
-                            ],
-                            default: false,
-                        },
-                    ],
+                    objs: (import 'sst.libsonnet').get(jid),
                 },
             },
         ],
-    },  // dataset: sst
+    },  // dataset_name: sst
 };
 
 {
-    get(dataset): {
+    get(dataset_name): {
         name: { en: 'Phase', cn: self.en },
         type: 'navigation',
         objs: [
             {
-                local jid = 'dataset_reader',
+                local jid = 'dataset_name_reader',
                 name: { en: 'Train', cn: self.en },
                 objs: [
                     {
                         _id_: jid + '.type',
                         name: { en: 'Type', cn: self.en },
                         type: 'string-enum-trigger',
-                        objs: _READERS[dataset].get(jid),
+                        objs: _READERS[dataset_name].get(jid, 'train'),
                         default: self.objs[0].value,
                     },
                 ],
             },
             {
-                local jid = 'validation_dataset_reader',
+                local jid = 'validation_dataset_name_reader',
                 name: { en: 'Validation', cn: self.en },
                 objs: [
                     {
@@ -83,7 +55,7 @@ local _READERS = {
                                             _id_: jid + '.type',
                                             name: { en: 'Type', cn: self.en },
                                             type: 'string-enum-trigger',
-                                            objs: _READERS[dataset].get(jid),
+                                            objs: _READERS[dataset_name].get(jid, 'val'),
                                             default: self.objs[0].value,
                                         },
                                     ],
