@@ -146,25 +146,34 @@ def _platform_control():
         return json.dumps(_err_msg(100202, exc=True))
 
 ### GPU Framework for schema/train/evaluate/predict
-topdir = '/home/lidong/workspace/codes/hzcsai_com/hzcsnote/'
+topdir = '/home/lidong/workspace/codes/hzcsai_com/'
 @app.route('/k12ai/framework/schema', methods=['POST'])
 def _framework_schema():
     logger.info('call _framework_schema')
-    schema_dir = os.path.join(topdir, 'k12libs', 'templates', 'schema')
     try:
         reqjson = json.loads(request.get_data().decode())
         file = reqjson['file']
-        if file not in ('k12ai_basic_type.jsonnet', 
+        if file in ('k12ai_basic_type.jsonnet', 
                 'k12ai_complex_type.jsonnet',
-                'k12ai_layout_type.jsonnet'
-                ):
+                'k12ai_layout_type.jsonnet',
+                'k12ai_all_type.jsonnet'):
+            schema_dir = os.path.join(topdir, 'hzcsnote', 'k12libs', 'templates', 'schema')
+            basic_file = os.path.join(schema_dir, file) 
+            if not os.path.exists(basic_file):
+                return json.dumps(_err_msg(100102, f'{file} is not exist'))
+            basic_json = _jsonnet.evaluate_file(basic_file)
+        elif file in ('k12ai_nlp.jsonnet'):
+            schema_dir = os.path.join(topdir, 'hzcsk12', 'nlp', 'app', 'templates', 'schema')
+            basic_file = os.path.join(schema_dir, file) 
+            if not os.path.exists(basic_file):
+                return json.dumps(_err_msg(100102, f'{file} is not exist'))
+            basic_json = _jsonnet.evaluate_file(basic_file, ext_vars={
+                'task': 'sentiment_analysis',
+                'dataset_path': '/data/datasets/nlp',
+                'dataset_name': 'sst'})
+        else:
             return json.dumps(_err_msg(100102, f'file error :{file}'))
 
-        basic_file = os.path.join(schema_dir, file) 
-        if not os.path.exists(basic_file):
-            return json.dumps(_err_msg(100102, f'{file} is not exist'))
-
-        basic_json = _jsonnet.evaluate_file(basic_file)
         print(reqjson)
 
     except Exception:

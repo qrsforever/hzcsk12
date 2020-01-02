@@ -20,7 +20,7 @@ from allennlp.common.util import import_submodules
 # QRS: add for catch except info
 try:
     from k12nlp.common.util import hzcsk12_error_message
-except:
+except Exception:
     def hzcsk12_error_message(errmsg=None, exc=False):
         pass
 
@@ -126,7 +126,7 @@ def main(prog: str = None, subcommand_overrides: Dict[str, Subcommand] = None) -
         try:
             args.func(args)
             logger.info("+++success+++")
-        except Exception as err:
+        except Exception:
             logger.info("+++fail+++")
             hzcsk12_error_message(exc=True)
     else:
