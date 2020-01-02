@@ -33,21 +33,23 @@
     },
 
     // basic type node generator function
-    bool(id, en, cn='', def=false, width=-1, height=-1, readonly=false):: {
+    bool(id, en, cn='', def=false, tips='', width=-1, height=-1, readonly=false):: {
         _id_: id,
         name: { en: en, cn: if std.length(cn) == 0 then self.en else cn },
         type: 'bool',
         default: def,
+        [if std.length(tips) > 0 then 'tips']: tips,
         [if width > 0 then 'width']: width,
         [if height > 0 then 'height']: height,
         [if readonly then 'readonly']: readonly,
     },
 
-    int(id, en, cn='', def=0, min=-1, max=-1, width=-1, height=-1, readonly=false):: {
+    int(id, en, cn='', def=0, tips='', min=-1, max=-1, width=-1, height=-1, readonly=false):: {
         _id_: id,
         name: { en: en, cn: if std.length(cn) == 0 then self.en else cn },
         type: 'int',
         default: def,
+        [if std.length(tips) > 0 then 'tips']: tips,
         [if min > 0 then 'min']: min,
         [if max > 0 then 'max']: max,
         [if width > 0 then 'width']: width,
@@ -55,11 +57,12 @@
         [if readonly then 'readonly']: readonly,
     },
 
-    float(id, en, cn='', def=0, min=-1, max=-1, width=-1, height=-1, readonly=false):: {
+    float(id, en, cn='', def=0, tips='', min=-1, max=-1, width=-1, height=-1, readonly=false):: {
         _id_: id,
         name: { en: en, cn: if std.length(cn) == 0 then self.en else cn },
         type: 'float',
         default: def,
+        [if std.length(tips) > 0 then 'tips']: tips,
         [if min > 0 then 'min']: min,
         [if max > 0 then 'max']: max,
         [if width > 0 then 'width']: width,
@@ -67,21 +70,45 @@
         [if readonly then 'readonly']: readonly,
     },
 
-    string(id, en, cn='', def='', width=-1, height=-1, readonly=false):: {
+    string(id, en, cn='', def='', tips='', width=-1, height=-1, readonly=false):: {
         _id_: id,
         name: { en: en, cn: if std.length(cn) == 0 then self.en else cn },
         type: 'string',
         default: def,
+        [if std.length(tips) > 0 then 'tips']: tips,
         [if width > 0 then 'width']: width,
         [if height > 0 then 'height']: height,
         [if readonly then 'readonly']: readonly,
     },
 
-    stringarray(id, en, cn='', def='', width=-1, height=-1, readonly=false):: {
+    intarray(id, en, cn='', def=[], tips='', width=-1, height=-1, readonly=false):: {
+        _id_: id,
+        name: { en: en, cn: if std.length(cn) == 0 then self.en else cn },
+        type: 'int-array',
+        default: def,
+        [if std.length(tips) > 0 then 'tips']: tips,
+        [if width > 0 then 'width']: width,
+        [if height > 0 then 'height']: height,
+        [if readonly then 'readonly']: readonly,
+    },
+
+    floatarray(id, en, cn='', def=[], tips='', width=-1, height=-1, readonly=false):: {
+        _id_: id,
+        name: { en: en, cn: if std.length(cn) == 0 then self.en else cn },
+        type: 'float-array',
+        default: def,
+        [if std.length(tips) > 0 then 'tips']: tips,
+        [if width > 0 then 'width']: width,
+        [if height > 0 then 'height']: height,
+        [if readonly then 'readonly']: readonly,
+    },
+
+    stringarray(id, en, cn='', def='', tips='', width=-1, height=-1, readonly=false):: {
         _id_: id,
         name: { en: en, cn: if std.length(cn) == 0 then self.en else cn },
         type: 'string-array',
         default: def,
+        [if std.length(tips) > 0 then 'tips']: tips,
         [if width > 0 then 'width']: width,
         [if height > 0 then 'height']: height,
         [if readonly then 'readonly']: readonly,

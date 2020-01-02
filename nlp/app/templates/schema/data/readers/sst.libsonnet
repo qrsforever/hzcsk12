@@ -4,14 +4,19 @@
 // @version 1.0
 // @date 2019-12-25 20:33
 
-// train_data_path: '/data/datasets/nlp/sst/train.txt',
-// validation_data_path: '/data/datasets/nlp/sst/dev.txt',
-// test_data_path: '/data/datasets/nlp/sst/test.txt',
-
 local _Utils = import '../../utils/helper.libsonnet';
 
 {
-    get(jid): [
+    get(jid, navi): [
+        // if navi == 'train' then
+        //     _Utils.string('train_data_path',
+        //                   'Data Path',
+        //                   def=_Utils.dataset_path + '/sst/train.txt',
+        //                   readonly=true) else
+        //     _Utils.string('validation_data_path',
+        //                   'Data Path',
+        //                   def=_Utils.dataset_path + '/sst/dev.txt',
+        //                   readonly=true),
         {
             type: 'H',
             objs: [

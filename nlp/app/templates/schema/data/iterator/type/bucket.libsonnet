@@ -11,23 +11,23 @@ local _KEYS = {
 };
 
 {
-    get(dataset): {
+    get(jid, dataset_name): {
         objs: [
             {
                 type: 'H',
-                objs: import 'common.libsonnet',
+                objs: (import 'common.libsonnet').get(jid),
             },
             {
                 type: 'H',
                 objs: [
-                    _BASIC.stringarray('iterator.sorting_keys',
+                    _BASIC.stringarray(jid + '.sorting_keys',
                                        'sorting keys',
-                                       def=_KEYS[dataset],
+                                       def=_KEYS[dataset_name],
                                        width=600,
                                        readonly=true),
-                    _BASIC.float('iterator.padding_noise', 'padding noise', def=0.1),
-                    _BASIC.bool('iterator.biggest_batch_first', 'biggest batch first', def=false),
-                    _BASIC.bool('iterator.skip_smaller_batches', 'skip smaller batches', def=false),
+                    _BASIC.float(jid + '.padding_noise', 'padding noise', def=0.1),
+                    _BASIC.bool(jid + '.biggest_batch_first', 'biggest batch first', def=false),
+                    _BASIC.bool(jid + '.skip_smaller_batches', 'skip smaller batches', def=false),
                 ],
             },
         ],

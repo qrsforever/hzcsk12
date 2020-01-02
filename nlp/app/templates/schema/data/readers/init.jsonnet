@@ -8,12 +8,12 @@ local _Utils = import '../../utils/helper.libsonnet';
 
 local _READERS = {
     sst: {
-        get(jid): [
+        get(jid, navi): [
             {
                 name: { en: 'SST Tokens', cn: self.en },
                 value: 'sst_tokens',
                 trigger: {
-                    objs: (import 'sst.libsonnet').get(jid),
+                    objs: (import 'sst.libsonnet').get(jid, navi),
                 },
             },
         ],
@@ -43,7 +43,7 @@ local _READERS = {
                 name: { en: 'Validation', cn: self.en },
                 objs: [
                     {
-                        _id_: '_k12.validation.bool',
+                        _id_: '_k12.validation_dataset_name_reader.bool',
                         name: { en: 'Enable', cn: self.en },
                         type: 'bool-trigger',
                         objs: [
@@ -55,7 +55,7 @@ local _READERS = {
                                             _id_: jid + '.type',
                                             name: { en: 'Type', cn: self.en },
                                             type: 'string-enum-trigger',
-                                            objs: _READERS[dataset_name].get(jid, 'val'),
+                                            objs: _READERS[dataset_name].get(jid, 'validation'),
                                             default: self.objs[0].value,
                                         },
                                     ],
