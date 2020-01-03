@@ -15,6 +15,8 @@ import requests
 import consul
 import docker
 from threading import Thread
+from pyhocon import ConfigFactory
+from pyhocon import HOCONConverter
 
 try:
     from k12ai_errmsg import k12ai_error_message as _err_msg
@@ -134,10 +136,14 @@ class CVServiceRPC(object):
     def _get_container(self, op, user, uuid):
         container_name = '%s-%s-%s' % (op.split('.')[0], user, uuid)
         try:
-            con = self._docker.containers.get(container_name)
-            return container_name, con
+            cons = self._docker.containers.list(all=True, filters={'label': [
+                'k12ai.service.user=%s'%user,
+                'k12ai.service.uuid=%s'%uuid]})
+            if len(cons) == 1:
+                return container_name, cons[0]
         except docker.errors.NotFound:
-            return container_name, None
+            pass
+        return container_name, None
 
     def _prepare_environ(self, user, uuid, params):
         try:

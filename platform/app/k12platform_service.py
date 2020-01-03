@@ -169,6 +169,29 @@ def _get_container_infos(client):
         logger.error(str(err))
     return infos
 
+def _get_service_infos(client, user, uuid):
+    infos = []
+    try:
+        cons = []
+        if uuid == '*':
+            cons = client.containers.list(filters={'label': 'k12ai.service.user=%s'%user})
+        else:
+            cons = client.containers.list(filters={'label': ['k12ai.service.user=%s'%user, 'k12ai.service.uuid=%s'%uuid]})
+        if len(cons) == 0:
+            return infos
+        for c in cons:
+            info = {}
+            stats = c.stats(stream=False)
+            info['id'] = stats['id'][0:12]
+            info['op'] = c.labels.get('k12ai.service.op', '')
+            info['service_uuid'] = c.labels.get('k12ai.service.uuid', '')
+            info['service_pid'] = c.attrs.get('State', {}).get('Pid', -1)
+            info['service_starttime'] = c.attrs.get('State', {}).get('StartedAt', '')
+            infos.append(info)
+    except Exception as err:
+        logger.error(str(err))
+    return infos
+
 class PlatformServiceRPC(object):
 
     def __init__(self, host, port, k12ai='k12ai', debug=False):
@@ -214,14 +237,16 @@ class PlatformServiceRPC(object):
                 message['disks'] = _get_disk_infos()
                 message['containers'] = _get_container_infos(self._docker)
             elif isinstance(params, dict):
-                if params.get('cpus', True):
-                    message = _get_cpu_infos()
-                if params.get('gpus', True):
+                if params.get('cpus', False):
+                    message.update(_get_cpu_infos())
+                if params.get('gpus', False):
                     message['gpus'] = _get_gpu_infos()
-                if params.get('disks', True):
+                if params.get('disks', False):
                     message['disks'] = _get_disk_infos()
-                if params.get('containers', True):
+                if params.get('containers', False):
                     message['containers'] = _get_container_infos(self._docker)
+                if params.get('services', False):
+                    message['services'] = _get_service_infos(self._docker, user, uuid)
             self.send_message(op, user, uuid, 'result', _err_msg(message=message))
         else:
             message['todo'] = 'TODO'

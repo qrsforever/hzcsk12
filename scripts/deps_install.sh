@@ -60,3 +60,12 @@ then
 else
     echo "psutil ok"
 fi
+
+check=`python3 -c "import pyhocon" 2>&1`
+if [[ x$check != x ]]
+then
+    sudo pip3 install pyhocon
+else
+    echo "pyhocon ok"
+fi
+

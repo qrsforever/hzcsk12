@@ -10,6 +10,7 @@
 import os
 import sys
 import zerorpc
+import traceback
 
 _RPCClient = None
 _RPCEnable = -1

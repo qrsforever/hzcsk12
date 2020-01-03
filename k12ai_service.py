@@ -85,8 +85,7 @@ def _get_service_by_name(name):
 def _consul_check_status():
     return "Success"
 
-### Platform resource manager
-platform_service_name = 'k12platform'
+### Platform
 
 @app.route('/k12ai/platform/stats', methods=['POST'])
 def _platform_stats():
@@ -117,6 +116,7 @@ def _platform_stats():
     except Exception:
         return json.dumps(_err_msg(100202, exc=True))
 
+
 @app.route('/k12ai/platform/control', methods=['POST'])
 def _platform_control():
     logger.info('call _platform_control')
@@ -145,41 +145,54 @@ def _platform_control():
     except Exception:
         return json.dumps(_err_msg(100202, exc=True))
 
-### GPU Framework for schema/train/evaluate/predict
-topdir = '/home/lidong/workspace/codes/hzcsai_com/'
+
+### Framework
+
 @app.route('/k12ai/framework/schema', methods=['POST'])
 def _framework_schema():
     logger.info('call _framework_schema')
     try:
         reqjson = json.loads(request.get_data().decode())
-        file = reqjson['file']
-        if file in ('k12ai_basic_type.jsonnet', 
-                'k12ai_complex_type.jsonnet',
-                'k12ai_layout_type.jsonnet',
-                'k12ai_all_type.jsonnet'):
-            schema_dir = os.path.join(topdir, 'hzcsnote', 'k12libs', 'templates', 'schema')
-            basic_file = os.path.join(schema_dir, file) 
-            if not os.path.exists(basic_file):
-                return json.dumps(_err_msg(100102, f'{file} is not exist'))
-            basic_json = _jsonnet.evaluate_file(basic_file)
-        elif file in ('k12ai_nlp.jsonnet'):
-            schema_dir = os.path.join(topdir, 'hzcsk12', 'nlp', 'app', 'templates', 'schema')
-            basic_file = os.path.join(schema_dir, file) 
-            if not os.path.exists(basic_file):
-                return json.dumps(_err_msg(100102, f'{file} is not exist'))
-            basic_json = _jsonnet.evaluate_file(basic_file, ext_vars={
-                'task': 'sentiment_analysis',
-                'dataset_path': '/data/datasets/nlp',
-                'dataset_name': 'sst'})
+        file = reqjson.get('file', None)
+        if file: # TODO for test
+            topdir = '/home/lidong/workspace/codes/hzcsai_com/'
+            basic_json = {}
+            if file in ('k12ai_basic_type.jsonnet', 
+                    'k12ai_complex_type.jsonnet',
+                    'k12ai_layout_type.jsonnet',
+                    'k12ai_all_type.jsonnet'):
+                schema_dir = os.path.join(topdir, 'hzcsnote', 'k12libs', 'templates', 'schema')
+                basic_file = os.path.join(schema_dir, file) 
+                if not os.path.exists(basic_file):
+                    return json.dumps(_err_msg(100102, f'{file} is not exist'))
+                basic_json = _jsonnet.evaluate_file(basic_file)
+            elif file in ('k12ai_nlp.jsonnet'):
+                schema_dir = os.path.join(topdir, 'hzcsk12', 'nlp', 'app', 'templates', 'schema')
+                basic_file = os.path.join(schema_dir, file) 
+                if not os.path.exists(basic_file):
+                    return json.dumps(_err_msg(100102, f'{file} is not exist'))
+                basic_json = _jsonnet.evaluate_file(basic_file, ext_vars={
+                    'task': 'sentiment_analysis',
+                    'dataset_path': '/data/datasets/nlp',
+                    'dataset_name': 'sst'})
+            return basic_json
         else:
-            return json.dumps(_err_msg(100102, f'file error :{file}'))
-
-        print(reqjson)
-
+            service_name = reqjson['service_name']
+            service_task = reqjson['service_task']
+            dataset_path = reqjson['dataset_path']
+            dataset_name = reqjson['dataset_name']
     except Exception:
         return json.dumps(_err_msg(100101, exc=True))
 
-    return basic_json
+    agent = _get_service_by_name(service_name)
+    if not agent:
+        return json.dumps(_err_msg(100201, f'service name:{service_name}'))
+    try:
+        code, msg = agent.schema(service_task, dataset_path, dataset_name)
+        return json.dumps(_err_msg(100202 if code < 0 else 100000, msg))
+    except Exception:
+        return json.dumps(_err_msg(100202, exc=True))
+
 
 @app.route('/k12ai/framework/train', methods=['POST'])
 def _framework_train():
@@ -205,6 +218,7 @@ def _framework_train():
     except Exception:
         return json.dumps(_err_msg(100202, exc=True))
 
+
 @app.route('/k12ai/framework/evaluate', methods=['POST'])
 def _framework_evaluate():
     logger.info('call _framework_evaluate')
@@ -228,6 +242,7 @@ def _framework_evaluate():
         return json.dumps(_err_msg(100202 if code < 0 else 100000, msg))
     except Exception:
         return json.dumps(_err_msg(100202, exc=True))
+
 
 @app.route('/k12ai/framework/predict', methods=['POST'])
 def _framework_predict():
@@ -253,6 +268,7 @@ def _framework_predict():
     except Exception:
         return json.dumps(_err_msg(100202, exc=True))
 
+
 @app.route('/k12ai/private/message', methods=['POST'])
 def _framework_message():
     logger.info('call _framework_message')
@@ -263,6 +279,7 @@ def _framework_message():
         return "error"
     logger.info(reqjson)
     return "1"
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

@@ -10,11 +10,14 @@
 import os, sys, time
 import argparse
 import logging, json
+import _jsonnet
 import zerorpc
 import requests
 import consul
 import docker
 from threading import Thread
+from pyhocon import ConfigFactory
+from pyhocon import HOCONConverter
 
 try:
     from k12ai_errmsg import k12ai_error_message as _err_msg
@@ -108,11 +111,10 @@ class NLPServiceRPC(object):
         self._image = image
         self._libs = 'app/k12nlp' 
         self._docker = docker.from_env()
-        if debug:
-            self._workdir = workdir
-            self._projdir = os.path.abspath(
-                    os.path.dirname(os.path.abspath(__file__)) + os.path.sep + "..")
-            logger.info('workdir:%s, projdir:%s', self._workdir, self._projdir)
+        self._workdir = workdir
+        self._projdir = os.path.abspath(
+                os.path.dirname(os.path.abspath(__file__)) + os.path.sep + "..")
+        logger.info('workdir:%s, projdir:%s', self._workdir, self._projdir)
 
     def send_message(self, op, user, uuid, msgtype, message):
         client = consul.Consul(consul_addr, port=consul_port)
@@ -125,13 +127,13 @@ class NLPServiceRPC(object):
         if isinstance(message, dict):
             if 'err_type' in message:
                 errtype = message['err_type']
-            if errtype == 'ConfigurationError':
-                code = 100405
-            elif errtype == 'MemoryError':
-                code = 100901
-            else:
-                code = 100499
-            message = _err_msg(code, ext_info=message)
+                if errtype == 'ConfigurationError':
+                    code = 100405
+                elif errtype == 'MemoryError':
+                    code = 100901
+                else:
+                    code = 100499
+                message = _err_msg(code, ext_info=message)
 
         data = {
                 'version': '0.1.0',
@@ -155,13 +157,27 @@ class NLPServiceRPC(object):
                 key = '%s/%s' % (key, data['datetime'][:-2])
             client.kv.put(key, json.dumps(data, indent=4))
 
+    def schema(self, service_task, dataset_path, dataset_name):
+        schema_file = os.path.join(self._projdir, 'app', 'templates', 'schema', 'k12ai_nlp.jsonnet')
+        if not os.path.exists(schema_file):
+            return OP_FAILURE, f'schema file: {schema_file} not found'
+        schema_json = _jsonnet.evaluate_file(schema_file, ext_vars={
+            'task': service_task, 
+            'dataset_path': dataset_path,
+            'dataset_name': dataset_name})
+        return OP_SUCCESS, schema_json
+
     def _get_container(self, op, user, uuid):
         container_name = '%s-%s-%s' % (op.split('.')[0], user, uuid)
         try:
-            con = self._docker.containers.get(container_name)
-            return container_name, con
+            cons = self._docker.containers.list(all=True, filters={'label': [
+                'k12ai.service.user=%s'%user,
+                'k12ai.service.uuid=%s'%uuid]})
+            if len(cons) == 1:
+                return container_name, cons[0]
         except docker.errors.NotFound:
-            return container_name, None
+            pass
+        return container_name, None
 
     def _run(self, op, user, uuid, command=None):
         logger.info(command)
@@ -218,6 +234,7 @@ class NLPServiceRPC(object):
                 self.send_message(op, user, uuid, "status", {'value':'starting'})
                 try:
                     if con:
+                        print("#################")
                         con.remove()
                     con = self._docker.containers.run(self._image,
                             command, **kwargs)
@@ -246,17 +263,22 @@ class NLPServiceRPC(object):
         pro_dir = os.path.join(users_cache_dir, user, uuid)
         if not os.path.exists(pro_dir):
             os.makedirs(pro_dir)
+        config_tree = ConfigFactory.from_dict(params)
+        config_tree.pop('_k12')
+        config_str = HOCONConverter.convert(config_tree, 'json')
         training_config = os.path.join(pro_dir, 'config.json')
         with open(training_config, 'w') as fout:
-            fout.write(json.dumps(params))
+            fout.write(config_str)
         flag = '--force'
         output_dir = os.path.join(pro_dir, 'output')
         serial_conf = os.path.join(output_dir, 'config.json')
         if os.path.exists(serial_conf):
             if not _check_config_diff(training_config, serial_conf):
                 flag = '--recover'
-        command = 'allennlp train {} {} -s {} --include-package {}'.format(
-                training_config, flag, output_dir, self._libs)
+        # command = 'allennlp train {} {} -s {} --include-package {}'.format(
+                # training_config, flag, output_dir, self._libs)
+        command = 'allennlp train {} {} -s {}'.format(
+                training_config, flag, output_dir)
         Thread(target=lambda: self._run(op=op, user=user, uuid=uuid, command=command),
                 daemon=True).start()
         return OP_SUCCESS, None
@@ -384,7 +406,7 @@ if __name__ == "__main__":
         app = zerorpc.Server(NLPServiceRPC(
             host=host, port=args.port,
             k12ai='{}-k12ai'.format(app_host_name),
-            image=image, libs='k12nlp', debug=LEVEL == logging.DEBUG))
+            image=image, debug=LEVEL == logging.DEBUG))
         app.bind('tcp://%s:%d' % (host, args.port))
         app.run()
     finally:

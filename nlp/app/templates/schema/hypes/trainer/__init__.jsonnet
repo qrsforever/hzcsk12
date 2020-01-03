@@ -6,7 +6,7 @@
 
 {
     get(jid):: {
-        _id_: jid + '.type',
+        _id_: '_k12.' + jid + '.type',
         name: { en: 'Trainer Type', cn: self.en },
         type: 'string-enum-trigger',
         objs: [
@@ -23,6 +23,7 @@
                 },
             },
         ],
+        readonly: true,
         default: self.objs[0].value,
     },
 }

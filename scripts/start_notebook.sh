@@ -93,4 +93,4 @@ __main()
     fi
 }
 
-__main
+__main $*

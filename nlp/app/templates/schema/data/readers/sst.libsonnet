@@ -11,7 +11,7 @@ local _Utils = import '../../utils/helper.libsonnet';
         {
             type: 'H',
             objs: [
-                _Utils.bool(jid + '.layz', 'lazy', def=true),
+                _Utils.bool(jid + '.lazy', 'lazy', def=true),
                 _Utils.bool(jid + '.use_subtrees', 'use subtrees', def=false),
                 _Utils.string(jid + '.granularity', 'granularity', def='5-class'),
             ],

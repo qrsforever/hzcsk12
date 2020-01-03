@@ -50,6 +50,6 @@
                 trigger: {},
             },
         ],
-        default: true,
+        default: false,
     },
 }
