@@ -1,8 +1,8 @@
-// @file basic.libsonnet
+// @file lstm.libsonnet
 // @brief
 // @author QRS
 // @version 1.0
-// @date 2019-12-26 00:02
+// @date 2020-01-03 15:13
 
 {
     get(jid):: {

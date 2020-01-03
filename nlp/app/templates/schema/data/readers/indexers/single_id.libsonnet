@@ -7,7 +7,7 @@
 local _BASIC = import '../../../utils/basic_type.libsonnet';
 
 {
-    get(jid): [
+    get(jid):: [
         {
             type: 'H',
             objs: [

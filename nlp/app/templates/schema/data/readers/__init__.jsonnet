@@ -8,7 +8,7 @@ local _Utils = import '../../utils/helper.libsonnet';
 
 local _READERS = {
     sst: {
-        get(jid, navi): [
+        get(jid, navi):: [
             {
                 name: { en: 'SST Tokens', cn: self.en },
                 value: 'sst_tokens',
@@ -21,19 +21,20 @@ local _READERS = {
 };
 
 {
-    get(dataset_name): {
+    get():: {
         name: { en: 'Phase', cn: self.en },
         type: 'navigation',
         objs: [
             {
                 local jid = 'dataset_name_reader',
                 name: { en: 'Train', cn: self.en },
+                type: '_ignore_',
                 objs: [
                     {
                         _id_: jid + '.type',
                         name: { en: 'Type', cn: self.en },
                         type: 'string-enum-trigger',
-                        objs: _READERS[dataset_name].get(jid, 'train'),
+                        objs: _READERS[_Utils.dataset_name].get(jid, 'train'),
                         default: self.objs[0].value,
                     },
                 ],
@@ -41,6 +42,7 @@ local _READERS = {
             {
                 local jid = 'validation_dataset_name_reader',
                 name: { en: 'Validation', cn: self.en },
+                type: '_ignore_',
                 objs: [
                     {
                         _id_: '_k12.validation_dataset_name_reader.bool',
@@ -50,12 +52,13 @@ local _READERS = {
                             {
                                 value: true,
                                 trigger: {
+                                    type: '_ignore_',
                                     objs: [
                                         {
                                             _id_: jid + '.type',
                                             name: { en: 'Type', cn: self.en },
                                             type: 'string-enum-trigger',
-                                            objs: _READERS[dataset_name].get(jid, 'validation'),
+                                            objs: _READERS[_Utils.dataset_name].get(jid, 'validation'),
                                             default: self.objs[0].value,
                                         },
                                     ],

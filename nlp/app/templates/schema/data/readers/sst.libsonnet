@@ -7,7 +7,7 @@
 local _Utils = import '../../utils/helper.libsonnet';
 
 {
-    get(jid, navi): [
+    get(jid, navi):: [
         // if navi == 'train' then
         //     _Utils.string('train_data_path',
         //                   'Data Path',
@@ -34,6 +34,7 @@ local _Utils = import '../../utils/helper.libsonnet';
                 {
                     value: true,
                     trigger: {
+                        type: '_ignore_',
                         objs: (import 'indexers/single_id.libsonnet').get(tokenid),
                     },
                 },

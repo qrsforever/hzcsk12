@@ -5,7 +5,7 @@
 // @date 2020-01-02 15:46
 
 {
-    get(jid): {
+    get(jid):: {
         _id_: jid + '.type',
         name: { en: 'Trainer Type', cn: self.en },
         type: 'string-enum-trigger',

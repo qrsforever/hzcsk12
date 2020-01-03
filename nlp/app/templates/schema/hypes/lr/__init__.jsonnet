@@ -5,7 +5,7 @@
 // @date 2020-01-02 12:24
 
 {
-    get(jid): {
+    get(jid):: {
         _id_: '_k12.lr_scheduler.bool',
         name: { en: 'Enable', cn: self.en },
         type: 'bool-trigger',
@@ -50,5 +50,6 @@
                 trigger: {},
             },
         ],
+        default: true,
     },
 }

@@ -7,7 +7,7 @@
 local _Utils = import '../../../utils/helper.libsonnet';
 
 {
-    get(jid): {
+    get(jid):: {
         type: 'H',
         objs: [
             _Utils.float(jid + '.gamma',

@@ -4,14 +4,15 @@
 // @version 1.0
 // @date 2019-12-26 00:09
 
-local _BASIC = import '../../../utils/basic_type.libsonnet';
+local _Basic = import '../../../utils/basic_type.libsonnet';
+local _Utils = import '../../../utils/helper.libsonnet';
 
 local _KEYS = {
     sst: [['tokens', 'num_tokens']],
 };
 
 {
-    get(jid, dataset_name): {
+    get(jid):: {
         objs: [
             {
                 type: 'H',
@@ -20,14 +21,14 @@ local _KEYS = {
             {
                 type: 'H',
                 objs: [
-                    _BASIC.stringarray(jid + '.sorting_keys',
+                    _Basic.stringarray(jid + '.sorting_keys',
                                        'sorting keys',
-                                       def=_KEYS[dataset_name],
+                                       def=_KEYS[_Utils.dataset_name],
                                        width=600,
                                        readonly=true),
-                    _BASIC.float(jid + '.padding_noise', 'padding noise', def=0.1),
-                    _BASIC.bool(jid + '.biggest_batch_first', 'biggest batch first', def=false),
-                    _BASIC.bool(jid + '.skip_smaller_batches', 'skip smaller batches', def=false),
+                    _Basic.float(jid + '.padding_noise', 'padding noise', def=0.1),
+                    _Basic.bool(jid + '.biggest_batch_first', 'biggest batch first', def=false),
+                    _Basic.bool(jid + '.skip_smaller_batches', 'skip smaller batches', def=false),
                 ],
             },
         ],

@@ -7,7 +7,8 @@
 local _Utils = import '../../../utils/helper.libsonnet';
 
 {
-    get(jid): {
+    get(jid):: {
+        type: '_ignore_',
         objs: [
             {
                 type: 'H',

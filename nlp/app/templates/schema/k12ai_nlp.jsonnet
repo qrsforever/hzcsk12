@@ -12,14 +12,17 @@
             objs: [
                 {
                     name: { en: 'Data', cn: self.en },
+                    type: '_ignore_',
                     objs: import 'data/assemble.jsonnet',
                 },
                 {
                     name: { en: 'Model', cn: self.en },
-                    objs: import 'model/assemble.jsonnet',
+                    type: '_ignore_',
+                    objs: import 'models/assemble.jsonnet',
                 },
                 {
                     name: { en: 'Hypes', cn: self.en },
+                    type: '_ignore_',
                     objs: import 'hypes/assemble.jsonnet',
                 },
             ],

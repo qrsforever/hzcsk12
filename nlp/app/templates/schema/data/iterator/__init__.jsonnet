@@ -5,13 +5,14 @@
 // @date 2019-12-26 00:35
 
 {
-    get(dataset_name): {
+    get():: {
         name: { en: 'Phase', cn: self.en },
         type: 'navigation',
         objs: [
             {
                 local jid = 'iterator',
                 name: { en: 'Train', cn: self.en },
+                type: '_ignore_',
                 objs: [
                     {
                         _id_: jid + '.type',
@@ -21,12 +22,12 @@
                             {
                                 name: { en: 'bucket', cn: self.en },
                                 value: 'bucket',
-                                trigger: (import 'type/bucket.libsonnet').get(jid, dataset_name),
+                                trigger: (import 'type/bucket.libsonnet').get(jid),
                             },
                             {
                                 name: { en: 'basic', cn: self.en },
                                 value: 'basic',
-                                trigger: (import 'type/basic.libsonnet').get(jid, dataset_name),
+                                trigger: (import 'type/basic.libsonnet').get(jid),
                             },
                         ],
                         default: self.objs[0].value,
@@ -36,6 +37,7 @@
             {
                 local jid = 'validation_iterator',
                 name: { en: 'Validation', cn: self.en },
+                type: '_ignore_',
                 objs: [
                     {
                         _id_: '_k12.validation_iterator.bool',
@@ -45,6 +47,7 @@
                             {
                                 value: true,
                                 trigger: {
+                                    type: '_ignore_',
                                     objs: [
                                         {
                                             _id_: jid + '.type',
@@ -54,12 +57,12 @@
                                                 {
                                                     name: { en: 'bucket', cn: self.en },
                                                     value: 'bucket',
-                                                    trigger: (import 'type/bucket.libsonnet').get(jid, dataset_name),
+                                                    trigger: (import 'type/bucket.libsonnet').get(jid),
                                                 },
                                                 {
                                                     name: { en: 'basic', cn: self.en },
                                                     value: 'basic',
-                                                    trigger: (import 'type/basic.libsonnet').get(jid, dataset_name),
+                                                    trigger: (import 'type/basic.libsonnet').get(jid),
                                                 },
                                             ],
                                             default: self.objs[0].value,

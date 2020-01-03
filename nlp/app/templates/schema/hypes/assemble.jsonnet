@@ -11,20 +11,23 @@
         objs: [
             {
                 name: { en: 'Trainer', cn: self.en },
+                type: '_ignore_',
                 objs: [
-                    (import 'trainer/init.jsonnet').get(jid),
+                    (import 'trainer/__init__.jsonnet').get(jid),
                 ],
             },
             {
                 name: { en: 'Optimizer', cn: self.en },
+                type: '_ignore_',
                 objs: [
-                    (import 'optimizer/init.jsonnet').get(jid + '.optimizer'),
+                    (import 'optimizer/__init__.jsonnet').get(jid + '.optimizer'),
                 ],
             },
             {
                 name: { en: 'LR Scheduler', cn: self.en },
+                type: '_ignore_',
                 objs: [
-                    (import 'lr/init.jsonnet').get(jid + '.learning_rate_scheduler'),
+                    (import 'lr/__init__.jsonnet').get(jid + '.learning_rate_scheduler'),
                 ],
             },
         ],
