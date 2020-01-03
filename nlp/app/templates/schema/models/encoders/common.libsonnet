@@ -4,7 +4,7 @@
 // @version 1.0
 // @date 2020-01-03 15:25
 
-local _Utils = import '../../../utils/helper.libsonnet';
+local _Utils = import '../../utils/helper.libsonnet';
 
 {
     get(jid):: [
