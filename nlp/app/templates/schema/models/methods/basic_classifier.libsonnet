@@ -92,7 +92,7 @@ local _Utils = import '../../utils/helper.libsonnet';
                         objs: [
                             {
                                 _id_: '_k12.' + jid2 + '.encoder.bool',
-                                name: { en: 'Encoder', cn: self.en },
+                                name: { en: 'Enable', cn: self.en },
                                 type: 'bool-trigger',
                                 objs: [
                                     {
@@ -109,6 +109,7 @@ local _Utils = import '../../utils/helper.libsonnet';
                                         trigger: {},
                                     },
                                 ],
+                                readonly: true,
                                 default: false,
                             },
                         ],

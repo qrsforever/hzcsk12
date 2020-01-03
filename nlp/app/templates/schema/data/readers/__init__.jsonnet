@@ -26,7 +26,7 @@ local _READERS = {
         type: 'navigation',
         objs: [
             {
-                local jid = 'dataset_name_reader',
+                local jid = 'dataset_reader',
                 name: { en: 'Train', cn: self.en },
                 type: '_ignore_',
                 objs: [
@@ -40,12 +40,12 @@ local _READERS = {
                 ],
             },
             {
-                local jid = 'validation_dataset_name_reader',
+                local jid = 'validation_dataset_reader',
                 name: { en: 'Validation', cn: self.en },
                 type: '_ignore_',
                 objs: [
                     {
-                        _id_: '_k12.validation_dataset_name_reader.bool',
+                        _id_: '_k12.' + jid + '.bool',
                         name: { en: 'Enable', cn: self.en },
                         type: 'bool-trigger',
                         objs: [

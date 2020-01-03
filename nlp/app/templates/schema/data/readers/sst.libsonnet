@@ -8,15 +8,6 @@ local _Utils = import '../../utils/helper.libsonnet';
 
 {
     get(jid, navi):: [
-        // if navi == 'train' then
-        //     _Utils.string('train_data_path',
-        //                   'Data Path',
-        //                   def=_Utils.dataset_path + '/sst/train.txt',
-        //                   readonly=true) else
-        //     _Utils.string('validation_data_path',
-        //                   'Data Path',
-        //                   def=_Utils.dataset_path + '/sst/dev.txt',
-        //                   readonly=true),
         {
             type: 'H',
             objs: [
@@ -26,7 +17,6 @@ local _Utils = import '../../utils/helper.libsonnet';
             ],
         },
         {
-            local tokenid = jid + 'token_indexers.tokens',
             _id_: '_k12.token_indexers.single_id',
             name: { en: 'single_id', cn: self.en },
             type: 'bool-trigger',
@@ -35,7 +25,7 @@ local _Utils = import '../../utils/helper.libsonnet';
                     value: true,
                     trigger: {
                         type: '_ignore_',
-                        objs: (import 'indexers/single_id.libsonnet').get(tokenid),
+                        objs: (import 'indexers/single_id.libsonnet').get(jid + '.token_indexers.tokens'),
                     },
                 },
                 {
@@ -45,5 +35,18 @@ local _Utils = import '../../utils/helper.libsonnet';
             ],
             default: false,
         },
+        if navi == 'train' then
+            _Utils.string('train_data_path',
+                          'Data Path',
+                          def=_Utils.dataset_path + '/sst/train.txt',
+                          ddd=true,
+                          width=500,
+                          readonly=true) else
+            _Utils.string('validation_data_path',
+                          'Data Path',
+                          def=_Utils.dataset_path + '/sst/dev.txt',
+                          ddd=true,
+                          width=500,
+                          readonly=true),
     ],
 }

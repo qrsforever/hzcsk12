@@ -23,7 +23,7 @@ local _KEYS = {
                     _Utils.stringarray(jid + '.sorting_keys',
                                        'sorting keys',
                                        def=_KEYS[_Utils.dataset_name],
-                                       width=600,
+                                       width=500,
                                        readonly=true),
                     _Utils.float(jid + '.padding_noise', 'padding noise', def=0.1),
                     _Utils.bool(jid + '.biggest_batch_first', 'biggest batch first', def=false),
