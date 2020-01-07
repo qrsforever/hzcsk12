@@ -80,7 +80,7 @@ def k12ai_error_message(code=100000, message=None, detail=False, exc=False, ext_
                             'filename': tb.filename,
                             'linenum': tb.lineno,
                             'funcname': tb.name,
-                            'souce': tb.line
+                            'source': tb.line
                             } # noqa
                     msg['detail']['trackback'].append(err)
 

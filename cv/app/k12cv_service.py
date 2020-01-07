@@ -10,6 +10,7 @@
 import os, sys, time
 import argparse
 import logging, json
+import _jsonnet
 import zerorpc
 import requests
 import consul
@@ -81,11 +82,11 @@ class CVServiceRPC(object):
         self._k12ai = k12ai
         self._image = image
         self._docker = docker.from_env()
+        self._workdir = workdir
+        self._projdir = os.path.abspath( # noqa: E126
+                os.path.dirname(os.path.abspath(__file__)) + os.path.sep + "..")
         if debug:
             logger.info('debug mode')
-            self._workdir = workdir
-            self._projdir = os.path.abspath( # noqa: E126
-                    os.path.dirname(os.path.abspath(__file__)) + os.path.sep + "..")
             logger.info('workdir:%s, projdir:%s', self._workdir, self._projdir)
 
     def send_message(self, op, user, uuid, msgtype, message):
@@ -147,6 +148,13 @@ class CVServiceRPC(object):
 
     def _prepare_environ(self, user, uuid, params):
         try:
+            # config_tree = ConfigFactory.from_dict(params)
+            # config_tree.pop('_k12')
+            # config_str = HOCONConverter.convert(config_tree, 'json')
+            # training_config = os.path.join(self.pro_dir, 'config.json')
+            # with open(training_config, 'w') as fout:
+            #     fout.write(config_str)
+
             if not params or not isinstance(params, dict):
                 return OP_FAILURE, _err_msg(100203, 'parameter must be dict type')
 
@@ -230,7 +238,10 @@ class CVServiceRPC(object):
                 volumes['%s/torchcv/metric'%self._projdir] = {'bind':'%s/torchcv/metric'%self._workdir, 'mode':'rw'}
                 volumes['%s/torchcv/model'%self._projdir] = {'bind':'%s/torchcv/model'%self._workdir, 'mode':'rw'}
                 volumes['%s/torchcv/runner'%self._projdir] = {'bind':'%s/torchcv/runner'%self._workdir, 'mode':'rw'}
-                volumes['%s/torchcv/tools'%self._projdir] = {'bind':'%s/torchcv/tools'%self._workdir, 'mode':'rw'}
+                volumes['%s/torchcv/lib/data'%self._projdir] = {'bind':'%s/torchcv/lib/data'%self._workdir, 'mode':'rw'}
+                volumes['%s/torchcv/lib/model'%self._projdir] = {'bind':'%s/torchcv/lib/model'%self._workdir, 'mode':'rw'}
+                volumes['%s/torchcv/lib/runner'%self._projdir] = {'bind':'%s/torchcv/lib/runner'%self._workdir, 'mode':'rw'}
+                volumes['%s/torchcv/lib/tools'%self._projdir] = {'bind':'%s/torchcv/lib/tools'%self._workdir, 'mode':'rw'}
                 volumes['%s/torchcv/main.py'%self._projdir] = {'bind':'%s/torchcv/main.py'%self._workdir, 'mode':'rw'}
             environs = {
                     'K12CV_RPC_HOST': '%s' % self._host,
@@ -265,6 +276,16 @@ class CVServiceRPC(object):
 
         if message:
             self.send_message(op, user, uuid, "error", message)
+
+    def schema(self, service_task, dataset_path, dataset_name):
+        schema_file = os.path.join(self._projdir, 'app', 'templates', 'schema', 'k12ai_cv.jsonnet')
+        if not os.path.exists(schema_file):
+            return OP_FAILURE, f'schema file: {schema_file} not found'
+        schema_json = _jsonnet.evaluate_file(schema_file, ext_vars={
+            'task': service_task, 
+            'dataset_path': dataset_path,
+            'dataset_name': dataset_name})
+        return OP_SUCCESS, schema_json
 
     def train(self, op, user, uuid, params):
         logger.info("call train(%s, %s, %s)", op, user, uuid)

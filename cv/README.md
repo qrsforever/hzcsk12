@@ -22,6 +22,7 @@ QRS
 
 | 文件 | 原因 |
 |:----|:----|
-| `main.py` | 添加hzcs初始函数以及异常捕捉 |
-| `data/tools/cv2_aug_transforms.py` | det训练RandomResizeCrop异常 |
-| `tools/util/logger.py1` | 截获日志, 捕捉错误 |
+| `torchcv/main.py` | 添加hzcs初始函数以及异常捕捉 |
+| `torchcv/data/tools/cv2_aug_transforms.py` | det训练RandomResizeCrop异常 |
+| `torchcv/tools/util/logger.py` | 截获日志, 捕捉错误 |
+| `torchcv/model/cls/nets/base_model.py` | 运行错误fix bug |

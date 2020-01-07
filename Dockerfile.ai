@@ -67,8 +67,8 @@ COPY external/en_core_web_sm/en_core_web_sm-2.1.0.tar.gz external/en_core_web_sm
 RUN pip install --no-cache-dir external/en_core_web_sm.tar.gz
 
 # install imgaug
-# COPY external/imgaug/imgaug-master-20190828.zip external/imgaug-master.zip
-# RUN pip install -v --no-cache-dir external/imgaug-master.zip
+COPY external/imgaug/imgaug-master-20190828.zip external/imgaug-master.zip
+RUN pip install --no-cache-dir external/imgaug-master.zip
 
 # check install scripts
 COPY external/docker/scripts/check_install.sh external/check_install.sh

@@ -10,10 +10,10 @@
 import torch
 
 from data.cls.data_loader import DataLoader
-from runner.tools.runner_helper import RunnerHelper
+from lib.runner.runner_helper import RunnerHelper
 from model.cls.model_manager import ModelManager
 from metric.cls.cls_running_score import ClsRunningScore
-from tools.util.logger import Logger as Log
+from lib.tools.util.logger import Logger as Log
 
 from k12cv.tools.util.rpc_message import hzcsk12_send_message
 

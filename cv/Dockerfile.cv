@@ -30,26 +30,26 @@ $REPOSITORY:$TAG"
 
 WORKDIR /hzcsk12/cv
 
-ADD torchcv/requirements.txt requirements.txt
-RUN pip install -v --no-cache-dir --timeout 120 -r requirements.txt
-RUN rm requirements.txt
+ARG FORCE_CUDA="1"
+ENV FORCE_CUDA=${FORCE_CUDA}
+ENV CUDA_HOME=/usr/local/cuda
+ENV PYTHONPATH=/hzcsk12/cv/app:/hzcsk12/cv/torchcv:$PYTHONPATH
+
+# ADD torchcv/requirements.txt requirements.txt
+# RUN pip3 install --no-cache-dir --timeout 120 -r requirements.txt
+# RUN rm requirements.txt
 
 COPY app app
 COPY torchcv/data torchcv/data 
-COPY torchcv/exts torchcv/exts
+COPY torchcv/lib torchcv/lib
 COPY torchcv/metric torchcv/metric
 COPY torchcv/model torchcv/model
 COPY torchcv/runner torchcv/runner
-COPY torchcv/tools torchcv/tools
 COPY torchcv/main.py torchcv/main.py
 
 # install torchcv extensions
-RUN cd torchcv/exts && \
+RUN cd torchcv/lib/exts && \
         chmod +x make.sh && \
         sh make.sh
-
-ARG FORCE_CUDA="1"
-ENV FORCE_CUDA=${FORCE_CUDA}
-ENV PYTHONPATH=/hzcsk12/cv/app:/hzcsk12/cv/torchcv:$PYTHONPATH
 
 CMD ["/bin/bash"]

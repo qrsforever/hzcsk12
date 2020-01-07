@@ -9,7 +9,7 @@
 
 import os
 
-from tools.util.logger import Logger as Log
+from lib.tools.util.logger import Logger as Log
 
 from k12cv.runner.cls.image_classifier_test import ImageClassifierTest
 from k12cv.runner.det.single_shot_detector_test import SingleShotDetectorTest

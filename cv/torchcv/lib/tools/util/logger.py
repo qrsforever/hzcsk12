@@ -9,6 +9,13 @@ import logging
 import os
 import sys
 
+# QRS: add
+try:
+    from k12cv.tools.util.log_parser import hzcsk12_log_parser
+except:
+    def hzcsk12_log_parser(level, filename, lineno, message):
+        pass
+
 
 DEFAULT_LOG_LEVEL = 'info'
 DEFAULT_LOG_FORMAT = '%(asctime)s %(levelname)-7s %(message)s'
@@ -69,6 +76,8 @@ class Logger(object):
         filename = os.path.basename(sys._getframe().f_back.f_code.co_filename)
         lineno = sys._getframe().f_back.f_lineno
         prefix = '[{}, {}]'.format(filename,lineno)
+        # QRS: add
+        hzcsk12_log_parser('info', filename, lineno, message)
         Logger.logger.info('{} {}'.format(prefix, message))
 
     @staticmethod
@@ -77,6 +86,8 @@ class Logger(object):
         filename = os.path.basename(sys._getframe().f_back.f_code.co_filename)
         lineno = sys._getframe().f_back.f_lineno
         prefix = '[{}, {}]'.format(filename,lineno)
+        # QRS: add
+        hzcsk12_log_parser('warn', filename, lineno, message)
         Logger.logger.warn('{} {}'.format(prefix, message))
 
     @staticmethod
@@ -85,6 +96,8 @@ class Logger(object):
         filename = os.path.basename(sys._getframe().f_back.f_code.co_filename)
         lineno = sys._getframe().f_back.f_lineno
         prefix = '[{}, {}]'.format(filename,lineno)
+        # QRS: add
+        hzcsk12_log_parser('error', filename, lineno, message)
         Logger.logger.error('{} {}'.format(prefix, message))
 
     @staticmethod
@@ -93,6 +106,8 @@ class Logger(object):
         filename = os.path.basename(sys._getframe().f_back.f_code.co_filename)
         lineno = sys._getframe().f_back.f_lineno
         prefix = '[{}, {}]'.format(filename,lineno)
+        # QRS: add
+        hzcsk12_log_parser('critical', filename, lineno, message)
         Logger.logger.critical('{} {}'.format(prefix, message))
 
 

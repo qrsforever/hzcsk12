@@ -9,12 +9,12 @@
 
 import torch
 
-from tools.util.logger import Logger as Log
+from lib.tools.util.logger import Logger as Log
 from data.det.data_loader import DataLoader
-from runner.tools.runner_helper import RunnerHelper
+from lib.runner.runner_helper import RunnerHelper
 from model.det.model_manager import ModelManager
 from metric.det.det_running_score import DetRunningScore
-from tools.helper.dc_helper import DCHelper
+from lib.tools.helper.dc_helper import DCHelper
 
 from runner.det.single_shot_detector_test import SingleShotDetectorTest as SSDT
 from k12cv.tools.util.rpc_message import hzcsk12_send_message
