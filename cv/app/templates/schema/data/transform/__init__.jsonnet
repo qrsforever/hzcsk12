@@ -140,12 +140,34 @@ local _aug_trans_group_item(jid, method, display) = {
                         default: self.objs[0].value,
                     },
                 ] + (
-                    if method == 'random_brightness'
+                    if method == 'random_border'
+                    then (import 'random/random_border.libsonnet').get(jid + '.aug_trans.random_border')
+                    else if method == 'random_brightness'
                     then (import 'random/random_brightness.libsonnet').get(jid + '.aug_trans.random_brightness')
                     else if method == 'random_contrast'
                     then (import 'random/random_contrast.libsonnet').get(jid + '.aug_trans.random_contrast')
+                    else if method == 'random_crop'
+                    then (import 'random/random_crop.libsonnet').get(jid + '.aug_trans.random_crop')
+                    else if method == 'random_det_crop'
+                    then (import 'random/random_det_crop.libsonnet').get(jid + '.aug_trans.random_det_crop')
+                    else if method == 'random_focus_crop'
+                    then (import 'random/random_focus_crop.libsonnet').get(jid + '.aug_trans.random_focus_crop')
+                    else if method == 'random_hflip'
+                    then (import 'random/random_hflip.libsonnet').get(jid + '.aug_trans.random_hflip')
+                    else if method == 'random_hsv'
+                    then (import 'random/random_hsv.libsonnet').get(jid + '.aug_trans.random_hsv')
                     else if method == 'random_hue'
                     then (import 'random/random_hue.libsonnet').get(jid + '.aug_trans.random_hue')
+                    else if method == 'random_pad'
+                    then (import 'random/random_pad.libsonnet').get(jid + '.aug_trans.random_pad')
+                    else if method == 'random_perm'
+                    then (import 'random/random_perm.libsonnet').get(jid + '.aug_trans.random_perm')
+                    else if method == 'random_resize'
+                    then (import 'random/random_resize.libsonnet').get(jid + '.aug_trans.random_resize')
+                    else if method == 'random_resized_crop'
+                    then (import 'random/random_resized_crop.libsonnet').get(jid + '.aug_trans.random_resized_crop')
+                    else if method == 'random_rotate'
+                    then (import 'random/random_rotate.libsonnet').get(jid + '.aug_trans.random_rotate')
                     else if method == 'random_saturation'
                     then (import 'random/random_saturation.libsonnet').get(jid + '.aug_trans.random_saturation')
                     else []
@@ -164,9 +186,19 @@ local _augment_transform(jid, label) = {
     name: { en: label + ' Augment Transform', cn: self.en },
     type: 'H',
     objs: [
+        _aug_trans_group_item('train', 'random_border', 'Random Border'),
         _aug_trans_group_item('train', 'random_brightness', 'Random Brightness'),
         _aug_trans_group_item('train', 'random_contrast', 'Random Contrast'),
+        _aug_trans_group_item('train', 'random_crop', 'Random Crop'),
+        _aug_trans_group_item('train', 'random_det_crop', 'Random Det Crop'),
+        _aug_trans_group_item('train', 'random_gauss_blur', 'Random Gauss Blur'),
+        _aug_trans_group_item('train', 'random_hsv', 'Random HSV'),
         _aug_trans_group_item('train', 'random_hue', 'Random Hue'),
+        _aug_trans_group_item('train', 'random_pad', 'Random Pad'),
+        _aug_trans_group_item('train', 'random_perm', 'Random Perm'),
+        _aug_trans_group_item('train', 'random_resize', 'Random Resize'),
+        _aug_trans_group_item('train', 'random_resized_crop', 'Random Resized Crop'),
+        _aug_trans_group_item('train', 'random_rotate', 'Random Rotate'),
         _aug_trans_group_item('train', 'random_saturation', 'Random Saturation'),
     ],
 };

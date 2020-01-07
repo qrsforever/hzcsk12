@@ -91,7 +91,7 @@
             ],
         },
         network: {
-            model_name: 'cls_model',
+            model_name: 'base_model',
             backbone: 'vgg19',
             pooled_size: [
                 1,
