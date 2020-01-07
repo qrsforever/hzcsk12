@@ -234,7 +234,6 @@ class NLPServiceRPC(object):
                 self.send_message(op, user, uuid, "status", {'value':'starting'})
                 try:
                     if con:
-                        print("#################")
                         con.remove()
                     con = self._docker.containers.run(self._image,
                             command, **kwargs)
