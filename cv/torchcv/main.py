@@ -13,17 +13,10 @@ import torch
 import torch.backends.cudnn as cudnn
 
 from runner.runner_selector import RunnerSelector
-from runner.tools.controller import Controller
-from tools.util.configer import Configer
-from tools.util.logger import Logger as Log
+from lib.runner.controller import Controller
+from lib.tools.util.configer import Configer
+from lib.tools.util.logger import Logger as Log
 
-# QRS: add
-try:
-    from k12cv.k12cv_init import hzcsk12_cv_init
-except Exception as err:
-    def hzcsk12_cv_init(configer):
-        pass
-    print(err)
 
 def str2bool(v):
     """ Usage:
@@ -170,38 +163,28 @@ if __name__ == "__main__":
     Log.info('BN Type is {}.'.format(configer.get('network', 'norm_type')))
     Log.info('Config Dict: {}'.format(json.dumps(configer.to_dict(), indent=2)))
 
-    # QRS: add
-    hzcsk12_cv_init(configer)
-    try:
-        runner_selector = RunnerSelector(configer)
-        runner = None
-        if configer.get('task') == 'pose':
-            runner = runner_selector.pose_runner()
-        elif configer.get('task') == 'seg':
-            runner = runner_selector.seg_runner()
-        elif configer.get('task') == 'det':
-            runner = runner_selector.det_runner()
-        elif configer.get('task') == 'cls':
-            runner = runner_selector.cls_runner()
-        elif configer.get('task') == 'gan':
-            runner = runner_selector.gan_runner()
-        else:
-            Log.error('Task: {} is not valid.'.format(configer.get('task')))
-            exit(1)
-        if configer.get('phase') == 'train':
-            if configer.get('network', 'resume') is None or not configer.get('network.resume_continue'):
-                Controller.init(runner)
-
-            Controller.train(runner)
-        elif configer.get('phase') == 'test' and configer.get('network', 'resume') is not None:
-            Controller.test(runner)
-        else:
-            Log.error('Phase: {} is not valid.'.format(configer.get('phase')))
-            exit(1)
-    except Exception as err:
-        # QRS: add for catch internal except
-        Log.critical('except: {}'.format(err))
+    runner_selector = RunnerSelector(configer)
+    runner = None
+    if configer.get('task') == 'pose':
+        runner = runner_selector.pose_runner()
+    elif configer.get('task') == 'seg':
+        runner = runner_selector.seg_runner()
+    elif configer.get('task') == 'det':
+        runner = runner_selector.det_runner()
+    elif configer.get('task') == 'cls':
+        runner = runner_selector.cls_runner()
+    elif configer.get('task') == 'gan':
+        runner = runner_selector.gan_runner()
     else:
-        Log.info('k12cv finish')
-    finally:
-        pass
+        Log.error('Task: {} is not valid.'.format(configer.get('task')))
+        exit(1)
+    if configer.get('phase') == 'train':
+        if configer.get('network', 'resume') is None or not configer.get('network.resume_continue'):
+            Controller.init(runner)
+
+        Controller.train(runner)
+    elif configer.get('phase') == 'test' and configer.get('network', 'resume') is not None:
+        Controller.test(runner)
+    else:
+        Log.error('Phase: {} is not valid.'.format(configer.get('phase')))
+        exit(1)
