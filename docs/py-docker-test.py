@@ -71,5 +71,27 @@ def main():
 
     print("end!")
 
+def main2():
+    client = docker.from_env()
+    args = {
+            'detach':True,
+            'auto_remove':True,
+            'network_mode':'host',
+            'volumes':{
+                '/data':{'bind':'/data', 'mode':'rw'}
+                }
+            }
+    img = 'hzcsai_com/k12ai'
+    cmd = '/bin/bash top' 
+    name = 'k12ai-test'
+    try:
+        client.containers.run(img, cmd, name=name, **args)
+    except Exception as err:
+        print(err)
+
+    time.sleep(10)
+
 if __name__ == "__main__":
-    main()
+    # main()
+    main2()
+

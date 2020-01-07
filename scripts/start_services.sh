@@ -104,6 +104,19 @@ __service_environment_check()
     then
         echo "##############"
         echo "Please install docker and nvidia-docker manually, then run deps_install.sh"
+        echo "Edit/create the /etc/docker/daemon.json"
+        echo "{"
+        echo "    \"runtimes\": {"
+        echo "       \"nvidia\": {"
+        echo "            \"path\": \"nvidia-container-runtime\","
+        echo "            \"runtimeArgs\": []",
+        echo "        }"
+        echo "    },"
+        echo "    \"default-runtime\": \"nvidia\""
+        echo "}"
+        echo ""
+        echo "sudo apt-get install nvidia-container-runtime"
+        echo "sudo systemctl restart docker.service"
         echo "##############"
         exit -1
     fi
