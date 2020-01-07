@@ -29,13 +29,6 @@ from allennlp.training.optimizers import Optimizer
 from allennlp.training.tensorboard_writer import TensorboardWriter
 from allennlp.training.trainer_base import TrainerBase
 
-# QRS: add for report message
-try:
-    from k12nlp.common.util import hzcsk12_send_message
-except:
-    def hzcsk12_send_message(msgtype, message, end=False):
-        pass
-
 logger = logging.getLogger(__name__)
 
 
@@ -111,7 +104,7 @@ class Trainer(TrainerBase):
         validation_iterator : ``DataIterator``, optional (default=None)
             An iterator to use for the validation set.  If ``None``, then
             use the training `iterator`.
-        shuffle: ``bool``, optional (default=True)
+        shuffle : ``bool``, optional (default=True)
             Whether to shuffle the instances in the iterator or not.
         num_epochs : int, optional (default = 20)
             Number of training epochs.
@@ -156,7 +149,7 @@ class Trainer(TrainerBase):
         momentum_scheduler : ``MomentumScheduler``, optional (default = None)
             If specified, the momentum will be updated at the end of each batch or epoch
             according to the schedule.
-        summary_interval: ``int``, optional, (default = 100)
+        summary_interval : ``int``, optional, (default = 100)
             Number of batches between logging scalars to tensorboard
         histogram_interval : ``int``, optional, (default = ``None``)
             If not None, then log histograms to tensorboard every ``histogram_interval`` batches.
@@ -179,22 +172,22 @@ class Trainer(TrainerBase):
             Whether to send parameter specific learning rate to tensorboard.
         log_batch_size_period : ``int``, optional, (default = ``None``)
             If defined, how often to log the average batch size.
-        moving_average: ``MovingAverage``, optional, (default = None)
+        moving_average : ``MovingAverage``, optional, (default = None)
             If provided, we will maintain moving averages for all parameters. During training, we
             employ a shadow variable for each parameter, which maintains the moving average. During
             evaluation, we backup the original parameters and assign the moving averages to corresponding
             parameters. Be careful that when saving the checkpoint, we will save the moving averages of
             parameters. This is necessary because we want the saved model to perform as well as the validated
             model if we load it later. But this may cause problems if you restart the training from checkpoint.
-        distributed: ``bool``, optional, (default = False)
+        distributed : ``bool``, optional, (default = False)
             If set, PyTorch's `DistributedDataParallel` is used to train the model in multiple GPUs. This also
             requires `world_size` to be greater than 1.
-        rank: ``int``, optional, (default = 0)
+        rank : ``int``, optional, (default = 0)
             This is the unique identifier of the `Trainer` in a distributed process group. The GPU device id is
             used as the rank.
-        world_size: ``int``, (default = 1)
+        world_size : ``int``, (default = 1)
             The number of `Trainer` workers participating in the distributed training.
-        num_gradient_accumulation_steps: ``int``, optional, (default = 1)
+        num_gradient_accumulation_steps : ``int``, optional, (default = 1)
             Gradients are accumulated for the given number of steps before doing an optimizer step. This can
             be useful to accommodate batches that are larger than the RAM size. Refer Thomas Wolf's
             [post](https://tinyurl.com/y5mv44fw) for details on Gradient Accumulation.
@@ -291,7 +284,9 @@ class Trainer(TrainerBase):
         # normal case, reference to `Model` is retained. This reference is only used in
         # these places: `model.__call__`, `model.train` and `model.eval`.
         if self._distributed:
-            self._pytorch_model = DistributedDataParallel(self.model, device_ids=[self.cuda_device])
+            self._pytorch_model = DistributedDataParallel(
+                self.model, device_ids=[self.cuda_device], find_unused_parameters=True
+            )
         else:
             self._pytorch_model = self.model
 
@@ -447,10 +442,6 @@ class Trainer(TrainerBase):
                     )
                     self._tensorboard.add_train_scalar("current_batch_size", batch_group_size)
                     self._tensorboard.add_train_scalar("mean_batch_size", average)
-
-                # QRS: add
-                if self._batch_num_total % 100 == 0:
-                    hzcsk12_send_message('metrics', metrics)
 
             # Save model if needed.
             if (
@@ -630,9 +621,6 @@ class Trainer(TrainerBase):
                     os.path.join(self._serialization_dir, f"metrics_epoch_{epoch}.json"), metrics
                 )
 
-            # QRS: add                               
-            hzcsk12_send_message('metrics', metrics)
-
             # The Scheduler API is agnostic to whether your schedule requires a validation metric -
             # if it doesn't, the validation metric passed here is ignored.
             if self._learning_rate_scheduler:
@@ -662,9 +650,6 @@ class Trainer(TrainerBase):
 
         # make sure pending events are flushed to disk and files are closed properly
         self._tensorboard.close()
-
-        # QRS: add
-        hzcsk12_send_message('metrics', metrics, True)
 
         # Load the best model state before returning
         best_model_state = self._checkpointer.best_model_state()

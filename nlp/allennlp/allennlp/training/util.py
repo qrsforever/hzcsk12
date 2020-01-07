@@ -22,13 +22,6 @@ from allennlp.models.model import Model
 from allennlp.models.archival import CONFIG_NAME
 from allennlp.nn import util as nn_util
 
-# QRS: add for report message
-try:
-    from k12nlp.common.util import hzcsk12_send_message
-except:
-    def hzcsk12_send_message(msgtype, message, end=False):
-        pass
-
 logger = logging.getLogger(__name__)
 
 
@@ -261,14 +254,14 @@ def create_serialization_dir(
 
     Parameters
     ----------
-    params: ``Params``
+    params : ``Params``
         A parameter object specifying an AllenNLP Experiment.
-    serialization_dir: ``str``
+    serialization_dir : ``str``
         The directory in which to save results and logs.
-    recover: ``bool``
+    recover : ``bool``
         If ``True``, we will try to recover from an existing serialization directory, and crash if
         the directory doesn't exist, or doesn't match the configuration we're given.
-    force: ``bool``
+    force : ``bool``
         If ``True``, we will overwrite the serialization directory if it already exists.
     """
     if recover and force:
@@ -448,10 +441,6 @@ def evaluate(
                 + " ||"
             )
             generator_tqdm.set_description(description, refresh=False)
-
-            # QRS: add
-            if batch_count % 120 == 0:
-                hzcsk12_send_message('metrics', metrics)
 
         final_metrics = model.get_metrics(reset=True)
         if loss_count > 0:
