@@ -9,6 +9,6 @@ local _Utils = import '../../utils/helper.libsonnet';
 {
     get(jid)::
         [
-            _Utils.int(jid + '.batch_size', 'batch size', min=8, def=32),
+            _Utils.int(jid + '.batch_size', 'Batch Size', min=8, def=32),
         ],
 }

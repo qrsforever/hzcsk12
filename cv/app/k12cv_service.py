@@ -228,8 +228,16 @@ class CVServiceRPC(object):
                     'k12ai.service.user': user,
                     'k12ai.service.uuid': uuid
                     }
+
+            usercache = '/data/usercache/%s/%s'%(user, uuid)
+            if not os.path.exists(usercache):
+                os.makedirs(usercache)
+
             volumes = { # noqa
-                    '/data': {'bind':'/data', 'mode':'rw'}
+                    '/data': {'bind':'/data', 'mode':'rw'}, # TODO will delete
+                    '/data/datasets/cv': {'bind': '/datasets'r, 'mode': 'rw'},
+                    '/data/pretrained/cv': {'bind': '/pretrained', 'mode': 'rw'},
+                    usercache: {'bind':'/cache', 'mode': 'rw'},
                     }
             if self._debug:
                 rm_flag = False
@@ -277,14 +285,17 @@ class CVServiceRPC(object):
         if message:
             self.send_message(op, user, uuid, "error", message)
 
-    def schema(self, service_task, dataset_path, dataset_name):
+    def schema(self, task, dataset_name):
         schema_file = os.path.join(self._projdir, 'app', 'templates', 'schema', 'k12ai_cv.jsonnet')
         if not os.path.exists(schema_file):
             return OP_FAILURE, f'schema file: {schema_file} not found'
         schema_json = _jsonnet.evaluate_file(schema_file, ext_vars={
-            'task': service_task, 
-            'dataset_path': dataset_path,
-            'dataset_name': dataset_name})
+            'task': task, 
+            'dataset_name': dataset_name,
+            'dataset_root': '/datasets',
+            'checkpt_root': '/cache',
+            'pretrained_path': '/pretrained',
+            })
         return OP_SUCCESS, schema_json
 
     def train(self, op, user, uuid, params):

@@ -7,8 +7,10 @@
 {
     version:: '0.0.1b',
     task:: std.extVar('task'),
-    dataset_path:: std.extVar('dataset_path'),
     dataset_name:: std.extVar('dataset_name'),
+    dataset_path:: std.extVar('dataset_root') + '/' + $.dataset_name,
+    checkpt_root:: std.extVar('checkpt_root'),
+    pretrained_path:: std.extVar('pretrained_path'),
 
     // usage: get_value(confg, 'a.b.c', 100)
     get_value(obj, keystr, def)::
@@ -37,8 +39,12 @@
 
     // default dataset, can set default value
     datasets:: {
-        [if $.dataset_name == 'mnist' then 'mnist']: (import '../constants/datasets/mnist.jsonnet').get($.dataset_path),
-        [if $.dataset_name == 'cifar10' then 'cifar10']: (import '../constants/datasets/cifar10.jsonnet').get($.dataset_path),
+        [if $.dataset_name == 'mnist' then 'mnist']: (import
+                                                          '../constants/datasets/mnist.jsonnet').get($.dataset_path,
+                                                                                                     $.checkpt_root),
+        [if $.dataset_name == 'cifar10' then 'cifar10']: (import
+                                                              '../constants/datasets/cifar10.jsonnet').get($.dataset_path,
+                                                                                                           $.checkpt_root),
     },
 
     // basic type node generator function
@@ -83,6 +89,17 @@
         _id_: id,
         name: { en: en, cn: if std.length(cn) == 0 then self.en else cn },
         type: 'string',
+        default: if ddd then $.get_default_value(id, def) else def,
+        [if std.length(tips) > 0 then 'tips']: tips,
+        [if width > 0 then 'width']: width,
+        [if height > 0 then 'height']: height,
+        [if readonly then 'readonly']: readonly,
+    },
+
+    text(id, en, cn='', def='', ddd=false, tips='', width=-1, height=-1, readonly=false):: {
+        _id_: id,
+        name: { en: en, cn: if std.length(cn) == 0 then self.en else cn },
+        type: 'text',
         default: if ddd then $.get_default_value(id, def) else def,
         [if std.length(tips) > 0 then 'tips']: tips,
         [if width > 0 then 'width']: width,

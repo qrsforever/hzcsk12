@@ -36,8 +36,8 @@
             def,
 
     // default dataset, can set default value
-    datasets:: {
-        sst: (import '../constants/datasets/sst.jsonnet').get($.dataset_path),
+    datasets: {
+        [if $.dataset_name == 'sst' then 'sst']: (import '../constants/datasets/sst.jsonnet').get($.dataset_path),
     },
 
     // basic type node generator function

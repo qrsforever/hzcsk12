@@ -1,12 +1,12 @@
 {
-    get(dataset_path):: {
+    get(dataset_path, checkpt_root):: {
         dataset: 'default',
         task: 'cls',
         method: 'image_classifier',
         data: {
             num_records: 70000,
             num_classes: 10,
-            data_dir: dataset_path + '/mnist',
+            data_dir: dataset_path,
             image_tool: 'cv2',
             input_mode: 'BGR',
             workers: 1,
@@ -97,6 +97,9 @@
                 1,
                 1,
             ],
+            checkpoints_dir: 'ckpts',
+            checkpoints_root: checkpt_root,
+            checkpoints_name: 'mnist',
         },
         solver: {
             lr: {

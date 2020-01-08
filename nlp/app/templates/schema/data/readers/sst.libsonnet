@@ -37,13 +37,13 @@ local _Utils = import '../../utils/helper.libsonnet';
         },
         if navi == 'train' then
             _Utils.string('train_data_path',
-                          'Data Path',
+                          'Dataset Path',
                           def=_Utils.dataset_path + '/sst/train.txt',
                           ddd=true,
                           width=500,
                           readonly=true) else
             _Utils.string('validation_data_path',
-                          'Data Path',
+                          'Dataset Path',
                           def=_Utils.dataset_path + '/sst/dev.txt',
                           ddd=true,
                           width=500,

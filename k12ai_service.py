@@ -179,7 +179,6 @@ def _framework_schema():
         else:
             service_name = reqjson['service_name']
             service_task = reqjson['service_task']
-            dataset_path = reqjson['dataset_path']
             dataset_name = reqjson['dataset_name']
     except Exception:
         return json.dumps(_err_msg(100101, exc=True))
@@ -188,7 +187,7 @@ def _framework_schema():
     if not agent:
         return json.dumps(_err_msg(100201, f'service name:{service_name}'))
     try:
-        code, msg = agent.schema(service_task, dataset_path, dataset_name)
+        code, msg = agent.schema(service_task, dataset_name)
         return json.dumps(_err_msg(100202 if code < 0 else 100000, msg))
     except Exception:
         return json.dumps(_err_msg(100202, exc=True))

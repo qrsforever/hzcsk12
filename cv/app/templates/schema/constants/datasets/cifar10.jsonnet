@@ -1,12 +1,12 @@
 {
-    get(dataset_path):: {
+    get(dataset_path, checkpt_root):: {
         dataset: 'default',
         task: 'cls',
         method: 'image_classifier',
         data: {
             num_records: 60000,
             num_classes: 10,
-            data_dir: dataset_path + '/cifar10',
+            data_dir: dataset_path,
             image_tool: 'pil',
             input_mode: 'RGB',
             workers: 1,
@@ -124,6 +124,9 @@
                 1,
                 1,
             ],
+            checkpoints_dir: 'ckpts',
+            checkpoints_root: checkpt_root,
+            checkpoints_name: 'cifar10',
         },
         solver: {
             lr: {

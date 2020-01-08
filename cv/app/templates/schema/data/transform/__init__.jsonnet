@@ -122,10 +122,11 @@ local _aug_trans_group_item(jid, method, display) = {
         {
             value: true,
             trigger: {
+                type: 'H',
                 objs: [
                     {
                         _id_: '_k12._stringarray_.' + jid + '.' + method,
-                        name: { en: 'Transform Type', cn: self.en },
+                        name: { en: 'type', cn: self.en },
                         type: 'string-enum',
                         objs: [
                             {
@@ -183,23 +184,23 @@ local _aug_trans_group_item(jid, method, display) = {
 };
 
 local _augment_transform(jid, label) = {
-    name: { en: label + ' Augment Transform', cn: self.en },
-    type: 'H',
+    name: { en: label + ' Random Transform', cn: self.en },
+    type: 'V',
     objs: [
-        _aug_trans_group_item('train', 'random_border', 'Random Border'),
-        _aug_trans_group_item('train', 'random_brightness', 'Random Brightness'),
-        _aug_trans_group_item('train', 'random_contrast', 'Random Contrast'),
-        _aug_trans_group_item('train', 'random_crop', 'Random Crop'),
-        _aug_trans_group_item('train', 'random_det_crop', 'Random Det Crop'),
-        _aug_trans_group_item('train', 'random_gauss_blur', 'Random Gauss Blur'),
-        _aug_trans_group_item('train', 'random_hsv', 'Random HSV'),
-        _aug_trans_group_item('train', 'random_hue', 'Random Hue'),
-        _aug_trans_group_item('train', 'random_pad', 'Random Pad'),
-        _aug_trans_group_item('train', 'random_perm', 'Random Perm'),
-        _aug_trans_group_item('train', 'random_resize', 'Random Resize'),
-        _aug_trans_group_item('train', 'random_resized_crop', 'Random Resized Crop'),
-        _aug_trans_group_item('train', 'random_rotate', 'Random Rotate'),
-        _aug_trans_group_item('train', 'random_saturation', 'Random Saturation'),
+        _aug_trans_group_item(jid, 'random_border', 'Border'),
+        _aug_trans_group_item(jid, 'random_brightness', 'Brightness'),
+        _aug_trans_group_item(jid, 'random_contrast', 'Contrast'),
+        _aug_trans_group_item(jid, 'random_crop', 'Crop'),
+        _aug_trans_group_item(jid, 'random_det_crop', 'Det Crop'),
+        _aug_trans_group_item(jid, 'random_gauss_blur', 'Gauss Blur'),
+        _aug_trans_group_item(jid, 'random_hsv', 'HSV'),
+        _aug_trans_group_item(jid, 'random_hue', 'Hue'),
+        _aug_trans_group_item(jid, 'random_pad', 'Pad'),
+        _aug_trans_group_item(jid, 'random_perm', 'Perm'),
+        _aug_trans_group_item(jid, 'random_resize', 'Resize'),
+        _aug_trans_group_item(jid, 'random_resized_crop', 'Resized Crop'),
+        _aug_trans_group_item(jid, 'random_rotate', 'Rotate'),
+        _aug_trans_group_item(jid, 'random_saturation', 'Saturation'),
     ],
 };
 
@@ -232,7 +233,6 @@ local _augment_transform(jid, label) = {
                         type: '_ignore_',
                         objs: [
                             _data_transform('test', 'Test'),
-                            _augment_transform('test', 'Test'),
                         ],
                     },
                 ],

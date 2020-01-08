@@ -12,6 +12,7 @@ local _KEYS = {
 
 {
     get(jid):: {
+        type: '_ignore_',
         objs: [
             {
                 type: 'H',

@@ -10,7 +10,6 @@ local _Utils = import '../../../utils/helper.libsonnet';
     get(jid): [
         _Utils.float(jid + '.radio', 'radio', def=0.5),
         _Utils.floatarray(jid + '.crop_size', 'crop size', def=[32, 32]),
-        _Utils.bool(jid + '.allow_outsize_center', 'outsize center', def=true),
         {
             _id_: jid + '.method',
             name: { en: 'method', cn: self.en },
@@ -32,5 +31,6 @@ local _Utils = import '../../../utils/helper.libsonnet';
             ],
             default: self.objs[0].value,
         },
+        _Utils.bool(jid + '.allow_outsize_center', 'outsize center', def=true),
     ],
 }
