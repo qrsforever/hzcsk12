@@ -175,6 +175,18 @@ def _framework_schema():
                     'task': 'sentiment_analysis',
                     'dataset_path': '/data/datasets/nlp',
                     'dataset_name': 'sst'})
+            elif file in ('k12ai_cv.jsonnet'):
+                schema_dir = os.path.join(topdir, 'hzcsk12', 'cv', 'app', 'templates', 'schema')
+                basic_file = os.path.join(schema_dir, file) 
+                if not os.path.exists(basic_file):
+                    return json.dumps(_err_msg(100102, f'{file} is not exist'))
+                basic_json = _jsonnet.evaluate_file(basic_file, ext_vars={
+                    'task': 'cls',
+                    'dataset_name': 'mnist',
+                    'dataset_root': '/datasets',
+                    'checkpt_root': '/cache',
+                    'pretrained_path': '/pretrained',
+                    })
             return basic_json
         else:
             service_name = reqjson['service_name']

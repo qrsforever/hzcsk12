@@ -235,7 +235,7 @@ class CVServiceRPC(object):
 
             volumes = { # noqa
                     '/data': {'bind':'/data', 'mode':'rw'}, # TODO will delete
-                    '/data/datasets/cv': {'bind': '/datasets'r, 'mode': 'rw'},
+                    '/data/datasets/cv': {'bind': '/datasets', 'mode': 'rw'},
                     '/data/pretrained/cv': {'bind': '/pretrained', 'mode': 'rw'},
                     usercache: {'bind':'/cache', 'mode': 'rw'},
                     }
