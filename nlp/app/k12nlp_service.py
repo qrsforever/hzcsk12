@@ -274,8 +274,6 @@ class NLPServiceRPC(object):
         if os.path.exists(serial_conf):
             if not _check_config_diff(training_config, serial_conf):
                 flag = '--recover'
-        # command = 'allennlp train {} {} -s {} --include-package {}'.format(
-                # training_config, flag, output_dir, self._libs)
         command = 'allennlp train {} {} -s {}'.format(
                 training_config, flag, output_dir)
         Thread(target=lambda: self._run(op=op, user=user, uuid=uuid, command=command),

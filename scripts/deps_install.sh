@@ -69,3 +69,10 @@ else
     echo "pyhocon ok"
 fi
 
+check=`python3 -c "import redis" 2>&1`
+if [[ x$check != x ]]
+then
+    sudo pip3 install redis
+else
+    echo "redis ok"
+fi

@@ -13,6 +13,7 @@ import argparse
 import logging
 import zerorpc
 import consul
+import redis
 from flask import Flask, request
 from flask_cors import CORS
 from threading import Thread
@@ -39,6 +40,8 @@ app_host_ip = _get_hostip()
 
 consul_addr = None
 consul_port = None
+
+g_redis = None
 
 def _delay_do_consul(host, port):
     time.sleep(3)
@@ -284,11 +287,11 @@ def _framework_predict():
 def _framework_message():
     logger.info('call _framework_message')
     try:
-        reqjson = request.json
+        if g_redis:
+            g_redis.lpush('k12ai', request.get_data().decode())
     except Exception as err:
         logger.info(err)
         return "error"
-    logger.info(reqjson)
     return "1"
 
 
@@ -307,6 +310,24 @@ if __name__ == "__main__":
             dest='port',
             help="port to run k12ai service")
     parser.add_argument(
+            '--redis_addr',
+            default=None,
+            type=str,
+            dest='redis_addr',
+            help="redis address")
+    parser.add_argument(
+            '--redis_port',
+            default=10090,
+            type=int,
+            dest='redis_port',
+            help="redis port")
+    parser.add_argument(
+            '--redis_passwd',
+            default='123456',
+            type=str,
+            dest='redis_passwd',
+            help="redis passwd")
+    parser.add_argument(
             '--consul_addr',
             default=None,
             type=str,
@@ -322,14 +343,24 @@ if __name__ == "__main__":
 
     host = args.host if args.host else app_host_ip
 
+    redis_addr = args.redis_addr if args.redis_addr else app_host_ip
+    redis_port = args.redis_port
+    redis_passwd = args.redis_passwd
+
     consul_addr = args.consul_addr if args.consul_addr else app_host_ip
     consul_port = args.consul_port
 
     logger.info('start ai server on %s:%d', host, args.port)
     logger.info('start consul server on %s:%d', consul_addr, consul_port)
+    logger.info('start redis server on %s:%d: %s', redis_addr, redis_port, redis_passwd)
 
     thread = Thread(target=_delay_do_consul, args=(host, args.port))
     thread.start()
+
+    try:
+        g_redis = redis.StrictRedis(redis_addr, port=redis_port, password=redis_passwd)
+    except Exception as err:
+        logger.error('redis not connect: {}'.format(err))
 
     try:
         app.run(host=host, port=args.port)

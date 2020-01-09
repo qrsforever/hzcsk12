@@ -17,6 +17,10 @@ hostaddr=`ifconfig eth0| grep inet\ | awk '{print $2}' | awk -F: '{print $2}'`
 log_fil=/tmp/k12ai_log.txt
 
 # service name, address and ports
+redis_addr='117.51.156.111'
+redis_port=10090
+redis_pswd='qY3Zh4xLPZNMkaz3'
+
 consul_name=${hostname}-consul
 consul_addr=$hostaddr
 consul_port=8500
@@ -221,6 +225,9 @@ __start_k12ai_service()
         __run_command "nohup python3 ${top_dir}/k12ai_service.py \
             --host ${k12ai_addr} \
             --port ${k12ai_port} \
+            --redis_addr ${redis_addr} \
+            --redis_port ${redis_port} \
+            --redis_passwd ${redis_pswd} \
             --consul_addr ${consul_addr} \
             --consul_port ${consul_port}"
         __script_logout "start k12ai service"
