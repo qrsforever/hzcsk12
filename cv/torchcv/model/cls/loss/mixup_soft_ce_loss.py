@@ -13,7 +13,8 @@ class MixupSoftCELoss(nn.Module):
     def __init__(self, configer):
         super(MixupSoftCELoss, self).__init__()
         self.params_dict = dict()
-        if 'soft_ce_loss' in configer.get('loss', 'params'):
+        # QRS: fix bug
+        if 'mixup_soft_ce_loss' in configer.get('loss', 'params'):
             self.params_dict = configer.get('loss', 'params')['mixup_soft_ce_loss']
 
         self.label_smooth = self.params_dict['label_smooth'] if 'label_smooth' in self.params_dict else 0.0

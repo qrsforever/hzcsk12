@@ -11,31 +11,31 @@
         type: 'string-enum',
         objs: [
             {
-                name: { en: 'VGG_11', cn: self.en },
+                name: { en: 'vgg_11', cn: self.en },
                 value: 'vgg11',
             },
             {
-                name: { en: 'VGG_13', cn: self.en },
+                name: { en: 'vgg_13', cn: self.en },
                 value: 'vgg13',
             },
             {
-                name: { en: 'VGG_16', cn: self.en },
+                name: { en: 'vgg_16', cn: self.en },
                 value: 'vgg16',
             },
             {
-                name: { en: 'VGG_19', cn: self.en },
+                name: { en: 'vgg_19', cn: self.en },
                 value: 'vgg19',
             },
             {
-                name: { en: 'VGG_13_bn', cn: self.en },
+                name: { en: 'vgg_13_bn', cn: self.en },
                 value: 'vgg13_bn',
             },
             {
-                name: { en: 'VGG_16_bn', cn: self.en },
+                name: { en: 'vgg_16_bn', cn: self.en },
                 value: 'vgg16_bn',
             },
             {
-                name: { en: 'VGG_19_bn', cn: self.en },
+                name: { en: 'vgg_19_bn', cn: self.en },
                 value: 'vgg19_bn',
             },
         ],

@@ -50,6 +50,24 @@ consul_addr = None
 consul_port = None
 
 users_cache_dir = '/data/users'
+datasets_dir = '/data/datasets/cv'
+pretrained_dir = '/data/pretrained/cv'
+
+model_pretrained = {
+    'vgg11': 'vgg11-bbd30ac9.pth',
+    'vgg13': 'vgg13-c768596a.pth',
+    'vgg16': 'vgg16-397923af.pth',
+    'vgg19': 'vgg19-dcbb9e9d.pth',
+    'vgg11_bn': 'vgg11_bn-6002323d.pth',
+    'vgg13_bn': 'vgg13_bn-abd245e5.pth',
+    'vgg16_bn': 'vgg16_bn-6c64b313.pth',
+    'vgg19_bn': 'vgg19_bn-c79401a0.pth',
+    'resnet18': 'resnet18-5c106cde.pth',
+    'resnet34': 'resnet34-333f7ec4.pth',
+    'resnet50': 'resnet50-19c8e357.pth',
+    'resnet101': 'resnet101-5d3b4d8f.pth',
+    'resnet152': 'resnet152-b121ed2d.pth',
+}
 
 def _delay_do_consul(host, port):
     time.sleep(3)
@@ -146,60 +164,81 @@ class CVServiceRPC(object):
             pass
         return container_name, None
 
+    def _get_cache_dir(self, user, uuid):
+        usercache = '%s/%s/%s'%(users_cache_dir, user, uuid)
+        if not os.path.exists(usercache):
+            os.makedirs(usercache)
+        return usercache 
+
     def _prepare_environ(self, user, uuid, params):
         try:
-            # config_tree = ConfigFactory.from_dict(params)
-            # config_tree.pop('_k12')
-            # config_str = HOCONConverter.convert(config_tree, 'json')
-            # training_config = os.path.join(self.pro_dir, 'config.json')
-            # with open(training_config, 'w') as fout:
-            #     fout.write(config_str)
-
             if not params or not isinstance(params, dict):
                 return OP_FAILURE, _err_msg(100203, 'parameter must be dict type')
+
+            if '_k12.data.dataset_name' in params.keys():
+                config_tree = ConfigFactory.from_dict(params)
+                _k12ai_tree = config_tree.pop('_k12')
+                config_json = HOCONConverter.convert(config_tree, 'json')
+                _params = json.loads(config_json)
+                if 'aug_trans' not in _params['train']:
+                    _params['train']['aug_trans'] = {}
+                _params['train']['aug_trans']['trans_seq'] = []
+                if 'aug_trans' not in _params['val']:
+                    _params['val']['aug_trans'] = {}
+                _params['val']['aug_trans']['trans_seq'] = []
+                if 'trans_seq_group' in _k12ai_tree.keys():
+                    if 'train' in _k12ai_tree['trans_seq_group']:
+                        for k, v in _k12ai_tree['trans_seq_group']['train']:
+                            if v == 'trans_seq':
+                                _params['train']['aug_trans']['trans_seq'].append(k)
+                            elif v == 'shuffle_trans_seq':
+                                if 'shuffle_trans_seq' not in _params['train']['aug_trans']:
+                                    _params['train']['aug_trans']['shuffle_trans_seq'] = []
+                                _params['train']['aug_trans']['shuffle_trans_seq'].append(k)
+                    if 'val' in _k12ai_tree['trans_seq_group']:
+                        for k, v in _k12ai_tree['trans_seq_group']['val']:
+                            if v == 'trans_seq':
+                                _params['val']['aug_trans']['trans_seq'].append(k)
+                            elif v == 'shuffle_trans_seq':
+                                if 'shuffle_trans_seq' not in _params['val']['aug_trans']:
+                                    _params['val']['aug_trans']['shuffle_trans_seq'] = []
+                                _params['val']['aug_trans']['shuffle_trans_seq'].append(k)
+                model_name = _params['network'].get('model_name', 'unknow')
+                backbone = _params['network'].get('backbone', 'unknow')
+                _params['network']['checkpoints_name'] = '%s_%s' % (model_name, backbone)
+                resume_continue = _params['network'].get('resume_continue', False)
+                if resume_continue:
+                    _params['network']['resume'] = '%s/%s/%s_latest.pth' % (
+                            _params['network'].get('checkpoints_root', '/cache'),
+                            _params['network'].get('checkpoints_dir', 'ckpts'),
+                            _params['network'].get('checkpoints_name', 'ckpts'))
+                pretrained = _params['network'].get('pretrained', False)
+                if pretrained: 
+                    _file = model_pretrained.get(backbone, None)
+                    if _file:
+                        _params['network']['pretrained'] = '/pretrained/%s' % _file
+                    else:
+                        _params['network'].pop('pretrained')
+                else:
+                    if 'pretrained' in _params['network']:
+                        _params['network'].pop('pretrained')
+                params = _params
 
             task = params['task']
             if task not in ['cls', 'det', 'seg', 'pose', 'gan']:
                 return OP_FAILURE, _err_msg(100203, f'task[{{task}}] is not support yet')
 
-            pro_dir = os.path.join(users_cache_dir, user, uuid)
-            if not os.path.exists(pro_dir):
-                os.makedirs(pro_dir)
-
             dataset_path = params['data']['data_dir']
-
-            if not os.path.exists(dataset_path):
-                return OP_FAILURE, _err_msg(100203, f'dataset [{dataset_path}] is not exist!')
-
             dataset_name = dataset_path.split('/')[-1]
 
-            params['cache_dir'] = os.path.join(users_cache_dir, user, uuid)
-            params['network']['checkpoints_dir'] = 'ckpts/' + dataset_name
-            config_path = os.path.join(pro_dir, 'config.json')
+            if not os.path.exists('%s/%s'%(datasets_dir, dataset_name)):
+                return OP_FAILURE, _err_msg(100203, f'dataset [{dataset_path}] is not exist!')
+
+            config_path = '%s/config.json' % self._get_cache_dir(user, uuid)
             with open(config_path, 'w') as fout:
                 fout.write(json.dumps(params))
 
-            ckpts_root = params['cache_dir']
-            ckpts_dirx = params['network']['checkpoints_dir']
-            ckpts_name = params['network']['model_name']
-            resume_path = os.path.join(ckpts_root, ckpts_dirx, ckpts_name + '_latest.pth')
-
-            if task == 'cls':
-                test_dir = os.path.join(dataset_path, 'imgs', 'test')
-            else:
-                test_dir = dataset_path
-
-            out_dir = os.path.join(ckpts_root, 'out')
-
-            return OP_SUCCESS, { # noqa: E126
-                    'config_path': config_path,
-                    'resume_path': resume_path,
-                    'dataset_path': dataset_path,
-                    'ckpts_root': ckpts_root,
-                    'ckpts_name': ckpts_name,
-                    'test_dir': test_dir,
-                    'out_dir': out_dir
-                    }
+            return OP_SUCCESS, {'config_file': '/cache/config.json'}
         except Exception:
             return OP_FAILURE, _err_msg(100203, 'prepare environ occur exception', exc=True)
 
@@ -229,15 +268,12 @@ class CVServiceRPC(object):
                     'k12ai.service.uuid': uuid
                     }
 
-            usercache = '/data/usercache/%s/%s'%(user, uuid)
-            if not os.path.exists(usercache):
-                os.makedirs(usercache)
+            usercache_dir = self._get_cache_dir(user, uuid)
 
             volumes = { # noqa
-                    '/data': {'bind':'/data', 'mode':'rw'}, # TODO will delete
-                    '/data/datasets/cv': {'bind': '/datasets', 'mode': 'rw'},
-                    '/data/pretrained/cv': {'bind': '/pretrained', 'mode': 'rw'},
-                    usercache: {'bind':'/cache', 'mode': 'rw'},
+                    datasets_dir: {'bind': '/datasets', 'mode': 'rw'},
+                    pretrained_dir: {'bind': '/pretrained', 'mode': 'rw'},
+                    usercache_dir: {'bind':'/cache', 'mode': 'rw'},
                     }
             if self._debug:
                 rm_flag = False
@@ -313,17 +349,10 @@ class CVServiceRPC(object):
         if code < 0:
             return OP_FAILURE, json.dumps(result)
 
-        resume_flag = True
-        if not os.path.exists(result['resume_path']):
-            resume_flag = False
-
-        command = 'python {} {} {} {} {} {} --dist y --gather y --phase train'.format(
+        command = 'python {} {} {} --phase train'.format(
                 '-m torch.distributed.launch --nproc_per_node=1',
-                '/hzcsk12/cv/torchcv/main.py',
-                '--config_file %s' % result['config_path'],
-                '--checkpoints_root %s' % result['ckpts_root'],
-                '--checkpoints_name %s' % result['ckpts_name'],
-                '{}'.format('--resume %s' % result['resume_path'] if resume_flag else ' ')
+                '%s/torchcv/main.py'%self._workdir,
+                '--config_file %s' % result['config_file']
                 ) # noqa
 
         Thread(target=lambda: self._run(op=op, user=user, uuid=uuid, command=command),

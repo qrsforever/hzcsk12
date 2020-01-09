@@ -139,4 +139,11 @@
         [if height > 0 then 'height']: height,
         [if readonly then 'readonly']: readonly,
     },
+
+    notiml():: {
+        _id_: 'notiml',
+        name: { en: 'todo', cn: self.en },
+        type: 'text',
+        default: 'Not Impl Yet',
+    },
 }

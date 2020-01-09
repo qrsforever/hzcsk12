@@ -8,16 +8,16 @@ then
     jsonnet \
         --ext-str task='cls' \
         --ext-str dataset_name='mnist' \
-        --ext-str dataset_root='/hzcsk12/cv/data/datasets' \
-        --ext-str checkpt_root='/hzcsk12/cv/data/cache' \
-        --ext-str pretrained_path='/hzcsk12/cv/data/pretrained' \
+        --ext-str dataset_root='/datasets' \
+        --ext-str checkpt_root='/cache' \
+        --ext-str pretrained_path='/pretrained' \
         $cur_dir/k12ai_cv.jsonnet
 else
     jsonnet \
         --ext-str task='cls' \
         --ext-str dataset_name='mnist' \
-        --ext-str dataset_root='/hzcsk12/cv/data/datasets' \
-        --ext-str checkpt_root='/hzcsk12/cv/data/cache' \
-        --ext-str pretrained_path='/hzcsk12/cv/data/pretrained' \
+        --ext-str dataset_root='/datasets' \
+        --ext-str checkpt_root='/cache' \
+        --ext-str pretrained_path='/pretrained' \
         $1
 fi

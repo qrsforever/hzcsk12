@@ -12,13 +12,15 @@ local _Utils = import '../utils/helper.libsonnet';
         objs: [
             _Utils.string('task', 'Task', def=_Utils.task, readonly=true),
             _Utils.string('method', 'Method', def='unkown', ddd=true, readonly=true),
+            _Utils.bool('data.include_val', 'Include Val', def=false),
         ],
     },
     {
         type: 'H',
         objs: [
-            _Utils.string('_k12.dataset', 'Dataset Name', def=_Utils.dataset_name, readonly=true),
-            _Utils.string('data.data_dir', 'Dataset Path', def='unkown', ddd=true, readonly=true),
+            _Utils.string('dataset', 'Loader', def='default', ddd=true, readonly=true),
+            _Utils.int('data.workers', 'Workers', min=1, max=8, def=4),
+            _Utils.bool('data.drop_last', 'Drop Last', def=false),
         ],
     },
     {
@@ -70,23 +72,17 @@ local _Utils = import '../utils/helper.libsonnet';
             {
                 name: { en: 'Iterator', cn: self.en },
                 type: '_ignore_',
-                objs: [
-                    (import 'iterator/__init__.jsonnet').get(),
-                ],
+                objs: (import 'iterator/__init__.jsonnet').get(),
             },
             {
                 name: { en: 'Transform', cn: self.en },
                 type: '_ignore_',
-                objs: [
-                    (import 'transform/__init__.jsonnet').get(),
-                ],
+                objs: (import 'transform/__init__.jsonnet').get(),
             },
             {
                 name: { en: 'Details', cn: self.en },
                 type: '_ignore_',
-                objs: [
-                    (import 'details/__init__.jsonnet').get(),
-                ],
+                objs: (import 'details/__init__.jsonnet').get(),
             },
         ],
     },

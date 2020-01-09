@@ -12,7 +12,8 @@ class MixupCELoss(nn.Module):
     def __init__(self, configer):
         super(MixupCELoss, self).__init__()
         self.params_dict = dict()
-        if 'ce_loss' in configer.get('loss', 'params'):
+        # QRS: fix bug
+        if 'mixup_ce_loss' in configer.get('loss', 'params'):
             self.params_dict = configer.get('loss', 'params')['mixup_ce_loss']
 
         weight = torch.FloatTensor(self.params_dict['weight']).cuda() if 'weight' in self.params_dict else None

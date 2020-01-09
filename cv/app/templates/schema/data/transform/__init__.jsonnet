@@ -125,17 +125,17 @@ local _aug_trans_group_item(jid, method, display) = {
                 type: 'H',
                 objs: [
                     {
-                        _id_: '_k12._stringarray_.' + jid + '.' + method,
+                        _id_: '_k12.trans_seq_group.' + jid + '.' + method,
                         name: { en: 'type', cn: self.en },
                         type: 'string-enum',
                         objs: [
                             {
                                 name: { en: 'Normal', cn: self.en },
-                                value: jid + '.aug_trans.trans_seq',
+                                value: 'trans_seq',
                             },
                             {
                                 name: { en: 'Shuffle', cn: self.en },
-                                value: jid + '.aug_trans.shuffle_trans_seq',
+                                value: 'shuffle_trans_seq',
                             },
                         ],
                         default: self.objs[0].value,
@@ -205,38 +205,35 @@ local _augment_transform(jid, label) = {
 };
 
 {
-    get():: {
-        type: '_ignore_',
-        objs: [
-            {
-                name: { en: 'Phase', cn: self.en },
-                type: 'navigation',
-                objs: [
-                    {
-                        name: { en: 'Train', cn: self.en },
-                        type: '_ignore_',
-                        objs: [
-                            _data_transform('train', 'Train'),
-                            _augment_transform('train', 'Train'),
-                        ],
-                    },
-                    {
-                        name: { en: 'Validation', cn: self.en },
-                        type: '_ignore_',
-                        objs: [
-                            _data_transform('val', 'Validation'),
-                            _augment_transform('val', 'Validation'),
-                        ],
-                    },
-                    {
-                        name: { en: 'Test', cn: self.en },
-                        type: '_ignore_',
-                        objs: [
-                            _data_transform('test', 'Test'),
-                        ],
-                    },
-                ],
-            },
-        ],
-    },
+    get():: [
+        {
+            name: { en: 'Phase', cn: self.en },
+            type: 'navigation',
+            objs: [
+                {
+                    name: { en: 'Train', cn: self.en },
+                    type: '_ignore_',
+                    objs: [
+                        _data_transform('train', 'Train'),
+                        _augment_transform('train', 'Train'),
+                    ],
+                },
+                {
+                    name: { en: 'Validation', cn: self.en },
+                    type: '_ignore_',
+                    objs: [
+                        _data_transform('val', 'Validation'),
+                        _augment_transform('val', 'Validation'),
+                    ],
+                },
+                {
+                    name: { en: 'Test', cn: self.en },
+                    type: '_ignore_',
+                    objs: [
+                        _data_transform('test', 'Test'),
+                    ],
+                },
+            ],
+        },
+    ],
 }

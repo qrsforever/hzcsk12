@@ -28,7 +28,6 @@ local _Utils = import '../utils/helper.libsonnet';
                 ],
                 default: 'epoch',
             },
-            _Utils.int('data.workers', 'Workers', min=1, max=8, def=4),
         ],
     },
     {

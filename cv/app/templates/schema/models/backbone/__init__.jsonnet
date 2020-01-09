@@ -13,12 +13,12 @@ local _Utils = import '../../utils/helper.libsonnet';
         type: 'string-enum-trigger',
         objs: [
             {
-                name: { en: 'VGG', cn: self.en },
+                name: { en: 'vgg', cn: self.en },
                 value: 'vgg',
                 trigger: (import 'vgg.libsonnet').get(jid),
             },
             {
-                name: { en: 'ResNET', cn: self.en },
+                name: { en: 'resnet', cn: self.en },
                 value: 'resnet',
                 trigger: (import 'resnet.libsonnet').get(jid),
             },

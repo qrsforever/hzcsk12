@@ -14,7 +14,7 @@ local _Utils = import '../../utils/helper.libsonnet';
         type: 'string-enum',
         objs: [
             {
-                name: { en: 'ResNet_18', cn: self.en },
+                name: { en: 'resnet_18', cn: self.en },
                 value: 'resnet18',
                 // trigger: {
                 //     type: 'H',
@@ -32,7 +32,7 @@ local _Utils = import '../../utils/helper.libsonnet';
                 // },
             },
             {
-                name: { en: 'ResNet_34', cn: self.en },
+                name: { en: 'resnet_34', cn: self.en },
                 value: 'resnet34',
                 // trigger: {
                 //     type: 'H',
@@ -50,7 +50,7 @@ local _Utils = import '../../utils/helper.libsonnet';
                 // },
             },
             {
-                name: { en: 'ResNet_50', cn: self.en },
+                name: { en: 'resnet_50', cn: self.en },
                 value: 'resnet50',
                 // trigger: {
                 //     type: 'H',
@@ -68,7 +68,7 @@ local _Utils = import '../../utils/helper.libsonnet';
                 // },
             },
             {
-                name: { en: 'ResNet_101', cn: self.en },
+                name: { en: 'resnet_101', cn: self.en },
                 value: 'resnet101',
                 // trigger: {
                 //     type: 'H',
@@ -86,7 +86,7 @@ local _Utils = import '../../utils/helper.libsonnet';
                 // },
             },
             {
-                name: { en: 'ResNet_152', cn: self.en },
+                name: { en: 'resnet_152', cn: self.en },
                 value: 'resnet152',
                 // trigger: {
                 //     type: 'H',
