@@ -43,6 +43,7 @@ imageio
 Shapely
 
 # hzcs
+# dictlib
 zerorpc
 python-consul
 protobuf

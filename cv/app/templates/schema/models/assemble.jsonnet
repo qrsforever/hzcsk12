@@ -7,5 +7,6 @@
 local _Utils = import '../utils/helper.libsonnet';
 
 (import 'network/__init__.jsonnet').get()
-+
-(import 'details/__init__.jsonnet').get()
+// +
+// (import 'details/__init__.jsonnet').get()
+

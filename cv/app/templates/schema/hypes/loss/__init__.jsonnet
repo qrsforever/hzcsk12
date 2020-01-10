@@ -16,24 +16,12 @@ local _Utils = import '../../utils/helper.libsonnet';
             {
                 name: { en: 'ce Loss', cn: self.en },
                 value: 'ce_loss',
-                trigger: {
-                    type: '_ignore_',
-                    objs: [
-                        _Utils.float(jid + '.loss_weights.ce_loss.ce_loss', 'Weight', def=1.0),
-                        (import 'type/ce_loss.libsonnet').get(jid + '.params.ce_loss'),
-                    ],
-                },
+                trigger: (import 'type/ce_loss.libsonnet').get(jid + '.params.ce_loss'),
             },
             {
                 name: { en: 'soft ce Loss', cn: self.en },
                 value: 'soft_ce_loss',
-                trigger: {
-                    type: '_ignore_',
-                    objs: [
-                        _Utils.float(jid + '.loss_weights.soft_ce_loss.ce_loss', 'Weight', def=1.0),
-                        (import 'type/soft_ce_loss.libsonnet').get(jid + '.params.soft_ce_loss'),
-                    ],
-                },
+                trigger: (import 'type/soft_ce_loss.libsonnet').get(jid + '.params.soft_ce_loss'),
             },
         ],
         default: _Utils.get_default_value(jid + '.loss_type', 'ce_loss'),

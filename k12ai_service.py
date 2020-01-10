@@ -283,12 +283,13 @@ def _framework_predict():
         return json.dumps(_err_msg(100202, exc=True))
 
 
-@app.route('/k12ai/private/message', methods=['POST'])
+@app.route('/k12ai/private/message', methods=['POST', 'GET'])
 def _framework_message():
     logger.info('call _framework_message')
     try:
         if g_redis:
-            g_redis.lpush('k12ai', request.get_data().decode())
+            msgtype = request.args.get("type", default='unknown')
+            g_redis.lpush('k12ai.{}'.format(msgtype), request.get_data().decode())
     except Exception as err:
         logger.info(err)
         return "error"

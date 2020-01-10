@@ -53,7 +53,7 @@ users_cache_dir = '/data/users'
 datasets_dir = '/data/datasets/cv'
 pretrained_dir = '/data/pretrained/cv'
 
-model_pretrained = {
+pretrained_models = {
     'vgg11': 'vgg11-bbd30ac9.pth',
     'vgg13': 'vgg13-c768596a.pth',
     'vgg16': 'vgg16-397923af.pth',
@@ -141,10 +141,10 @@ class CVServiceRPC(object):
         now_time = time.time()
         data['timestamp'] = round(now_time * 1000)
         data['datetime'] = time.strftime('%Y%m%d%H%M%S', time.localtime(now_time))
-        data[msgtype] = message
+        data['contents'] = message
 
         # service
-        api = 'http://{}:{}/k12ai/private/message'.format(service['Address'], service['Port'])
+        api = 'http://{}:{}/k12ai/private/message?type={}'.format(service['Address'], service['Port'], msgtype)
         requests.post(api, json=data)
         if self._debug:
             key = 'framework/%s/%s/%s/%s' % (user, uuid, op, msgtype)
@@ -168,7 +168,7 @@ class CVServiceRPC(object):
         usercache = '%s/%s/%s'%(users_cache_dir, user, uuid)
         if not os.path.exists(usercache):
             os.makedirs(usercache)
-        return usercache 
+        return usercache
 
     def _prepare_environ(self, user, uuid, params):
         try:
@@ -178,61 +178,49 @@ class CVServiceRPC(object):
             if '_k12.data.dataset_name' in params.keys():
                 config_tree = ConfigFactory.from_dict(params)
                 _k12ai_tree = config_tree.pop('_k12')
+
+                # Aug Trans
+                if config_tree.get('train.aug_trans.trans_seq', default=None) is None:
+                    config_tree.put('train.aug_trans.trans_seq', [])
+                if config_tree.get('val.aug_trans.trans_seq', default=None) is None:
+                    config_tree.put('val.aug_trans.trans_seq', [])
+                for k, v in _k12ai_tree.get('trans_seq_group.train', default={}).items():
+                    if v == 'trans_seq':
+                        config_tree.put('train.aug_trans.trans_seq', [k], append=True)
+                    if v == 'shuffle_trans_seq':
+                        config_tree.put('train.aug_trans.shuffle_trans_seq', [k], append=True)
+                for k, v in _k12ai_tree.get('trans_seq_group.val', default={}).items():
+                    if v == 'trans_seq':
+                        config_tree.put('val.aug_trans.trans_seq', [k], append=True)
+                    if v == 'shuffle_trans_seq':
+                        config_tree.put('val.aug_trans.shuffle_trans_seq', [k], append=True)
+
+                # CheckPoints
+                model_name = config_tree.get('network.model_name', default='unknow')
+                backbone = config_tree.get('network.backbone', default='unknow')
+                ckpts_name = '%s_%s'%(model_name, backbone)
+                config_tree.put('network.checkpoints_root', '/cache')
+                config_tree.put('network.checkpoints_name', ckpts_name)
+                config_tree.put('network.checkpoints_dir', 'ckpts')
+
+                resume_path = '%s/ckpts/%s_latest.pth' % (self._get_cache_dir(user, uuid), ckpts_name)
+                if os.path.exists(resume_path):
+                    config_tree.put('network.resume', '/cache/ckpts/%s_latest.pth' % ckpts_name)
+
+                # Pretrained
+                pretrained = config_tree.get('network.pretrained', default=False)
+                config_tree.pop('network.pretrained', default=None)
+                if pretrained:
+                    _file = pretrained_models.get(backbone, 'nofile')
+                    if os.path.exists('%s/%s'%(pretrained_dir, _file)):
+                        config_tree.put('network.pretrained', '/pretrained/%s' % _file)
+
                 config_json = HOCONConverter.convert(config_tree, 'json')
-                _params = json.loads(config_json)
-                if 'aug_trans' not in _params['train']:
-                    _params['train']['aug_trans'] = {}
-                _params['train']['aug_trans']['trans_seq'] = []
-                if 'aug_trans' not in _params['val']:
-                    _params['val']['aug_trans'] = {}
-                _params['val']['aug_trans']['trans_seq'] = []
-                if 'trans_seq_group' in _k12ai_tree.keys():
-                    if 'train' in _k12ai_tree['trans_seq_group']:
-                        for k, v in _k12ai_tree['trans_seq_group']['train']:
-                            if v == 'trans_seq':
-                                _params['train']['aug_trans']['trans_seq'].append(k)
-                            elif v == 'shuffle_trans_seq':
-                                if 'shuffle_trans_seq' not in _params['train']['aug_trans']:
-                                    _params['train']['aug_trans']['shuffle_trans_seq'] = []
-                                _params['train']['aug_trans']['shuffle_trans_seq'].append(k)
-                    if 'val' in _k12ai_tree['trans_seq_group']:
-                        for k, v in _k12ai_tree['trans_seq_group']['val']:
-                            if v == 'trans_seq':
-                                _params['val']['aug_trans']['trans_seq'].append(k)
-                            elif v == 'shuffle_trans_seq':
-                                if 'shuffle_trans_seq' not in _params['val']['aug_trans']:
-                                    _params['val']['aug_trans']['shuffle_trans_seq'] = []
-                                _params['val']['aug_trans']['shuffle_trans_seq'].append(k)
-                model_name = _params['network'].get('model_name', 'unknow')
-                backbone = _params['network'].get('backbone', 'unknow')
-                _params['network']['checkpoints_name'] = '%s_%s' % (model_name, backbone)
-                resume_continue = _params['network'].get('resume_continue', False)
-                if resume_continue:
-                    _params['network']['resume'] = '%s/%s/%s_latest.pth' % (
-                            _params['network'].get('checkpoints_root', '/cache'),
-                            _params['network'].get('checkpoints_dir', 'ckpts'),
-                            _params['network'].get('checkpoints_name', 'ckpts'))
-                pretrained = _params['network'].get('pretrained', False)
-                if pretrained: 
-                    _file = model_pretrained.get(backbone, None)
-                    if _file:
-                        _params['network']['pretrained'] = '/pretrained/%s' % _file
-                    else:
-                        _params['network'].pop('pretrained')
-                else:
-                    if 'pretrained' in _params['network']:
-                        _params['network'].pop('pretrained')
-                params = _params
+                params = json.loads(config_json)
 
             task = params['task']
             if task not in ['cls', 'det', 'seg', 'pose', 'gan']:
                 return OP_FAILURE, _err_msg(100203, f'task[{{task}}] is not support yet')
-
-            dataset_path = params['data']['data_dir']
-            dataset_name = dataset_path.split('/')[-1]
-
-            if not os.path.exists('%s/%s'%(datasets_dir, dataset_name)):
-                return OP_FAILURE, _err_msg(100203, f'dataset [{dataset_path}] is not exist!')
 
             config_path = '%s/config.json' % self._get_cache_dir(user, uuid)
             with open(config_path, 'w') as fout:
@@ -272,8 +260,8 @@ class CVServiceRPC(object):
 
             volumes = { # noqa
                     datasets_dir: {'bind': '/datasets', 'mode': 'rw'},
-                    pretrained_dir: {'bind': '/pretrained', 'mode': 'rw'},
                     usercache_dir: {'bind':'/cache', 'mode': 'rw'},
+                    pretrained_dir: {'bind': '/pretrained', 'mode': 'rw'},
                     }
             if self._debug:
                 rm_flag = False
@@ -326,11 +314,8 @@ class CVServiceRPC(object):
         if not os.path.exists(schema_file):
             return OP_FAILURE, f'schema file: {schema_file} not found'
         schema_json = _jsonnet.evaluate_file(schema_file, ext_vars={
-            'task': task, 
+            'task': task,
             'dataset_name': dataset_name,
-            'dataset_root': '/datasets',
-            'checkpt_root': '/cache',
-            'pretrained_path': '/pretrained',
             })
         return OP_SUCCESS, schema_json
 

@@ -214,7 +214,7 @@ local _augment_transform(jid, label) = {
                     name: { en: 'Train', cn: self.en },
                     type: '_ignore_',
                     objs: [
-                        _data_transform('train', 'Train'),
+                        _data_transform('train.data_transformer', 'Train'),
                         _augment_transform('train', 'Train'),
                     ],
                 },
@@ -222,7 +222,7 @@ local _augment_transform(jid, label) = {
                     name: { en: 'Validation', cn: self.en },
                     type: '_ignore_',
                     objs: [
-                        _data_transform('val', 'Validation'),
+                        _data_transform('val.data_transformer', 'Validation'),
                         _augment_transform('val', 'Validation'),
                     ],
                 },
@@ -230,7 +230,7 @@ local _augment_transform(jid, label) = {
                     name: { en: 'Test', cn: self.en },
                     type: '_ignore_',
                     objs: [
-                        _data_transform('test', 'Test'),
+                        _data_transform('test.data_transformer', 'Test'),
                     ],
                 },
             ],

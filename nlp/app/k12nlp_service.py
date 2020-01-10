@@ -146,7 +146,7 @@ class NLPServiceRPC(object):
         now_time = time.time()
         data['timestamp'] = round(now_time * 1000)
         data['datetime'] = time.strftime('%Y%m%d%H%M%S', time.localtime(now_time))
-        data[msgtype] = message
+        data['contents'] = message
 
         # service
         api = 'http://{}:{}/k12ai/private/message'.format(service['Address'], service['Port'])

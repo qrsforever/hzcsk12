@@ -20,6 +20,10 @@ local _NetSelector = {
             name: { en: 'distill', cn: self.en },
             value: 'distill_model',
         },
+        {
+            name: { en: 'custom', cn: self.en },
+            value: 'custom_model',
+        },
     ],
 };
 
@@ -80,21 +84,21 @@ local _NetSelector = {
                 _Utils.bool('network.resume_val', 'Resume Validation', def=false),
             ],
         },
-        {
-            _id_: 'network.custom_model',
-            name: { en: 'Custom Model', cn: self.en },
-            type: 'bool-trigger',
-            objs: [
-                {
-                    value: true,
-                    trigger: _Utils.notiml(),
-                },
-                {
-                    value: false,
-                    trigger: {},
-                },
-            ],
-            default: false,
-        },
+        // {
+        //     _id_: 'network.custom_model',
+        //     name: { en: 'Custom Model', cn: self.en },
+        //     type: 'bool-trigger',
+        //     objs: [
+        //         {
+        //             value: true,
+        //             trigger: _Utils.notiml(),
+        //         },
+        //         {
+        //             value: false,
+        //             trigger: {},
+        //         },
+        //     ],
+        //     default: false,
+        // },
     ],
 }

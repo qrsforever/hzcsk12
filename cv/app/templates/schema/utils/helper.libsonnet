@@ -8,8 +8,6 @@
     version:: '0.0.1b',
     task:: std.extVar('task'),
     dataset_name:: std.extVar('dataset_name'),
-    dataset_path:: std.extVar('dataset_root') + '/' + $.dataset_name,
-    checkpt_root:: std.extVar('checkpt_root'),
     pretrained_path:: std.extVar('pretrained_path'),
 
     // usage: get_value(confg, 'a.b.c', 100)
@@ -39,12 +37,8 @@
 
     // default dataset, can set default value
     datasets:: {
-        [if $.dataset_name == 'mnist' then 'mnist']: (import
-                                                          '../constants/datasets/mnist.jsonnet').get($.dataset_path,
-                                                                                                     $.checkpt_root),
-        [if $.dataset_name == 'cifar10' then 'cifar10']: (import
-                                                              '../constants/datasets/cifar10.jsonnet').get($.dataset_path,
-                                                                                                           $.checkpt_root),
+        [if $.dataset_name == 'mnist' then 'mnist']: import '../constants/datasets/mnist.jsonnet',
+        [if $.dataset_name == 'cifar10' then 'cifar10']: import '../constants/datasets/cifar10.jsonnet',
     },
 
     // basic type node generator function

@@ -61,6 +61,14 @@ else
     echo "psutil ok"
 fi
 
+check=`python3 -c "import dictlib" 2>&1`
+if [[ x$check != x ]]
+then
+    sudo pip3 install dictlib
+else
+    echo "dictlib ok"
+fi
+
 check=`python3 -c "import pyhocon" 2>&1`
 if [[ x$check != x ]]
 then

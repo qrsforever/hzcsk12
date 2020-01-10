@@ -11,6 +11,7 @@ local _Utils = import '../../../utils/helper.libsonnet';
         name: { en: 'CE Parameters', cn: self.en },
         type: 'H',
         objs: [
+            _Utils.float('loss.loss_weights.ce_loss.ce_loss', 'Weight', def=1.0),
             {
                 _id_: jid + '.reduction',
                 type: 'string-enum',
@@ -22,7 +23,7 @@ local _Utils = import '../../../utils/helper.libsonnet';
                 ],
                 default: 'mean',
             },
-            _Utils.float(jid + '.ignore_index', 'Ignore Index', def=-1),
+            _Utils.int(jid + '.ignore_index', 'Ignore Index', def=-1),
         ],
     },
 }

@@ -11,6 +11,7 @@ local _Utils = import '../../../utils/helper.libsonnet';
         name: { en: 'SoftCE Parameters', cn: self.en },
         type: 'H',
         objs: [
+            _Utils.float('loss.loss_weights.soft_ce_loss.ce_loss', 'Weight', def=1.0),
             {
                 _id_: jid + '.reduction',
                 type: 'string-enum',
