@@ -52,10 +52,18 @@
         },
     },
     test: {
+        data_transformer: {
+            size_mode: 'fix_size',
+            input_size: [
+                28,
+                28,
+            ],
+            align_method: 'only_pad',
+        },
     },
     network: {
         model_name: 'base_model',
-        backbone: 'vgg19',
+        backbone: 'resnet18',
         distributed: true,
         gather: true,
     },

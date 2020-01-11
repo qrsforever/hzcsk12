@@ -21,6 +21,8 @@ ERRORS = {
         100201: 'task service is not found',
         100202: 'task service start fails',
         100203: 'task service parameters is invalid',
+        100204: 'task service is running already',
+        100205: 'task service schema file is not found',
         100299: 'task service unknown exception',
 
         100300: 'success', # k12cv container inner process error

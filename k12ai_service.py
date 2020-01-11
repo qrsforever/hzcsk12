@@ -228,7 +228,7 @@ def _framework_train():
         return json.dumps(_err_msg(100201, f'service name:{service_name}'))
     try:
         code, msg = agent.train(op, user, service_uuid, service_params)
-        return json.dumps(_err_msg(100202 if code < 0 else 100000, msg))
+        return json.dumps(_err_msg(code, msg))
     except Exception:
         return json.dumps(_err_msg(100202, exc=True))
 
@@ -253,7 +253,7 @@ def _framework_evaluate():
         return json.dumps(_err_msg(100201, f'service name:{service_name}'))
     try:
         code, msg = agent.evaluate(op, user, service_uuid, service_params)
-        return json.dumps(_err_msg(100202 if code < 0 else 100000, msg))
+        return json.dumps(_err_msg(code, msg))
     except Exception:
         return json.dumps(_err_msg(100202, exc=True))
 

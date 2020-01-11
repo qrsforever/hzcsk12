@@ -42,7 +42,7 @@
             name: { en: 'Debug Output', cn: '调试输出: ' },
             type: 'output',
             objs: [
-                { value: 'print', name: 'Status' },
+                { value: 'print', name: 'Print' },
                 { value: 'kv', name: 'Key-Value(changed)' },
                 { value: 'json', name: 'Json(changed)' },
                 { value: 'kvs', name: 'Key-Value(all)' },

@@ -84,7 +84,6 @@ def _delay_do_consul(host, port):
             logger.info("consul agent service register err", err)
             time.sleep(3)
 
-OP_SUCCESS = 0
 OP_FAILURE = -1
 
 class CVServiceRPC(object):
@@ -171,64 +170,61 @@ class CVServiceRPC(object):
         return usercache
 
     def _prepare_environ(self, user, uuid, params):
-        try:
-            if not params or not isinstance(params, dict):
-                return OP_FAILURE, _err_msg(100203, 'parameter must be dict type')
+        if not params or not isinstance(params, dict):
+            return 100203, 'parameters type is not dict'
 
-            if '_k12.data.dataset_name' in params.keys():
-                config_tree = ConfigFactory.from_dict(params)
-                _k12ai_tree = config_tree.pop('_k12')
+        if '_k12.data.dataset_name' in params.keys():
+            config_tree = ConfigFactory.from_dict(params)
+            _k12ai_tree = config_tree.pop('_k12')
 
-                # Aug Trans
-                if config_tree.get('train.aug_trans.trans_seq', default=None) is None:
-                    config_tree.put('train.aug_trans.trans_seq', [])
-                if config_tree.get('val.aug_trans.trans_seq', default=None) is None:
-                    config_tree.put('val.aug_trans.trans_seq', [])
-                for k, v in _k12ai_tree.get('trans_seq_group.train', default={}).items():
-                    if v == 'trans_seq':
-                        config_tree.put('train.aug_trans.trans_seq', [k], append=True)
-                    if v == 'shuffle_trans_seq':
-                        config_tree.put('train.aug_trans.shuffle_trans_seq', [k], append=True)
-                for k, v in _k12ai_tree.get('trans_seq_group.val', default={}).items():
-                    if v == 'trans_seq':
-                        config_tree.put('val.aug_trans.trans_seq', [k], append=True)
-                    if v == 'shuffle_trans_seq':
-                        config_tree.put('val.aug_trans.shuffle_trans_seq', [k], append=True)
+            # Aug Trans
+            if config_tree.get('train.aug_trans.trans_seq', default=None) is None:
+                config_tree.put('train.aug_trans.trans_seq', [])
+            if config_tree.get('val.aug_trans.trans_seq', default=None) is None:
+                config_tree.put('val.aug_trans.trans_seq', [])
+            for k, v in _k12ai_tree.get('trans_seq_group.train', default={}).items():
+                if v == 'trans_seq':
+                    config_tree.put('train.aug_trans.trans_seq', [k], append=True)
+                if v == 'shuffle_trans_seq':
+                    config_tree.put('train.aug_trans.shuffle_trans_seq', [k], append=True)
+            for k, v in _k12ai_tree.get('trans_seq_group.val', default={}).items():
+                if v == 'trans_seq':
+                    config_tree.put('val.aug_trans.trans_seq', [k], append=True)
+                if v == 'shuffle_trans_seq':
+                    config_tree.put('val.aug_trans.shuffle_trans_seq', [k], append=True)
 
-                # CheckPoints
-                model_name = config_tree.get('network.model_name', default='unknow')
-                backbone = config_tree.get('network.backbone', default='unknow')
-                ckpts_name = '%s_%s'%(model_name, backbone)
-                config_tree.put('network.checkpoints_root', '/cache')
-                config_tree.put('network.checkpoints_name', ckpts_name)
-                config_tree.put('network.checkpoints_dir', 'ckpts')
+            # CheckPoints
+            model_name = config_tree.get('network.model_name', default='unknow')
+            backbone = config_tree.get('network.backbone', default='unknow')
+            ckpts_name = '%s_%s'%(model_name, backbone)
+            config_tree.put('network.checkpoints_root', '/cache')
+            config_tree.put('network.checkpoints_name', ckpts_name)
+            config_tree.put('network.checkpoints_dir', 'ckpts')
 
-                resume_path = '%s/ckpts/%s_latest.pth' % (self._get_cache_dir(user, uuid), ckpts_name)
-                if os.path.exists(resume_path):
-                    config_tree.put('network.resume', '/cache/ckpts/%s_latest.pth' % ckpts_name)
+            resume_path = '%s/ckpts/%s_latest.pth' % (self._get_cache_dir(user, uuid), ckpts_name)
+            if os.path.exists(resume_path):
+                config_tree.put('network.resume', '/cache/ckpts/%s_latest.pth' % ckpts_name)
 
-                # Pretrained
-                pretrained = config_tree.get('network.pretrained', default=False)
-                config_tree.pop('network.pretrained', default=None)
-                if pretrained:
-                    _file = pretrained_models.get(backbone, 'nofile')
-                    if os.path.exists('%s/%s'%(pretrained_dir, _file)):
-                        config_tree.put('network.pretrained', '/pretrained/%s' % _file)
+            # Pretrained
+            pretrained = config_tree.get('network.pretrained', default=False)
+            config_tree.pop('network.pretrained', default=None)
+            if pretrained:
+                _file = pretrained_models.get(backbone, 'nofile')
+                if os.path.exists('%s/%s'%(pretrained_dir, _file)):
+                    config_tree.put('network.pretrained', '/pretrained/%s' % _file)
 
-                config_json = HOCONConverter.convert(config_tree, 'json')
-                params = json.loads(config_json)
+            config_json = HOCONConverter.convert(config_tree, 'json')
+            params = json.loads(config_json)
 
-            task = params['task']
-            if task not in ['cls', 'det', 'seg', 'pose', 'gan']:
-                return OP_FAILURE, _err_msg(100203, f'task[{{task}}] is not support yet')
+        task = params['task']
+        if task not in ['cls', 'det', 'seg', 'pose', 'gan']:
+            return 100203, f'task[{{task}}] is not support yet'
 
-            config_path = '%s/config.json' % self._get_cache_dir(user, uuid)
-            with open(config_path, 'w') as fout:
-                fout.write(json.dumps(params))
+        config_path = '%s/config.json' % self._get_cache_dir(user, uuid)
+        with open(config_path, 'w') as fout:
+            fout.write(json.dumps(params))
 
-            return OP_SUCCESS, {'config_file': '/cache/config.json'}
-        except Exception:
-            return OP_FAILURE, _err_msg(100203, 'prepare environ occur exception', exc=True)
+        return 100000, {'config_file': '/cache/config.json'}
 
     def _run(self, op, user, uuid, command=None):
         logger.info(command)
@@ -240,7 +236,7 @@ class CVServiceRPC(object):
                 if con:
                     if con.status == 'running':
                         con.kill()
-                        message = _err_msg(100300, f'container name:{container_name}')
+                        message = _err_msg(100000, f'container name:{container_name}')
                         xop = op.replace('stop', 'start')
                         self.send_message(xop, user, uuid, "status", {'value':'exit', 'way': 'manual'})
                 else:
@@ -312,27 +308,27 @@ class CVServiceRPC(object):
     def schema(self, task, dataset_name):
         schema_file = os.path.join(self._projdir, 'app', 'templates', 'schema', 'k12ai_cv.jsonnet')
         if not os.path.exists(schema_file):
-            return OP_FAILURE, f'schema file: {schema_file} not found'
+            return 100205, f'schema file: {schema_file} not found'
         schema_json = _jsonnet.evaluate_file(schema_file, ext_vars={
             'task': task,
             'dataset_name': dataset_name,
             })
-        return OP_SUCCESS, schema_json
+        return 100000, schema_json
 
     def train(self, op, user, uuid, params):
         logger.info("call train(%s, %s, %s)", op, user, uuid)
         if op == 'train.stop':
             Thread(target=lambda: self._run(op=op, user=user, uuid=uuid),
                     daemon=True).start()
-            return OP_SUCCESS, None
+            return 100000, None
 
         container_name, con = self._get_container(op, user, uuid)
         if con and con.status == 'running':
-            return OP_FAILURE, f'[{container_name}] same op is running!'
+            return 100204, f'[{container_name}] service is running!'
 
         code, result = self._prepare_environ(user, uuid, params)
-        if code < 0:
-            return OP_FAILURE, json.dumps(result)
+        if code != 100000:
+            return code, result
 
         command = 'python {} {} {} --phase train'.format(
                 '-m torch.distributed.launch --nproc_per_node=1',
@@ -342,21 +338,18 @@ class CVServiceRPC(object):
 
         Thread(target=lambda: self._run(op=op, user=user, uuid=uuid, command=command),
                 daemon=True).start()
-        return OP_SUCCESS, result
+        return 100000, result
 
     def evaluate(self, op, user, uuid, params):
         logger.info("call evaluate(%s, %s, %s)", op, user, uuid)
         if op == 'evaluate.stop':
             Thread(target=lambda: self._run(op=op, user=user, uuid=uuid),
                     daemon=True).start()
-            return OP_SUCCESS, None
+            return 100000, None
 
         code, result = self._prepare_environ(user, uuid, params)
-        if code < 0:
-            return OP_FAILURE, json.dumps(result)
-
-        if not os.path.exists(result['resume_path']):
-            return OP_FAILURE, json.dumps(_err_msg(100203, 'resume path[%s] is not found!' % result['resume_path']))
+        if code != 100000:
+            return code, result
 
         command = 'python {} {} {} {} {} {} {} {} --dist y --gather y --phase test'.format(
                 '-m torch.distributed.launch --nproc_per_node=1',
@@ -371,21 +364,11 @@ class CVServiceRPC(object):
 
         Thread(target=lambda: self._run(op=op, user=user, uuid=uuid, command=command),
                 daemon=True).start()
-        return OP_SUCCESS, result
+        return 100000, result
 
     def predict(self, op, user, uuid, params):
         logger.info("call predict(%s, %s, %s)", op, user, uuid)
-        if op == 'predict.stop':
-            Thread(target=lambda: self._run(op=op, user=user, uuid=uuid),
-                    daemon=True).start()
-            return OP_SUCCESS, None
-
-        if not params or not isinstance(params, dict):
-            return OP_FAILURE, 'params is none or not dict type'
-
-        # Thread(target=lambda: self._run(op=op, user=user, uuid=uuid, command=command),
-        #         daemon=True).start()
-        return OP_SUCCESS, None
+        return 100000, None
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
