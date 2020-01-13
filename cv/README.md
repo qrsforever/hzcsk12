@@ -26,5 +26,7 @@ QRS
 | `torchcv/data/tools/cv2_aug_transforms.py` | det训练RandomResizeCrop异常 |
 | `torchcv/tools/util/logger.py` | 截获日志, 捕捉错误 |
 | `torchcv/model/cls/nets/base_model.py` | 运行错误fix bug |
-| `torchcv/model/cls/loss/mixup_ce_loss.py` | fix bug |
-| `torchcv/model/cls/loss/mixup_soft_ce_loss.py` | fix bug |
+| `torchcv/model/cls/loss/mixup_ce_loss.py` | fix bug: check param |
+| `torchcv/model/cls/loss/mixup_soft_ce_loss.py` | fix bug: check param |
+| `torchcv/data/cls/datasets/default_dataset.py` | fix bug: read dataset |
+| `torchcv/lib/model/base/vgg.py` | fix bug: pool ceil mode |

@@ -171,7 +171,7 @@ def _parse_except(filename, lineno, message):
                     'filename': tb.filename,
                     'linenum': tb.lineno,
                     'funcname': tb.name,
-                    'souce': tb.line
+                    'source': tb.line
                     }
             message['trackback'].append(err)
         hzcsk12_send_message('error', message)

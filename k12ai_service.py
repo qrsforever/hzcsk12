@@ -195,6 +195,34 @@ def _framework_schema():
             service_name = reqjson['service_name']
             service_task = reqjson['service_task']
             dataset_name = reqjson['dataset_name']
+    except json.decoder.JSONDecodeError:
+        return json.dumps(_err_msg(100103, request.get_data().decode()))
+    except Exception:
+        return json.dumps(_err_msg(100101, reqjson, exc=True))
+
+    agent = _get_service_by_name(service_name)
+    if not agent:
+        return json.dumps(_err_msg(100201, f'service name:{service_name}'))
+    try:
+        code, msg = agent.schema(service_task, dataset_name)
+        return json.dumps(_err_msg(code, msg))
+    except Exception:
+        return json.dumps(_err_msg(100202, exc=True))
+
+@app.route('/k12ai/framework/execute', methods=['POST'])
+def _framework_execute():
+    logger.info('call _framework_project')
+    try:
+        reqjson = json.loads(request.get_data().decode())
+        user = reqjson['user']
+        op = reqjson['op']
+        if op not in ('train.start', 'train.stop',
+                'evaluate.start', 'evaluate.stop',
+                'predict.start', 'predict.stop'):
+            return json.dumps(_err_msg(100102, f'not support op:{op}'))
+        service_name = reqjson['service_name']
+        service_uuid = reqjson['service_uuid']
+        service_params = reqjson.get('service_params', None)
     except Exception:
         return json.dumps(_err_msg(100101, exc=True))
 
@@ -202,11 +230,10 @@ def _framework_schema():
     if not agent:
         return json.dumps(_err_msg(100201, f'service name:{service_name}'))
     try:
-        code, msg = agent.schema(service_task, dataset_name)
-        return json.dumps(_err_msg(100202 if code < 0 else 100000, msg))
+        code, msg = agent.execute(op, user, service_uuid, service_params)
+        return json.dumps(_err_msg(code, msg))
     except Exception:
         return json.dumps(_err_msg(100202, exc=True))
-
 
 @app.route('/k12ai/framework/train', methods=['POST'])
 def _framework_train():

@@ -49,7 +49,6 @@ app_host_ip = _get_hostip()
 consul_addr = None
 consul_port = None
 
-users_cache_dir = '/data/users'
 datasets_dir = '/data/datasets/cv'
 pretrained_dir = '/data/pretrained/cv'
 
@@ -92,6 +91,7 @@ class CVServiceRPC(object):
             host, port,
             k12ai='k12ai',
             image='hzcsai_com/k12cv',
+            data_root='/data',
             workdir='/hzcsk12/cv', debug=False):
         self._debug = debug
         self._host = host
@@ -105,6 +105,10 @@ class CVServiceRPC(object):
         if debug:
             logger.info('debug mode')
             logger.info('workdir:%s, projdir:%s', self._workdir, self._projdir)
+
+        self.userscache_dir = '%s/users' % data_root
+        self.datasets_dir = '%s/datasets/cv' % data_root
+        self.pretrained_dir = '%s/pretrained/cv' % data_root
 
     def send_message(self, op, user, uuid, msgtype, message):
         client = consul.Consul(consul_addr, port=consul_port)
@@ -140,7 +144,7 @@ class CVServiceRPC(object):
         now_time = time.time()
         data['timestamp'] = round(now_time * 1000)
         data['datetime'] = time.strftime('%Y%m%d%H%M%S', time.localtime(now_time))
-        data['contents'] = message
+        data['data'] = message
 
         # service
         api = 'http://{}:{}/k12ai/private/message?type={}'.format(service['Address'], service['Port'], msgtype)
@@ -151,20 +155,19 @@ class CVServiceRPC(object):
                 key = '%s/%s' % (key, data['datetime'][:-2])
             client.kv.put(key, json.dumps(data, indent=4))
 
-    def _get_container(self, op, user, uuid):
-        container_name = '%s-%s-%s' % (op.split('.')[0], user, uuid)
+    def _get_container(self, user, uuid):
         try:
             cons = self._docker.containers.list(all=True, filters={'label': [
                 'k12ai.service.user=%s'%user,
                 'k12ai.service.uuid=%s'%uuid]})
             if len(cons) == 1:
-                return container_name, cons[0]
+                return cons[0]
         except docker.errors.NotFound:
             pass
-        return container_name, None
+        return None
 
     def _get_cache_dir(self, user, uuid):
-        usercache = '%s/%s/%s'%(users_cache_dir, user, uuid)
+        usercache = '%s/%s/%s'%(self.userscache_dir, user, uuid)
         if not os.path.exists(usercache):
             os.makedirs(usercache)
         return usercache
@@ -220,87 +223,62 @@ class CVServiceRPC(object):
         if task not in ['cls', 'det', 'seg', 'pose', 'gan']:
             return 100203, f'task[{{task}}] is not support yet'
 
-        config_path = '%s/config.json' % self._get_cache_dir(user, uuid)
-        with open(config_path, 'w') as fout:
-            fout.write(json.dumps(params))
-
-        return 100000, {'config_file': '/cache/config.json'}
+        return 100000, params
 
     def _run(self, op, user, uuid, command=None):
         logger.info(command)
         message = None
-        container_name, con = self._get_container(op, user, uuid)
+        rm_flag = True
+        labels = { # noqa
+                'k12ai.service.name': service_name,
+                'k12ai.service.op': op,
+                'k12ai.service.user': user,
+                'k12ai.service.uuid': uuid
+                }
 
-        if not command: # stop
-            try:
-                if con:
-                    if con.status == 'running':
-                        con.kill()
-                        message = _err_msg(100000, f'container name:{container_name}')
-                        xop = op.replace('stop', 'start')
-                        self.send_message(xop, user, uuid, "status", {'value':'exit', 'way': 'manual'})
-                else:
-                    message = _err_msg(100301, f'container name:{container_name}')
-            except Exception:
-                message = _err_msg(100303, f'container name:{container_name}', exc=True)
-        else: # start
-            rm_flag = True
-            labels = { # noqa
-                    'k12ai.service.name': service_name,
-                    'k12ai.service.op': op,
-                    'k12ai.service.user': user,
-                    'k12ai.service.uuid': uuid
-                    }
+        usercache_dir = self._get_cache_dir(user, uuid)
 
-            usercache_dir = self._get_cache_dir(user, uuid)
+        volumes = { # noqa
+                self.datasets_dir: {'bind': '/datasets', 'mode': 'rw'},
+                usercache_dir: {'bind':'/cache', 'mode': 'rw'},
+                self.pretrained_dir: {'bind': '/pretrained', 'mode': 'rw'},
+                }
+        if self._debug:
+            rm_flag = False
+            volumes['%s/app'%self._projdir] = {'bind':'%s/app'%self._workdir, 'mode':'rw'}
+            volumes['%s/torchcv/data'%self._projdir] = {'bind':'%s/torchcv/data'%self._workdir, 'mode':'rw'}
+            volumes['%s/torchcv/metric'%self._projdir] = {'bind':'%s/torchcv/metric'%self._workdir, 'mode':'rw'}
+            volumes['%s/torchcv/model'%self._projdir] = {'bind':'%s/torchcv/model'%self._workdir, 'mode':'rw'}
+            volumes['%s/torchcv/runner'%self._projdir] = {'bind':'%s/torchcv/runner'%self._workdir, 'mode':'rw'}
+            volumes['%s/torchcv/lib/data'%self._projdir] = {'bind':'%s/torchcv/lib/data'%self._workdir, 'mode':'rw'}
+            volumes['%s/torchcv/lib/model'%self._projdir] = {'bind':'%s/torchcv/lib/model'%self._workdir, 'mode':'rw'}
+            volumes['%s/torchcv/lib/runner'%self._projdir] = {'bind':'%s/torchcv/lib/runner'%self._workdir, 'mode':'rw'}
+            volumes['%s/torchcv/lib/tools'%self._projdir] = {'bind':'%s/torchcv/lib/tools'%self._workdir, 'mode':'rw'}
+            volumes['%s/torchcv/main.py'%self._projdir] = {'bind':'%s/torchcv/main.py'%self._workdir, 'mode':'rw'}
+        environs = {
+                'K12CV_RPC_HOST': '%s' % self._host,
+                'K12CV_RPC_PORT': '%s' % self._port,
+                'K12CV_OP': '%s' % op,
+                'K12CV_USER': '%s' % user,
+                'K12CV_UUID': '%s' % uuid
+                } # noqa
+        kwargs = {
+                'name': '%s-%s-%s' % (op, user, uuid),
+                'auto_remove': rm_flag,
+                'detach': True,
+                'runtime': 'nvidia',
+                'labels': labels,
+                'volumes': volumes,
+                'environment': environs
+                } # noqa
 
-            volumes = { # noqa
-                    datasets_dir: {'bind': '/datasets', 'mode': 'rw'},
-                    usercache_dir: {'bind':'/cache', 'mode': 'rw'},
-                    pretrained_dir: {'bind': '/pretrained', 'mode': 'rw'},
-                    }
-            if self._debug:
-                rm_flag = False
-                volumes['%s/app'%self._projdir] = {'bind':'%s/app'%self._workdir, 'mode':'rw'}
-                volumes['%s/torchcv/data'%self._projdir] = {'bind':'%s/torchcv/data'%self._workdir, 'mode':'rw'}
-                volumes['%s/torchcv/metric'%self._projdir] = {'bind':'%s/torchcv/metric'%self._workdir, 'mode':'rw'}
-                volumes['%s/torchcv/model'%self._projdir] = {'bind':'%s/torchcv/model'%self._workdir, 'mode':'rw'}
-                volumes['%s/torchcv/runner'%self._projdir] = {'bind':'%s/torchcv/runner'%self._workdir, 'mode':'rw'}
-                volumes['%s/torchcv/lib/data'%self._projdir] = {'bind':'%s/torchcv/lib/data'%self._workdir, 'mode':'rw'}
-                volumes['%s/torchcv/lib/model'%self._projdir] = {'bind':'%s/torchcv/lib/model'%self._workdir, 'mode':'rw'}
-                volumes['%s/torchcv/lib/runner'%self._projdir] = {'bind':'%s/torchcv/lib/runner'%self._workdir, 'mode':'rw'}
-                volumes['%s/torchcv/lib/tools'%self._projdir] = {'bind':'%s/torchcv/lib/tools'%self._workdir, 'mode':'rw'}
-                volumes['%s/torchcv/main.py'%self._projdir] = {'bind':'%s/torchcv/main.py'%self._workdir, 'mode':'rw'}
-            environs = {
-                    'K12CV_RPC_HOST': '%s' % self._host,
-                    'K12CV_RPC_PORT': '%s' % self._port,
-                    'K12CV_OP': '%s' % op,
-                    'K12CV_USER': '%s' % user,
-                    'K12CV_UUID': '%s' % uuid
-                    } # noqa
-            kwargs = {
-                    'name': container_name,
-                    'auto_remove': rm_flag,
-                    'detach': True,
-                    'runtime': 'nvidia',
-                    'labels': labels,
-                    'volumes': volumes,
-                    'environment': environs
-                    } # noqa
-
-            if con and con.status == 'running':
-                message = _err_msg(100304, 'container name: {}'.format(con.short_id))
-            else:
-                self.send_message(op, user, uuid, "status", {'value':'starting'})
-                try:
-                    if con:
-                        con.remove()
-                    con = self._docker.containers.run(self._image,
-                            command, **kwargs)
-                    return
-                except Exception:
-                    message = _err_msg(100302, 'container image:{}'.format(self._image), exc=True)
-                    self.send_message(op, user, uuid, "status", {'value':'exit', 'way': 'docker'})
+        self.send_message(op, user, uuid, "status", {'value':'starting'})
+        try:
+            self._docker.containers.run(self._image, command, **kwargs)
+            return
+        except Exception:
+            message = _err_msg(100302, 'container image:{}'.format(self._image), exc=True)
+            self.send_message(op, user, uuid, "status", {'value':'exit', 'way': 'docker'})
 
         if message:
             self.send_message(op, user, uuid, "error", message)
@@ -308,67 +286,50 @@ class CVServiceRPC(object):
     def schema(self, task, dataset_name):
         schema_file = os.path.join(self._projdir, 'app', 'templates', 'schema', 'k12ai_cv.jsonnet')
         if not os.path.exists(schema_file):
-            return 100205, f'schema file: {schema_file} not found'
+            return 100206, f'{schema_file}'
         schema_json = _jsonnet.evaluate_file(schema_file, ext_vars={
             'task': task,
             'dataset_name': dataset_name,
             })
-        return 100000, schema_json
+        return 100000, json.dumps(json.loads(schema_json), separators=(',',':'))
 
-    def train(self, op, user, uuid, params):
-        logger.info("call train(%s, %s, %s)", op, user, uuid)
-        if op == 'train.stop':
-            Thread(target=lambda: self._run(op=op, user=user, uuid=uuid),
-                    daemon=True).start()
+    def execute(self, op, user, uuid, params):
+        logger.info("call execute(%s, %s, %s)", op, user, uuid)
+        container = self._get_container(user, uuid)
+        phase, action = op.split('.')
+        if action == 'stop':
+            if container is None or container.status != 'running':
+                return 100205, None
+            container.kill()
+            self.send_message('%s.start' % phase, user, uuid, "status", {'value':'exit', 'way': 'manual'})
             return 100000, None
 
-        container_name, con = self._get_container(op, user, uuid)
-        if con and con.status == 'running':
-            return 100204, f'[{container_name}] service is running!'
+        if container:
+            if container.status == 'running':
+                return 100204, None
+            container.remove()
 
         code, result = self._prepare_environ(user, uuid, params)
         if code != 100000:
             return code, result
 
-        command = 'python {} {} {} --phase train'.format(
-                '-m torch.distributed.launch --nproc_per_node=1',
-                '%s/torchcv/main.py'%self._workdir,
-                '--config_file %s' % result['config_file']
-                ) # noqa
+        config_path = '%s/config.json' % self._get_cache_dir(user, uuid)
+        with open(config_path, 'w') as fout:
+            fout.write(json.dumps(result))
+
+        command = 'python -m torch.distributed.launch --nproc_per_node=1 {} {} '.format(
+                '%s/torchcv/main.py' % self._workdir, '--config_file /cache/config.json')
+
+        if phase == 'train':
+            command += ' --phase train'
+        elif phase == 'evaluate':
+            command += ' --phase test --out_dir /cache/out --test_dir /cache'
+        elif phase == 'predict':
+            raise('not impl yet')
 
         Thread(target=lambda: self._run(op=op, user=user, uuid=uuid, command=command),
                 daemon=True).start()
         return 100000, result
-
-    def evaluate(self, op, user, uuid, params):
-        logger.info("call evaluate(%s, %s, %s)", op, user, uuid)
-        if op == 'evaluate.stop':
-            Thread(target=lambda: self._run(op=op, user=user, uuid=uuid),
-                    daemon=True).start()
-            return 100000, None
-
-        code, result = self._prepare_environ(user, uuid, params)
-        if code != 100000:
-            return code, result
-
-        command = 'python {} {} {} {} {} {} {} {} --dist y --gather y --phase test'.format(
-                '-m torch.distributed.launch --nproc_per_node=1',
-                '/hzcsk12/cv/torchcv/main.py',
-                '--config_file %s' % result['config_path'],
-                '--checkpoints_root %s' % result['ckpts_root'],
-                '--checkpoints_name %s' % result['ckpts_name'],
-                '--resume %s' % result['resume_path'],
-                '--test_dir %s' % result['test_dir'],
-                '--out_dir %s' % result['out_dir']
-                ) # noqa
-
-        Thread(target=lambda: self._run(op=op, user=user, uuid=uuid, command=command),
-                daemon=True).start()
-        return 100000, result
-
-    def predict(self, op, user, uuid, params):
-        logger.info("call predict(%s, %s, %s)", op, user, uuid)
-        return 100000, None
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -398,13 +359,17 @@ if __name__ == "__main__":
             help="consul port")
     parser.add_argument(
             '--image',
-            default=None,
+            default='hzcsai_com/k12cv',
             type=str,
             dest='image',
             help="image to run container")
+    parser.add_argument(
+            '--data_root',
+            default='/data',
+            type=str,
+            dest='data_root',
+            help="data root: datasets, pretrained, users")
     args = parser.parse_args()
-
-    image = args.image if args.image else 'hzcsai_com/k12cv'
 
     host = args.host if args.host else app_host_ip
 
@@ -420,7 +385,9 @@ if __name__ == "__main__":
         app = zerorpc.Server(CVServiceRPC(
             host=host, port=args.port,
             k12ai='{}-k12ai'.format(app_host_name),
-            image=image, debug=LEVEL==logging.DEBUG)) # noqa
+            image=args.image,
+            data_root=args.data_root,
+            debug=LEVEL==logging.DEBUG)) # noqa
         app.bind('tcp://%s:%d' % (host, args.port))
         app.run()
     finally:

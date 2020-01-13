@@ -39,6 +39,7 @@
     datasets:: {
         [if $.dataset_name == 'mnist' then 'mnist']: import '../constants/datasets/mnist.jsonnet',
         [if $.dataset_name == 'cifar10' then 'cifar10']: import '../constants/datasets/cifar10.jsonnet',
+        [if $.dataset_name == 'voc' then 'voc']: import '../constants/datasets/voc.jsonnet',
     },
 
     // basic type node generator function

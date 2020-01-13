@@ -25,6 +25,28 @@ local _NetSelector = {
             value: 'custom_model',
         },
     ],
+    det: [
+        {
+            name: { en: 'vgg16 ssd300', cn: self.en },
+            value: 'vgg16_ssd300',
+        },
+        {
+            name: { en: 'vgg16 ssd512', cn: self.en },
+            value: 'vgg16_ssd512',
+        },
+        {
+            name: { en: 'faster rcnn', cn: self.en },
+            value: 'faster_rcnn',
+        },
+        {
+            name: { en: 'darknet yolov3', cn: self.en },
+            value: 'darknet_yolov3',
+        },
+        {
+            name: { en: 'lffdv2', cn: self.en },
+            value: 'lffdv2',
+        },
+    ],
 };
 
 {
@@ -62,43 +84,5 @@ local _NetSelector = {
                 },
             ],
         },
-        {
-            type: 'H',
-            objs: [
-                _Utils.bool('network.pretrained', 'Pretrained', def=false),
-                _Utils.bool('network.syncbn', 'SyncBN', def=false),
-            ],
-        },
-        {
-            type: 'H',
-            objs: [
-                _Utils.bool('network.distributed', 'Distributed', def=true),
-                _Utils.bool('network.gather', 'Gather', def=true),
-            ],
-        },
-        {
-            type: 'H',
-            objs: [
-                _Utils.bool('network.resume_continue', 'Resume Continue', def=false),
-                _Utils.bool('network.resume_strict', 'Resume Strict', def=false),
-                _Utils.bool('network.resume_val', 'Resume Validation', def=false),
-            ],
-        },
-        // {
-        //     _id_: 'network.custom_model',
-        //     name: { en: 'Custom Model', cn: self.en },
-        //     type: 'bool-trigger',
-        //     objs: [
-        //         {
-        //             value: true,
-        //             trigger: _Utils.notiml(),
-        //         },
-        //         {
-        //             value: false,
-        //             trigger: {},
-        //         },
-        //     ],
-        //     default: false,
-        // },
     ],
 }

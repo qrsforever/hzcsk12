@@ -49,7 +49,8 @@ class DefaultDataset(data.Dataset):
         with open(os.path.join(root_dir, '{}.json'.format(dataset)), 'r') as file_stream:
             items = json.load(file_stream)
             for item in items:
-                img_path = os.path.join(root_dir, 'dataset', item['image_path'])
+                # QRS: fix
+                img_path = os.path.join(root_dir, item['image_path'])
                 if not os.path.exists(img_path):
                     Log.warn('Image Path: {} not exists.'.format(img_path))
                     continue
@@ -61,7 +62,8 @@ class DefaultDataset(data.Dataset):
             with open(os.path.join(root_dir, 'val.json'), 'r') as file_stream:
                 items = json.load(file_stream)
                 for item in items:
-                    img_path = os.path.join(root_dir, 'dataset', item['image_path'])
+                    # QRS: fix
+                    img_path = os.path.join(root_dir, item['image_path'])
                     if not os.path.exists(img_path):
                         Log.warn('Image Path: {} not exists.'.format(img_path))
                         continue

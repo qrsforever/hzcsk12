@@ -146,7 +146,7 @@ class NLPServiceRPC(object):
         now_time = time.time()
         data['timestamp'] = round(now_time * 1000)
         data['datetime'] = time.strftime('%Y%m%d%H%M%S', time.localtime(now_time))
-        data['contents'] = message
+        data['data'] = message
 
         # service
         api = 'http://{}:{}/k12ai/private/message'.format(service['Address'], service['Port'])
@@ -165,7 +165,7 @@ class NLPServiceRPC(object):
             'task': service_task, 
             'dataset_path': dataset_path,
             'dataset_name': dataset_name})
-        return OP_SUCCESS, schema_json
+        return OP_SUCCESS, json.dumps(json.loads(schema_json), separators=(',',':'))
 
     def _get_container(self, op, user, uuid):
         container_name = '%s-%s-%s' % (op.split('.')[0], user, uuid)
