@@ -3,9 +3,17 @@
 cur_fil=${BASH_SOURCE[0]}
 cur_dir=`dirname $cur_fil`
 
-if [[ x$1 == x ]]
-then
-    jsonnet --ext-str task='sentiment_analysis' --ext-str dataset_path='/data/datasets/nlp' --ext-str dataset_name='sst' $cur_dir/k12ai_nlp.jsonnet
-else
-    jsonnet --ext-str task='sentiment_analysis' --ext-str dataset_path='/data/datasets/nlp' --ext-str dataset_name='sst' $1
-fi
+task='sentiment_analysis'
+network='basic_classifier'
+dataset_name='sst'
+
+case $1 in
+    *):
+        ;;
+esac
+
+jsonnet \
+    --ext-str task=$task \
+    --ext-str network=$network \
+    --ext-str dataset_name=$dataset_name \
+    $cur_dir/k12ai_nlp.jsonnet

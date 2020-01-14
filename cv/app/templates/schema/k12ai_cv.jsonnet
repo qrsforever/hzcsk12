@@ -39,7 +39,7 @@
             ],
         },
         {
-            name: { en: 'Debug', cn: '调试: ' },
+            name: { en: 'Debug: ', cn: '调试: ' },
             type: 'output',
             objs: [
                 { value: 'print', name: 'Print' },

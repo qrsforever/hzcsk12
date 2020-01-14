@@ -46,7 +46,6 @@ local _network_maps = {
     method:: _network_maps[$.network].method,
     network_name:: _network_maps[$.network].name,
     dataset_name:: std.extVar('dataset_name'),
-    pretrained_path:: std.extVar('pretrained_path'),
 
     get_value(obj, keystr, def)::
         if std.type(obj) == 'object' && std.length(keystr) > 1
@@ -170,12 +169,5 @@ local _network_maps = {
         [if width > 0 then 'width']: width,
         [if height > 0 then 'height']: height,
         [if readonly then 'readonly']: readonly,
-    },
-
-    notiml():: {
-        _id_: 'notiml',
-        name: { en: 'todo', cn: self.en },
-        type: 'text',
-        default: 'Not Impl Yet',
     },
 }

@@ -46,23 +46,23 @@ local _Utils = import '../../utils/helper.libsonnet';
                                 objs: [
                                     {
                                         name: { en: '6B.50d', cn: self.en },
-                                        value: _Utils.dataset_path + '/glove/glove.6B.50d.txt.gz',
+                                        value: '/pretrained/glove/glove.6B.50d.txt.gz',
                                     },
                                     {
                                         name: { en: '6B.100d', cn: self.en },
-                                        value: _Utils.dataset_path + '/glove/glove.6B.100d.txt.gz',
+                                        value: '/pretrained/glove/glove.6B.100d.txt.gz',
                                     },
                                     {
                                         name: { en: '6B.200d', cn: self.en },
-                                        value: _Utils.dataset_path + '/glove/glove.6B.200d.txt.gz',
+                                        value: '/pretrained/glove/glove.6B.200d.txt.gz',
                                     },
                                     {
                                         name: { en: '6B.300d', cn: self.en },
-                                        value: _Utils.dataset_path + '/glove/glove.6B.300d.txt.gz',
+                                        value: '/pretrained/glove/glove.6B.300d.txt.gz',
                                     },
                                     {
                                         name: { en: '840B.300d', cn: self.en },
-                                        value: _Utils.dataset_path + '/glove/glove.840B.300d.txt.gz',
+                                        value: '/pretrained/glove/glove.840B.300d.txt.gz',
                                     },
                                 ],
                                 default: self.objs[2].value,

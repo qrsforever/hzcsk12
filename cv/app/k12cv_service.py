@@ -49,9 +49,6 @@ app_host_ip = _get_hostip()
 consul_addr = None
 consul_port = None
 
-datasets_dir = '/data/datasets/cv'
-pretrained_dir = '/data/pretrained/cv'
-
 pretrained_models = {
     'vgg11': 'vgg11-bbd30ac9.pth',
     'vgg13': 'vgg13-c768596a.pth',
@@ -102,9 +99,7 @@ class CVServiceRPC(object):
         self._workdir = workdir
         self._projdir = os.path.abspath( # noqa: E126
                 os.path.dirname(os.path.abspath(__file__)) + os.path.sep + "..")
-        if debug:
-            logger.info('debug mode')
-            logger.info('workdir:%s, projdir:%s', self._workdir, self._projdir)
+        logger.info('workdir:%s, projdir:%s', self._workdir, self._projdir)
 
         self.userscache_dir = '%s/users' % data_root
         self.datasets_dir = '%s/datasets/cv' % data_root
@@ -213,17 +208,16 @@ class CVServiceRPC(object):
             config_tree.pop('network.pretrained', default=None)
             if pretrained:
                 _file = pretrained_models.get(backbone, 'nofile')
-                if os.path.exists('%s/%s'%(pretrained_dir, _file)):
+                if os.path.exists('%s/%s'%(self.pretrained_dir, _file)):
                     config_tree.put('network.pretrained', '/pretrained/%s' % _file)
 
-            config_json = HOCONConverter.convert(config_tree, 'json')
-            params = json.loads(config_json)
+            config_str = HOCONConverter.convert(config_tree, 'json')
 
-        task = params['task']
-        if task not in ['cls', 'det', 'seg', 'pose', 'gan']:
-            return 100203, f'task[{{task}}] is not support yet'
+        config_file = '%s/config.json' % self._get_cache_dir(user, uuid)
+        with open(config_file, 'w') as fout:
+            fout.write(config_str)
 
-        return 100000, params
+        return 100000, {'config': '/cache/config.json', 'output': '/cache/output'}
 
     def _run(self, op, user, uuid, command=None):
         logger.info(command)
@@ -243,6 +237,7 @@ class CVServiceRPC(object):
                 usercache_dir: {'bind':'/cache', 'mode': 'rw'},
                 self.pretrained_dir: {'bind': '/pretrained', 'mode': 'rw'},
                 }
+
         if self._debug:
             rm_flag = False
             volumes['%s/app'%self._projdir] = {'bind':'%s/app'%self._workdir, 'mode':'rw'}
@@ -255,6 +250,7 @@ class CVServiceRPC(object):
             volumes['%s/torchcv/lib/runner'%self._projdir] = {'bind':'%s/torchcv/lib/runner'%self._workdir, 'mode':'rw'}
             volumes['%s/torchcv/lib/tools'%self._projdir] = {'bind':'%s/torchcv/lib/tools'%self._workdir, 'mode':'rw'}
             volumes['%s/torchcv/main.py'%self._projdir] = {'bind':'%s/torchcv/main.py'%self._workdir, 'mode':'rw'}
+
         environs = {
                 'K12CV_RPC_HOST': '%s' % self._host,
                 'K12CV_RPC_PORT': '%s' % self._port,
@@ -316,17 +312,15 @@ class CVServiceRPC(object):
         if code != 100000:
             return code, result
 
-        config_path = '%s/config.json' % self._get_cache_dir(user, uuid)
-        with open(config_path, 'w') as fout:
-            fout.write(json.dumps(result))
+        command = 'python -m torch.distributed.launch --nproc_per_node=1 {}'.format(
+                '%s/torchcv/main.py' % self._workdir)
 
-        command = 'python -m torch.distributed.launch --nproc_per_node=1 {} {} '.format(
-                '%s/torchcv/main.py' % self._workdir, '--config_file /cache/config.json')
+        command += ' --config_file %s' % result['config']
 
         if phase == 'train':
             command += ' --phase train'
         elif phase == 'evaluate':
-            command += ' --phase test --out_dir /cache/out --test_dir /cache'
+            command += ' --phase test --out_dir %s' % result['output']
         elif phase == 'predict':
             raise('not impl yet')
 

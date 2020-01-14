@@ -219,7 +219,7 @@ class PlatformServiceRPC(object):
         now_time = time.time()
         data['timestamp'] = round(now_time * 1000)
         data['datetime'] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(now_time))
-        data[msgtype] = message
+        data['data'] = message
 
         # service
         api = 'http://{}:{}/k12ai/private/message'.format(service['Address'], service['Port'])
@@ -247,7 +247,7 @@ class PlatformServiceRPC(object):
                     message['containers'] = _get_container_infos(self._docker)
                 if params.get('services', False):
                     message['services'] = _get_service_infos(self._docker, user, uuid)
-            self.send_message(op, user, uuid, 'result', _err_msg(message=message))
+            self.send_message(op, user, uuid, 'result', _err_msg(data=message))
         else:
             message['todo'] = 'TODO'
             self.send_message(op, user, uuid, 'error', message)

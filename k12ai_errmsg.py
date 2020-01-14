@@ -25,6 +25,7 @@ ERRORS = {
         100204: 'task service is running',
         100205: 'task service is not found or not running',
         100206: 'task service schema file is not found',
+        100207: 'task service schema get fail',
         100299: 'task service unknown exception',
 
         100300: 'success', # k12cv container inner process error

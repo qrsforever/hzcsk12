@@ -7,7 +7,7 @@
 {
     version:: '0.0.1b',
     task:: std.extVar('task'),
-    dataset_path:: std.extVar('dataset_path'),
+    network:: std.extVar('network'),
     dataset_name:: std.extVar('dataset_name'),
 
     // usage: get_value(confg, 'a.b.c', 100)
@@ -37,7 +37,7 @@
 
     // default dataset, can set default value
     datasets: {
-        [if $.dataset_name == 'sst' then 'sst']: (import '../constants/datasets/sst.jsonnet').get($.dataset_path),
+        [if $.dataset_name == 'sst' then 'sst']: (import '../constants/datasets/sst.jsonnet'),
     },
 
     // basic type node generator function

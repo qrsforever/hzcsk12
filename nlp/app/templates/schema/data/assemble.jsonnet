@@ -7,7 +7,7 @@
 local _Utils = import '../utils/helper.libsonnet';
 
 [
-    _Utils.string('_k12.dataset', 'Dataset Name', def=_Utils.dataset_name, readonly=true),
+    _Utils.string('_k12.data.dataset_name', 'Dataset Name', def=_Utils.dataset_name, readonly=true),
     {
         type: 'accordion',
         objs: [

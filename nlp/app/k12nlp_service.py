@@ -103,18 +103,22 @@ class NLPServiceRPC(object):
             host, port,
             k12ai='k12ai',
             image='hzcsai_com/k12nlp',
+            data_root='/data',
             workdir='/hzcsk12/nlp', debug=False):
         self._debug = debug
         self._host = host
         self._port = port
         self._k12ai = k12ai
         self._image = image
-        self._libs = 'app/k12nlp' 
         self._docker = docker.from_env()
         self._workdir = workdir
         self._projdir = os.path.abspath(
                 os.path.dirname(os.path.abspath(__file__)) + os.path.sep + "..")
         logger.info('workdir:%s, projdir:%s', self._workdir, self._projdir)
+
+        self.userscache_dir = '%s/users' % data_root
+        self.datasets_dir = '%s/datasets/nlp' % data_root
+        self.pretrained_dir = '%s/pretrained/nlp' % data_root
 
     def send_message(self, op, user, uuid, msgtype, message):
         client = consul.Consul(consul_addr, port=consul_port)
@@ -157,201 +161,211 @@ class NLPServiceRPC(object):
                 key = '%s/%s' % (key, data['datetime'][:-2])
             client.kv.put(key, json.dumps(data, indent=4))
 
-    def schema(self, service_task, dataset_path, dataset_name):
-        schema_file = os.path.join(self._projdir, 'app', 'templates', 'schema', 'k12ai_nlp.jsonnet')
-        if not os.path.exists(schema_file):
-            return OP_FAILURE, f'schema file: {schema_file} not found'
-        schema_json = _jsonnet.evaluate_file(schema_file, ext_vars={
-            'task': service_task, 
-            'dataset_path': dataset_path,
-            'dataset_name': dataset_name})
-        return OP_SUCCESS, json.dumps(json.loads(schema_json), separators=(',',':'))
-
-    def _get_container(self, op, user, uuid):
-        container_name = '%s-%s-%s' % (op.split('.')[0], user, uuid)
+    def _get_container(self, user, uuid):
         try:
             cons = self._docker.containers.list(all=True, filters={'label': [
                 'k12ai.service.user=%s'%user,
                 'k12ai.service.uuid=%s'%uuid]})
             if len(cons) == 1:
-                return container_name, cons[0]
+                return cons[0]
         except docker.errors.NotFound:
             pass
-        return container_name, None
+        return None
+
+    def _get_cache_dir(self, user, uuid):
+        usercache = '%s/%s/%s'%(self.userscache_dir, user, uuid)
+        if not os.path.exists(usercache):
+            os.makedirs(usercache)
+        return usercache
+
+    def _prepare_environ(self, user, uuid, params):
+        if not params or not isinstance(params, dict):
+            return 100203, 'parameters type is not dict'
+
+        if '_k12.data.dataset_name' in params.keys():
+            config_tree = ConfigFactory.from_dict(params)
+            config_tree.pop('_k12')
+
+            config_str = HOCONConverter.convert(config_tree, 'json')
+
+        config_file = '%s/config.json' % self._get_cache_dir(user, uuid)
+        with open(config_file, 'w') as fout:
+            fout.write(config_str)
+
+        return 100000, {'config': '/cache/config.json', 'output': '/cache/output'}
 
     def _run(self, op, user, uuid, command=None):
         logger.info(command)
         message = None
-        container_name, con = self._get_container(op, user, uuid)
+        rm_flag = True
+        labels = {
+                'k12ai.service.name': service_name,
+                'k12ai.service.op': op,
+                'k12ai.service.user': user,
+                'k12ai.service.uuid': uuid
+                }
 
-        if not command: # stop
-            try:
-                if con:
-                    if con.status == 'running':
-                        con.kill()
-                        message = _err_msg(100400, f'container name:{container_name}')
-                        xop = op.replace('stop', 'start')
-                        self.send_message(xop, user, uuid, "status", {'value':'exit', 'way': 'manual'})
-                else:
-                    message = _err_msg(100401, f'container name:{container_name}')
-            except Exception:
-                message = _err_msg(100403, f'container name:{container_name}', exc=True)
-        else: # start
-            rm_flag = True
-            labels = {
-                    'k12ai.service.name': service_name,
-                    'k12ai.service.op': op,
-                    'k12ai.service.user': user,
-                    'k12ai.service.uuid': uuid
-                    }
-            volumes = {
-                    '/data': {'bind':'/data', 'mode':'rw'}
-                    }
-            if self._debug:
-                rm_flag = False
-                volumes['%s/app'%self._projdir] = {'bind':'%s/app'%self._workdir, 'mode':'rw'}
-                volumes['%s/allennlp'%self._projdir] = {'bind':'%s/allennlp'%self._workdir, 'mode':'rw'}
-            environs = {
-                    'K12NLP_RPC_HOST': '%s' % self._host,
-                    'K12NLP_RPC_PORT': '%s' % self._port,
-                    'K12NLP_OP': '%s' % op,
-                    'K12NLP_USER': '%s' % user,
-                    'K12NLP_UUID': '%s' % uuid
-                    }
-            kwargs = {
-                    'name': container_name,
-                    'auto_remove': rm_flag,
-                    'detach': True,
-                    'runtime': 'nvidia',
-                    'labels': labels,
-                    'volumes': volumes,
-                    'environment': environs
-                    }
+        usercache_dir = self._get_cache_dir(user, uuid)
 
-            if con and con.status == 'running':
-                message = _err_msg(100404, 'container name: {}'.format(con.short_id))
-            else:
-                self.send_message(op, user, uuid, "status", {'value':'starting'})
-                try:
-                    if con:
-                        con.remove()
-                    con = self._docker.containers.run(self._image,
-                            command, **kwargs)
-                    return
-                except Exception:
-                    message = _err_msg(100402, 'container image:{}'.format(self._image), exc=True)
-                    self.send_message(op, user, uuid, "status", {'value':'exit', 'way': 'docker'})
+        volumes = {
+                self.datasets_dir: {'bind': '/datasets', 'mode': 'rw'},
+                usercache_dir: {'bind':'/cache', 'mode': 'rw'},
+                self.pretrained_dir: {'bind': '/pretrained', 'mode': 'rw'},
+                }
+
+        if self._debug:
+            rm_flag = False
+            volumes['%s/app'%self._projdir] = {'bind':'%s/app'%self._workdir, 'mode':'rw'}
+            volumes['%s/allennlp'%self._projdir] = {'bind':'%s/allennlp'%self._workdir, 'mode':'rw'}
+
+        environs = {
+                'K12NLP_RPC_HOST': '%s' % self._host,
+                'K12NLP_RPC_PORT': '%s' % self._port,
+                'K12NLP_OP': '%s' % op,
+                'K12NLP_USER': '%s' % user,
+                'K12NLP_UUID': '%s' % uuid
+                }
+        kwargs = {
+                'name': '%s-%s-%s' % (op, user, uuid),
+                'auto_remove': rm_flag,
+                'detach': True,
+                'runtime': 'nvidia',
+                'labels': labels,
+                'volumes': volumes,
+                'environment': environs,
+                'shm_size': '4g',
+                'mem_limit': '8g',
+                }
+
+        self.send_message(op, user, uuid, "status", {'value':'starting'})
+        try:
+            self._docker.containers.run(self._image, command, **kwargs)
+            return
+        except Exception:
+            message = _err_msg(100402, 'container image:{}'.format(self._image), exc=True)
+            self.send_message(op, user, uuid, "status", {'value':'exit', 'way': 'docker'})
 
         if message:
             self.send_message(op, user, uuid, "error", message)
 
-    def train(self, op, user, uuid, params):
-        logger.info("call train(%s, %s, %s)", op, user, uuid)
-        if op == 'train.stop':
-            Thread(target=lambda: self._run(op=op, user=user, uuid=uuid),
-                    daemon=True).start()
-            return OP_SUCCESS, None
+    def schema(self, task, netw, dataset_name):
+        schema_file = os.path.join(self._projdir, 'app', 'templates', 'schema', 'k12ai_nlp.jsonnet')
+        if not os.path.exists(schema_file):
+            return OP_FAILURE, f'{schema_file}'
+        schema_json = _jsonnet.evaluate_file(schema_file, ext_vars={
+            'task': task, 
+            'network': netw,
+            'dataset_name': dataset_name})
+        return 100000, json.dumps(json.loads(schema_json), separators=(',',':'))
+    
+    def execute(self, op, user, uuid, params):
+        logger.info("call execute(%s, %s, %s)", op, user, uuid)
+        container = self._get_container(user, uuid)
+        phase, action = op.split('.')
+        if action == 'stop':
+            if container is None or container.status != 'running':
+                return 100205, None
+            container.kill()
+            self.send_message('%s.start' % phase, user, uuid, "status", {'value':'exit', 'way': 'manual'})
+            return 100000, None
 
-        container_name, con = self._get_container(op, user, uuid)
-        if con and con.status == 'running':
-            return OP_FAILURE, f'[{container_name}] same op is running!'
+        if container:
+            if container.status == 'running':
+                return 100204, None
+            container.remove()
 
-        if not params or not isinstance(params, dict):
-            return OP_FAILURE, 'parameter is none or not dict type'
+        code, result = self._prepare_environ(user, uuid, params)
+        if code != 100000:
+            return code, result
 
-        pro_dir = os.path.join(users_cache_dir, user, uuid)
-        if not os.path.exists(pro_dir):
-            os.makedirs(pro_dir)
-        config_tree = ConfigFactory.from_dict(params)
-        config_tree.pop('_k12')
-        config_str = HOCONConverter.convert(config_tree, 'json')
-        training_config = os.path.join(pro_dir, 'config.json')
-        with open(training_config, 'w') as fout:
-            fout.write(config_str)
-        flag = '--force'
-        output_dir = os.path.join(pro_dir, 'output')
-        serial_conf = os.path.join(output_dir, 'config.json')
-        if os.path.exists(serial_conf):
-            if not _check_config_diff(training_config, serial_conf):
-                flag = '--recover'
-        command = 'allennlp train {} {} -s {}'.format(
-                training_config, flag, output_dir)
+        if phase == 'train':
+            flag = '--force'
+            serial_conf = os.path.join(self._get_cache_dir(user, uuid), 'output', 'config.json')
+            if os.path.exists(serial_conf):
+                if not _check_config_diff(result['config'], serial_conf):
+                    flag = '--recover'
+            command = 'allennlp train %s %s -s %s' % (result['config'], flag, result['output'])
+        elif phase == 'evaluate':
+            raise('not impl yet')
+        elif phase == 'predict':
+            raise('not impl yet')
+
         Thread(target=lambda: self._run(op=op, user=user, uuid=uuid, command=command),
                 daemon=True).start()
-        return OP_SUCCESS, None
+        return 100000, result 
 
-    def evaluate(self, op, user, uuid, params):
-        logger.info("call evaluate(%s, %s, %s)", op, user, uuid)
-        if op == 'evaluate.stop':
-            Thread(target=lambda: self._run(op=op, user=user, uuid=uuid),
-                    daemon=True).start()
-            return OP_SUCCESS, None
+    # def evaluate(self, op, user, uuid, params):
+    #     logger.info("call evaluate(%s, %s, %s)", op, user, uuid)
+    #     if op == 'evaluate.stop':
+    #         Thread(target=lambda: self._run(op=op, user=user, uuid=uuid),
+    #                 daemon=True).start()
+    #         return OP_SUCCESS, None
 
-        if not params or not isinstance(params, dict):
-            return OP_FAILURE, 'parameter is none or not dict type'
+    #     if not params or not isinstance(params, dict):
+    #         return OP_FAILURE, 'parameter is none or not dict type'
 
-        input_file = params.get('input_file', None)
-        if not input_file:
-            return OP_FAILURE, 'parameter have no key: input_file'
+    #     input_file = params.get('input_file', None)
+    #     if not input_file:
+    #         return OP_FAILURE, 'parameter have no key: input_file'
 
-        pro_dir = os.path.join(users_cache_dir, user, uuid)
-        archive_file = os.path.join(pro_dir, 'output', 'model.tar.gz')
-        if not os.path.exists(archive_file):
-            return OP_FAILURE, f'model.tar.gz is not found in {pro_dir}'
-        output_file = params.get('output_file', None)
-        if not output_file:
-            output_file = os.path.join(pro_dir, 'evaluate_output.txt')
+    #     pro_dir = os.path.join(users_cache_dir, user, uuid)
+    #     archive_file = os.path.join(pro_dir, 'output', 'model.tar.gz')
+    #     if not os.path.exists(archive_file):
+    #         return OP_FAILURE, f'model.tar.gz is not found in {pro_dir}'
+    #     output_file = params.get('output_file', None)
+    #     if not output_file:
+    #         output_file = os.path.join(pro_dir, 'evaluate_output.txt')
 
-        command = 'allennlp evaluate {} {} --output-file {} --include-package {}'.format(
-                archive_file, input_file, output_file, self._libs)
-        Thread(target=lambda: self._run(op=op, user=user, uuid=uuid, command=command),
-                daemon=True).start()
-        return OP_SUCCESS, None
+    #     command = 'allennlp evaluate {} {} --output-file {}'.format(
+    #             archive_file, input_file, output_file)
+    #     Thread(target=lambda: self._run(op=op, user=user, uuid=uuid, command=command),
+    #             daemon=True).start()
+    #     return OP_SUCCESS, None
 
-    def predict(self, op, user, uuid, params):
-        logger.info("call predict(%s, %s, %s)", op, user, uuid)
-        if op == 'predict.stop':
-            Thread(target=lambda: self._run(op=op, user=user, uuid=uuid),
-                    daemon=True).start()
-            return OP_SUCCESS, None
+    # def predict(self, op, user, uuid, params):
+    #     logger.info("call predict(%s, %s, %s)", op, user, uuid)
+    #     if op == 'predict.stop':
+    #         Thread(target=lambda: self._run(op=op, user=user, uuid=uuid),
+    #                 daemon=True).start()
+    #         return OP_SUCCESS, None
 
-        if not params or not isinstance(params, dict):
-            return OP_FAILURE, 'params is none or not dict type'
+    #     if not params or not isinstance(params, dict):
+    #         return OP_FAILURE, 'params is none or not dict type'
 
-        pro_dir = os.path.join(users_cache_dir, user, uuid)
-        archive_file = os.path.join(pro_dir, 'output', 'model.tar.gz')
-        if not os.path.exists(archive_file):
-            return OP_FAILURE, f'model.tar.gz is not found in {pro_dir}'
+    #     pro_dir = os.path.join(users_cache_dir, user, uuid)
+    #     archive_file = os.path.join(pro_dir, 'output', 'model.tar.gz')
+    #     if not os.path.exists(archive_file):
+    #         return OP_FAILURE, f'model.tar.gz is not found in {pro_dir}'
 
-        input_type = params.get('input_type', None)
-        if not input_type:
-            return OP_FAILURE, 'parameter have no key: input_file'
+    #     input_type = params.get('input_type', None)
+    #     if not input_type:
+    #         return OP_FAILURE, 'parameter have no key: input_file'
 
-        if input_type == 'text':
-            input_text = params.get('input_text', None)
-            if not input_text:
-                return OP_FAILURE, 'parameter have no key: input_file'
-            input_file = os.path.join(pro_dir, 'predict_input.txt')
-            with open(input_file, 'w') as fout:
-                fout.write(input_text)
+    #     if input_type == 'text':
+    #         input_text = params.get('input_text', None)
+    #         if not input_text:
+    #             return OP_FAILURE, 'parameter have no key: input_file'
+    #         input_file = os.path.join(pro_dir, 'predict_input.txt')
+    #         with open(input_file, 'w') as fout:
+    #             fout.write(input_text)
 
-        output_file = params.get('output_file', None)
-        if not output_file:
-            output_file = os.path.join(pro_dir, 'predict_output.json')
+    #     output_file = params.get('output_file', None)
+    #     if not output_file:
+    #         output_file = os.path.join(pro_dir, 'predict_output.json')
 
-        other_args = ''
-        batch_size = params.get('batch_size', None)
-        if batch_size and isinstance(batch_size, int):
-            other_args += ' --batch-size %d' % batch_size
-        predictor = params.get('predictor', None)
-        if predictor:
-            other_args += ' --predictor %s' % predictor
+    #     other_args = ''
+    #     batch_size = params.get('batch_size', None)
+    #     if batch_size and isinstance(batch_size, int):
+    #         other_args += ' --batch-size %d' % batch_size
+    #     predictor = params.get('predictor', None)
+    #     if predictor:
+    #         other_args += ' --predictor %s' % predictor
 
-        command = 'allennlp predict {} {} --output-file {} --include-package {} {}'.format(
-                archive_file, input_file, output_file, self._libs, other_args)
-        Thread(target=lambda: self._run(op=op, user=user, uuid=uuid, command=command),
-                daemon=True).start()
-        return OP_SUCCESS, None
+    #     command = 'allennlp predict {} {} --output-file {} {}'.format(
+    #             archive_file, input_file, output_file, other_args)
+    #     Thread(target=lambda: self._run(op=op, user=user, uuid=uuid, command=command),
+    #             daemon=True).start()
+    #     return OP_SUCCESS, None
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -381,13 +395,17 @@ if __name__ == "__main__":
             help="consul port")
     parser.add_argument(
             '--image',
-            default=None,
+            default='hzcsai_com/k12nlp',
             type=str,
             dest='image',
             help="image to run container")
+    parser.add_argument(
+            '--data_root',
+            default='/data',
+            type=str,
+            dest='data_root',
+            help="data root: datasets, pretrained, users")
     args = parser.parse_args()
-
-    image = args.image if args.image else 'hzcsai_com/k12nlp-dev'
 
     host = args.host if args.host else app_host_ip
 
@@ -403,7 +421,9 @@ if __name__ == "__main__":
         app = zerorpc.Server(NLPServiceRPC(
             host=host, port=args.port,
             k12ai='{}-k12ai'.format(app_host_name),
-            image=image, debug=LEVEL == logging.DEBUG))
+            image=args.image,
+            data_root=args.data_root,
+            debug=LEVEL == logging.DEBUG))
         app.bind('tcp://%s:%d' % (host, args.port))
         app.run()
     finally:
