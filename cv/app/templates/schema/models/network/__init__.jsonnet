@@ -6,62 +6,39 @@
 
 local _Utils = import '../../utils/helper.libsonnet';
 
-local _NetSelector = {
-    cls: [
-        {
-            name: { en: 'base', cn: self.en },
-            value: 'base_model',
-        },
-        {
-            name: { en: 'cls', cn: self.en },
-            value: 'cls_model',
-        },
-        {
-            name: { en: 'distill', cn: self.en },
-            value: 'distill_model',
-        },
-        {
-            name: { en: 'custom', cn: self.en },
-            value: 'custom_model',
-        },
-    ],
-    det: [
-        {
-            name: { en: 'vgg16 ssd300', cn: self.en },
-            value: 'vgg16_ssd300',
-        },
-        {
-            name: { en: 'vgg16 ssd512', cn: self.en },
-            value: 'vgg16_ssd512',
-        },
-        {
-            name: { en: 'faster rcnn', cn: self.en },
-            value: 'faster_rcnn',
-        },
-        {
-            name: { en: 'darknet yolov3', cn: self.en },
-            value: 'darknet_yolov3',
-        },
-        {
-            name: { en: 'lffdv2', cn: self.en },
-            value: 'lffdv2',
-        },
-    ],
-};
-
 {
     get():: [
         {
             type: 'H',
             objs: [
-                (import '../backbone/__init__.jsonnet').get('network'),
                 {
                     _id_: 'network.model_name',
                     name: { en: 'Network', cn: self.en },
                     type: 'string-enum',
-                    objs: _NetSelector[_Utils.task],
-                    default: _Utils.get_default_value(self._id_, self.objs[0].value),
+                    objs: [
+                        {
+                            name: _Utils.network_name,
+                            value: _Utils.network,
+                        },
+                    ],
+                    default: self.objs[0].value,
+                    readonly: true,
                 },
+                _Utils.bool('network.distributed', 'Distributed', def=true),
+                _Utils.bool('network.resume_continue', 'Resume Continue', def=false),
+            ],
+        },
+        {
+            type: 'H',
+            objs: [
+                (import '../backbone/__init__.jsonnet').get(),
+                _Utils.bool('network.pretrained', 'Pretrained', def=false),
+                _Utils.bool('network.resume_strict', 'Resume Strict', def=false),
+            ],
+        },
+        {
+            type: 'H',
+            objs: [
                 {
                     _id_: 'network.norm_type',
                     name: { en: 'Norm Type', cn: self.en },
@@ -82,6 +59,8 @@ local _NetSelector = {
                     ],
                     default: self.objs[0].value,
                 },
+                _Utils.bool('network.syncbn', 'SyncBN', def=false),
+                _Utils.bool('network.resume_val', 'Resume Validation', def=false),
             ],
         },
     ],

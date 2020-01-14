@@ -7,22 +7,25 @@
 local _Utils = import '../../utils/helper.libsonnet';
 
 {
-    get(jid):: {
-        _id_: '_k12.' + jid + '.backbone.enum',
-        name: { en: 'Backbone', cn: self.en },
-        type: 'string-enum-trigger',
-        objs: [
+    get()::
+        if _Utils.method == 'image_classifier' then
             {
-                name: { en: 'vgg', cn: self.en },
-                value: 'vgg',
-                trigger: (import 'vgg.libsonnet').get(jid),
-            },
+                _id_: 'network.backbone',
+                name: { en: 'Backbone', cn: self.en },
+                type: 'string-enum',
+                objs: (import 'vgg.libsonnet').get() +
+                      (import 'resnet.libsonnet').get(),
+                default: _Utils.get_default_value(self._id_, 'vgg16'),
+            } else if _Utils.method == 'single_shot_detector' then
             {
-                name: { en: 'resnet', cn: self.en },
-                value: 'resnet',
-                trigger: (import 'resnet.libsonnet').get(jid),
-            },
-        ],
-        default: self.objs[0].value,
-    },
+                _id_: 'network.backbone',
+                name: { en: 'Backbone', cn: self.en },
+                type: 'string-enum',
+                objs: [
+                    { name: { en: 'vgg16', cn: self.en }, value: 'vgg16' },
+                ],
+                default: self.objs[0].value,
+                readonly: true,
+            } else {
+        },
 }

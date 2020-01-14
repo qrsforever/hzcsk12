@@ -10,29 +10,24 @@ local _Utils = import '../../utils/helper.libsonnet';
     get(jid):: {
         type: 'V',
         objs: [
+            _Utils.float(jid + '.base_lr', 'Base LR', def=0.001),
             {
-                type: 'H',
+                _id_: jid + '.lr_policy',
+                name: { en: 'LR Policy', cn: self.en },
+                type: 'string-enum-trigger',
                 objs: [
-                    _Utils.float(jid + '.base_lr', 'Base LR', def=0.001),
                     {
-                        _id_: jid + '.lr_policy',
-                        name: { en: 'LR Policy', cn: self.en },
-                        type: 'string-enum-trigger',
-                        objs: [
-                            {
-                                name: { en: 'step', cn: self.en },
-                                value: 'step',
-                                trigger: (import 'policy/step.libsonnet').get(jid + '.step'),
-                            },
-                            {
-                                name: { en: 'multi step', cn: self.en },
-                                value: 'multistep',
-                                trigger: (import 'policy/multistep.libsonnet').get(jid + '.multistep'),
-                            },
-                        ],
-                        default: 'multistep',
+                        name: { en: 'step', cn: self.en },
+                        value: 'step',
+                        trigger: (import 'policy/step.libsonnet').get(jid + '.step'),
+                    },
+                    {
+                        name: { en: 'multi step', cn: self.en },
+                        value: 'multistep',
+                        trigger: (import 'policy/multistep.libsonnet').get(jid + '.multistep'),
                     },
                 ],
+                default: 'multistep',
             },
             {
                 _id_: jid + '.is_warm',

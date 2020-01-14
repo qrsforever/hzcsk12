@@ -4,13 +4,50 @@
 // @version 1.0
 // @date 2020-01-06 13:31
 
+local _network_maps = {
+    base_model: {
+        method: 'image_classifier',
+        name: { en: 'base', cn: self.en },
+    },
+    cls_model: {
+        method: 'image_classifier',
+        name: { en: 'cls', cn: self.en },
+    },
+    distill: {
+        method: 'image_classifier',
+        name: { en: 'distill', cn: self.en },
+    },
+    vgg16_ssd300: {
+        method: 'single_shot_detector',
+        name: { en: 'ssd300', cn: self.en },
+    },
+    vgg16_ssd512: {
+        method: 'single_shot_detector',
+        name: { en: 'ssd512', cn: self.en },
+    },
+    lffdv2: {
+        method: 'single_shot_detector',
+        name: { en: 'lffdv2', cn: self.en },
+    },
+    faster_rcnn: {
+        method: 'faster_rcnn',
+        name: { en: 'faster rcnn', cn: self.en },
+    },
+    darknet_yolov3: {
+        method: 'yolov3',
+        name: { en: 'yolov3', cn: self.en },
+    },
+};
+
 {
     version:: '0.0.1b',
     task:: std.extVar('task'),
+    network:: std.extVar('network'),
+    method:: _network_maps[$.network].method,
+    network_name:: _network_maps[$.network].name,
     dataset_name:: std.extVar('dataset_name'),
     pretrained_path:: std.extVar('pretrained_path'),
 
-    // usage: get_value(confg, 'a.b.c', 100)
     get_value(obj, keystr, def)::
         if std.type(obj) == 'object' && std.length(keystr) > 1
         then
@@ -39,7 +76,7 @@
     datasets:: {
         [if $.dataset_name == 'mnist' then 'mnist']: import '../constants/datasets/mnist.jsonnet',
         [if $.dataset_name == 'cifar10' then 'cifar10']: import '../constants/datasets/cifar10.jsonnet',
-        [if $.dataset_name == 'voc' then 'voc']: import '../constants/datasets/voc.jsonnet',
+        [if $.dataset_name == 'VOC07+12_DET' then 'VOC07+12_DET']: import '../constants/datasets/VOC07+12_DET.jsonnet',
     },
 
     // basic type node generator function

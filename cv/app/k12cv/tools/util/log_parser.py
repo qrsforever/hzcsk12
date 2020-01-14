@@ -81,6 +81,7 @@ def _parse_metrics(filename, lineno, message):
                 res = RE_DET_COM_TRAIN.search(message)
                 if res:
                     result = res.groupdict()
+                    _metrics_['training_iters'] = int(result.get('iters', '0'))
                     _metrics_['training_epochs'] = int(result.get('epoch', '0'))
                     _metrics_['training_loss'] = float(result.get('train_loss', '0'))
                     _metrics_['training_speed'] = float(result.get('batch_time_avg', '0'))

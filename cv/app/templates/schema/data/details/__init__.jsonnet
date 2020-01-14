@@ -19,7 +19,16 @@ local _Datasets = {
             objs: [
                 _Utils.string('_k12.data.dataset_name', 'Dataset Name', def=_Utils.dataset_name, readonly=true),
                 _Utils.string('data.data_dir', 'Dataset Path', def='unkown', ddd=true, readonly=true),
-            ],
+            ] + (
+                if _Utils.task == 'det'
+                then
+                    if _Utils.dataset_name == 'VOC07+12_DET'
+                    then
+                        [_Utils.bool('val.use_07_metric', '07 Metric', def=true, readonly=true)]
+                    else
+                        [_Utils.bool('val.use_07_metric', '07 Metric', def=false, readonly=true)]
+                else []
+            ),
         },
         {
             type: 'H',
@@ -36,8 +45,5 @@ local _Datasets = {
                 _Utils.int('data.normalize.div_value', 'Div Value', def=255, ddd=true, readonly=true),
             ],
         },
-        // _Utils.stringarray('details.name_seq', 'Name Seq', def=[], ddd=true, width=600, readonly=true),
-        // _Utils.intarray('details.color_list', 'Color List', def=[[]], ddd=true, width=600, readonly=true),
-    ] + (if std.objectHas(_Datasets, _Utils.dataset_name) then _Datasets[_Utils.dataset_name]
-         else []),
+    ],
 }

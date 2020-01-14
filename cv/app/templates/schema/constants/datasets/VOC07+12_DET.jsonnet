@@ -1,4 +1,4 @@
-// @file voc.jsonnet
+// @file VOC07+12_DET.jsonnet
 // @brief
 // @author QRS
 // @version 1.0
@@ -146,8 +146,8 @@
                 nesterov: false,
             },
         },
-        display_iter: 100,
-        save_iters: 5000,
+        display_iter: 20,
+        save_iters: 500,
         test_interval: 500,
         max_epoch: 2,
     },

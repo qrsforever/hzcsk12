@@ -199,7 +199,7 @@ class CVServiceRPC(object):
             # CheckPoints
             model_name = config_tree.get('network.model_name', default='unknow')
             backbone = config_tree.get('network.backbone', default='unknow')
-            ckpts_name = '%s_%s'%(model_name, backbone)
+            ckpts_name = '%s_%s_%s'%(model_name, backbone, _k12ai_tree.get('data.dataset_name'))
             config_tree.put('network.checkpoints_root', '/cache')
             config_tree.put('network.checkpoints_name', ckpts_name)
             config_tree.put('network.checkpoints_dir', 'ckpts')
@@ -269,7 +269,9 @@ class CVServiceRPC(object):
                 'runtime': 'nvidia',
                 'labels': labels,
                 'volumes': volumes,
-                'environment': environs
+                'environment': environs,
+                'shm_size': '4g',
+                'mem_limit': '8g',
                 } # noqa
 
         self.send_message(op, user, uuid, "status", {'value':'starting'})
@@ -283,12 +285,13 @@ class CVServiceRPC(object):
         if message:
             self.send_message(op, user, uuid, "error", message)
 
-    def schema(self, task, dataset_name):
+    def schema(self, task, netw, dataset_name):
         schema_file = os.path.join(self._projdir, 'app', 'templates', 'schema', 'k12ai_cv.jsonnet')
         if not os.path.exists(schema_file):
             return 100206, f'{schema_file}'
         schema_json = _jsonnet.evaluate_file(schema_file, ext_vars={
             'task': task,
+            'network': netw,
             'dataset_name': dataset_name,
             })
         return 100000, json.dumps(json.loads(schema_json), separators=(',',':'))
