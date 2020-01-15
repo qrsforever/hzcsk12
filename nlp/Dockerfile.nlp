@@ -33,6 +33,7 @@ COPY app app/
 COPY allennlp/allennlp/ allennlp/
 COPY allennlp/setup.py setup.py
 COPY allennlp/README.md README.md
+COPY allennlp-reading-comprehension/allennlp_rc allennlp_rc/
 
 RUN pip install --editable .
 
@@ -41,7 +42,7 @@ RUN pip install --editable .
 # care about, so we redirect the output to /dev/null.
 RUN cd allennlp/tools/EVALB && make &> /dev/null && cd ../../../
 
-ENV PYTHONPATH=/hzcsk12/nlp/app:/hzcsk12/nlp/allennlp:$PYTHONPATH
+ENV PYTHONPATH=/hzcsk12/nlp/app:/hzcsk12/nlp/allennlp:/hzcsk12/nlp/allennlp_rc:$PYTHONPATH
 
 EXPOSE 8000
 CMD ["/bin/bash"]

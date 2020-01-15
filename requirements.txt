@@ -1,5 +1,4 @@
-# nlp
-
+# allennlp
 torch>=1.2.0,!=1.3.0
 jsonnet>=0.10.0 ; sys.platform != 'win32'
 overrides==2.0
@@ -23,6 +22,9 @@ editdistance
 h5py
 pytz>=2017.3
 conllu==1.3.1
+
+# allennlp_rc
+py-rouge==1.1
 
 # cv
 pyhocon

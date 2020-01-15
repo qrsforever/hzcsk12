@@ -126,8 +126,9 @@ def main(prog: str = None, subcommand_overrides: Dict[str, Subcommand] = None) -
         try:
             args.func(args)
             logger.info("+++success+++")
-        except Exception:
+        except Exception as err:
             logger.info("+++fail+++")
+            logger.info("{}".format(err))
             hzcsk12_error_message(exc=True)
     else:
         parser.print_help()
