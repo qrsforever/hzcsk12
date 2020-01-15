@@ -34,8 +34,8 @@ class CcgBankDatasetReader(DatasetReader):
     you'll need to first concatenate some of those files into a training set, a validation set,
     and a test set.
 
-    Parameters
-    ----------
+    # Parameters
+
     token_indexers : ``Dict[str, TokenIndexer]``, optional (default=``{"tokens": SingleIdTokenIndexer()}``)
         We use this to define the input representation for the text.  See :class:`TokenIndexer`.
         Note that the `output` tags will always correspond to single token IDs based on how they
@@ -94,9 +94,13 @@ class CcgBankDatasetReader(DatasetReader):
                     tuples = zip(*[leaf.split() for leaf in leaves])
 
                     # Convert to lists and assign to variables.
-                    ccg_categories, modified_pos_tags, original_pos_tags, tokens, predicate_arg_categories = [
-                        list(result) for result in tuples
-                    ]
+                    (
+                        ccg_categories,
+                        modified_pos_tags,
+                        original_pos_tags,
+                        tokens,
+                        predicate_arg_categories,
+                    ) = [list(result) for result in tuples]
 
                     yield self.text_to_instance(
                         tokens,
@@ -118,8 +122,8 @@ class CcgBankDatasetReader(DatasetReader):
         """
         We take `pre-tokenized` input here, because we don't have a tokenizer in this class.
 
-        Parameters
-        ----------
+        # Parameters
+
         tokens : ``List[str]``, required.
             The tokens in a given sentence.
         ccg_categories : ``List[str]``, optional, (default = None).
@@ -132,8 +136,8 @@ class CcgBankDatasetReader(DatasetReader):
             Encodes the word-word dependencies in the underlying predicate-
             argument structure.
 
-        Returns
-        -------
+        # Returns
+
         An ``Instance`` containing the following fields:
             tokens : ``TextField``
                 The tokens in the sentence.

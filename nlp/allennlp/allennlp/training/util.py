@@ -26,7 +26,7 @@ from allennlp.nn import util as nn_util
 try:
     from k12nlp.common.util import hzcsk12_send_message
 except:
-    def hzcsk12_send_message(msgtype, message, end=False):
+    def hzcsk12_send_message(msgtype, message, iters=None, speed=None, end=False):
         pass
 
 logger = logging.getLogger(__name__)
@@ -45,8 +45,8 @@ def sparse_clip_norm(parameters, max_norm, norm_type=2) -> float:
     concatenated into a single vector. Gradients are modified in-place.
     Supports sparse gradients.
 
-    Parameters
-    ----------
+    # Parameters
+
     parameters : ``(Iterable[torch.Tensor])``
         An iterable of Tensors that will have gradients normalized.
     max_norm : ``float``
@@ -54,8 +54,8 @@ def sparse_clip_norm(parameters, max_norm, norm_type=2) -> float:
     norm_type : ``float``
         The type of the used p-norm. Can be ``'inf'`` for infinity norm.
 
-    Returns
-    -------
+    # Returns
+
     Total norm of the parameters (viewed as a single vector).
     """
     parameters = list(filter(lambda p: p.grad is not None, parameters))
@@ -141,8 +141,8 @@ def datasets_from_params(
     """
     Load all the datasets specified by the config.
 
-    Parameters
-    ----------
+    # Parameters
+
     params : ``Params``
     cache_directory : ``str``, optional
         If given, we will instruct the ``DatasetReaders`` that we construct to cache their
@@ -259,8 +259,8 @@ def create_serialization_dir(
     This function creates the serialization directory if it doesn't exist.  If it already exists
     and is non-empty, then it verifies that we're recovering from a training with an identical configuration.
 
-    Parameters
-    ----------
+    # Parameters
+
     params : ``Params``
         A parameter object specifying an AllenNLP Experiment.
     serialization_dir : ``str``
@@ -321,7 +321,7 @@ def create_serialization_dir(
                 fail = True
         if fail:
             raise ConfigurationError(
-                "Training configuration does not match the configuration we're " "recovering from."
+                "Training configuration does not match the configuration we're recovering from."
             )
     else:
         if recover:
@@ -493,7 +493,7 @@ def make_vocab_from_params(params: Params, serialization_dir: str) -> Vocabulary
 
     if os.path.isdir(vocab_dir) and os.listdir(vocab_dir) is not None:
         raise ConfigurationError(
-            "The 'vocabulary' directory in the provided " "serialization directory is non-empty"
+            "The 'vocabulary' directory in the provided serialization directory is non-empty"
         )
 
     all_datasets = datasets_from_params(params)
@@ -515,7 +515,7 @@ def make_vocab_from_params(params: Params, serialization_dir: str) -> Vocabulary
         if key in datasets_for_vocab_creation
     )
 
-    vocab = Vocabulary.from_params(vocab_params, instances)
+    vocab = Vocabulary.from_params(vocab_params, instances=instances)
 
     logger.info(f"writing the vocabulary to {vocab_dir}.")
     vocab.save_to_files(vocab_dir)

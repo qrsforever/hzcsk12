@@ -53,8 +53,8 @@ class SampledSoftmaxLoss(torch.nn.Module):
     For the (tie_embeddings=True and use_character_inputs=False) case,
     then the embeddings DO include the extra 0 padding, to be consistent with the word embedding layer.
 
-    Parameters
-    ----------
+    # Parameters
+
     num_words, ``int``, required
         The number of words in the vocabulary
     embedding_dim, ``int``, required
@@ -169,9 +169,11 @@ class SampledSoftmaxLoss(torch.nn.Module):
 
         # NOTE: targets input has padding removed (so 0 == the first id, NOT the padding id)
 
-        sampled_ids, target_expected_count, sampled_expected_count = self.log_uniform_candidate_sampler(
-            targets, choice_func=self.choice_func
-        )
+        (
+            sampled_ids,
+            target_expected_count,
+            sampled_expected_count,
+        ) = self.log_uniform_candidate_sampler(targets, choice_func=self.choice_func)
 
         long_targets = targets.long()
         long_targets.requires_grad_(False)
