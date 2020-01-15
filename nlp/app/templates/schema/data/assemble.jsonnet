@@ -7,7 +7,13 @@
 local _Utils = import '../utils/helper.libsonnet';
 
 [
-    _Utils.string('_k12.data.dataset_name', 'Dataset Name', def=_Utils.dataset_name, readonly=true),
+    {
+        type: 'H',
+        objs: [
+            _Utils.string('_k12.data.dataset_name', 'Dataset Name', def=_Utils.dataset_name, readonly=true),
+            _Utils.bool('trainer.shuffle', 'Shuffle', def=true, ddd=true),
+        ],
+    },
     {
         type: 'accordion',
         objs: [

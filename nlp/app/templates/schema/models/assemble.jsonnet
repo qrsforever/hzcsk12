@@ -4,6 +4,6 @@
 // @version 1.0
 // @date 2019-12-27 00:04
 
-[
-    (import 'methods/__init__.jsonnet').get('model'),
-]
+local _Utils = import '../utils/helper.libsonnet';
+
+(import 'networks/__init__.jsonnet').get('model')

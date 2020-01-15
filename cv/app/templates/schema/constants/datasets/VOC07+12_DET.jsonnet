@@ -149,7 +149,7 @@
         display_iter: 20,
         save_iters: 500,
         test_interval: 500,
-        max_epoch: 2,
+        max_epoch: 30,
     },
     loss: {
         loss_type: 'multibox_loss',

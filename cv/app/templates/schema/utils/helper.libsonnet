@@ -43,8 +43,8 @@ local _network_maps = {
     version:: '0.0.1b',
     task:: std.extVar('task'),
     network:: std.extVar('network'),
-    method:: _network_maps[$.network].method,
-    network_name:: _network_maps[$.network].name,
+    method:: if std.objectHas(_network_maps, $.network) then _network_maps[$.network].method else 'unkown',
+    network_name:: if std.objectHas(_network_maps, $.network) then _network_maps[$.network].name else 'unkown',
     dataset_name:: std.extVar('dataset_name'),
 
     get_value(obj, keystr, def)::

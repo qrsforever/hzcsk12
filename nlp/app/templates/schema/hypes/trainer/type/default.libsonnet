@@ -13,9 +13,10 @@ local _Utils = import '../../../utils/helper.libsonnet';
             {
                 type: 'H',
                 objs: [
-                    _Utils.int(jid + '.cuda_device', 'CUDA Device', def=0, readonly=true),
-                    _Utils.int(jid + '.num_epochs', 'Epochs Num', def=20),
-                    _Utils.int(jid + '.patience', 'Patience', def=10),
+                    _Utils.int(jid + '.cuda_device', 'CUDA Device', def=0),
+                    _Utils.int(jid + '.num_epochs', 'Epochs Count', def=20, ddd=true),
+                    _Utils.int(jid + '.patience', 'Patience', def=10, ddd=true),
+                    _Utils.int(jid + '.summary_interval', 'Summary Interval', def=100, ddd=true),
                     {
                         _id_: jid + '.validation_metric',
                         name: { en: 'Validation Metric', cn: self.en },
@@ -39,7 +40,7 @@ local _Utils = import '../../../utils/helper.libsonnet';
                 objs: [
                     {
                         _id_: '_k12.' + jid + 'grad_norm.bool',
-                        name: { en: 'Enable Grad Norm', cn: self.en },
+                        name: { en: 'Grad Norm', cn: self.en },
                         type: 'bool-trigger',
                         objs: [
                             {
@@ -58,7 +59,7 @@ local _Utils = import '../../../utils/helper.libsonnet';
                     },
                     {
                         _id_: '_k12.' + jid + 'grad_clipping.bool',
-                        name: { en: 'Enable Grad Clipping', cn: self.en },
+                        name: { en: 'Grad Clipping', cn: self.en },
                         type: 'bool-trigger',
                         objs: [
                             {

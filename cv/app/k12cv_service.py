@@ -105,7 +105,7 @@ class CVServiceRPC(object):
         self.datasets_dir = '%s/datasets/cv' % data_root
         self.pretrained_dir = '%s/pretrained/cv' % data_root
 
-    def send_message(self, op, user, uuid, msgtype, message):
+    def send_message(self, op, user, uuid, msgtype, message, clear=False):
         client = consul.Consul(consul_addr, port=consul_port)
         service = client.agent.services().get(self._k12ai)
         if not service:
@@ -145,10 +145,12 @@ class CVServiceRPC(object):
         api = 'http://{}:{}/k12ai/private/message?type={}'.format(service['Address'], service['Port'], msgtype)
         requests.post(api, json=data)
         if self._debug:
+            if clear:
+                client.kv.delete('framework/%s/%s' % (user, uuid), recurse=True)
             key = 'framework/%s/%s/%s/%s' % (user, uuid, op, msgtype)
             if msgtype != 'status':
                 key = '%s/%s' % (key, data['datetime'][:-2])
-            client.kv.put(key, json.dumps(data, indent=4))
+            client.kv.put(key, json.dumps(data, indent=2))
 
     def _get_container(self, user, uuid):
         try:
@@ -212,12 +214,14 @@ class CVServiceRPC(object):
                     config_tree.put('network.pretrained', '/pretrained/%s' % _file)
 
             config_str = HOCONConverter.convert(config_tree, 'json')
+        else:
+            config_str = json.dumps(params)
 
         config_file = '%s/config.json' % self._get_cache_dir(user, uuid)
         with open(config_file, 'w') as fout:
             fout.write(config_str)
 
-        return 100000, {'config': '/cache/config.json', 'output': '/cache/output'}
+        return 100000, None
 
     def _run(self, op, user, uuid, command=None):
         logger.info(command)
@@ -270,7 +274,7 @@ class CVServiceRPC(object):
                 'mem_limit': '8g',
                 } # noqa
 
-        self.send_message(op, user, uuid, "status", {'value':'starting'})
+        self.send_message(op, user, uuid, "status", {'value':'starting'}, clear=True)
         try:
             self._docker.containers.run(self._image, command, **kwargs)
             return
@@ -315,18 +319,18 @@ class CVServiceRPC(object):
         command = 'python -m torch.distributed.launch --nproc_per_node=1 {}'.format(
                 '%s/torchcv/main.py' % self._workdir)
 
-        command += ' --config_file %s' % result['config']
+        command += ' --config_file /cache/config.json'
 
         if phase == 'train':
             command += ' --phase train'
         elif phase == 'evaluate':
-            command += ' --phase test --out_dir %s' % result['output']
+            command += ' --phase test --out_dir /cache/output'
         elif phase == 'predict':
             raise('not impl yet')
 
         Thread(target=lambda: self._run(op=op, user=user, uuid=uuid, command=command),
                 daemon=True).start()
-        return 100000, result
+        return 100000, None
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

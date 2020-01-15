@@ -210,9 +210,10 @@ def _framework_schema():
     except Exception:
         return json.dumps(_err_msg(100207, exc=True))
 
+
 @app.route('/k12ai/framework/execute', methods=['POST'])
 def _framework_execute():
-    logger.info('call _framework_project')
+    logger.info('call _framework_execute')
     try:
         reqjson = json.loads(request.get_data().decode())
         user = reqjson['user']
@@ -224,8 +225,13 @@ def _framework_execute():
         service_name = reqjson['service_name']
         service_uuid = reqjson['service_uuid']
         service_params = reqjson.get('service_params', None)
+        if isinstance(service_params, str):
+            service_params = json.loads(service_params)
     except Exception:
         return json.dumps(_err_msg(100101, exc=True))
+
+    if not isinstance(user, str) or not isinstance(service_uuid, str):
+        return json.dumps(_err_msg(100102, 'user or service_uuid type not str'))
 
     agent = _get_service_by_name(service_name)
     if not agent:
@@ -246,8 +252,8 @@ def _framework_message():
             g_redis.lpush('k12ai.{}'.format(msgtype), request.get_data().decode())
     except Exception as err:
         logger.info(err)
-        return "error"
-    return "1"
+        return "-1"
+    return "0"
 
 
 if __name__ == "__main__":

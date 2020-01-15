@@ -123,7 +123,7 @@
         display_iter: 20,
         save_iters: 2000,
         test_interval: 100,
-        max_epoch: 360,
+        max_epoch: 30,
     },
     loss: {
         loss_type: 'ce_loss',

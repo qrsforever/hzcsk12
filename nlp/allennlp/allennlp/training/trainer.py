@@ -32,8 +32,8 @@ from allennlp.training.trainer_base import TrainerBase
 # QRS: add for report message
 try:
     from k12nlp.common.util import hzcsk12_send_message
-except:
-    def hzcsk12_send_message(msgtype, message, end=False):
+except ModuleNotFoundError:
+    def hzcsk12_send_message(msgtype, message, iters=None, speed=None, end=False):
         pass
 
 logger = logging.getLogger(__name__)
@@ -436,6 +436,9 @@ class Trainer(TrainerBase):
                 self._tensorboard.add_train_scalar("loss/loss_train", metrics["loss"])
                 self._tensorboard.log_metrics({"epoch_metrics/" + k: v for k, v in metrics.items()})
 
+                # QRS: add
+                hzcsk12_send_message('metrics', metrics, iters=batch_num_total)
+
             if self._tensorboard.should_log_histograms_this_batch() and self._master:
                 self._tensorboard.log_histograms(self.model, histogram_parameters)
 
@@ -449,10 +452,6 @@ class Trainer(TrainerBase):
                     )
                     self._tensorboard.add_train_scalar("current_batch_size", batch_group_size)
                     self._tensorboard.add_train_scalar("mean_batch_size", average)
-
-                # QRS: add
-                if self._batch_num_total % 100 == 0:
-                    hzcsk12_send_message('metrics', metrics)
 
             # Save model if needed.
             if (
@@ -632,9 +631,6 @@ class Trainer(TrainerBase):
                     os.path.join(self._serialization_dir, f"metrics_epoch_{epoch}.json"), metrics
                 )
 
-            # QRS: add                               
-            hzcsk12_send_message('metrics', metrics)
-
             # The Scheduler API is agnostic to whether your schedule requires a validation metric -
             # if it doesn't, the validation metric passed here is ignored.
             if self._learning_rate_scheduler:
@@ -662,11 +658,14 @@ class Trainer(TrainerBase):
 
             epochs_trained += 1
 
+            # QRS: add
+            hzcsk12_send_message('metrics', metrics, iters=self._batch_num_total, speed=epoch_elapsed_time)
+
         # make sure pending events are flushed to disk and files are closed properly
         self._tensorboard.close()
 
         # QRS: add
-        hzcsk12_send_message('metrics', metrics, True)
+        hzcsk12_send_message('metrics', metrics, end=True)
 
         # Load the best model state before returning
         best_model_state = self._checkpointer.best_model_state()

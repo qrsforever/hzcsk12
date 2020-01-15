@@ -120,7 +120,7 @@ class NLPServiceRPC(object):
         self.datasets_dir = '%s/datasets/nlp' % data_root
         self.pretrained_dir = '%s/pretrained/nlp' % data_root
 
-    def send_message(self, op, user, uuid, msgtype, message):
+    def send_message(self, op, user, uuid, msgtype, message, clear=False):
         client = consul.Consul(consul_addr, port=consul_port)
         service = client.agent.services().get(self._k12ai)
         if not service:
@@ -156,6 +156,8 @@ class NLPServiceRPC(object):
         api = 'http://{}:{}/k12ai/private/message'.format(service['Address'], service['Port'])
         requests.post(api, json=data)
         if self._debug:
+            if clear:
+                client.kv.delete('framework/%s/%s' % (user, uuid), recurse=True)
             key = 'framework/%s/%s/%s/%s' % (user, uuid, op, msgtype)
             if msgtype != 'status':
                 key = '%s/%s' % (key, data['datetime'][:-2])
@@ -182,17 +184,20 @@ class NLPServiceRPC(object):
         if not params or not isinstance(params, dict):
             return 100203, 'parameters type is not dict'
 
+        resume = True
         if '_k12.data.dataset_name' in params.keys():
             config_tree = ConfigFactory.from_dict(params)
-            config_tree.pop('_k12')
-
+            _k12ai_tree = config_tree.pop('_k12')
+            resume = _k12ai_tree.get('model.resume', True)
             config_str = HOCONConverter.convert(config_tree, 'json')
+        else:
+            config_str = json.dumps(params)
 
         config_file = '%s/config.json' % self._get_cache_dir(user, uuid)
         with open(config_file, 'w') as fout:
             fout.write(config_str)
 
-        return 100000, {'config': '/cache/config.json', 'output': '/cache/output'}
+        return 100000, {'resume': resume}
 
     def _run(self, op, user, uuid, command=None):
         logger.info(command)
@@ -237,7 +242,7 @@ class NLPServiceRPC(object):
                 'mem_limit': '8g',
                 }
 
-        self.send_message(op, user, uuid, "status", {'value':'starting'})
+        self.send_message(op, user, uuid, "status", {'value':'starting'}, clear=True)
         try:
             self._docker.containers.run(self._image, command, **kwargs)
             return
@@ -280,11 +285,13 @@ class NLPServiceRPC(object):
 
         if phase == 'train':
             flag = '--force'
-            serial_conf = os.path.join(self._get_cache_dir(user, uuid), 'output', 'config.json')
-            if os.path.exists(serial_conf):
-                if not _check_config_diff(result['config'], serial_conf):
-                    flag = '--recover'
-            command = 'allennlp train %s %s -s %s' % (result['config'], flag, result['output'])
+            if result['resume']:
+                config_conf = os.path.join(self._get_cache_dir(user, uuid), 'config.json')
+                serial_conf = os.path.join(self._get_cache_dir(user, uuid), 'output', 'config.json')
+                if os.path.exists(serial_conf):
+                    if not _check_config_diff(config_conf, serial_conf):
+                        flag = '--recover'
+            command = 'allennlp train /cache/config.json %s --serialization-dir /cache/output' % flag
         elif phase == 'evaluate':
             raise('not impl yet')
         elif phase == 'predict':
@@ -292,7 +299,7 @@ class NLPServiceRPC(object):
 
         Thread(target=lambda: self._run(op=op, user=user, uuid=uuid, command=command),
                 daemon=True).start()
-        return 100000, result 
+        return 100000, None
 
     # def evaluate(self, op, user, uuid, params):
     #     logger.info("call evaluate(%s, %s, %s)", op, user, uuid)

@@ -44,10 +44,14 @@
         batch_size: 32,
     },
     trainer: {
-        num_epochs: 2,
+        num_epochs: 100,
         patience: 1,
         grad_norm: 5.0,
+        shuffle: true,
+        num_serialized_models_to_keep: 2,
+        summary_interval: 5,
         validation_metric: '+accuracy',
+        distributed: false,
         cuda_device: 0,
         optimizer: {
             type: 'adam',

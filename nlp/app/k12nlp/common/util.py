@@ -16,7 +16,7 @@ _RPCClient = None
 _RPCEnable = -1
 K12NLP_OP, K12NLP_USER, K12NLP_UUID = None, None, None
 
-def hzcsk12_send_message(msgtype, message, end=False):
+def hzcsk12_send_message(msgtype, message, iters=None, speed=None, end=False):
     global _RPCClient, _RPCEnable, K12NLP_OP, K12NLP_USER, K12NLP_UUID
 
     if _RPCEnable == 0:
@@ -39,6 +39,13 @@ def hzcsk12_send_message(msgtype, message, end=False):
 
     try:
         if message:
+            if iters:
+                message['training_iters'] = iters
+                epochs = message.get('training_epochs', None)
+                if epochs:
+                    message['training_epochs'] = epochs + 1
+            if speed:
+                message['training_speed'] = speed
             _RPCClient.send_message(K12NLP_OP, K12NLP_USER, K12NLP_UUID, msgtype, message)
         if end:
             _RPCClient.close()

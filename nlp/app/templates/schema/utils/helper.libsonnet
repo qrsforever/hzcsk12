@@ -4,10 +4,17 @@
 // @version 1.0
 // @date 2019-12-30 12:14
 
+local _network_maps = {
+    basic_classifier: {
+        name: { en: 'Basic Classifier', cn: self.en },
+    },
+};
+
 {
     version:: '0.0.1b',
     task:: std.extVar('task'),
     network:: std.extVar('network'),
+    network_name:: if std.objectHas(_network_maps, $.network) then _network_maps[$.network].name else 'unkown',
     dataset_name:: std.extVar('dataset_name'),
 
     // usage: get_value(confg, 'a.b.c', 100)

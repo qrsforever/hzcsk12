@@ -32,7 +32,7 @@
                         {
                             _id_: '_k12.iframe.train',
                             type: 'iframe',
-                            html: 'http://www.baidu.com',
+                            html: '/#/demo',
                         },
                     ],
                 },

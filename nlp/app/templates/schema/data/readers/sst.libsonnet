@@ -11,9 +11,9 @@ local _Utils = import '../../utils/helper.libsonnet';
         {
             type: 'H',
             objs: [
+                _Utils.string(jid + '.granularity', 'granularity', def='5-class'),
                 _Utils.bool(jid + '.lazy', 'lazy', def=true),
                 _Utils.bool(jid + '.use_subtrees', 'use subtrees', def=false),
-                _Utils.string(jid + '.granularity', 'granularity', def='5-class'),
             ],
         },
         {
@@ -38,13 +38,13 @@ local _Utils = import '../../utils/helper.libsonnet';
         if navi == 'train' then
             _Utils.string('train_data_path',
                           'Dataset Path',
-                          def=_Utils.dataset_path + '/sst/train.txt',
+                          def='/datasets/sst/train.txt',
                           ddd=true,
                           width=500,
                           readonly=true) else
             _Utils.string('validation_data_path',
                           'Dataset Path',
-                          def=_Utils.dataset_path + '/sst/dev.txt',
+                          def='/datasets/sst/dev.txt',
                           ddd=true,
                           width=500,
                           readonly=true),
