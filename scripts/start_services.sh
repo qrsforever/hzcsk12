@@ -80,6 +80,13 @@ __service_environment_check()
         exit -1
     fi
 
+    if [[ ! -d /data/nltk_data ]]
+    then
+        echo "##############"
+        echo "Warning: not found nltk_data, downloading from https://github.com/nltk/nltk_data"
+        echo "##############"
+    fi
+
     ret=$(__software_install_check nfs-kernel-server)
     if [[ $ret == "0" ]]
     then

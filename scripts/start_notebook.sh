@@ -66,7 +66,7 @@ __start_notebook()
 
 __main()
 {
-    if [[ x$1 == x ]] || [[ x$1 == xall ]]
+    if [[ x$1 == x ]] || [[ x$1 == xall ]] || [[ x$1 == xai ]]
     then
         __start_notebook $K12AI_PROJECT $K12AI_PORT \
             --env PYTHONPATH=$DST_DIR/hzcsnote \
@@ -78,17 +78,21 @@ __main()
     if [[ x$1 == xcv ]]
     then
         __start_notebook $K12CV_PROJECT $K12CV_PORT \
+            --runtime nvidia --shm-size=4g --ulimit memlock=-1 --ulimit stack=67108864 \
             --volume $TOP_DIR/cv/app:$DST_DIR/cv/app \
             --volume $TOP_DIR/cv/torchcv:$DST_DIR/cv/torchcv \
-            --volume $DST_DIR/cv/torchcv/exts \
+            --volume $DST_DIR/cv/torchcv/lib/exts \
             --volume /data:/data
     fi
 
     if [[ x$1 == xnlp ]]
     then
         __start_notebook $K12NLP_PROJECT $K12NLP_PORT \
+            --runtime nvidia --shm-size=4g --ulimit memlock=-1 --ulimit stack=67108864 \
             --volume $TOP_DIR/nlp/app:$DST_DIR/nlp/app \
-            --volume $TOP_DIR/nlp/allennlp:$DST_DIR/nlp/allennlp \
+            --volume $TOP_DIR/nlp/allennlp/allennlp:$DST_DIR/nlp/allennlp \
+            --volume $TOP_DIR/nlp/allennlp-reading-comprehension/allennlp_rc:$DST_DIR/nlp/allennlp_rc \
+            --volume /data/nltk_data:/root/nltk_data \
             --volume /data:/data
     fi
 }

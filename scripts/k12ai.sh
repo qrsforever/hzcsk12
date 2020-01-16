@@ -11,14 +11,14 @@ top_dir=`cd $(dirname $cur_fil)/..; pwd`
 
 __main()
 {
-    result=$(mountpoint /data 2>&1 | grep "is a mountpoint")
+    result=$(mountpoint /data2 2>&1 | grep "is a mountpoint")
     if [[ x$result == x ]]
     then
         if [[ `id -u` == 0 ]]
         then
-            mount -t nfs dataserver:/data /data
+            mount -t nfs dataserver:/data /data2
         else
-            sudo mount -t nfs dataserver:/data /data
+            sudo mount -t nfs dataserver:/data /data2
         fi
     fi
     $top_dir/scripts/start_services.sh dev nocheck

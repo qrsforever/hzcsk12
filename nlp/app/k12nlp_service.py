@@ -119,6 +119,7 @@ class NLPServiceRPC(object):
         self.userscache_dir = '%s/users' % data_root
         self.datasets_dir = '%s/datasets/nlp' % data_root
         self.pretrained_dir = '%s/pretrained/nlp' % data_root
+        self.nltk_data_dir = '%s/nltk_data' % data_root
 
     def send_message(self, op, user, uuid, msgtype, message, clear=False):
         client = consul.Consul(consul_addr, port=consul_port)
@@ -213,15 +214,17 @@ class NLPServiceRPC(object):
         usercache_dir = self._get_cache_dir(user, uuid)
 
         volumes = {
-                self.datasets_dir: {'bind': '/datasets', 'mode': 'rw'},
+                self.datasets_dir: {'bind': '/datasets', 'mode': 'ro'},
                 usercache_dir: {'bind':'/cache', 'mode': 'rw'},
-                self.pretrained_dir: {'bind': '/pretrained', 'mode': 'rw'},
+                self.pretrained_dir: {'bind': '/pretrained', 'mode': 'ro'},
+                self.nltk_data_dir: {'bind': '/root/nltk_data', 'mode': 'ro'},
                 }
 
         if self._debug:
             rm_flag = False
             volumes['%s/app'%self._projdir] = {'bind':'%s/app'%self._workdir, 'mode':'rw'}
-            volumes['%s/allennlp'%self._projdir] = {'bind':'%s/allennlp'%self._workdir, 'mode':'rw'}
+            volumes['%s/allennlp/allennlp'%self._projdir] = {'bind':'%s/allennlp'%self._workdir, 'mode':'rw'}
+            volumes['%s/allennlp-reading-comprehension/allennlp_rc'%self._projdir] = {'bind':'%s/allennlp_rc'%self._workdir, 'mode':'rw'}
 
         environs = {
                 'K12NLP_RPC_HOST': '%s' % self._host,
@@ -297,6 +300,7 @@ class NLPServiceRPC(object):
         elif phase == 'predict':
             raise('not impl yet')
 
+        command += ' --include-package allennlp_rc'
         Thread(target=lambda: self._run(op=op, user=user, uuid=uuid, command=command),
                 daemon=True).start()
         return 100000, None

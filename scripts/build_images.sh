@@ -119,10 +119,25 @@ __build_image()
 
 __main()
 {
-    force=$1
-    __build_image "k12ai" $MAJOR_K12AI $MINOR_K12AI Dockerfile.ai $force
-    __build_image "k12cv" $MAJOR_K12CV $MINOR_K12CV cv/Dockerfile.cv $force
-    __build_image "k12nlp" $MAJOR_K12NLP $MINOR_K12NLP nlp/Dockerfile.nlp $force
+    image='all'
+    if [[ x$1 == xai ]] || [[ x$1 == xcv ]] || [[ x$1 == xnlp ]]
+    then
+        image=$1
+        shift
+    fi
+    force=0
+    if [[ x$1 == x1 ]]
+    then
+        force=1
+    fi
+    if [[ x$image == xall ]]
+    then
+        __build_image "k12ai" $MAJOR_K12AI $MINOR_K12AI Dockerfile.ai $force
+        __build_image "k12cv" $MAJOR_K12CV $MINOR_K12CV cv/Dockerfile.cv $force
+        __build_image "k12nlp" $MAJOR_K12NLP $MINOR_K12NLP nlp/Dockerfile.nlp $force
+    else
+        __build_image "k12$image" $MAJOR_K12NLP $MINOR_K12NLP nlp/Dockerfile.nlp $force
+    fi
 }
 
 __main $@
