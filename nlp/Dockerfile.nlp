@@ -22,10 +22,7 @@ LABEL org.label-schema.schema-version="1.0" \
       org.label-schema.vcs-branch=$BRANCH \
       org.label-schema.vendor=$VENDOR \
       org.label-schema.version=$VERSION \
-      org.label-schema.docker.cmd="docker run -it --rm --name $PROJECT \
---network host --hostname $PROJECT --entrypoint /bin/bash \
---runtime nvidia --shm-size=2g --ulimit memlock=-1 --ulimit stack=67108864 \
---volume /data:/data $REPOSITORY:$TAG"
+      org.label-schema.docker.cmd="allennlp"
 
 WORKDIR /hzcsk12/nlp
 
@@ -44,5 +41,4 @@ RUN cd allennlp/tools/EVALB && make &> /dev/null && cd ../../../
 
 ENV PYTHONPATH=/hzcsk12/nlp/app:/hzcsk12/nlp/allennlp:/hzcsk12/nlp/allennlp_rc:$PYTHONPATH
 
-EXPOSE 8000
 CMD ["/bin/bash"]

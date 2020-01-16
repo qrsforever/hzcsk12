@@ -1,0 +1,14 @@
+pyhocon
+cython
+cffi
+opencv-python
+easydict
+Pillow
+pyyaml
+bs4
+html5lib
+ninja
+six
+scikit-image
+imageio
+Shapely

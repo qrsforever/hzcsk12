@@ -1,6 +1,6 @@
 FROM hzcsai_com/k12ai
 
-LABEL maintainer="k12cv@hzcsai.com"
+LABEL maintainer="k12rl@hzcsai.com"
 
 ARG VENDOR
 ARG PROJECT
@@ -24,7 +24,7 @@ LABEL org.label-schema.schema-version="1.0" \
       org.label-schema.version=$VERSION \
       org.label-schema.docker.cmd="main.py"
 
-WORKDIR /hzcsk12/cv
+WORKDIR /hzcsk12/rl
 
 ARG FORCE_CUDA="1"
 ENV FORCE_CUDA=${FORCE_CUDA}
@@ -35,18 +35,12 @@ RUN pip3 install --no-cache-dir --timeout 120 -r requirements.txt
 RUN rm requirements.txt
 
 COPY app app
-COPY torchcv/data torchcv/data 
-COPY torchcv/lib torchcv/lib
-COPY torchcv/metric torchcv/metric
-COPY torchcv/model torchcv/model
-COPY torchcv/runner torchcv/runner
-COPY torchcv/main.py torchcv/main.py
+COPY rlpyt/rlpyt rlpyt
+COPY rlpyt/setup.py setup.py
+COPY rlpyt/README.md README.md
 
-# install torchcv extensions
-RUN cd torchcv/lib/exts && \
-        chmod +x make.sh && \
-        sh make.sh
+RUN pip install --editable .
 
-ENV PYTHONPATH=/hzcsk12/cv/app:/hzcsk12/cv/torchcv:$PYTHONPATH
+ENV PYTHONPATH=/hzcsk12/rl/app:/hzcsk12/rl/rlpyt:$PYTHONPATH
 
 CMD ["/bin/bash"]
