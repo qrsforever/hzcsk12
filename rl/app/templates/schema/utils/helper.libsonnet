@@ -5,7 +5,9 @@
 // @date 2020-01-17 14:48
 
 local _network_maps = {
-
+    dqn: {
+        name: { en: 'DQN', cn: self.en },
+    },
 };
 
 {
