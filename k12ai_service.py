@@ -43,6 +43,7 @@ consul_port = None
 
 g_redis = None
 
+
 def _delay_do_consul(host, port):
     time.sleep(3)
     while not app_quit:
@@ -57,6 +58,7 @@ def _delay_do_consul(host, port):
         except Exception as err:
             logger.error("consul agent service register err", err)
             time.sleep(3)
+
 
 class RPCServiceAgent(object):
     def __init__(self, addr, port):
@@ -75,6 +77,7 @@ class RPCServiceAgent(object):
                 raise err
         return __wrapper
 
+
 def _get_service_by_name(name):
     client = consul.Consul(consul_addr, port=consul_port)
     service = client.agent.services().get('%s-%s' % (app_host_name, name))
@@ -83,13 +86,14 @@ def _get_service_by_name(name):
     else:
         return RPCServiceAgent(service['Address'], service['Port'])
 
+
 ### Consul check the flask service health
 @app.route('/status', methods=['GET'])
 def _consul_check_status():
     return "Success"
 
-### Platform
 
+### Platform
 @app.route('/k12ai/platform/stats', methods=['POST'])
 def _platform_stats():
     logger.info('call _platform_stats')
@@ -150,7 +154,6 @@ def _platform_control():
 
 
 ### Framework
-
 @app.route('/k12ai/framework/schema', methods=['POST'])
 def _framework_schema():
     logger.info('call _framework_schema')
@@ -188,8 +191,7 @@ def _framework_schema():
                     'dataset_name': 'mnist',
                     'dataset_root': '/datasets',
                     'checkpt_root': '/cache',
-                    'pretrained_path': '/pretrained',
-                    })
+                    'pretrained_path': '/pretrained'})
             return basic_json
         else:
             service_name = reqjson['service_name']

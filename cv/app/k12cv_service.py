@@ -25,7 +25,7 @@ try:
     from k12ai_utils import k12ai_get_hostip as _get_hostip
 except Exception:
     topdir = os.path.abspath(
-            os.path.dirname(os.path.abspath(__file__)) + "/../..")
+        os.path.dirname(os.path.abspath(__file__)) + "/../..")
     sys.path.append(topdir)
     from k12ai_errmsg import k12ai_error_message as _err_msg
     from k12ai_utils import k12ai_get_hostname as _get_hostname
@@ -65,22 +65,25 @@ pretrained_models = {
     'resnet152': 'resnet152-b121ed2d.pth',
 }
 
+
 def _delay_do_consul(host, port):
     time.sleep(3)
     while not app_quit:
         try:
             client = consul.Consul(host=consul_addr, port=consul_port)
             client.agent.service.register(
-                    name='{}-{}'.format(app_host_name, service_name),
-                    address=host, port=port, tags=('AI', 'FRAMEWORK'),
-                    check=consul.Check.tcp(host, port,
-                        interval='10s', timeout='5s', deregister='10s'))
+                name='{}-{}'.format(app_host_name, service_name),
+                address=host, port=port, tags=('AI', 'FRAMEWORK'),
+                check=consul.Check.tcp(host, port,
+                    interval='10s', timeout='5s', deregister='10s'))
             break
         except Exception as err:
             logger.info("consul agent service register err", err)
             time.sleep(3)
 
+
 OP_FAILURE = -1
+
 
 class CVServiceRPC(object):
 
@@ -164,7 +167,7 @@ class CVServiceRPC(object):
         return None
 
     def _get_cache_dir(self, user, uuid):
-        usercache = '%s/%s/%s'%(self.userscache_dir, user, uuid)
+        usercache = '%s/%s/%s' % (self.userscache_dir, user, uuid)
         if not os.path.exists(usercache):
             os.makedirs(usercache)
         return usercache
@@ -196,21 +199,22 @@ class CVServiceRPC(object):
             # CheckPoints
             model_name = config_tree.get('network.model_name', default='unknow')
             backbone = config_tree.get('network.backbone', default='unknow')
-            ckpts_name = '%s_%s_%s'%(model_name, backbone, _k12ai_tree.get('data.dataset_name'))
+            ckpts_name = '%s_%s_%s' % (model_name, backbone, _k12ai_tree.get('data.dataset_name'))
             config_tree.put('network.checkpoints_root', '/cache')
             config_tree.put('network.checkpoints_name', ckpts_name)
             config_tree.put('network.checkpoints_dir', 'ckpts')
 
-            resume_path = '%s/ckpts/%s_latest.pth' % (self._get_cache_dir(user, uuid), ckpts_name)
-            if os.path.exists(resume_path):
-                config_tree.put('network.resume', '/cache/ckpts/%s_latest.pth' % ckpts_name)
+            if config_tree.get('network.resume_continue', default=False):
+                resume_path = '%s/ckpts/%s_latest.pth' % (self._get_cache_dir(user, uuid), ckpts_name)
+                if os.path.exists(resume_path):
+                    config_tree.put('network.resume', '/cache/ckpts/%s_latest.pth' % ckpts_name)
 
             # Pretrained
             pretrained = config_tree.get('network.pretrained', default=False)
             config_tree.pop('network.pretrained', default=None)
             if pretrained:
                 _file = pretrained_models.get(backbone, 'nofile')
-                if os.path.exists('%s/%s'%(self.pretrained_dir, _file)):
+                if os.path.exists('%s/%s' % (self.pretrained_dir, _file)):
                     config_tree.put('network.pretrained', '/pretrained/%s' % _file)
 
             config_str = HOCONConverter.convert(config_tree, 'json')
@@ -238,22 +242,22 @@ class CVServiceRPC(object):
 
         volumes = { # noqa
                 self.datasets_dir: {'bind': '/datasets', 'mode': 'rw'},
-                usercache_dir: {'bind':'/cache', 'mode': 'rw'},
+                usercache_dir: {'bind': '/cache', 'mode': 'rw'},
                 self.pretrained_dir: {'bind': '/pretrained', 'mode': 'rw'},
                 }
 
         if self._debug:
             rm_flag = False
-            volumes['%s/app'%self._projdir] = {'bind':'%s/app'%self._workdir, 'mode':'rw'}
-            volumes['%s/torchcv/data'%self._projdir] = {'bind':'%s/torchcv/data'%self._workdir, 'mode':'rw'}
-            volumes['%s/torchcv/metric'%self._projdir] = {'bind':'%s/torchcv/metric'%self._workdir, 'mode':'rw'}
-            volumes['%s/torchcv/model'%self._projdir] = {'bind':'%s/torchcv/model'%self._workdir, 'mode':'rw'}
-            volumes['%s/torchcv/runner'%self._projdir] = {'bind':'%s/torchcv/runner'%self._workdir, 'mode':'rw'}
-            volumes['%s/torchcv/lib/data'%self._projdir] = {'bind':'%s/torchcv/lib/data'%self._workdir, 'mode':'rw'}
-            volumes['%s/torchcv/lib/model'%self._projdir] = {'bind':'%s/torchcv/lib/model'%self._workdir, 'mode':'rw'}
-            volumes['%s/torchcv/lib/runner'%self._projdir] = {'bind':'%s/torchcv/lib/runner'%self._workdir, 'mode':'rw'}
-            volumes['%s/torchcv/lib/tools'%self._projdir] = {'bind':'%s/torchcv/lib/tools'%self._workdir, 'mode':'rw'}
-            volumes['%s/torchcv/main.py'%self._projdir] = {'bind':'%s/torchcv/main.py'%self._workdir, 'mode':'rw'}
+            volumes[f'{self._projdir}/app'] = {'bind': f'{self._workdir}/app', 'mode': 'rw'}
+            volumes[f'{self._projdir}/torchcv/data'] = {'bind': f'{self._workdir}/torchcv/data', 'mode': 'rw'}
+            volumes[f'{self._projdir}/torchcv/metric'] = {'bind': f'{self._workdir}/torchcv/metric', 'mode': 'rw'}
+            volumes[f'{self._projdir}/torchcv/model'] = {'bind': f'{self._workdir}/torchcv/model', 'mode': 'rw'}
+            volumes[f'{self._projdir}/torchcv/runner'] = {'bind': f'{self._workdir}/torchcv/runner', 'mode': 'rw'}
+            volumes[f'{self._projdir}/torchcv/lib/data'] = {'bind': f'{self._workdir}/torchcv/lib/data', 'mode': 'rw'}
+            volumes[f'{self._projdir}/torchcv/lib/model'] = {'bind': f'{self._workdir}/torchcv/lib/model', 'mode': 'rw'}
+            volumes[f'{self._projdir}/torchcv/lib/runner'] = {'bind': f'{self._workdir}/torchcv/lib/runner', 'mode': 'rw'}
+            volumes[f'{self._projdir}/torchcv/lib/tools'] = {'bind': f'{self._workdir}/torchcv/lib/tools', 'mode': 'rw'}
+            volumes[f'{self._projdir}/torchcv/main.py'] = {'bind': f'{self._workdir}/torchcv/main.py', 'mode': 'rw'}
 
         environs = {
                 'K12CV_RPC_HOST': '%s' % self._host,
@@ -274,13 +278,13 @@ class CVServiceRPC(object):
                 'mem_limit': '8g',
                 } # noqa
 
-        self.send_message(op, user, uuid, "status", {'value':'starting'}, clear=True)
+        self.send_message(op, user, uuid, "status", {'value': 'starting'}, clear=True)
         try:
             self._docker.containers.run(self._image, command, **kwargs)
             return
         except Exception:
             message = _err_msg(100302, 'container image:{}'.format(self._image), exc=True)
-            self.send_message(op, user, uuid, "status", {'value':'exit', 'way': 'docker'})
+            self.send_message(op, user, uuid, "status", {'value': 'exit', 'way': 'docker'})
 
         if message:
             self.send_message(op, user, uuid, "error", message)
@@ -292,9 +296,8 @@ class CVServiceRPC(object):
         schema_json = _jsonnet.evaluate_file(schema_file, ext_vars={
             'task': task,
             'network': netw,
-            'dataset_name': dataset_name,
-            })
-        return 100000, json.dumps(json.loads(schema_json), separators=(',',':'))
+            'dataset_name': dataset_name})
+        return 100000, json.dumps(json.loads(schema_json), separators=(',', ':'))
 
     def execute(self, op, user, uuid, params):
         logger.info("call execute(%s, %s, %s)", op, user, uuid)
@@ -304,7 +307,7 @@ class CVServiceRPC(object):
             if container is None or container.status != 'running':
                 return 100205, None
             container.kill()
-            self.send_message('%s.start' % phase, user, uuid, "status", {'value':'exit', 'way': 'manual'})
+            self.send_message('%s.start' % phase, user, uuid, "status", {'value': 'exit', 'way': 'manual'})
             return 100000, None
 
         if container:
@@ -329,8 +332,9 @@ class CVServiceRPC(object):
             raise('not impl yet')
 
         Thread(target=lambda: self._run(op=op, user=user, uuid=uuid, command=command),
-                daemon=True).start()
+            daemon=True).start()
         return 100000, None
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
