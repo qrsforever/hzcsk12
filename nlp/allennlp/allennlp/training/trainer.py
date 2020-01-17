@@ -658,7 +658,7 @@ class Trainer(TrainerBase):
             epochs_trained += 1
 
             # QRS: add
-            hzcsk12_send_message('metrics', metrics, iters=self._batch_num_total, speed=epoch_elapsed_time)
+            hzcsk12_send_message('metrics', metrics, iters=self._batch_num_total, speed=1.0 / epoch_elapsed_time)
 
         # make sure pending events are flushed to disk and files are closed properly
         self._tensorboard.close()

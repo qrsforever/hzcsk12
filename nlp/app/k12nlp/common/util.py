@@ -16,6 +16,7 @@ _RPCClient = None
 _RPCEnable = -1
 K12NLP_OP, K12NLP_USER, K12NLP_UUID = None, None, None
 
+
 def hzcsk12_send_message(msgtype, message, iters=None, speed=None, end=False):
     global _RPCClient, _RPCEnable, K12NLP_OP, K12NLP_USER, K12NLP_UUID
 
@@ -51,6 +52,7 @@ def hzcsk12_send_message(msgtype, message, iters=None, speed=None, end=False):
             _RPCClient.close()
     except Exception:
         pass
+
 
 def hzcsk12_error_message(errmsg=None, exc=False):
     if exc:

@@ -7,30 +7,75 @@
 local _Utils = import '../../utils/helper.libsonnet';
 
 {
-
+    get():: [
+        {
+            _id_: '_k12.sampler.mode',
+            name: { en: 'Mode', cn: self.en },
+            type: 'string-enum-trigger',
+            objs: [
+                {
+                    name: { en: 'gpu', cn: self.en },
+                    value: 'gpu',
+                    trigger: {
+                        type: 'H',
+                        objs: [
+                            _Utils.int('affinity.n_gpu', 'Num GPU', def=1),
+                            _Utils.int('affinity.gpu_per_run', 'GPU Per Run', def=1),
+                        ],
+                    },
+                },
+                {
+                    name: { en: 'cpu', cn: self.en },
+                    value: 'cpu',
+                    trigger: {},
+                },
+                {
+                    name: { en: 'alternating', cn: self.en },
+                    value: 'alternating',
+                    trigger: {
+                        type: 'H',
+                        objs: [
+                            _Utils.bool('affinity.alternating', 'Alternating', def=true, readonly=true),
+                        ],
+                    },
+                },
+                {
+                    name: { en: 'serial', cn: self.en },
+                    value: 'serial',
+                    trigger: {},
+                },
+            ],
+            default: self.objs[0].value,
+        },
+        {
+            type: 'H',
+            objs: [
+                _Utils.int('affinity.n_cpu_core', 'Num CPU', def=8),
+                _Utils.int('affinity.cpu_per_run', 'CPU Per Run', def=1),
+                _Utils.int('affinity.cpu_per_worker', 'Per Worker', def=1),
+            ],
+        },
+        {
+            _id_: 'affinity.async_sample',
+            name: { en: 'Async', cn: self.en },
+            type: 'bool-trigger',
+            objs: [
+                {
+                    value: true,
+                    trigger: {
+                        type: 'H',
+                        objs: [
+                            _Utils.int('algo.updates_per_sync', 'Sample Updates', def=1),
+                            _Utils.int('affinity.sample_gpu_per_run', 'Sample Per Run', def=1),
+                            _Utils.bool('affinity.optim_sample_share_gpu', 'Sample Optim', def=false),
+                        ],
+                    },
+                },
+                {
+                    value: false,
+                    trigger: {},
+                },
+            ],
+        },
+    ],
 }
-
-//        n_cpu_core=1,  # Total number to use on machine (not virtual).
-//        n_gpu=0,  # Total number to use on machine.
-//        cpu_reserved=0,  # Number CPU to reserve per GPU.
-//        contexts_per_gpu=1,  # e.g. 2 will put two experiments per GPU.
-//        gpu_per_run=1,  # For multi-GPU optimizaion.
-//        cpu_per_run=1,  # Specify if not using GPU.
-//        cpu_per_worker=1,  # Use 1 unless environment is multi-threaded.
-
-
-//        async_sample=False,  # True if asynchronous sampling / optimization.
-
-//        sample_gpu_per_run=0,  # For asynchronous sampling.
-
-//        optim_sample_share_gpu=False,  # Async sampling, overrides sample_gpu.
-
-
-//        run_slot=None,  # Leave None in `run` script, but specified in `train` script.
-
-//        alternating=False,  # True for altenating sampler.
-
-//        set_affinity=True,  # Everything same except psutil.Process().cpu_affinity(cpus)
-
-
-

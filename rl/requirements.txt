@@ -1,2 +1,3 @@
 atari-py
+# mujoco-py
 pyprind

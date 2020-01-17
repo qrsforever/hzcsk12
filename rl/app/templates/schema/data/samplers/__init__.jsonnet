@@ -7,12 +7,15 @@
 local _Utils = import '../../utils/helper.libsonnet';
 
 {
-    type: 'H',
-    objs: [
-        import 'modes.libsonnet',
-        _Utils.int('sampler.batch_T', 'Batch T', def=32),
-        _Utils.int('sampler.batch_B', 'Batch B', def=16),
-        _Utils.int('sampler.max_decorrelation_steps', 'Decorr Steps', def=100),
+    get():: [
+        {
+            type: 'H',
+            objs: [
+                _Utils.int('sampler.batch_T', 'Batch T', def=32),
+                _Utils.int('sampler.batch_B', 'Batch B', def=16),
+                _Utils.int('sampler.max_decorrelation_steps', 'Decorr Steps', def=100),
+            ],
+        },
         {
             _id_: '_k12.sampler.eval',
             name: { en: 'Eval Enable', cn: self.en },
@@ -23,9 +26,14 @@ local _Utils = import '../../utils/helper.libsonnet';
                     trigger: {
                         type: '_ignore_',
                         objs: [
-                            _Utils.int('sampler.eval_n_envs', 'Envs Number', def=4, min=1),
-                            _Utils.int('sampler.eval_max_steps', 'Max Steps', def=125e3),
-                            _Utils.int('sampler.eval_max_trajectories', 'Max Trajectories', def=100),
+                            {
+                                type: 'H',
+                                objs: [
+                                    _Utils.int('sampler.eval_n_envs', 'Num Envs', def=4, min=1),
+                                    _Utils.int('sampler.eval_max_steps', 'Max Steps', def=125e3),
+                                    _Utils.int('sampler.eval_max_trajectories', 'Max Trajectories', def=100),
+                                ],
+                            },
                         ],
                     },
                 },

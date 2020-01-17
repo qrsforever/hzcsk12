@@ -16,4 +16,4 @@ jsonnet \
     --ext-str task=$task \
     --ext-str network=$network \
     --ext-str dataset_name=$dataset_name \
-    $cur_dir/k12ai_cv.jsonnet
+    $cur_dir/k12ai_rl.jsonnet

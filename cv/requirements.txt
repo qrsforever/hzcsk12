@@ -1,4 +1,3 @@
-pyhocon
 cython
 cffi
 opencv-python

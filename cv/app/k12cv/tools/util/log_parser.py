@@ -18,6 +18,7 @@ _metrics_ = {}
 RE_CLS_IC_TRAIN = None
 RE_DET_COM_TRAIN = None
 
+
 def _parse_metrics(filename, lineno, message):
     global _metrics_
     try:
@@ -36,6 +37,7 @@ def _parse_metrics(filename, lineno, message):
                 res = RE_CLS_IC_TRAIN.search(message)
                 if res:
                     result = res.groupdict()
+                    _metrics_ = {}
                     _metrics_['training_iters'] = int(result.get('iters', '0'))
                     _metrics_['training_epochs'] = int(result.get('epoch', '0'))
                     _metrics_['training_loss'] = float(result.get('train_loss', '0'))
@@ -81,6 +83,7 @@ def _parse_metrics(filename, lineno, message):
                 res = RE_DET_COM_TRAIN.search(message)
                 if res:
                     result = res.groupdict()
+                    _metrics_ = {}
                     _metrics_['training_iters'] = int(result.get('iters', '0'))
                     _metrics_['training_epochs'] = int(result.get('epoch', '0'))
                     _metrics_['training_loss'] = float(result.get('train_loss', '0'))
@@ -110,6 +113,7 @@ def _parse_metrics(filename, lineno, message):
         hzcsk12_send_message('metrics', _metrics_)
     except Exception as err:
         print(err)
+
 
 def _parse_error(filename, lineno, message):
 
@@ -157,6 +161,7 @@ def _parse_error(filename, lineno, message):
 
     return _err_msg('UnkownError')
 
+
 def _parse_except(filename, lineno, message):
         exc_type, exc_value, exc_tb = sys.exc_info()
         message = { # noqa: E126
@@ -177,6 +182,7 @@ def _parse_except(filename, lineno, message):
             message['trackback'].append(err)
         hzcsk12_send_message('error', message)
         hzcsk12_send_message('status', {'value': 'exit', 'way': 'crash'})
+
 
 def hzcsk12_log_parser(level, filename, lineno, message):
     if level == 'info':

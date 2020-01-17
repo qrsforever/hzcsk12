@@ -10,6 +10,7 @@ matplotlib>=2.2.3
 # tool
 GPUtil
 psutil
+pyhocon
 
 # rpc
 zerorpc
