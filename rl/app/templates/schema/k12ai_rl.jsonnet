@@ -20,22 +20,22 @@
                     type: '_ignore_',
                     objs: import 'models/assemble.jsonnet',
                 },
-                // {
-                //     name: { en: 'Hypes', cn: self.en },
-                //     type: '_ignore_',
-                //     objs: import 'hypes/assemble.jsonnet',
-                // },
-                // {
-                //     name: { en: 'Train', cn: self.en },
-                //     type: '_ignore_',
-                //     objs: [
-                //         {
-                //             _id_: '_k12.iframe.train',
-                //             type: 'iframe',
-                //             html: '/#/demo',
-                //         },
-                //     ],
-                // },
+                {
+                    name: { en: 'Hypes', cn: self.en },
+                    type: '_ignore_',
+                    objs: import 'hypes/assemble.jsonnet',
+                },
+                {
+                    name: { en: 'Train', cn: self.en },
+                    type: '_ignore_',
+                    objs: [
+                        {
+                            _id_: '_k12.iframe.train',
+                            type: 'iframe',
+                            html: 'http://www.baidu.com',
+                        },
+                    ],
+                },
             ],
         },
         {
