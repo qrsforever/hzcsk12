@@ -9,6 +9,13 @@ local _Utils = import '../../utils/helper.libsonnet';
 {
     get():: [
         {
+            type: 'H',
+            objs: [
+                _Utils.string('_k12.task', 'Task', def=_Utils.task, readonly=true),
+                _Utils.string('_k12.dataset', 'Dataset', def=_Utils.dataset_name, readonly=true),
+            ],
+        },
+        {
             _id_: '_k12.sampler.mode',
             name: { en: 'Mode', cn: self.en },
             type: 'string-enum-trigger',

@@ -10,7 +10,7 @@ local _Utils = import '../../utils/helper.libsonnet';
     get():: {
         type: 'H',
         objs: [
-            _Utils.int('_k12.runner.cuda_device', 'CUDA Device', def=0),
+            _Utils.int('affinity.cuda_idx', 'CUDA Device', def=0),
             _Utils.int('runner.n_steps', 'Iters Count', def=20e6),
             _Utils.int('runner.log_interval_steps', 'Summary Interval', def=2e5),
         ],

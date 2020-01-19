@@ -12,7 +12,7 @@ local _Utils = import '../../utils/helper.libsonnet';
             type: 'H',
             objs: [
                 {
-                    _id_: '_k12.models.model_name',
+                    _id_: '_k12.model.network',
                     name: { en: 'Network', cn: self.en },
                     type: 'string-enum',
                     objs: [

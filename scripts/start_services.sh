@@ -41,6 +41,10 @@ k12nlp_service_name=${hostname}-k12nlp
 k12nlp_addr=$hostaddr
 k12nlp_port=8149
 
+k12rl_service_name=${hostname}-k12rl
+k12rl_addr=$hostaddr
+k12rl_port=8159
+
 export HOST_NAME=${hostname}
 export HOST_ADDR=${hostaddr}
 
@@ -309,6 +313,30 @@ __start_k12nlp_service()
     fi
 }
 
+# 6. check or start k12rl service
+__start_k12rl_service()
+{
+    use_image="hzcsai_com/k12rl"
+    result=$(__service_health_check ${k12rl_service_name})
+    if [[ $result != 1 ]]
+    then
+        export K12RL_DEBUG=$debug
+        if [[ x$1 == xcheck ]]
+        then
+            __service_image_check $use_image 
+        fi
+        __run_command "nohup python3 ${top_dir}/rl/app/k12rl_service.py \
+            --host ${k12rl_addr} \
+            --port ${k12rl_port} \
+            --consul_addr ${consul_addr} \
+            --consul_port ${consul_port} \
+            --image $use_image"
+        __script_logout "start k12rl service"
+    else
+        __script_logout "check k12rl service"
+    fi
+}
+
 __main()
 {
     if [[ x$1 == xrelease ]]
@@ -330,6 +358,7 @@ __main()
     __start_k12platform_service
     __start_k12cv_service $2
     __start_k12nlp_service $2
+    __start_k12rl_service $2
     cd - > /dev/null
 }
 
