@@ -12,7 +12,7 @@ local _Utils = import '../../utils/helper.libsonnet';
             type: '_ignore_',
             objs: [
                 {
-                    _id_: '_k12.algo.optimcls',
+                    _id_: '_k12.optim.type',
                     name: { en: 'Optimizer Type', cn: self.en },
                     type: 'string-enum-trigger',
                     objs: [
@@ -21,9 +21,13 @@ local _Utils = import '../../utils/helper.libsonnet';
                             value: 'adam',
                             trigger: (import 'adam.libsonnet').get(),
                         },
+                        {
+                            name: { en: 'rmsprop', cn: self.en },
+                            value: 'rmsprop',
+                            trigger: (import 'rmsprop.libsonnet').get(),
+                        },
                     ],
                     default: self.objs[0].value,
-                    readonly: true,
                 },
             ],
         },

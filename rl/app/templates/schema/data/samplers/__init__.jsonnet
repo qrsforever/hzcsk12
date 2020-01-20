@@ -29,7 +29,7 @@ local _Utils = import '../../utils/helper.libsonnet';
                             {
                                 type: 'H',
                                 objs: [
-                                    _Utils.int('sampler.eval_n_envs', 'Num Envs', def=4, min=1),
+                                    _Utils.int('sampler.eval_n_envs', 'Num Envs', def=2, min=1),
                                     _Utils.int('sampler.eval_max_steps', 'Max Steps', def=125e3),
                                     _Utils.int('sampler.eval_max_trajectories', 'Max Trajectories', def=100),
                                 ],
@@ -42,7 +42,8 @@ local _Utils = import '../../utils/helper.libsonnet';
                     trigger: {},
                 },
             ],
-            default: false,
+            default: true,
+            readonly: true,
         },
     ],
 }

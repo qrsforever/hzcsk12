@@ -105,7 +105,7 @@ __main()
         __start_notebook $K12RL_PROJECT $K12RL_PORT \
             --runtime nvidia --shm-size=4g --ulimit memlock=-1 --ulimit stack=67108864 \
             --volume $TOP_DIR/rl/app:$DST_DIR/rl/app \
-            --volume $TOP_DIR/rl/rlpyt:$DST_DIR/rl/rlpyt\
+            --volume $TOP_DIR/rl/rlpyt:$DST_DIR/rl/rlpyt \
             --volume /data:/data
     fi
 }

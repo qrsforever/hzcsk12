@@ -56,9 +56,11 @@ ERRORS = {
 
         100900: '100900', # common except error
         100901: 'common exception: out of memory',
+        100902: 'common exception: not implemented yet',
 
         999999: 'unknown error!',
 }
+
 
 def k12ai_error_message(code=100000, data=None, detail=False, exc=False, ext_info=None):
     msg = {}

@@ -14,6 +14,7 @@ _RPCClient = None
 _RPCEnable = -1
 K12CV_OP, K12CV_USER, K12CV_UUID = None, None, None
 
+
 def hzcsk12_send_message(msgtype, message, end=False):
     global _RPCClient, _RPCEnable, K12CV_OP, K12CV_USER, K12CV_UUID
 

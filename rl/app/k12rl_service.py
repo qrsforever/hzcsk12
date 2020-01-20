@@ -105,6 +105,8 @@ class RLServiceRPC(object):
                 errtype = message['err_type']
                 if errtype == 'MemoryError':
                     code = 100901
+                elif errtype == 'NotImplementedError':
+                    code = 100902
                 else:
                     code = 100999
                 message = _err_msg(code, ext_info=message)
@@ -151,11 +153,10 @@ class RLServiceRPC(object):
         return usercache
 
     def _prepare_environ(self, user, uuid, params):
-        print(params)
         if not params or not isinstance(params, dict):
             return 100203, 'parameters type is not dict'
 
-        if '_k12.data.dataset_name' in params.keys():
+        if '_k12.task' in params.keys():
             config_tree = ConfigFactory.from_dict(params)
             config_str = HOCONConverter.convert(config_tree, 'json')
         else:
@@ -190,8 +191,6 @@ class RLServiceRPC(object):
             rm_flag = False
             volumes[f'{self._projdir}/app'] = {'bind': f'{self._workdir}/app', 'mode': 'rw'}
             volumes[f'{self._projdir}/rlpyt'] = {'bind': f'{self._workdir}/rlpyt', 'mode': 'rw'}
-
-        print(volumes)
 
         environs = {
                 'K12RL_RPC_HOST': '%s' % self._host,

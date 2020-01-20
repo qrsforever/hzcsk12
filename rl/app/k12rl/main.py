@@ -9,14 +9,20 @@
 
 import argparse
 import os
+import sys
+import traceback
 import json
 import logging
+import torch
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s', level=logging.DEBUG)
 
 logger = logging.getLogger(__name__)
 
 from pyhocon import ConfigFactory
+
+# K12AI
+from k12rl.utils.rpc_message import hzcsk12_error_message as _err_msg
 
 # utils
 from rlpyt.utils.launching.affinity import make_affinity
@@ -42,7 +48,7 @@ from rlpyt.samplers.parallel.gpu.collectors import (GpuResetCollector, GpuWaitRe
 
 # runner
 from rlpyt.runners.async_rl import AsyncRlEval
-from rlpyt.runners.minibatch_rl_eval import MinibatchRlEval
+from rlpyt.runners.minibatch_rl import MinibatchRlEval
 
 # algo & agent
 from rlpyt.algos.dqn.dqn import DQN
@@ -57,7 +63,7 @@ from rlpyt.agents.dqn.atari.atari_r2d1_agent import AtariR2d1Agent
 from rlpyt.agents.dqn.atari.atari_r2d1_agent import AtariR2d1AlternatingAgent
 
 
-def _rl_runner(task, async_, mode, netw, model, reset_, config_):
+def _rl_runner(task, async_, mode, netw, model, optim, reset_, config):
     if task == 'atari':
         Env = AtariEnv
         Traj = AtariTrajInfo
@@ -121,7 +127,14 @@ def _rl_runner(task, async_, mode, netw, model, reset_, config_):
             TrajInfoCls=Traj,
             eval_env_kwargs=config['eval_env'],
             **config['sampler'])
-    algo = Algo(optim_kwargs=config['optim'], **config['algo'])
+    
+    # OptimCls
+    if optim == 'adam':
+        Optim = torch.optim.Adam
+    else:
+        Optim = torch.optim.RMSprop
+
+    algo = Algo(OptimCls=Optim, optim_kwargs=config['optim'], **config['algo'])
     agent = Agent(model_kwargs=config['model'], **config['agent'])
     return Runner(algo=algo, agent=agent, sampler=sampler, affinity=affinity, **config['runner'])
 
@@ -131,22 +144,26 @@ def _rl_train(out_dir, config_):
     async_ = config.get('affinity.async_sample')
     model_ = config.get('_k12.model.name')
     reset_ = config.get('_k12.sampler.mid_batch_reset')
+    optim_ = config.get('_k12.optim.type')
 
     task = config.get('_k12.task')
     if task not in ('atari'):
-        raise NotADirectoryError
+        raise NotImplementedError(f'task: {task}')
 
     model_netw = config.get('_k12.model.network')
     if model_netw not in ('dqn'):
-        raise NotADirectoryError
+        raise NotImplementedError(f'network type: {model_netw}')
 
     sampl_mode = config.get('_k12.sampler.mode')
     if sampl_mode not in ('serial', 'cpu', 'gpu', 'alternating'):
-        raise NotADirectoryError
+        raise NotImplementedError(f'sampler mode: {sampl_mode}')
 
-    runner = _rl_runner(task, async_, sampl_mode, model_netw, model_, reset_, config)
+    if optim_ not in ('adam', 'rmsprop'):
+        raise NotImplementedError(f'optimize type: {optim_}')
 
-    with logger_context(out_dir, 'k12', 'rl', config):
+    runner = _rl_runner(task, async_, sampl_mode, model_netw, model_, optim_, reset_, config)
+
+    with logger_context(out_dir, 'rl', 'k12', config):
         runner.train()
 
 
@@ -172,13 +189,14 @@ if __name__ == "__main__":
             help="log dir")
     args = parser.parse_args()
 
-    with open(os.join(args.config_file), 'r') as f:
-        config = json.load(f)
-
     try:
+        with open(os.path.join(args.config_file), 'r') as f:
+            config = json.load(f)
+
         if args.phase == 'train':
             _rl_train(args.out_dir, config)
         else:
-            logger.error('phase not impl yet')
+            raise NotImplementedError(f'phase: {args.phase}')
     except Exception as err:
         logger.error('{}'.format(err))
+        _err_msg(exc=True)

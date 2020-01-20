@@ -57,7 +57,7 @@ local _Utils = import '../../utils/helper.libsonnet';
         {
             type: 'H',
             objs: [
-                _Utils.int('affinity.n_cpu_core', 'Num CPU', def=8),
+                _Utils.int('affinity.n_cpu_core', 'Num CPU', def=2),
                 _Utils.int('affinity.cpu_per_run', 'CPU Per Run', def=1),
                 _Utils.int('affinity.cpu_per_worker', 'Per Worker', def=1),
             ],
@@ -73,7 +73,7 @@ local _Utils = import '../../utils/helper.libsonnet';
                         type: 'H',
                         objs: [
                             _Utils.int('algo.updates_per_sync', 'Sample Updates', def=1),
-                            _Utils.int('affinity.sample_gpu_per_run', 'Sample Per Run', def=1),
+                            _Utils.int('affinity.sample_gpu_per_run', 'Sample GPU Per Run', def=1),
                             _Utils.bool('affinity.optim_sample_share_gpu', 'Sample Optim', def=false),
                         ],
                     },

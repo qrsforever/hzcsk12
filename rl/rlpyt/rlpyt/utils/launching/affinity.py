@@ -117,6 +117,7 @@ def affinity_from_code(run_slot_affinity_code):
     """Use in individual experiment script; pass output to Runner."""
     run_slot, aff_code = remove_run_slot(run_slot_affinity_code)
     aff_params = decode_affinity(aff_code)
+    print("#######QRS: ", aff_params)
     if aff_params.get(N_GPU, 0) > 0:
         if aff_params.pop(ASYNC_SAMPLE, 0) > 0:
             return build_async_affinity(run_slot, **aff_params)
