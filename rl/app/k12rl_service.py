@@ -49,6 +49,7 @@ app_host_ip = _get_hostip()
 consul_addr = None
 consul_port = None
 
+
 def _delay_do_consul(host, port):
     time.sleep(3)
     while not app_quit:
@@ -156,8 +157,6 @@ class RLServiceRPC(object):
 
         if '_k12.data.dataset_name' in params.keys():
             config_tree = ConfigFactory.from_dict(params)
-            _k12ai_tree = config_tree.pop('_k12')
-
             config_str = HOCONConverter.convert(config_tree, 'json')
         else:
             config_str = json.dumps(params)
@@ -191,6 +190,8 @@ class RLServiceRPC(object):
             rm_flag = False
             volumes[f'{self._projdir}/app'] = {'bind': f'{self._workdir}/app', 'mode': 'rw'}
             volumes[f'{self._projdir}/rlpyt'] = {'bind': f'{self._workdir}/rlpyt', 'mode': 'rw'}
+
+        print(volumes)
 
         environs = {
                 'K12RL_RPC_HOST': '%s' % self._host,
@@ -252,9 +253,12 @@ class RLServiceRPC(object):
         if code != 100000:
             return code, result
 
-        # command = 'ls'
-        # Thread(target=lambda: self._run(op=op, user=user, uuid=uuid, command=command),
-            # daemon=True).start()
+        command = 'python {}'.format('%s/app/k12rl/main.py' % self._workdir)
+        command += ' --phase %s --config_file /cache/config.json' % phase
+        command += ' --out_dir /cache/output'
+        print(command)
+        Thread(target=lambda: self._run(op=op, user=user, uuid=uuid, command=command),
+            daemon=True).start()
         return 100000, None
 
 

@@ -22,6 +22,9 @@ K12CV_PORT=8138
 K12NLP_PROJECT=k12nlp
 K12NLP_PORT=8148
 
+K12RL_PROJECT=k12rl
+K12RL_PORT=8158
+
 __start_notebook()
 {
     PROJECT=$1
@@ -94,6 +97,15 @@ __main()
             --volume $TOP_DIR/nlp/allennlp/allennlp:$DST_DIR/nlp/allennlp \
             --volume $TOP_DIR/nlp/allennlp-reading-comprehension/allennlp_rc:$DST_DIR/nlp/allennlp_rc \
             --volume /data/nltk_data:/root/nltk_data \
+            --volume /data:/data
+    fi
+
+    if [[ x$1 == xrl ]]
+    then
+        __start_notebook $K12RL_PROJECT $K12RL_PORT \
+            --runtime nvidia --shm-size=4g --ulimit memlock=-1 --ulimit stack=67108864 \
+            --volume $TOP_DIR/rl/app:$DST_DIR/rl/app \
+            --volume $TOP_DIR/rl/rlpyt:$DST_DIR/rl/rlpyt\
             --volume /data:/data
     fi
 }

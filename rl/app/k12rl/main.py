@@ -16,33 +16,138 @@ logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s
 
 logger = logging.getLogger(__name__)
 
+from pyhocon import ConfigFactory
+
+# utils
 from rlpyt.utils.launching.affinity import make_affinity
-from rlpyt.samplers.cpu.parallel_sampler import CpuParallelSampler
-from rlpyt.samplers.cpu.collectors import WaitResetCollector
-from rlpyt.samplers.async_.async_cpu_sampler import AsyncCpuSampler
-from rlpyt.samplers.async_.collectors import DbCpuResetCollector
-from rlpyt.envs.atari.atari_env import AtariEnv, AtariTrajInfo
-from rlpyt.algos.dqn.dqn import DQN
-from rlpyt.algos.dqn.cat_dqn import CategoricalDQN
-from rlpyt.agents.dqn.atari.atari_dqn_agent import AtariDqnAgent
-from rlpyt.agents.dqn.atari.atari_catdqn_agent import AtariCatDqnAgent
-from rlpyt.runners.minibatch_rl_eval import MinibatchRlEval
-from rlpyt.runners.async_rl import AsyncRlEval
 from rlpyt.utils.logging.context import logger_context
 
+# sync
+from rlpyt.samplers.serial.sampler import SerialSampler
+from rlpyt.samplers.parallel.cpu.sampler import CpuSampler
+from rlpyt.samplers.parallel.gpu.sampler import GpuSampler
+from rlpyt.samplers.parallel.gpu.alternating_sampler import AlternatingSampler
 
-def _rl_train(out_dir, config):
-    # '_k12.agent.eps_final_min': False,
-    # '_k12.algo.optimcls': 'adam',
-    # '_k12.dataset': 'pong',
-    # '_k12.model.name': 'dqn',
-    # '_k12.model.network': 'dqn',
-    # '_k12.runner.cuda_device': 2,
-    # '_k12.sampler.eval': False,
-    # '_k12.sampler.mode': 'gpu',
-    # '_k12.task': 'atari',
-    # 'affinity.async_sample': False,
-    pass
+# async
+from rlpyt.samplers.async_.serial_sampler import AsyncSerialSampler
+from rlpyt.samplers.async_.cpu_sampler import AsyncCpuSampler
+from rlpyt.samplers.async_.gpu_sampler import AsyncGpuSampler
+from rlpyt.samplers.async_.alternating_sampler import AsyncAlternatingSampler
+
+# collectors
+from rlpyt.samplers.async_.collectors import (DbCpuResetCollector, DbCpuWaitResetCollector)
+from rlpyt.samplers.async_.collectors import (DbGpuResetCollector, DbGpuWaitResetCollector)
+from rlpyt.samplers.parallel.cpu.collectors import (CpuResetCollector, CpuWaitResetCollector)
+from rlpyt.samplers.parallel.gpu.collectors import (GpuResetCollector, GpuWaitResetCollector)
+
+# runner
+from rlpyt.runners.async_rl import AsyncRlEval
+from rlpyt.runners.minibatch_rl_eval import MinibatchRlEval
+
+# algo & agent
+from rlpyt.algos.dqn.dqn import DQN
+from rlpyt.algos.dqn.cat_dqn import CategoricalDQN
+from rlpyt.algos.dqn.r2d1 import R2D1
+
+# atari
+from rlpyt.envs.atari.atari_env import AtariEnv, AtariTrajInfo
+from rlpyt.agents.dqn.atari.atari_dqn_agent import AtariDqnAgent
+from rlpyt.agents.dqn.atari.atari_catdqn_agent import AtariCatDqnAgent
+from rlpyt.agents.dqn.atari.atari_r2d1_agent import AtariR2d1Agent
+from rlpyt.agents.dqn.atari.atari_r2d1_agent import AtariR2d1AlternatingAgent
+
+
+def _rl_runner(task, async_, mode, netw, model, reset_, config_):
+    if task == 'atari':
+        Env = AtariEnv
+        Traj = AtariTrajInfo
+
+    if mode == 'serial':
+        if async_:
+            Sampler = AsyncSerialSampler
+            Collector = DbCpuResetCollector if reset_ else DbCpuWaitResetCollector
+        else:
+            Sampler = SerialSampler
+            Collector = CpuResetCollector if reset_ else CpuWaitResetCollector
+    elif mode == 'cpu':
+        if async_:
+            Sampler = AsyncCpuSampler
+            Collector = DbCpuResetCollector if reset_ else DbCpuWaitResetCollector
+        else:
+            Sampler = CpuSampler
+            Collector = CpuResetCollector if reset_ else CpuWaitResetCollector
+    elif mode == 'gpu':
+        if async_:
+            Sampler = AsyncGpuSampler
+            Collector = DbGpuResetCollector if reset_ else DbGpuWaitResetCollector
+        else:
+            Sampler = GpuSampler
+            Collector = GpuResetCollector if reset_ else GpuWaitResetCollector
+    elif mode == 'alternating':
+        if async_:
+            Sampler = AsyncAlternatingSampler
+            Collector = DbGpuResetCollector if reset_ else DbGpuWaitResetCollector
+        else:
+            Sampler = AlternatingSampler
+            Collector = GpuResetCollector if reset_ else GpuWaitResetCollector
+
+    if async_:
+        Runner = AsyncRlEval
+    else:
+        Runner = MinibatchRlEval
+
+    if netw == 'dqn':
+        if model == 'dqn':
+            Algo = DQN
+            if task == 'atari':
+                Agent = AtariDqnAgent
+        elif model == 'catdqn':
+            Algo = CategoricalDQN
+            if task == 'atari':
+                Agent = AtariCatDqnAgent
+        elif model == 'r2d1':
+            Algo = R2D1
+            if task == 'atari':
+                if mode == 'alternating':
+                    Agent = AtariR2d1AlternatingAgent
+                else:
+                    Agent = AtariR2d1Agent
+
+    affinity = make_affinity(**config['affinity'])
+    sampler = Sampler(
+            EnvCls=Env,
+            env_kwargs=config['env'],
+            CollectorCls=Collector,
+            TrajInfoCls=Traj,
+            eval_env_kwargs=config['eval_env'],
+            **config['sampler'])
+    algo = Algo(optim_kwargs=config['optim'], **config['algo'])
+    agent = Agent(model_kwargs=config['model'], **config['agent'])
+    return Runner(algo=algo, agent=agent, sampler=sampler, affinity=affinity, **config['runner'])
+
+
+def _rl_train(out_dir, config_):
+    config = ConfigFactory.from_dict(config_)
+    async_ = config.get('affinity.async_sample')
+    model_ = config.get('_k12.model.name')
+    reset_ = config.get('_k12.sampler.mid_batch_reset')
+
+    task = config.get('_k12.task')
+    if task not in ('atari'):
+        raise NotADirectoryError
+
+    model_netw = config.get('_k12.model.network')
+    if model_netw not in ('dqn'):
+        raise NotADirectoryError
+
+    sampl_mode = config.get('_k12.sampler.mode')
+    if sampl_mode not in ('serial', 'cpu', 'gpu', 'alternating'):
+        raise NotADirectoryError
+
+    runner = _rl_runner(task, async_, sampl_mode, model_netw, model_, reset_, config)
+
+    with logger_context(out_dir, 'k12', 'rl', config):
+        runner.train()
 
 
 if __name__ == "__main__":
