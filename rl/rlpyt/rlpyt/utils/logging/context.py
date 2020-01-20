@@ -12,7 +12,7 @@ LOG_DIR = osp.abspath(osp.join(osp.dirname(__file__), '../../../data'))
 
 def get_log_dir(experiment_name):
     yyyymmdd = datetime.datetime.today().strftime("%Y%m%d")
-    log_dir = osp.join(LOG_DIR, "local", yyyymmdd, experiment_name)
+    log_dir = osp.join(experiment_name, yyyymmdd)
     return log_dir
 
 
@@ -22,10 +22,11 @@ def logger_context(log_dir, run_ID, name, log_params=None, snapshot_mode="none")
     logger.set_log_tabular_only(False)
     log_dir = osp.join(log_dir, f"run_{run_ID}")
     exp_dir = osp.abspath(log_dir)
-    if LOG_DIR != osp.commonpath([exp_dir, LOG_DIR]):
-        print(f"logger_context received log_dir outside of {LOG_DIR}: "
-            f"prepending by {LOG_DIR}/local/<yyyymmdd>/")
-        exp_dir = get_log_dir(log_dir)
+    # QRS: mod
+    # if LOG_DIR != osp.commonpath([exp_dir, LOG_DIR]):
+    #     print(f"logger_context received log_dir outside of {LOG_DIR}: "
+    #         f"prepending by {LOG_DIR}/local/<yyyymmdd>/")
+    #     exp_dir = get_log_dir(log_dir)
     tabular_log_file = osp.join(exp_dir, "progress.csv")
     text_log_file = osp.join(exp_dir, "debug.log")
     params_log_file = osp.join(exp_dir, "params.json")

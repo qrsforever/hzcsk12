@@ -63,10 +63,12 @@ from rlpyt.agents.dqn.atari.atari_r2d1_agent import AtariR2d1Agent
 from rlpyt.agents.dqn.atari.atari_r2d1_agent import AtariR2d1AlternatingAgent
 
 
-def _rl_runner(task, async_, mode, netw, model, optim, reset_, config):
+def _rl_runner(task, async_, alt_, mode, netw, model, optim, reset_, config):
     if task == 'atari':
         Env = AtariEnv
         Traj = AtariTrajInfo
+
+    affinity = make_affinity(**config['affinity'])
 
     if mode == 'serial':
         if async_:
@@ -84,17 +86,10 @@ def _rl_runner(task, async_, mode, netw, model, optim, reset_, config):
             Collector = CpuResetCollector if reset_ else CpuWaitResetCollector
     elif mode == 'gpu':
         if async_:
-            Sampler = AsyncGpuSampler
+            Sampler = AsyncAlternatingSampler if alt_ else AsyncGpuSampler
             Collector = DbGpuResetCollector if reset_ else DbGpuWaitResetCollector
         else:
-            Sampler = GpuSampler
-            Collector = GpuResetCollector if reset_ else GpuWaitResetCollector
-    elif mode == 'alternating':
-        if async_:
-            Sampler = AsyncAlternatingSampler
-            Collector = DbGpuResetCollector if reset_ else DbGpuWaitResetCollector
-        else:
-            Sampler = AlternatingSampler
+            Sampler = AlternatingSampler if alt_ else GpuSampler
             Collector = GpuResetCollector if reset_ else GpuWaitResetCollector
 
     if async_:
@@ -119,7 +114,6 @@ def _rl_runner(task, async_, mode, netw, model, optim, reset_, config):
                 else:
                     Agent = AtariR2d1Agent
 
-    affinity = make_affinity(**config['affinity'])
     sampler = Sampler(
             EnvCls=Env,
             env_kwargs=config['env'],
@@ -145,23 +139,28 @@ def _rl_train(out_dir, config_):
     model_ = config.get('_k12.model.name')
     reset_ = config.get('_k12.sampler.mid_batch_reset')
     optim_ = config.get('_k12.optim.type')
+    alter_ = config.get('affinity.alternating', default=False)
 
     task = config.get('_k12.task')
     if task not in ('atari'):
         raise NotImplementedError(f'task: {task}')
 
-    model_netw = config.get('_k12.model.network')
-    if model_netw not in ('dqn'):
-        raise NotImplementedError(f'network type: {model_netw}')
+    netw = config.get('_k12.model.network')
+    if netw not in ('dqn'):
+        raise NotImplementedError(f'network type: {netw}')
 
-    sampl_mode = config.get('_k12.sampler.mode')
-    if sampl_mode not in ('serial', 'cpu', 'gpu', 'alternating'):
-        raise NotImplementedError(f'sampler mode: {sampl_mode}')
+    mode = config.get('_k12.sampler.mode')
+    if mode not in ('serial', 'cpu', 'gpu', 'alternating'):
+        raise NotImplementedError(f'sampler mode: {mode}')
 
     if optim_ not in ('adam', 'rmsprop'):
         raise NotImplementedError(f'optimize type: {optim_}')
 
-    runner = _rl_runner(task, async_, sampl_mode, model_netw, model_, optim_, reset_, config)
+    # TODO work around
+    if async_ and mode != 'gpu' and not config.get('affinity.n_gpu', default=None):
+        config.put('affinity.n_gpu', torch.cuda.device_count())
+
+    runner = _rl_runner(task, async_, alter_, mode, netw, model_, optim_, reset_, config)
 
     with logger_context(out_dir, 'rl', 'k12', config):
         runner.train()
