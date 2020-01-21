@@ -19,17 +19,9 @@ from threading import Thread
 from pyhocon import ConfigFactory
 from pyhocon import HOCONConverter
 
-try:
-    from k12ai_errmsg import k12ai_error_message as _err_msg
-    from k12ai_utils import k12ai_get_hostname as _get_hostname
-    from k12ai_utils import k12ai_get_hostip as _get_hostip
-except Exception:
-    topdir = os.path.abspath(
-        os.path.dirname(os.path.abspath(__file__)) + "/../..")
-    sys.path.append(topdir)
-    from k12ai_errmsg import k12ai_error_message as _err_msg
-    from k12ai_utils import k12ai_get_hostname as _get_hostname
-    from k12ai_utils import k12ai_get_hostip as _get_hostip
+from k12ai_errmsg import k12ai_error_message as _err_msg
+from k12ai_utils import k12ai_get_hostname as _get_hostname
+from k12ai_utils import k12ai_get_hostip as _get_hostip
 
 service_name = 'k12cv'
 

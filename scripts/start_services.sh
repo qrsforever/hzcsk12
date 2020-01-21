@@ -47,6 +47,7 @@ k12rl_port=8159
 
 export HOST_NAME=${hostname}
 export HOST_ADDR=${hostaddr}
+export PYTHONPATH=${top_dir}/utils:$PYTHONPATH
 
 # global function
 __script_logout()
@@ -233,7 +234,7 @@ __start_k12ai_service()
     if [[ $result != 1 ]]
     then
         export K12AI_DEBUG=$debug
-        __run_command "nohup python3 ${top_dir}/k12ai_service.py \
+        __run_command "nohup python3 ${top_dir}/services/k12ai_service.py \
             --host ${k12ai_addr} \
             --port ${k12ai_port} \
             --redis_addr ${redis_addr} \
@@ -254,7 +255,7 @@ __start_k12platform_service()
     if [[ $result != 1 ]]
     then
         export K12PLATFORM_DEBUG=$debug
-        __run_command "nohup python3 ${top_dir}/platform/app/k12platform_service.py \
+        __run_command "nohup python3 ${top_dir}/services/k12platform_service.py \
             --host ${k12platform_addr} \
             --port ${k12platform_port} \
             --consul_addr ${consul_addr} \
@@ -277,7 +278,7 @@ __start_k12cv_service()
         then
             __service_image_check $use_image 
         fi
-        __run_command "nohup python3 ${top_dir}/cv/app/k12cv_service.py \
+        __run_command "nohup python3 ${top_dir}/services/k12cv_service.py \
             --host ${k12cv_addr} \
             --port ${k12cv_port} \
             --consul_addr ${consul_addr} \
@@ -301,7 +302,7 @@ __start_k12nlp_service()
         then
             __service_image_check $use_image 
         fi
-        __run_command "nohup python3 ${top_dir}/nlp/app/k12nlp_service.py \
+        __run_command "nohup python3 ${top_dir}/services/k12nlp_service.py \
             --host ${k12nlp_addr} \
             --port ${k12nlp_port} \
             --consul_addr ${consul_addr} \
@@ -325,7 +326,7 @@ __start_k12rl_service()
         then
             __service_image_check $use_image 
         fi
-        __run_command "nohup python3 ${top_dir}/rl/app/k12rl_service.py \
+        __run_command "nohup python3 ${top_dir}/services/k12rl_service.py \
             --host ${k12rl_addr} \
             --port ${k12rl_port} \
             --consul_addr ${consul_addr} \
