@@ -59,7 +59,7 @@ class RLServiceRPC(object):
         self._image = image
         self._docker = docker.from_env()
         self._workdir = workdir
-        self._projdir = os.path.join(k12ai_utils_topdir(), 'cv')
+        self._projdir = os.path.join(k12ai_utils_topdir(), 'rl')
         logger.info('workdir:%s, projdir:%s', self._workdir, self._projdir)
 
         self.userscache_dir = '%s/users' % data_root
