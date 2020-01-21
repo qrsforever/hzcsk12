@@ -10,6 +10,9 @@
 import sys
 import traceback
 
+SUCCESS = 100000
+FAILURE = -1
+
 ERRORS = {
         100000: 'success',
         100100: '100100', # k12ai service api params parse error
@@ -29,14 +32,14 @@ ERRORS = {
         100299: 'task service unknown exception',
 
         100300: 'success', # k12cv container inner process error
-        100301: 'k12cv container is not found!',
-        100302: 'k12cv container start fail',
-        100303: 'k12cv container stop fail',
-        100304: 'k12cv container is running',
-        100305: 'k12cv configuration error',
-        100306: 'k12cv image type error',
-        100307: 'k12cv tensor size error',
-        100399: 'k12cv container unknown exception',
+        100301: 'container is not found!',
+        100302: 'container start fail',
+        100303: 'container stop fail',
+        100304: 'container is running',
+        100305: 'configuration error',
+        100306: 'image type error',
+        100307: 'tensor size error',
+        100399: 'container unknown exception',
 
         100400: 'success', # k12nlp container inner process error
         100401: 'k12nlp container is not found',

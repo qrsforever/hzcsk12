@@ -21,33 +21,29 @@ redis_addr='117.51.156.111'
 redis_port=10090
 redis_pswd='qY3Zh4xLPZNMkaz3'
 
-consul_name=${hostname}-consul
+consul_name=consul_dev
 consul_addr=$hostaddr
 consul_port=8500
 
-k12ai_service_name=${hostname}-k12ai
+k12ai_service_name=k12ai
 k12ai_addr=$hostaddr
 k12ai_port=8119
 
-k12platform_service_name=${hostname}-k12platform
-k12platform_addr=$hostaddr
-k12platform_port=8129
-
-k12cv_service_name=${hostname}-k12cv
+k12cv_service_name=k12cv
 k12cv_addr=$hostaddr
 k12cv_port=8139
 
-k12nlp_service_name=${hostname}-k12nlp
+k12nlp_service_name=k12nlp
 k12nlp_addr=$hostaddr
 k12nlp_port=8149
 
-k12rl_service_name=${hostname}-k12rl
+k12rl_service_name=k12rl
 k12rl_addr=$hostaddr
 k12rl_port=8159
 
 export HOST_NAME=${hostname}
 export HOST_ADDR=${hostaddr}
-export PYTHONPATH=${top_dir}/utils:$PYTHONPATH
+export PYTHONPATH=${top_dir}/common:$PYTHONPATH
 
 # global function
 __script_logout()
@@ -249,22 +245,22 @@ __start_k12ai_service()
 }
 
 # 3. check or start k12platform service
-__start_k12platform_service()
-{
-    result=$(__service_health_check ${k12platform_service_name})
-    if [[ $result != 1 ]]
-    then
-        export K12PLATFORM_DEBUG=$debug
-        __run_command "nohup python3 ${top_dir}/services/k12platform_service.py \
-            --host ${k12platform_addr} \
-            --port ${k12platform_port} \
-            --consul_addr ${consul_addr} \
-            --consul_port ${consul_port}"
-        __script_logout "start k12platform service"
-    else
-        __script_logout "check k12platform service"
-    fi
-}
+# __start_k12platform_service()
+# {
+#     result=$(__service_health_check ${k12platform_service_name})
+#     if [[ $result != 1 ]]
+#     then
+#         export K12PLATFORM_DEBUG=$debug
+#         __run_command "nohup python3 ${top_dir}/services/k12platform_service.py \
+#             --host ${k12platform_addr} \
+#             --port ${k12platform_port} \
+#             --consul_addr ${consul_addr} \
+#             --consul_port ${consul_port}"
+#         __script_logout "start k12platform service"
+#     else
+#         __script_logout "check k12platform service"
+#     fi
+# }
 
 # 4. check or start k12cv service
 __start_k12cv_service()
@@ -356,7 +352,6 @@ __main()
     cd /tmp
     __start_consule_service
     __start_k12ai_service
-    __start_k12platform_service
     __start_k12cv_service $2
     __start_k12nlp_service $2
     __start_k12rl_service $2
