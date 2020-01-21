@@ -7,21 +7,19 @@
 # @version 1.0
 # @date 2020-01-19 15:55
 
-import os, sys, time
+import os, time
 import argparse
 import logging, json
 import _jsonnet
 import zerorpc
-import requests
-import consul
 import docker
 from threading import Thread
 from pyhocon import ConfigFactory
 from pyhocon import HOCONConverter
 
+from k12ai_consul import k12ai_consul_init, k12ai_consul_register, k12ai_consul_message
+from k12ai_utils import k12ai_utils_topdir
 from k12ai_errmsg import k12ai_error_message as _err_msg
-from k12ai_utils import k12ai_get_hostname as _get_hostname
-from k12ai_utils import k12ai_get_hostip as _get_hostip
 
 service_name = 'k12rl'
 
@@ -34,50 +32,34 @@ logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s
 
 logger = logging.getLogger(__name__)
 
-app_quit = False
-app_host_name = _get_hostname()
-app_host_ip = _get_hostip()
-
-consul_addr = None
-consul_port = None
+g_app_quit = False
 
 
 def _delay_do_consul(host, port):
     time.sleep(3)
-    while not app_quit:
+    while not g_app_quit:
         try:
-            client = consul.Consul(host=consul_addr, port=consul_port)
-            client.agent.service.register(
-                name='{}-{}'.format(app_host_name, service_name),
-                address=host, port=port, tags=('AI', 'FRAMEWORK'),
-                check=consul.Check.tcp(host, port,
-                    interval='10s', timeout='5s', deregister='10s'))
+            k12ai_consul_register(service_name, host, port)
             break
         except Exception as err:
             logger.info("consul agent service register err", err)
             time.sleep(3)
 
 
-OP_FAILURE = -1
-
-
 class RLServiceRPC(object):
 
     def __init__(self,
             host, port,
-            k12ai='k12ai',
             image='hzcsai_com/k12rl',
             data_root='/data',
-            workdir='/hzcsk12/rl', debug=False):
-        self._debug = debug
+            workdir='/hzcsk12/rl'):
+        self._debug = LEVEL == logging.DEBUG
         self._host = host
         self._port = port
-        self._k12ai = k12ai
         self._image = image
         self._docker = docker.from_env()
         self._workdir = workdir
-        self._projdir = os.path.abspath( # noqa: E126
-                os.path.dirname(os.path.abspath(__file__)) + os.path.sep + "..")
+        self._projdir = os.path.join(k12ai_utils_topdir(), 'cv')
         logger.info('workdir:%s, projdir:%s', self._workdir, self._projdir)
 
         self.userscache_dir = '%s/users' % data_root
@@ -85,11 +67,6 @@ class RLServiceRPC(object):
         self.pretrained_dir = '%s/pretrained/cv' % data_root
 
     def send_message(self, op, user, uuid, msgtype, message, clear=False):
-        client = consul.Consul(consul_addr, port=consul_port)
-        service = client.agent.services().get(self._k12ai)
-        if not service:
-            logger.error("Not found %s service!" % self._k12ai)
-            return
         if not msgtype:
             return
         if isinstance(message, dict):
@@ -102,30 +79,7 @@ class RLServiceRPC(object):
                 else:
                     code = 100999
                 message = _err_msg(code, ext_info=message)
-
-        data = { # noqa: E126
-                'version': '0.1.0',
-                'type': msgtype,
-                'tag': 'framework',
-                'op': op,
-                'user': user,
-                'service_uuid': uuid,
-                }
-        now_time = time.time()
-        data['timestamp'] = round(now_time * 1000)
-        data['datetime'] = time.strftime('%Y%m%d%H%M%S', time.localtime(now_time))
-        data['data'] = message
-
-        # service
-        api = 'http://{}:{}/k12ai/private/message?type={}'.format(service['Address'], service['Port'], msgtype)
-        requests.post(api, json=data)
-        if self._debug:
-            if clear:
-                client.kv.delete('framework/%s/%s' % (user, uuid), recurse=True)
-            key = 'framework/%s/%s/%s/%s' % (user, uuid, op, msgtype)
-            if msgtype != 'status':
-                key = '%s/%s' % (key, data['datetime'][:-2])
-            client.kv.put(key, json.dumps(data, indent=2))
+        k12ai_consul_message(op, user, uuid, msgtype, message, clear)
 
     def _get_container(self, user, uuid):
         try:
@@ -164,20 +118,20 @@ class RLServiceRPC(object):
         logger.info(command)
         message = None
         rm_flag = True
-        labels = { # noqa
-                'k12ai.service.name': service_name,
-                'k12ai.service.op': op,
-                'k12ai.service.user': user,
-                'k12ai.service.uuid': uuid
-                }
+        labels = {
+            'k12ai.service.name': service_name,
+            'k12ai.service.op': op,
+            'k12ai.service.user': user,
+            'k12ai.service.uuid': uuid
+        }
 
         usercache_dir = self._get_cache_dir(user, uuid)
 
-        volumes = { # noqa
-                self.datasets_dir: {'bind': '/datasets', 'mode': 'rw'},
-                usercache_dir: {'bind': '/cache', 'mode': 'rw'},
-                self.pretrained_dir: {'bind': '/pretrained', 'mode': 'rw'},
-                }
+        volumes = {
+            self.datasets_dir: {'bind': '/datasets', 'mode': 'rw'},
+            usercache_dir: {'bind': '/cache', 'mode': 'rw'},
+            self.pretrained_dir: {'bind': '/pretrained', 'mode': 'rw'},
+        }
 
         if self._debug:
             rm_flag = False
@@ -185,23 +139,23 @@ class RLServiceRPC(object):
             volumes[f'{self._projdir}/rlpyt'] = {'bind': f'{self._workdir}/rlpyt', 'mode': 'rw'}
 
         environs = {
-                'K12RL_RPC_HOST': '%s' % self._host,
-                'K12RL_RPC_PORT': '%s' % self._port,
-                'K12RL_OP': '%s' % op,
-                'K12RL_USER': '%s' % user,
-                'K12RL_UUID': '%s' % uuid
-                } # noqa
+            'K12RL_RPC_HOST': '%s' % self._host,
+            'K12RL_RPC_PORT': '%s' % self._port,
+            'K12RL_OP': '%s' % op,
+            'K12RL_USER': '%s' % user,
+            'K12RL_UUID': '%s' % uuid
+        }
         kwargs = {
-                'name': '%s-%s-%s' % (op, user, uuid),
-                'auto_remove': rm_flag,
-                'detach': True,
-                'runtime': 'nvidia',
-                'labels': labels,
-                'volumes': volumes,
-                'environment': environs,
-                'shm_size': '4g',
-                'mem_limit': '8g',
-                } # noqa
+            'name': '%s-%s-%s' % (op, user, uuid),
+            'auto_remove': rm_flag,
+            'detach': True,
+            'runtime': 'nvidia',
+            'labels': labels,
+            'volumes': volumes,
+            'environment': environs,
+            'shm_size': '4g',
+            'mem_limit': '8g',
+        }
 
         self.send_message(op, user, uuid, "status", {'value': 'starting'}, clear=True)
         try:
@@ -293,25 +247,21 @@ if __name__ == "__main__":
             help="data root: datasets, pretrained, users")
     args = parser.parse_args()
 
-    host = args.host if args.host else app_host_ip
+    k12ai_consul_init(args.consul_addr, args.consul_port, LEVEL == logging.DEBUG)
 
-    consul_addr = args.consul_addr if args.consul_addr else app_host_ip
-    consul_port = args.consul_port
-
-    thread = Thread(target=_delay_do_consul, args=(host, args.port))
+    thread = Thread(target=_delay_do_consul, args=(args.host, args.port))
     thread.start()
 
-    logger.info('start zerorpc server on %s:%d', host, args.port)
+    logger.info('start zerorpc server on %s:%d', args.host, args.port)
 
     try:
         app = zerorpc.Server(RLServiceRPC(
-            host=host, port=args.port,
-            k12ai='{}-k12ai'.format(app_host_name),
+            host=args.host, port=args.port,
             image=args.image,
-            data_root=args.data_root,
-            debug=LEVEL==logging.DEBUG)) # noqa
-        app.bind('tcp://%s:%d' % (host, args.port))
+            data_root=args.data_root
+        ))
+        app.bind('tcp://%s:%d' % (args.host, args.port))
         app.run()
     finally:
-        app_quit = True
+        g_app_quit = True
         thread.join()

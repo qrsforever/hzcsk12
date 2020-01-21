@@ -24,4 +24,25 @@ __main()
     $top_dir/scripts/start_services.sh dev nocheck
 }
 
-__main
+if [[ x$1 == x ]]
+then
+    __main
+else
+    if [[ $# < 2 ]]
+    then
+        if [[ x$1 == xai ]] || [[ x$1 == xcv ]] || [[ x$1 == xnlp ]] || [[ x$1 == xrl ]]
+        then
+            act=$2
+            if [[ x$2 == x ]]
+            then
+                act="restart"
+            fi
+            if [[ $act == start ]] || [[ $act == stop ]] || [[ $act == restart ]]
+            then
+                $top_dir/scripts/start_services.sh single $1 $act
+            fi
+        fi
+    else
+        echo "k12ai.sh [ai|cv|nlp|rl] [start|stop|restart]"
+    fi
+fi

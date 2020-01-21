@@ -17,7 +17,7 @@ from flask_cors import CORS
 from threading import Thread
 
 from k12ai_consul import k12ai_consul_init, k12ai_consul_register, k12ai_consul_service
-from k12ai_platform import k12ai_platform_stats, k12ai_platform_control 
+from k12ai_platform import k12ai_platform_stats, k12ai_platform_control
 from k12ai_errmsg import k12ai_error_message as _err_msg
 
 if os.environ.get("K12AI_DEBUG"):

@@ -18,7 +18,9 @@ from pyhocon import ConfigFactory
 from pyhocon import HOCONConverter
 
 from k12ai_consul import k12ai_consul_init, k12ai_consul_register, k12ai_consul_message
+from k12ai_utils import k12ai_utils_topdir
 from k12ai_errmsg import k12ai_error_message as _err_msg
+from k12ai_misc import PRETRAINED_MODELS
 
 service_name = 'k12cv'
 
@@ -33,28 +35,12 @@ logger = logging.getLogger(__name__)
 
 g_app_quit = False
 
-pretrained_models = {
-    'vgg11': 'vgg11-bbd30ac9.pth',
-    'vgg13': 'vgg13-c768596a.pth',
-    'vgg16': 'vgg16-397923af.pth',
-    'vgg19': 'vgg19-dcbb9e9d.pth',
-    'vgg11_bn': 'vgg11_bn-6002323d.pth',
-    'vgg13_bn': 'vgg13_bn-abd245e5.pth',
-    'vgg16_bn': 'vgg16_bn-6c64b313.pth',
-    'vgg19_bn': 'vgg19_bn-c79401a0.pth',
-    'resnet18': 'resnet18-5c106cde.pth',
-    'resnet34': 'resnet34-333f7ec4.pth',
-    'resnet50': 'resnet50-19c8e357.pth',
-    'resnet101': 'resnet101-5d3b4d8f.pth',
-    'resnet152': 'resnet152-b121ed2d.pth',
-}
-
 
 def _delay_do_consul(host, port):
     time.sleep(3)
     while not g_app_quit:
         try:
-            k12ai_consul_register('k12cv', host, port)
+            k12ai_consul_register(service_name, host, port)
             break
         except Exception as err:
             logger.info("consul agent service register err", err)
@@ -67,15 +53,14 @@ class CVServiceRPC(object):
             host, port,
             image='hzcsai_com/k12cv',
             data_root='/data',
-            workdir='/hzcsk12/cv', debug=False):
-        self._debug = debug
+            workdir='/hzcsk12/cv'):
+        self._debug = LEVEL == logging.DEBUG
         self._host = host
         self._port = port
         self._image = image
         self._docker = docker.from_env()
         self._workdir = workdir
-        self._projdir = os.path.abspath( # noqa: E126
-                os.path.dirname(os.path.abspath(__file__)) + os.path.sep + "..")
+        self._projdir = os.path.join(k12ai_utils_topdir(), 'cv')
         logger.info('workdir:%s, projdir:%s', self._workdir, self._projdir)
 
         self.userscache_dir = '%s/users' % data_root
@@ -99,7 +84,7 @@ class CVServiceRPC(object):
                 else:
                     code = 100399
                 message = _err_msg(code, ext_info=message)
-        k12ai_consul_message(op, user, uuid, msgtype, message)
+        k12ai_consul_message(op, user, uuid, msgtype, message, clear)
 
     def _get_container(self, user, uuid):
         try:
@@ -159,7 +144,7 @@ class CVServiceRPC(object):
             pretrained = config_tree.get('network.pretrained', default=False)
             config_tree.pop('network.pretrained', default=None)
             if pretrained:
-                _file = pretrained_models.get(backbone, 'nofile')
+                _file = PRETRAINED_MODELS.get(backbone, 'nofile')
                 if os.path.exists('%s/%s' % (self.pretrained_dir, _file)):
                     config_tree.put('network.pretrained', '/pretrained/%s' % _file)
 
@@ -204,8 +189,6 @@ class CVServiceRPC(object):
             volumes[f'{self._projdir}/torchcv/lib/runner'] = {'bind': f'{self._workdir}/torchcv/lib/runner', 'mode': 'rw'}
             volumes[f'{self._projdir}/torchcv/lib/tools'] = {'bind': f'{self._workdir}/torchcv/lib/tools', 'mode': 'rw'}
             volumes[f'{self._projdir}/torchcv/main.py'] = {'bind': f'{self._workdir}/torchcv/main.py', 'mode': 'rw'}
-
-        print(volumes)
 
         environs = {
                 'K12CV_RPC_HOST': '%s' % self._host,
@@ -335,8 +318,8 @@ if __name__ == "__main__":
         app = zerorpc.Server(CVServiceRPC(
             host=args.host, port=args.port,
             image=args.image,
-            data_root=args.data_root,
-            debug=LEVEL==logging.DEBUG)) # noqa
+            data_root=args.data_root
+        ))
         app.bind('tcp://%s:%d' % (args.host, args.port))
         app.run()
     finally:

@@ -15,7 +15,7 @@ from subprocess import Popen, PIPE
 from threading import Thread
 
 from k12ai_errmsg import k12ai_error_message as _err_msg
-from k12ai_utils import k12ai_get_hostip as _get_hostip
+from k12ai_utils import k12ai_utils_hostip as _get_hostip
 from k12ai_consul import k12ai_consul_message as _send_message
 
 g_docker = None
@@ -86,7 +86,7 @@ def _get_process_infos():
     infos = []
     try:
         process = Popen(['nvidia-smi', "pmon", "--count", "1", "--select", "mu"], stdout=PIPE)
-        stdout, stderr = process.communicate() 
+        stdout, stderr = process.communicate()
         output = stdout.decode('UTF-8').split('\n')
         for i in range(2, len(output) - 1):
             info = {}
@@ -123,7 +123,7 @@ def _get_container_infos(client):
             info['gpu_percent'] = 0.00
             info['gpu_memory_usage'] = 0
             info['gpu_memory_percent'] = 0.00
-            
+
             pids = sum(c.top(ps_args='eo pid')['Processes'], [])
             for ginfo in gpu_process_infos:
                 if ginfo['pid'] in pids:

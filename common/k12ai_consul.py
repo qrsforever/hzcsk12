@@ -38,14 +38,13 @@ class RPCServiceAgent(object):
 
 
 def k12ai_consul_init(addr, port, debug=False):
-    global g_consul_addr, g_consul_port, g_consul_debug 
+    global g_consul_addr, g_consul_port, g_consul_debug
     g_consul_addr = addr
     g_consul_port = port
     g_consul_debug = debug
 
 
 def k12ai_consul_register(name, host, port, timeout=5):
-    print(g_consul_addr, g_consul_port)
     client = consul.Consul(host=g_consul_addr, port=g_consul_port)
     client.agent.service.register(
             name=name, address=host, port=port, tags=('k12ai',),
@@ -86,7 +85,7 @@ def k12ai_consul_message(op, user, uuid, msgtype, message, clear=False):
     data['data'] = message
 
     # service
-    api = 'http://{}:{}/k12ai/private/message'.format(service['Address'], service['Port'])
+    api = 'http://{}:{}/k12ai/private/message?type={}'.format(service['Address'], service['Port'], msgtype)
     requests.post(api, json=data)
 
     if g_consul_debug:

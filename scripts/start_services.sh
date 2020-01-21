@@ -54,8 +54,31 @@ __script_logout()
 
 __run_command()
 {
+    if [[ x$1 != xnohup ]]
+    then
+        $*
+        return
+    fi
     $* >/dev/null 2>&1 &
     __script_logout "$*: $!"
+}
+
+__kill_service()
+{
+    if [[ x$1 == x ]]
+    then
+        return
+    fi
+    str=`ps -eo pid,args | grep k12$1_service | grep -v grep`
+    if [[ x$str != x ]]
+    then
+        pid=`echo $str | awk '{print $1}'`
+        if [[ x$pid != x ]]
+        then
+            __script_logout $str
+            kill -9 $pid
+        fi
+    fi
 }
 
 __software_install_check()
@@ -196,7 +219,7 @@ __service_image_check()
 }
 
 # 1. check or start consul service
-__start_consule_service()
+__start_consul_service()
 {
     consul_container=`docker container ls --filter name=${consul_name} --filter status=running -q`
     if [[ x$consul_container == x ]]
@@ -226,11 +249,18 @@ __start_consule_service()
 # 2. check or start k12ai service
 __start_k12ai_service()
 {
-    result=$(__service_health_check ${k12ai_service_name})
+    if [[ x$1 == xfg ]]
+    then
+        result=0
+        cmdstr=
+    else
+        result=$(__service_health_check ${k12ai_service_name})
+        cmdstr="nohup"
+    fi
     if [[ $result != 1 ]]
     then
         export K12AI_DEBUG=$debug
-        __run_command "nohup python3 ${top_dir}/services/k12ai_service.py \
+        cmdstr="$cmdstr python3 ${top_dir}/services/k12ai_service.py \
             --host ${k12ai_addr} \
             --port ${k12ai_port} \
             --redis_addr ${redis_addr} \
@@ -238,48 +268,42 @@ __start_k12ai_service()
             --redis_passwd ${redis_pswd} \
             --consul_addr ${consul_addr} \
             --consul_port ${consul_port}"
+
+        __run_command $cmdstr
         __script_logout "start k12ai service"
     else
         __script_logout "check k12ai service"
     fi
 }
 
-# 3. check or start k12platform service
-# __start_k12platform_service()
-# {
-#     result=$(__service_health_check ${k12platform_service_name})
-#     if [[ $result != 1 ]]
-#     then
-#         export K12PLATFORM_DEBUG=$debug
-#         __run_command "nohup python3 ${top_dir}/services/k12platform_service.py \
-#             --host ${k12platform_addr} \
-#             --port ${k12platform_port} \
-#             --consul_addr ${consul_addr} \
-#             --consul_port ${consul_port}"
-#         __script_logout "start k12platform service"
-#     else
-#         __script_logout "check k12platform service"
-#     fi
-# }
-
 # 4. check or start k12cv service
 __start_k12cv_service()
 {
     use_image="hzcsai_com/k12cv"
-    result=$(__service_health_check ${k12cv_service_name})
+    if [[ x$2 == xfg ]]
+    then
+        result=0
+        cmdstr=
+    else
+        result=$(__service_health_check ${k12cv_service_name})
+        cmdstr="nohup"
+    fi
     if [[ $result != 1 ]]
     then
         export K12CV_DEBUG=$debug
         if [[ x$1 == xcheck ]]
         then
-            __service_image_check $use_image 
+            __service_image_check $use_image
         fi
-        __run_command "nohup python3 ${top_dir}/services/k12cv_service.py \
+        cmdstr="$cmdstr python3 ${top_dir}/services/k12cv_service.py \
             --host ${k12cv_addr} \
             --port ${k12cv_port} \
             --consul_addr ${consul_addr} \
             --consul_port ${consul_port} \
             --image $use_image"
+
+        echo $cmdstr
+        __run_command $cmdstr
         __script_logout "start k12cv service"
     else
         __script_logout "check k12cv service"
@@ -290,20 +314,29 @@ __start_k12cv_service()
 __start_k12nlp_service()
 {
     use_image="hzcsai_com/k12nlp"
-    result=$(__service_health_check ${k12nlp_service_name})
+    if [[ x$2 == xfg ]]
+    then
+        result=0
+        cmdstr=
+    else
+        result=$(__service_health_check ${k12nlp_service_name})
+        cmdstr="nohup"
+    fi
     if [[ $result != 1 ]]
     then
         export K12NLP_DEBUG=$debug
         if [[ x$1 == xcheck ]]
         then
-            __service_image_check $use_image 
+            __service_image_check $use_image
         fi
-        __run_command "nohup python3 ${top_dir}/services/k12nlp_service.py \
+        cmdstr="$cmdstr python3 ${top_dir}/services/k12nlp_service.py \
             --host ${k12nlp_addr} \
             --port ${k12nlp_port} \
             --consul_addr ${consul_addr} \
             --consul_port ${consul_port} \
             --image $use_image"
+
+         __run_command $cmdstr
         __script_logout "start k12nlp service"
     else
         __script_logout "check k12nlp service"
@@ -314,34 +347,70 @@ __start_k12nlp_service()
 __start_k12rl_service()
 {
     use_image="hzcsai_com/k12rl"
-    result=$(__service_health_check ${k12rl_service_name})
+    if [[ x$2 == xfg ]]
+    then
+        result=0
+        cmdstr=
+    else
+        result=$(__service_health_check ${k12rl_service_name})
+        cmdstr="nohup"
+    fi
     if [[ $result != 1 ]]
     then
         export K12RL_DEBUG=$debug
         if [[ x$1 == xcheck ]]
         then
-            __service_image_check $use_image 
+            __service_image_check $use_image
         fi
-        __run_command "nohup python3 ${top_dir}/services/k12rl_service.py \
+        cmdstr="$cmdstr python3 ${top_dir}/services/k12rl_service.py \
             --host ${k12rl_addr} \
             --port ${k12rl_port} \
             --consul_addr ${consul_addr} \
             --consul_port ${consul_port} \
             --image $use_image"
+
+        __run_command $cmdstr
         __script_logout "start k12rl service"
     else
         __script_logout "check k12rl service"
     fi
 }
 
+__start_service()
+{
+    if [[ x$2 == xstop ]]
+    then
+        __kill_service $1
+        return
+    elif [[ x$2 == xrestart ]]
+    then
+        __kill_service $1
+        arg=fg
+    else
+        arg=bg
+    fi
+    debug=0
+
+    if [[ x$1 == xai ]]
+    then
+        __start_k12ai_service $arg
+    fi
+    if [[ x$1 == xcv ]]
+    then
+        __start_k12cv_service nocheck $arg
+    fi
+    if [[ x$1 == xnlp ]]
+    then
+        __start_k12nlp_service nocheck $arg
+    fi
+    if [[ x$1 == xrl ]]
+    then
+        __start_k12rl_service nocheck $arg
+    fi
+}
+
 __main()
 {
-    if [[ x$1 == xrelease ]]
-    then
-        debug=0
-    fi
-    __service_environment_check
-
     if [[ -f ${log_fil} ]]
     then
         sudo mv ${log_fil} ${log_fil}_bak
@@ -349,9 +418,21 @@ __main()
         sudo touch ${log_fil}
         sudo chmod 777 ${log_fil}
     fi
+
+    if [[ x$1 == xsingle ]]
+    then
+        __start_service $2 $3
+        return
+    fi
+    if [[ x$1 == xrelease ]]
+    then
+        debug=0
+    fi
+    __service_environment_check
+
     cd /tmp
-    __start_consule_service
-    __start_k12ai_service
+    __start_consul_service
+    __start_k12ai_service $2
     __start_k12cv_service $2
     __start_k12nlp_service $2
     __start_k12rl_service $2

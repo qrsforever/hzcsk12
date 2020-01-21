@@ -78,7 +78,7 @@ __main()
             --volume $TOP_DIR/rl/app:$DST_DIR/hzcsnote/rl/app \
             --volume /data:/data
     fi
-    
+
     if [[ x$1 == xcv ]]
     then
         __start_notebook $K12CV_PROJECT $K12CV_PORT \
