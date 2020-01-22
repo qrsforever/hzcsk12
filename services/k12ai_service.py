@@ -101,7 +101,13 @@ def _framework_schema():
         service_name = reqjson['service_name']
         service_task = reqjson['service_task']
         dataset_name = reqjson['dataset_name']
-        network_type = reqjson.get('network_type', 'base_model')
+        if service_name == 'k12cv':
+            network_type = 'base_model'
+        elif service_name == 'k12nlp':
+            network_type = 'basic_classifier'
+        elif service_name == 'k12rl':
+            network_type = 'dpn'
+        # network_type = reqjson['network_type']
     except json.decoder.JSONDecodeError:
         return json.dumps(_err_msg(100103, request.get_data().decode()))
     except Exception:
@@ -112,6 +118,7 @@ def _framework_schema():
         return json.dumps(_err_msg(100201, f'service name:{service_name}'))
     try:
         code, msg = agent.schema(service_task, network_type, dataset_name)
+        print(msg)
         return json.dumps(_err_msg(code, msg))
     except Exception:
         return json.dumps(_err_msg(100207, exc=True))

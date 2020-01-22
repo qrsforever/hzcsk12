@@ -9,20 +9,14 @@
 
 import argparse
 import os
-import sys
-import traceback
 import json
-import logging
 import torch
-
-logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s', level=logging.DEBUG)
-
-logger = logging.getLogger(__name__)
 
 from pyhocon import ConfigFactory
 
 # K12AI
 from k12rl.utils.rpc_message import hzcsk12_error_message as _err_msg
+from k12rl.utils import hzcsk12_kill
 
 # utils
 from rlpyt.utils.launching.affinity import make_affinity
@@ -47,8 +41,8 @@ from rlpyt.samplers.parallel.cpu.collectors import (CpuResetCollector, CpuWaitRe
 from rlpyt.samplers.parallel.gpu.collectors import (GpuResetCollector, GpuWaitResetCollector)
 
 # runner
-from rlpyt.runners.async_rl import AsyncRlEval
-from rlpyt.runners.minibatch_rl import MinibatchRlEval
+from rlpyt.runners.async_rl import (AsyncRlEval, AsyncRl)
+from rlpyt.runners.minibatch_rl import (MinibatchRlEval, MinibatchRl)
 
 # algo & agent
 from rlpyt.algos.dqn.dqn import DQN
@@ -63,7 +57,13 @@ from rlpyt.agents.dqn.atari.atari_r2d1_agent import AtariR2d1Agent
 from rlpyt.agents.dqn.atari.atari_r2d1_agent import AtariR2d1AlternatingAgent
 
 
-def _rl_runner(task, async_, alt_, mode, netw, model, optim, reset_, config):
+def _rl_runner(task, async_, mode, netw, optim, config):
+
+    model = config.get('_k12.model.name')
+    reset = config.get('_k12.sampler.mid_batch_reset')
+    alter = config.get('affinity.alternating', default=False)
+    eval_ = config.get('_k12.sampler.eval')
+
     if task == 'atari':
         Env = AtariEnv
         Traj = AtariTrajInfo
@@ -73,29 +73,29 @@ def _rl_runner(task, async_, alt_, mode, netw, model, optim, reset_, config):
     if mode == 'serial':
         if async_:
             Sampler = AsyncSerialSampler
-            Collector = DbCpuResetCollector if reset_ else DbCpuWaitResetCollector
+            Collector = DbCpuResetCollector if reset else DbCpuWaitResetCollector
         else:
             Sampler = SerialSampler
-            Collector = CpuResetCollector if reset_ else CpuWaitResetCollector
+            Collector = CpuResetCollector if reset else CpuWaitResetCollector
     elif mode == 'cpu':
         if async_:
             Sampler = AsyncCpuSampler
-            Collector = DbCpuResetCollector if reset_ else DbCpuWaitResetCollector
+            Collector = DbCpuResetCollector if reset else DbCpuWaitResetCollector
         else:
             Sampler = CpuSampler
-            Collector = CpuResetCollector if reset_ else CpuWaitResetCollector
+            Collector = CpuResetCollector if reset else CpuWaitResetCollector
     elif mode == 'gpu':
         if async_:
-            Sampler = AsyncAlternatingSampler if alt_ else AsyncGpuSampler
-            Collector = DbGpuResetCollector if reset_ else DbGpuWaitResetCollector
+            Sampler = AsyncAlternatingSampler if alter else AsyncGpuSampler
+            Collector = DbGpuResetCollector if reset else DbGpuWaitResetCollector
         else:
-            Sampler = AlternatingSampler if alt_ else GpuSampler
-            Collector = GpuResetCollector if reset_ else GpuWaitResetCollector
+            Sampler = AlternatingSampler if alter else GpuSampler
+            Collector = GpuResetCollector if reset else GpuWaitResetCollector
 
     if async_:
-        Runner = AsyncRlEval
+        Runner = AsyncRlEval if eval_ else AsyncRl
     else:
-        Runner = MinibatchRlEval
+        Runner = MinibatchRlEval if eval_ else MinibatchRl 
 
     if netw == 'dqn':
         if model == 'dqn':
@@ -133,13 +133,8 @@ def _rl_runner(task, async_, alt_, mode, netw, model, optim, reset_, config):
     return Runner(algo=algo, agent=agent, sampler=sampler, affinity=affinity, **config['runner'])
 
 
-def _rl_train(out_dir, config_):
-    config = ConfigFactory.from_dict(config_)
+def _rl_train(out_dir, config):
     async_ = config.get('affinity.async_sample')
-    model_ = config.get('_k12.model.name')
-    reset_ = config.get('_k12.sampler.mid_batch_reset')
-    optim_ = config.get('_k12.optim.type')
-    alter_ = config.get('affinity.alternating', default=False)
 
     task = config.get('_k12.task')
     if task not in ('atari'):
@@ -153,14 +148,15 @@ def _rl_train(out_dir, config_):
     if mode not in ('serial', 'cpu', 'gpu', 'alternating'):
         raise NotImplementedError(f'sampler mode: {mode}')
 
-    if optim_ not in ('adam', 'rmsprop'):
-        raise NotImplementedError(f'optimize type: {optim_}')
+    optim = config.get('_k12.optim.type')
+    if optim not in ('adam', 'rmsprop'):
+        raise NotImplementedError(f'optimize type: {optim}')
 
     # TODO work around
     if async_ and mode != 'gpu' and not config.get('affinity.n_gpu', default=None):
         config.put('affinity.n_gpu', torch.cuda.device_count())
 
-    runner = _rl_runner(task, async_, alter_, mode, netw, model_, optim_, reset_, config)
+    runner = _rl_runner(task, async_, mode, netw, optim, config)
 
     with logger_context(out_dir, 'rl', 'k12', config):
         runner.train()
@@ -189,13 +185,13 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     try:
-        with open(os.path.join(args.config_file), 'r') as f:
-            config = json.load(f)
-
         if args.phase == 'train':
+            with open(os.path.join(args.config_file), 'r') as f:
+                config = ConfigFactory.from_dict(json.load(f))
             _rl_train(args.out_dir, config)
         else:
             raise NotImplementedError(f'phase: {args.phase}')
-    except Exception as err:
-        logger.error('{}'.format(err))
+    except Exception:
         _err_msg(exc=True)
+        # TODO multiprocessing
+        hzcsk12_kill(os.getpid())

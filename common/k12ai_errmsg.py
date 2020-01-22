@@ -102,4 +102,5 @@ def k12ai_error_message(code=100000, data=None, detail=False, exc=False, ext_inf
                     'linenum': stack[1],
                     'funcname': stack[2]
                     } # noqa
+    print(msg)
     return msg

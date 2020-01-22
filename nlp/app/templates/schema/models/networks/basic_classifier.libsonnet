@@ -16,6 +16,7 @@ local _Utils = import '../../utils/helper.libsonnet';
                 objs: [
                     {
                         local jid1 = jid + '.text_field_embedder.token_embedders',
+                        name: { en: 'Embeders', cn: self.en },
                         type: 'navigation',
                         objs: [
                             {
@@ -85,6 +86,7 @@ local _Utils = import '../../utils/helper.libsonnet';
                 objs: [
                     {
                         local jid2 = jid,
+                        name: { en: 'Encoders', cn: self.en },
                         type: 'navigation',
                         objs: [
                             {

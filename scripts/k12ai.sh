@@ -28,7 +28,7 @@ if [[ x$1 == x ]]
 then
     __main
 else
-    if [[ $# < 2 ]]
+    if [[ $# > 0 ]]
     then
         if [[ x$1 == xai ]] || [[ x$1 == xcv ]] || [[ x$1 == xnlp ]] || [[ x$1 == xrl ]]
         then

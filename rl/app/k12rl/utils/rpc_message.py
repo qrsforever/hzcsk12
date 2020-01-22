@@ -68,6 +68,7 @@ def hzcsk12_error_message(errmsg=None, exc=False):
                     'souce': tb.line
                     }
             message['trackback'].append(err)
+        print(message)
         hzcsk12_send_message('error', message)
         hzcsk12_send_message('status', {'value': 'exit', 'way': 'crash'})
     else:

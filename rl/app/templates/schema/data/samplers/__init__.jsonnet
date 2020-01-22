@@ -11,8 +11,8 @@ local _Utils = import '../../utils/helper.libsonnet';
         {
             type: 'H',
             objs: [
-                _Utils.int('sampler.batch_T', 'Batch T', def=32),
-                _Utils.int('sampler.batch_B', 'Batch B', def=16),
+                _Utils.int('sampler.batch_T', 'Batch T', def=32, tips='Number of time steps'),
+                _Utils.int('sampler.batch_B', 'Batch B', def=16, tips='Number of separate trajectory segments'),
                 _Utils.int('sampler.max_decorrelation_steps', 'Decorr Steps', def=100),
             ],
         },
@@ -43,7 +43,6 @@ local _Utils = import '../../utils/helper.libsonnet';
                 },
             ],
             default: true,
-            readonly: true,
         },
     ],
 }

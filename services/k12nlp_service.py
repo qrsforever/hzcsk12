@@ -218,7 +218,8 @@ class NLPServiceRPC(object):
         elif phase == 'predict':
             raise('not impl yet')
 
-        command += ' --include-package allennlp_rc'
+        # command += ' --include-package allennlp_rc'
+
         Thread(target=lambda: self._run(op=op, user=user, uuid=uuid, command=command),
                 daemon=True).start()
         return 100000, None
