@@ -15,8 +15,7 @@ import torch
 from pyhocon import ConfigFactory
 
 # K12AI
-from k12rl.utils.rpc_message import hzcsk12_error_message as _err_msg
-from k12rl.utils import hzcsk12_kill
+from k12rl.utils.log_parser import hzcsk12_log_message as _k12log
 
 # utils
 from rlpyt.utils.launching.affinity import make_affinity
@@ -62,7 +61,7 @@ def _rl_runner(task, async_, mode, netw, optim, config):
     model = config.get('_k12.model.name')
     reset = config.get('_k12.sampler.mid_batch_reset')
     alter = config.get('affinity.alternating', default=False)
-    eval_ = config.get('_k12.sampler.eval')
+    eval_ = config.get('_k12.runner.eval')
 
     if task == 'atari':
         Env = AtariEnv
@@ -184,6 +183,7 @@ if __name__ == "__main__":
             help="log dir")
     args = parser.parse_args()
 
+    _k12log('k12rl_running')
     try:
         if args.phase == 'train':
             with open(os.path.join(args.config_file), 'r') as f:
@@ -192,6 +192,5 @@ if __name__ == "__main__":
         else:
             raise NotImplementedError(f'phase: {args.phase}')
     except Exception:
-        _err_msg(exc=True)
-        # TODO multiprocessing
-        hzcsk12_kill(os.getpid())
+        _k12log('k12rl_except')
+    _k12log('k12rl_finish')

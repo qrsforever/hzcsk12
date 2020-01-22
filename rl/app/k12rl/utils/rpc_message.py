@@ -8,8 +8,6 @@
 # @date 2020-01-20 16:43
 
 import os
-import sys
-import traceback
 import zerorpc
 
 _RPCClient = None
@@ -45,35 +43,3 @@ def hzcsk12_send_message(msgtype, message, end=False):
             _RPCClient.close()
     except Exception:
         pass
-
-
-def hzcsk12_error_message(errmsg=None, exc=False):
-    if exc:
-        filename = os.path.basename(sys._getframe().f_back.f_code.co_filename)
-        lineno = sys._getframe().f_back.f_lineno
-        exc_type, exc_value, exc_tb = sys.exc_info()
-        message = { # noqa: E126
-                'filename': filename,
-                'linenum': lineno,
-                'err_type': exc_type.__name__,
-                'err_text': str(exc_value)
-                }
-        message['trackback'] = []
-        tbs = traceback.extract_tb(exc_tb)
-        for tb in tbs:
-            err = { # noqa: E126
-                    'filename': tb.filename,
-                    'linenum': tb.lineno,
-                    'funcname': tb.name,
-                    'souce': tb.line
-                    }
-            message['trackback'].append(err)
-        print(message)
-        hzcsk12_send_message('error', message)
-        hzcsk12_send_message('status', {'value': 'exit', 'way': 'crash'})
-    else:
-        if errmsg:
-            hzcsk12_send_message('error', errmsg)
-            hzcsk12_send_message('status', {'value': 'exit', 'way': 'error'})
-        else:
-            print('UnkownError')

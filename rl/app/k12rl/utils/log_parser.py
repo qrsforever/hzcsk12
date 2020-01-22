@@ -7,9 +7,13 @@
 # @version 1.0
 # @date 2020-01-22 15:19
 
+import os, sys
 import re
+import traceback
 import numpy as np
+
 from k12rl.utils.rpc_message import hzcsk12_send_message
+from k12rl.utils import hzcsk12_kill
 
 g_iters = 0
 g_metrics = {}
@@ -41,6 +45,41 @@ def hzcsk12_log_tabular(key, val):
     if key == "lossAverage":
         g_metrics['training_loss'] = val
         hzcsk12_send_message('metrics', g_metrics)
+
+
+def hzcsk12_log_message(errmsg=None):
+    if errmsg.startswith('k12rl_running'):
+        hzcsk12_send_message('status', {'value': 'running'})
+        return
+
+    if errmsg.startswith('k12rl_finish'):
+        hzcsk12_send_message('status', {'value': 'exit', 'way': 'finish'})
+        return
+
+    if errmsg.startswith('k12rl_except'):
+        filename = os.path.basename(sys._getframe().f_back.f_code.co_filename)
+        lineno = sys._getframe().f_back.f_lineno
+        exc_type, exc_value, exc_tb = sys.exc_info()
+        message = {
+            'filename': filename,
+            'linenum': lineno,
+            'err_type': exc_type.__name__,
+            'err_text': str(exc_value)
+        }
+        message['trackback'] = []
+        tbs = traceback.extract_tb(exc_tb)
+        for tb in tbs:
+            err = {
+                'filename': tb.filename,
+                'linenum': tb.lineno,
+                'funcname': tb.name,
+                'souce': tb.line
+            }
+            message['trackback'].append(err)
+        print(message)
+        hzcsk12_send_message('error', message)
+        hzcsk12_send_message('status', {'value': 'exit', 'way': 'crash'})
+        hzcsk12_kill(os.getpid())
 
 
 def hzcsk12_log_parser(message):

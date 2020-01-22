@@ -13,7 +13,7 @@ local _Utils = import '../../utils/helper.libsonnet';
             type: 'H',
             objs: [
                 _Utils.int('algo.batch_size', 'Batch Size', def=32),
-                _Utils.int('algo.min_steps_learn', 'Min Steps', def=5e4),
+                _Utils.int('algo.min_steps_learn', 'Min Steps', def=5e4, tips='min steps learn'),
                 _Utils.int('algo.delta_clip', 'Delta Clip', def=1.0),
             ],
         },

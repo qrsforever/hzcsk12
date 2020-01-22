@@ -17,32 +17,13 @@ local _Utils = import '../../utils/helper.libsonnet';
             ],
         },
         {
-            _id_: '_k12.sampler.eval',
-            name: { en: 'Eval Enable', cn: self.en },
-            type: 'bool-trigger',
+            type: 'H',
             objs: [
-                {
-                    value: true,
-                    trigger: {
-                        type: '_ignore_',
-                        objs: [
-                            {
-                                type: 'H',
-                                objs: [
-                                    _Utils.int('sampler.eval_n_envs', 'Num Envs', def=2, min=1),
-                                    _Utils.int('sampler.eval_max_steps', 'Max Steps', def=125e3),
-                                    _Utils.int('sampler.eval_max_trajectories', 'Max Trajectories', def=100),
-                                ],
-                            },
-                        ],
-                    },
-                },
-                {
-                    value: true,
-                    trigger: {},
-                },
+                _Utils.int('sampler.eval_n_envs', 'Num Envs', def=2, min=1),
+                _Utils.int('sampler.eval_max_steps', 'Max Steps', def=125e3),
+                _Utils.int('sampler.eval_max_trajectories', 'Max Trajectories', def=100),
             ],
-            default: true,
         },
+        _Utils.bool('_k12.sampler.mid_batch_reset', 'Mid Batch Reset', def=false, tips='whether  environment resets during itr'),
     ],
 }

@@ -20,6 +20,7 @@ from k12cv.tools.util.rpc_message import hzcsk12_send_message
 from runner.runner_selector import CLS_TEST_DICT, DET_TEST_DICT
 from model.det.model_manager import DET_MODEL_DICT
 
+
 # change the original method to hzcsk12 hook
 def _hook_runner_selector(configer):
     task = configer.get('task')
@@ -32,6 +33,7 @@ def _hook_runner_selector(configer):
     else:
         Log.info("not impl")
 
+
 # build custom model if model name begin with the prefix 'custom_'
 def _check_custom_model(configer):
     model_name = configer.get('network.model_name')
@@ -43,6 +45,7 @@ def _check_custom_model(configer):
         net_def_fil = os.path.join(net_def_dir, '%s.txt' % model_name)
         with open(net_def_fil, 'w') as fout:
             fout.write(net_def_str)
+
 
 def hzcsk12_cv_init(configer):
 
