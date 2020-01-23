@@ -19,12 +19,8 @@ import torch
 
 # hzcsk12
 try:
-    from k12rl.utils.log_parser import hzcsk12_log_tabular
     from k12rl.utils.log_parser import hzcsk12_log_parser
 except ModuleNotFoundError:
-    def hzcsk12_log_tabular(*args, **kwargs):
-        pass
-
     def hzcsk12_log_parser(*args, **kwargs):
         pass
 
@@ -215,7 +211,7 @@ def log(s, with_prefix=True, with_timestamp=True, color=None):
 def record_tabular(key, val, *args, **kwargs):
     # if not _disabled and not _tabular_disabled:
     _tabular.append((_tabular_prefix_str + str(key), str(val)))
-    hzcsk12_log_tabular(key, val)
+    hzcsk12_log_parser(key, val)
 
 
 def push_tabular_prefix(key):

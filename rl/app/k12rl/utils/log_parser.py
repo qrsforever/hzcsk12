@@ -19,7 +19,7 @@ g_iters = 0
 g_metrics = {}
 
 
-def hzcsk12_log_tabular(key, val):
+def _log_tabular(key, val):
     global g_metrics
     if g_iters > 0 and key not in (
             'Iteration', 'CumTime (s)', 'CumSteps',
@@ -47,7 +47,7 @@ def hzcsk12_log_tabular(key, val):
         hzcsk12_send_message('metrics', g_metrics)
 
 
-def hzcsk12_log_message(errmsg=None):
+def hzcsk12_log_message(errmsg):
     if errmsg.startswith('k12rl_running'):
         hzcsk12_send_message('status', {'value': 'running'})
         return
@@ -82,7 +82,11 @@ def hzcsk12_log_message(errmsg=None):
         hzcsk12_kill(os.getpid())
 
 
-def hzcsk12_log_parser(message):
+def hzcsk12_log_parser(key_or_msg, val=None):
+    if val:
+        return _log_tabular(key_or_msg, val)
+
+    message = key_or_msg
     global g_iters
     if g_iters == 0 and message.startswith('Running '):
         result = re.search(r'\ARunning (?P<iters>\d+) iterations of minibatch RL.', message)

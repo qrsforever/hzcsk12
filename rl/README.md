@@ -4,4 +4,4 @@ https://rlpyt.readthedocs.io/
 
 | 文件 | 原因 |
 |:----|:----|
-|`rlpyt/rlpyt/utils/logging/context.py`| 修改日志目录 |
+|`rlpyt/rlpyt/utils/logging/logger.py` | hook log |

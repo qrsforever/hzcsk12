@@ -18,8 +18,8 @@ from pyhocon import ConfigFactory
 from k12rl.utils.log_parser import hzcsk12_log_message as _k12log
 
 # utils
+from rlpyt.utils.logging import context
 from rlpyt.utils.launching.affinity import make_affinity
-from rlpyt.utils.logging.context import logger_context
 
 # sync
 from rlpyt.samplers.serial.sampler import SerialSampler
@@ -157,7 +157,7 @@ def _rl_train(out_dir, config):
 
     runner = _rl_runner(task, async_, mode, netw, optim, config)
 
-    with logger_context(out_dir, 'rl', 'k12', config):
+    with context.logger_context(out_dir, 'rl', 'k12', config):
         runner.train()
 
 
@@ -183,12 +183,14 @@ if __name__ == "__main__":
             help="log dir")
     args = parser.parse_args()
 
+    context.LOG_DIR = args.out_dir
+
     _k12log('k12rl_running')
     try:
         if args.phase == 'train':
             with open(os.path.join(args.config_file), 'r') as f:
                 config = ConfigFactory.from_dict(json.load(f))
-            _rl_train(args.out_dir, config)
+            _rl_train(context.LOG_DIR, config)
         else:
             raise NotImplementedError(f'phase: {args.phase}')
     except Exception:
