@@ -108,6 +108,12 @@ def _framework_schema():
         elif service_name == 'k12rl':
             network_type = 'dpn'
         # network_type = reqjson['network_type']
+        # Test
+        if service_task == 'seg':
+            import _jsonnet
+            schema_file = os.environ.get("TEST_SCHEMA_FILE")
+            schema_json = _jsonnet.evaluate_file(schema_file)
+            return json.dumps(_err_msg(data=json.dumps(json.loads(schema_json), separators=(',', ':'))))
     except json.decoder.JSONDecodeError:
         return json.dumps(_err_msg(100103, request.get_data().decode()))
     except Exception:

@@ -21,7 +21,7 @@ redis_addr='117.51.156.111'
 redis_port=10090
 redis_pswd='qY3Zh4xLPZNMkaz3'
 
-consul_name=consul_dev
+consul_name=consul-dev
 consul_addr=$hostaddr
 consul_port=8500
 
