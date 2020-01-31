@@ -56,6 +56,13 @@ def hzcsk12_log_message(errmsg):
         hzcsk12_send_message('status', {'value': 'exit', 'way': 'finish'})
         return
 
+    if errmsg.startswith('k12rl_signal'):
+        message = {'err_type': 'signal', 'err_text': 'handle quit signal'}
+        hzcsk12_send_message('error', message)
+        hzcsk12_send_message('status', {'value': 'exit', 'way': 'error'})
+        hzcsk12_kill(os.getpid())
+        return
+
     if errmsg.startswith('k12rl_except'):
         filename = os.path.basename(sys._getframe().f_back.f_code.co_filename)
         lineno = sys._getframe().f_back.f_lineno

@@ -8,7 +8,7 @@
 # @date 2020-01-19 17:34
 
 import argparse
-import os
+import os, signal
 import json
 import torch
 
@@ -54,6 +54,11 @@ from rlpyt.agents.dqn.atari.atari_dqn_agent import AtariDqnAgent
 from rlpyt.agents.dqn.atari.atari_catdqn_agent import AtariCatDqnAgent
 from rlpyt.agents.dqn.atari.atari_r2d1_agent import AtariR2d1Agent
 from rlpyt.agents.dqn.atari.atari_r2d1_agent import AtariR2d1AlternatingAgent
+
+
+def _signal_handler(sig, frame):
+    if sig == signal.SIGUSR1:
+        _k12log('k12rl_signal')
 
 
 def _rl_runner(task, async_, mode, netw, optim, config):
@@ -162,6 +167,7 @@ def _rl_train(out_dir, config):
 
 
 if __name__ == "__main__":
+    signal.signal(signal.SIGUSR1, _signal_handler)
     parser = argparse.ArgumentParser()
     parser.add_argument(
             '--phase',
