@@ -17,14 +17,6 @@ import pickle
 import base64
 import torch
 
-# hzcsk12
-try:
-    from k12rl.utils.log_parser import hzcsk12_log_parser
-except ModuleNotFoundError:
-    def hzcsk12_log_parser(*args, **kwargs):
-        pass
-
-
 _prefixes = []
 _prefix_str = ''
 
@@ -188,7 +180,6 @@ def get_disable_prefix():
 
 
 def log(s, with_prefix=True, with_timestamp=True, color=None):
-    hzcsk12_log_parser(s)
     if not _disabled:
         out = s
         if with_prefix and not _disable_prefix:
@@ -211,7 +202,6 @@ def log(s, with_prefix=True, with_timestamp=True, color=None):
 def record_tabular(key, val, *args, **kwargs):
     # if not _disabled and not _tabular_disabled:
     _tabular.append((_tabular_prefix_str + str(key), str(val)))
-    hzcsk12_log_parser(key, val)
 
 
 def push_tabular_prefix(key):
