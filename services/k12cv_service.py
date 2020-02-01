@@ -103,7 +103,7 @@ class CVServiceRPC(object):
             os.makedirs(usercache)
         return usercache
 
-    def _prepare_environ(self, user, uuid, params):
+    def _prepare_environ(self, phase, user, uuid, params):
         if not params or not isinstance(params, dict):
             return 100203, 'parameters type is not dict'
 
@@ -135,6 +135,8 @@ class CVServiceRPC(object):
             config_tree.put('network.checkpoints_name', ckpts_name)
             config_tree.put('network.checkpoints_dir', 'ckpts')
 
+            if phase != 'train':
+                config_tree.put('network.resume_continue', True)
             if config_tree.get('network.resume_continue', default=False):
                 resume_path = '%s/ckpts/%s_latest.pth' % (self._get_cache_dir(user, uuid), ckpts_name)
                 if os.path.exists(resume_path):
@@ -246,7 +248,7 @@ class CVServiceRPC(object):
                 return 100204, None
             container.remove()
 
-        code, result = self._prepare_environ(user, uuid, params)
+        code, result = self._prepare_environ(phase, user, uuid, params)
         if code != 100000:
             return code, result
 
@@ -258,7 +260,7 @@ class CVServiceRPC(object):
         if phase == 'train':
             command += ' --phase train'
         elif phase == 'evaluate':
-            command += ' --phase test --out_dir /cache/output'
+            command += ' --phase test --test_dir todo --out_dir /cache/output'
         elif phase == 'predict':
             raise('not impl yet')
 

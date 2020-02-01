@@ -30,3 +30,5 @@ QRS
 | `torchcv/model/cls/loss/mixup_soft_ce_loss.py` | fix bug: check param |
 | `torchcv/data/cls/datasets/default_dataset.py` | fix bug: read dataset |
 | `torchcv/lib/model/base/vgg.py` | fix bug: pool ceil mode |
+| `torchcv/lib/tools/util/configer.py` | 以配置文件为主, 少用命令行传参 |
+| `torchcv/lib/runner/runner_helper.py` | fix bug: cannot ignore else |

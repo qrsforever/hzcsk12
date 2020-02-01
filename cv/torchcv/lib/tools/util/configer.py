@@ -47,8 +47,9 @@ class Configer(object):
 
                 if key not in self.params_root:
                     self.add(key, value)
-                elif value is not None:
-                    self.update(key, value)
+                # QRS: comment below else
+                # elif value is not None:
+                #     self.update(key, value)
 
     def _get_caller(self):
         filename = os.path.basename(sys._getframe().f_back.f_back.f_code.co_filename)

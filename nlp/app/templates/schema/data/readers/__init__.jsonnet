@@ -73,6 +73,18 @@ local _READERS = {
                     },
                 ],
             },
+            {
+                name: { en: 'Evaluate', cn: self.en },
+                type: '_ignore_',
+                objs: [
+                    _Utils.string('test_data_path',
+                                  'Dataset Path',
+                                  def='',
+                                  ddd=true,
+                                  width=500,
+                                  readonly=true),
+                ],
+            },
         ],
     },
 }

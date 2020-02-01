@@ -32,7 +32,18 @@
                         {
                             _id_: '_k12.iframe.train',
                             type: 'iframe',
-                            html: 'http://www.baidu.com',
+                            html: '',
+                        },
+                    ],
+                },
+                {
+                    name: { en: 'Evaluate', cn: self.en },
+                    type: '_ignore_',
+                    objs: [
+                        {
+                            _id_: '_k12.iframe.evaluate',
+                            type: 'iframe',
+                            html: '',
                         },
                     ],
                 },

@@ -59,6 +59,8 @@ def _platform_stats():
             return json.dumps(_err_msg(100102, f'not support op:{op}'))
         service_uuid = reqjson['service_uuid']
         service_params = reqjson.get('service_params', None)
+        if isinstance(service_params, str):
+            service_params = json.loads(service_params)
         isasync = reqjson.get('async', False)
     except Exception:
         return json.dumps(_err_msg(100101, exc=True))
@@ -81,6 +83,8 @@ def _platform_control():
             return json.dumps(_err_msg(100102, f'not support op:{op}'))
         service_uuid = reqjson['service_uuid']
         service_params = reqjson.get('service_params', None)
+        if isinstance(service_params, str):
+            service_params = json.loads(service_params)
         isasync = reqjson.get('async', False)
     except Exception:
         return json.dumps(_err_msg(100101, exc=True))

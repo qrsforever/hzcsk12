@@ -30,9 +30,9 @@ from allennlp.training.tensorboard_writer import TensorboardWriter
 from allennlp.training.trainer_base import TrainerBase
 
 try:
-    from k12nlp.common.util import hzcsk12_send_message
+    from k12nlp.common.util import hzcsk12_send_message as _k12msg
 except ModuleNotFoundError:
-    def hzcsk12_send_message(msgtype, message, iters=None, speed=None, end=False):
+    def _k12msg(*args, **kwargs):
         pass
 
 logger = logging.getLogger(__name__)
@@ -436,7 +436,8 @@ class Trainer(TrainerBase):
                 self._tensorboard.log_metrics({"epoch_metrics/" + k: v for k, v in metrics.items()})
 
                 # QRS: add
-                hzcsk12_send_message('metrics', metrics, iters=batch_num_total)
+                metrics['training_iters'] = batch_num_total
+                _k12msg('metrics', metrics)
 
             if self._tensorboard.should_log_histograms_this_batch() and self._master:
                 self._tensorboard.log_histograms(self.model, histogram_parameters)
@@ -658,13 +659,17 @@ class Trainer(TrainerBase):
             epochs_trained += 1
 
             # QRS: add
-            hzcsk12_send_message('metrics', metrics, iters=self._batch_num_total, speed=1.0 / epoch_elapsed_time)
+            metrics['training_iters'] = self._batch_num_total
+            metrics['training_speed'] = 1.0 / epoch_elapsed_time
+            metrics['training_progress'] = float(epoch) / self._num_epochs
+            _k12msg('metrics', metrics)
 
         # make sure pending events are flushed to disk and files are closed properly
         self._tensorboard.close()
 
         # QRS: add
-        hzcsk12_send_message('metrics', metrics, end=True)
+        metrics['training_progress'] = 1
+        _k12msg('metrics', metrics, end=True)
 
         # Load the best model state before returning
         best_model_state = self._checkpointer.best_model_state()

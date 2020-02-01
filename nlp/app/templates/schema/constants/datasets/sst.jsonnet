@@ -44,7 +44,7 @@
         batch_size: 32,
     },
     trainer: {
-        num_epochs: 100,
+        num_epochs: 1000,
         patience: 1,
         grad_norm: 5.0,
         shuffle: true,

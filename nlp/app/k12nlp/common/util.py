@@ -17,7 +17,7 @@ _RPCEnable = -1
 K12NLP_OP, K12NLP_USER, K12NLP_UUID = None, None, None
 
 
-def hzcsk12_send_message(msgtype, message, iters=None, speed=None, end=False):
+def hzcsk12_send_message(msgtype, message, end=False):
     global _RPCClient, _RPCEnable, K12NLP_OP, K12NLP_USER, K12NLP_UUID
 
     if _RPCEnable == 0:
@@ -40,13 +40,9 @@ def hzcsk12_send_message(msgtype, message, iters=None, speed=None, end=False):
 
     try:
         if message:
-            if iters:
-                message['training_iters'] = iters
-                epochs = message.get('training_epochs', None)
-                if epochs:
-                    message['training_epochs'] = epochs + 1
-            if speed:
-                message['training_speed'] = speed
+            epochs = message.get('training_epochs', None)
+            if epochs:
+                message['training_epochs'] = epochs + 1
             _RPCClient.send_message(K12NLP_OP, K12NLP_USER, K12NLP_UUID, msgtype, message)
         if end:
             _RPCClient.close()
@@ -54,8 +50,21 @@ def hzcsk12_send_message(msgtype, message, iters=None, speed=None, end=False):
         pass
 
 
-def hzcsk12_error_message(errmsg=None, exc=False):
-    if exc:
+def hzcsk12_error_message(errmsg):
+    if errmsg.startswith('k12nlp_running'):
+        hzcsk12_send_message('status', {'value': 'running'})
+        return
+
+    if errmsg.startswith('k12nlp_finish'):
+        hzcsk12_send_message('status', {'value': 'exit', 'way': 'finish'})
+        return
+
+    if errmsg.startswith('k12nlp_error'):
+        hzcsk12_send_message('error', errmsg)
+        hzcsk12_send_message('status', {'value': 'exit', 'way': 'error'})
+        return
+
+    if errmsg.startswith('k12nlp_except'):
         filename = os.path.basename(sys._getframe().f_back.f_code.co_filename)
         lineno = sys._getframe().f_back.f_lineno
         exc_type, exc_value, exc_tb = sys.exc_info()
@@ -72,14 +81,8 @@ def hzcsk12_error_message(errmsg=None, exc=False):
                     'filename': tb.filename,
                     'linenum': tb.lineno,
                     'funcname': tb.name,
-                    'souce': tb.line
+                    'source': tb.line
                     }
             message['trackback'].append(err)
         hzcsk12_send_message('error', message)
         hzcsk12_send_message('status', {'value': 'exit', 'way': 'crash'})
-    else:
-        if errmsg:
-            hzcsk12_send_message('error', errmsg)
-            hzcsk12_send_message('status', {'value': 'exit', 'way': 'error'})
-        else:
-            print('UnkownError')

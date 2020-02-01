@@ -55,4 +55,12 @@ def hzcsk12_cv_init(configer):
 
     _hook_runner_selector(configer)
 
+    metric = configer.get('solver.lr.metric')
+    if metric == 'epoch':
+        max_epoch = configer.get('solver.max_epoch')
+        Log.info('_k12ai.solver.lr.metric: epoch, max: %d' % max_epoch)
+    else:
+        max_iters = configer.get('solver.max_iters')
+        Log.info('_k12ai.solver.lr.metric: iters, max: %d' % max_iters)
+
     hzcsk12_send_message('status', {'value': 'running'})

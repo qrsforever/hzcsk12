@@ -17,6 +17,7 @@ from lib.tools.util.logger import Logger as Log
 
 from k12cv.tools.util.rpc_message import hzcsk12_send_message
 
+
 class ImageClassifierTest(object):
     def __init__(self, configer):
         self.configer = configer
@@ -50,15 +51,17 @@ class ImageClassifierTest(object):
             top1 = RunnerHelper.dist_avg(self, self.running_score.get_top1_acc())
             top3 = RunnerHelper.dist_avg(self, self.running_score.get_top3_acc())
             top5 = RunnerHelper.dist_avg(self, self.running_score.get_top5_acc())
+            print(top1, top3, self.running_score.get_top1_acc())
             if isinstance(top1, dict) and 'out' in top1.keys():
                 top1 = top1['out']
                 top3 = top3['out']
                 top5 = top5['out']
             hzcsk12_send_message('metrics', {
+                'evaluate_iters': 1,
+                'evaluate_progress': 1.0,
                 'evaluate_accuracy': top1,
                 'evaluate_accuracy3': top3,
-                'evaluate_accuracy5': top5,
-                })
+                'evaluate_accuracy5': top5})
             Log.info('Top1 ACC = {}'.format(top1))
             Log.info('Top3 ACC = {}'.format(top3))
             Log.info('Top5 ACC = {}'.format(top5))

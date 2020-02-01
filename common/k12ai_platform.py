@@ -140,7 +140,7 @@ def _get_service_infos(client, user, uuid):
     infos = []
     try:
         cons = []
-        if uuid == '*':
+        if uuid == '0' or uuid == '*' or uuid == 'all':
             cons = client.containers.list(filters={'label': 'k12ai.service.user=%s'%user})
         else:
             cons = client.containers.list(filters={'label': ['k12ai.service.user=%s'%user, 'k12ai.service.uuid=%s'%uuid]})

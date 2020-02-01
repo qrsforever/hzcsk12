@@ -19,9 +19,9 @@ from allennlp.common.util import import_submodules
 
 # QRS: add for catch except info
 try:
-    from k12nlp.common.util import hzcsk12_error_message
-except Exception:
-    def hzcsk12_error_message(errmsg=None, exc=False):
+    from k12nlp.common.util import hzcsk12_error_message as _k12log
+except ModuleNotFoundError:
+    def _k12log(*args, **kwargs):
         pass
 
 logger = logging.getLogger(__name__)
@@ -123,12 +123,14 @@ def main(prog: str = None, subcommand_overrides: Dict[str, Subcommand] = None) -
             import_submodules(package_name)
 
         # QRS: add for catch execpt info
+        _k12log('k12nlp_running')
         try:
             args.func(args)
             logger.info("+++success+++")
+            _k12log('k12nlp_finish')
         except Exception as err:
             logger.info("+++fail+++")
             logger.info("{}".format(err))
-            hzcsk12_error_message(exc=True)
+            _k12log('k12nlp_except')
     else:
         parser.print_help()

@@ -13,28 +13,33 @@ import traceback
 
 from k12cv.tools.util.rpc_message import hzcsk12_send_message
 
+_isepoch_ = True
+_maxiter_ = -1
 _metrics_ = {}
-
-RE_CLS_IC_TRAIN = None
-RE_DET_COM_TRAIN = None
 
 
 def _parse_metrics(filename, lineno, message):
-    global _metrics_
+    global _isepoch_, _maxiter_ , _metrics_
     try:
-        if filename in ['image_classifier.py']:
+        if filename == 'k12cv_init.py':
+            if message.startswith('_k12ai.solver.lr.metric: '):
+                res = re.search(r'_k12ai.solver.lr.metric: '
+                        r'(?P<metric>[a-z]+), max: (?P<total>\d+)', message)
+                if res:
+                    result = res.groupdict()
+                    if 'iters' == result.get('metric'):
+                        _isepoch_ = False
+                    _maxiter_ = int(result.get('total'))
+        elif filename in ['image_classifier.py']:
             if message.startswith('Train Epoch:'):
-                global RE_CLS_IC_TRAIN
-                if RE_CLS_IC_TRAIN is None:
-                    RE_CLS_IC_TRAIN = re.compile(r'Train Epoch: (?P<epoch>\d+)\t'
-                            r'Train Iteration: (?P<iters>\d+)\t'
-                            r'Time (?P<batch_time_sum>\d+\.?\d*)s / (?P<batch_iters>\d+)iters, '
-                            r'\((?P<batch_time_avg>\d+\.?\d*)\)\t'
-                            r'Data load (?P<data_time_sum>\d+\.?\d*)s / (?P<_batch_iters>\d+)iters, '
-                            r'\((?P<data_time_avg>\d+\.?\d*)\)\n'
-                            r'Learning rate = (?P<learning_rate>.*)\t'
-                            r'Loss = .*loss: (?P<train_loss>\d+\.?\d*).*\n')
-                res = RE_CLS_IC_TRAIN.search(message)
+                res = re.search(r'Train Epoch: (?P<epoch>\d+)\t'
+                    r'Train Iteration: (?P<iters>\d+)\t'
+                    r'Time (?P<batch_time_sum>\d+\.?\d*)s / (?P<batch_iters>\d+)iters, '
+                    r'\((?P<batch_time_avg>\d+\.?\d*)\)\t'
+                    r'Data load (?P<data_time_sum>\d+\.?\d*)s / (?P<_batch_iters>\d+)iters, '
+                    r'\((?P<data_time_avg>\d+\.?\d*)\)\n'
+                    r'Learning rate = (?P<learning_rate>.*)\t'
+                    r'Loss = .*loss: (?P<train_loss>\d+\.?\d*).*\n', message)
                 if res:
                     result = res.groupdict()
                     _metrics_ = {}
@@ -43,6 +48,10 @@ def _parse_metrics(filename, lineno, message):
                     _metrics_['training_loss'] = float(result.get('train_loss', '0'))
                     _metrics_['training_speed'] = float(result.get('batch_time_avg', '0'))
                     _metrics_['lr'] = eval(result.get('learning_rate', '0'))
+                    if _isepoch_:
+                        _metrics_['training_progress'] = float(_metrics_['training_epochs']) / _maxiter_
+                    else:
+                        _metrics_['training_progress'] = float(_metrics_['training_iters']) / _maxiter_
             elif message.startswith('TestLoss = '):
                 res = re.search(r'TestLoss = .*loss: (?P<val_loss>\d+\.?\d*).*', message)
                 if res:
@@ -70,17 +79,14 @@ def _parse_metrics(filename, lineno, message):
                 return
         elif filename in ['faster_rcnn.py', 'single_shot_detector.py', 'yolov3.py']:
             if message.startswith('Train Epoch:'):
-                global RE_DET_COM_TRAIN
-                if RE_DET_COM_TRAIN is None:
-                    RE_DET_COM_TRAIN = re.compile(r'Train Epoch: (?P<epoch>\d+)\t'
-                            r'Train Iteration: (?P<iters>\d+)\t'
-                            r'Time (?P<batch_time_sum>\d+\.?\d*)s / (?P<batch_iters>\d+)iters, '
-                            r'\((?P<batch_time_avg>\d+\.?\d*)\)\t'
-                            r'Data load (?P<data_time_sum>\d+\.?\d*)s / (?P<_batch_iters>\d+)iters, '
-                            r'\((?P<data_time_avg>\d+\.?\d*)\)\n'
-                            r'Learning rate = (?P<learning_rate>.*)\t'
-                            r'Loss = (?P<train_loss>\d+\.?\d*) \(ave = (?P<loss_avg>\d+\.?\d*)\)\n')
-                res = RE_DET_COM_TRAIN.search(message)
+                res = re.search(r'Train Epoch: (?P<epoch>\d+)\t'
+                    r'Train Iteration: (?P<iters>\d+)\t'
+                    r'Time (?P<batch_time_sum>\d+\.?\d*)s / (?P<batch_iters>\d+)iters, '
+                    r'\((?P<batch_time_avg>\d+\.?\d*)\)\t'
+                    r'Data load (?P<data_time_sum>\d+\.?\d*)s / (?P<_batch_iters>\d+)iters, '
+                    r'\((?P<data_time_avg>\d+\.?\d*)\)\n'
+                    r'Learning rate = (?P<learning_rate>.*)\t'
+                    r'Loss = (?P<train_loss>\d+\.?\d*) \(ave = (?P<loss_avg>\d+\.?\d*)\)\n', message)
                 if res:
                     result = res.groupdict()
                     _metrics_ = {}
@@ -104,7 +110,7 @@ def _parse_metrics(filename, lineno, message):
             else:
                 return
         elif filename == 'main.py':
-            if message.startswith('k12cv finish'):
+            if message.startswith('k12cv_finish'):
                 hzcsk12_send_message('status', {'value': 'exit', 'way': 'finish'})
                 return
         else:
@@ -163,25 +169,25 @@ def _parse_error(filename, lineno, message):
 
 
 def _parse_except(filename, lineno, message):
-        exc_type, exc_value, exc_tb = sys.exc_info()
-        message = { # noqa: E126
-                'filename': filename,
-                'linenum': lineno,
-                'err_type': exc_type.__name__,
-                'err_text': str(exc_value)
+    exc_type, exc_value, exc_tb = sys.exc_info()
+    message = { # noqa: E126
+            'filename': filename,
+            'linenum': lineno,
+            'err_type': exc_type.__name__,
+            'err_text': str(exc_value)
+            }
+    message['trackback'] = []
+    tbs = traceback.extract_tb(exc_tb)
+    for tb in tbs:
+        err = { # noqa: E126
+                'filename': tb.filename,
+                'linenum': tb.lineno,
+                'funcname': tb.name,
+                'source': tb.line
                 }
-        message['trackback'] = []
-        tbs = traceback.extract_tb(exc_tb)
-        for tb in tbs:
-            err = { # noqa: E126
-                    'filename': tb.filename,
-                    'linenum': tb.lineno,
-                    'funcname': tb.name,
-                    'source': tb.line
-                    }
-            message['trackback'].append(err)
-        hzcsk12_send_message('error', message)
-        hzcsk12_send_message('status', {'value': 'exit', 'way': 'crash'})
+        message['trackback'].append(err)
+    hzcsk12_send_message('error', message)
+    hzcsk12_send_message('status', {'value': 'exit', 'way': 'crash'})
 
 
 def hzcsk12_log_parser(level, filename, lineno, message):

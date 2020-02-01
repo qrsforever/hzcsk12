@@ -13,7 +13,7 @@ import sys
 try:
     from k12cv.tools.util.log_parser import hzcsk12_log_parser
 except ModuleNotFoundError:
-    def hzcsk12_log_parser(level, filename, lineno, message):
+    def hzcsk12_log_parser(*args, **kwargs):
         pass
 
 

@@ -104,19 +104,22 @@ class NLPServiceRPC(object):
             return 100203, 'parameters type is not dict'
 
         resume = True
+        test_file = ''
         if '_k12.data.dataset_name' in params.keys():
             config_tree = ConfigFactory.from_dict(params)
             _k12ai_tree = config_tree.pop('_k12')
             resume = _k12ai_tree.get('model.resume', True)
+            test_file = config_tree.get('test_data_path', '')
             config_str = HOCONConverter.convert(config_tree, 'json')
         else:
+            test_file = params.get('test_data_path', '')
             config_str = json.dumps(params)
 
         config_file = '%s/config.json' % self._get_cache_dir(user, uuid)
         with open(config_file, 'w') as fout:
             fout.write(config_str)
 
-        return 100000, {'resume': resume}
+        return 100000, {'resume': resume, 'test_file': test_file}
 
     def _run(self, op, user, uuid, command=None):
         logger.info(command)
@@ -204,17 +207,25 @@ class NLPServiceRPC(object):
         if code != 100000:
             return code, result
 
+        cache_dir_outer = os.path.join(self._get_cache_dir(user, uuid))
+
         if phase == 'train':
             flag = '--force'
             if result['resume']:
-                config_conf = os.path.join(self._get_cache_dir(user, uuid), 'config.json')
-                serial_conf = os.path.join(self._get_cache_dir(user, uuid), 'output', 'config.json')
+                config_conf = os.path.join(cache_dir_outer, 'config.json')
+                serial_conf = os.path.join(cache_dir_outer, 'output', 'config.json')
                 if os.path.exists(serial_conf):
                     if not k12ai_utils_diff(config_conf, serial_conf):
                         flag = '--recover'
             command = 'allennlp train /cache/config.json %s --serialization-dir /cache/output' % flag
         elif phase == 'evaluate':
-            raise('not impl yet')
+            model_file_outer = os.path.join(cache_dir_outer, 'output', 'model.tar.gz')
+            if not os.path.exists(model_file_outer):
+                return 100208, 'not found model.tar.gz'
+            input_file = result['test_file']
+            if not input_file:
+                return 100209, f'{user}-{uuid}-{op}'
+            command = f'allennlp evaluate /cache/output/model.tar.gz {input_file}'
         elif phase == 'predict':
             raise('not impl yet')
 

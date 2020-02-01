@@ -236,6 +236,8 @@ class RunnerHelper(object):
                 return [sum(sub_list) / len(data_list) for sub_list in zip(data_list)]
 
             return sum(data_list) / len(data_list)
+        else: # QRS: fix
+            return data
 
     @staticmethod
     def get_lr(optimizer):

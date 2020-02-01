@@ -22,14 +22,16 @@ ERRORS = {
         100199: 'api parameter unknown exception',
 
         100200: 'success', # k12 services error (k12cv, k12nlp)
-        100201: 'task service is not found',
-        100202: 'task service start fails',
-        100203: 'task service parameters is invalid',
-        100204: 'task service is running',
-        100205: 'task service is not found or not running',
-        100206: 'task service schema file is not found',
-        100207: 'task service schema get fail',
-        100299: 'task service unknown exception',
+        100201: 'task is not found',
+        100202: 'task start fail',
+        100203: 'task parameters is invalid',
+        100204: 'task is running',
+        100205: 'task is not found or not running',
+        100206: 'task schema file is not found',
+        100207: 'task schema get fail',
+        100208: 'task evaluate has no model.tar.gz',
+        100209: 'task parameter has no key: input file',
+        100299: 'task unknown exception',
 
         100300: 'success', # k12cv container inner process error
         100301: 'container is not found!',

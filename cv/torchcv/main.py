@@ -202,6 +202,6 @@ if __name__ == "__main__":
         # QRS: add for catch internal except
         Log.critical('except: {}'.format(err))
     else:
-        Log.info('k12cv finish')
+        Log.info('k12cv_finish')
     finally:
         pass
