@@ -14,56 +14,27 @@ SUCCESS = 100000
 FAILURE = -1
 
 ERRORS = {
-        100000: 'success',
-        100100: '100100', # k12ai service api params parse error
-        100101: 'api parameter key is not found',
-        100102: 'api parameter value is invalid',
-        100103: 'api parameter json format error',
-        100199: 'api parameter unknown exception',
+        100000: {'en': 'success', 'cn': '成功'},
+        100101: {'en': 'api parameter key is not found', 'cn': 'API参数错误: 非法Key'},
+        100102: {'en': 'api parameter value is invalid', 'cn': 'API参数错误: 非法Value'},
+        100103: {'en': 'api parameter json format error', 'cn': 'API参数错误: 非法Json格式'},
+        100199: {'en': 'api parameter unknown exception', 'cn': 'API参数错误: Unknow异常'},
 
-        100200: 'success', # k12 services error (k12cv, k12nlp)
-        100201: 'task is not found',
-        100202: 'task start fail',
-        100203: 'task parameters is invalid',
-        100204: 'task is running',
-        100205: 'task is not found or not running',
-        100206: 'task schema file is not found',
-        100207: 'task schema get fail',
-        100208: 'task evaluate has no model.tar.gz',
-        100209: 'task parameter has no key: input file',
-        100299: 'task unknown exception',
+        100201: {'en': 'task is not found', 'cn': '任务启动错误: 请求的服务不存在或者服务未启动'},
+        100202: {'en': 'task start fail', 'cn': '任务启动错误: 启动失败'},
+        100203: {'en': 'task parameters is invalid', 'cn': '任务启动错误: 非法服务参数'},
+        100204: {'en': 'task is running', 'cn': '任务启动错误: 服务已经启动,正在运行'},
+        100205: {'en': 'task is not found or not running', 'cn': '任务停止错误: 请求的服务不存在或者未启动'},
+        100206: {'en': 'task schema file is not found', 'cn': '模板请求错误: 模板文件不存在'},
+        100207: {'en': 'task schema get fail', 'cn': '模板请求错误: 模板获取失败(内部错误)'},
+        100208: {'en': 'task evaluate has no model.tar.gz', 'cn': '任务启动错误: 评估服务需要在完成训练后执行'},
+        100209: {'en': 'task parameter has no key: input file', 'cn': '任务启动错误: 评估服务缺少输入文件'},
+        100210: {'en': 'task parameter key is missing', 'cn': '任务启动错误: 缺少服务参数'},
+        100299: {'en': 'task unknown exception', 'cn': '任务启动错误: Unkown异常'},
 
-        100300: 'success', # k12cv container inner process error
-        100301: 'container is not found!',
-        100302: 'container start fail',
-        100303: 'container stop fail',
-        100304: 'container is running',
-        100305: 'configuration error',
-        100306: 'image type error',
-        100307: 'tensor size error',
-        100399: 'container unknown exception',
-
-        100400: 'success', # k12nlp container inner process error
-        100401: 'k12nlp container is not found',
-        100402: 'k12nlp container start fail',
-        100403: 'k12nlp container stop fail',
-        100404: 'k12nlp container is running',
-        100405: 'k12nlp container process start configure error',
-        100499: 'k12nlp continaer process unknown exception',
-
-        100500: '100500',
-
-        100600: '100600',
-
-        100700: '100700',
-
-        100800: '100800',
-
-        100900: '100900', # common except error
-        100901: 'common exception: out of memory',
-        100902: 'common exception: not implemented yet',
-
-        999999: 'unknown error!',
+        100901: {'en': 'out of memory', 'cn': '常见错误: 内存溢出'},
+        100902: {'en': 'not implemented yet', 'cn': '常见错误: 尚未实现'},
+        999999: {'en': 'unknown error!', 'cn': '常见错误: 不可知错误'},
 }
 
 

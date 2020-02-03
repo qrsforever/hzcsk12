@@ -9,7 +9,6 @@
 
 import os, time, json
 import argparse
-import logging
 import redis
 
 from flask import Flask, request
@@ -19,15 +18,9 @@ from threading import Thread
 from k12ai_consul import k12ai_consul_init, k12ai_consul_register, k12ai_consul_service
 from k12ai_platform import k12ai_platform_stats, k12ai_platform_control
 from k12ai_errmsg import k12ai_error_message as _err_msg
+from k12ai_logger import (k12ai_set_loglevel, k12ai_set_logfile, Logger)
 
-if os.environ.get("K12AI_DEBUG"):
-    LEVEL = logging.DEBUG
-else:
-    LEVEL = logging.INFO
-
-logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s', level=LEVEL)
-
-logger = logging.getLogger(__name__)
+_DEBUG_ = True if os.environ.get("K12AI_DEBUG") else False
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
@@ -43,14 +36,14 @@ def _delay_do_consul(host, port):
             k12ai_consul_register('k12ai', host, port)
             break
         except Exception as err:
-            logger.error("consul agent service register err", err)
+            Logger.error("consul agent service register err: {}".format(err))
             time.sleep(3)
 
 
 ### Platform
 @app.route('/k12ai/platform/stats', methods=['POST'])
 def _platform_stats():
-    logger.info('call _platform_stats')
+    Logger.info('call _platform_stats')
     try:
         reqjson = json.loads(request.get_data().decode())
         user = reqjson['user']
@@ -74,7 +67,7 @@ def _platform_stats():
 
 @app.route('/k12ai/platform/control', methods=['POST'])
 def _platform_control():
-    logger.info('call _platform_control')
+    Logger.info('call _platform_control')
     try:
         reqjson = json.loads(request.get_data().decode())
         user = reqjson['user']
@@ -99,36 +92,35 @@ def _platform_control():
 ### Framework
 @app.route('/k12ai/framework/schema', methods=['POST'])
 def _framework_schema():
-    logger.info('call _framework_schema')
+    Logger.info('call _framework_schema')
     try:
         reqjson = json.loads(request.get_data().decode())
         service_name = reqjson['service_name']
         service_task = reqjson['service_task']
         dataset_name = reqjson['dataset_name']
-        if service_name == 'k12cv':
-            network_type = 'base_model'
-        elif service_name == 'k12nlp':
-            network_type = 'basic_classifier'
-        elif service_name == 'k12rl':
-            network_type = 'dpn'
-        # network_type = reqjson['network_type']
+        network_type = reqjson['network_type']
         # Test
         if service_task == 'seg':
             import _jsonnet
             schema_file = os.environ.get("TEST_SCHEMA_FILE")
             schema_json = _jsonnet.evaluate_file(schema_file)
             return json.dumps(_err_msg(data=json.dumps(json.loads(schema_json), separators=(',', ':'))))
+
+        assert network_type != '', 'network_type'
     except json.decoder.JSONDecodeError:
         return json.dumps(_err_msg(100103, request.get_data().decode()))
-    except Exception:
-        return json.dumps(_err_msg(100101, reqjson, exc=True))
+    except AssertionError as aerr:
+        return json.dumps(_err_msg(100102, str(aerr)))
+    except KeyError as kerr:
+        return json.dumps(_err_msg(100101, str(kerr)))
+    except Exception as uerr:
+        return json.dumps(_err_msg(100199, str(uerr)))
 
     agent = k12ai_consul_service(service_name)
     if not agent:
         return json.dumps(_err_msg(100201, f'service name:{service_name}'))
     try:
         code, msg = agent.schema(service_task, network_type, dataset_name)
-        print(msg)
         return json.dumps(_err_msg(code, msg))
     except Exception:
         return json.dumps(_err_msg(100207, exc=True))
@@ -136,7 +128,7 @@ def _framework_schema():
 
 @app.route('/k12ai/framework/execute', methods=['POST'])
 def _framework_execute():
-    logger.info('call _framework_execute')
+    Logger.info('call _framework_execute')
     try:
         reqjson = json.loads(request.get_data().decode())
         user = reqjson['user']
@@ -168,13 +160,13 @@ def _framework_execute():
 
 @app.route('/k12ai/private/message', methods=['POST', 'GET'])
 def _framework_message():
-    logger.info('call _framework_message')
+    Logger.debug('call _framework_message')
     try:
         if g_redis:
             msgtype = request.args.get("type", default='unknown')
             g_redis.lpush('k12ai.{}'.format(msgtype), request.get_data().decode())
     except Exception as err:
-        logger.info(err)
+        Logger.info(err)
         return "-1"
     return "0"
 
@@ -225,7 +217,11 @@ if __name__ == "__main__":
             help="consul port")
     args = parser.parse_args()
 
-    k12ai_consul_init(args.consul_addr, args.consul_port, LEVEL == logging.DEBUG)
+    if _DEBUG_:
+        k12ai_set_loglevel('debug')
+    k12ai_set_logfile('k12ai.log')
+
+    k12ai_consul_init(args.consul_addr, args.consul_port, _DEBUG_)
 
     thread = Thread(target=_delay_do_consul, args=(args.host, args.port))
     thread.start()
@@ -235,7 +231,7 @@ if __name__ == "__main__":
                 port=args.redis_port,
                 password=args.redis_passwd)
     except Exception as err:
-        logger.error('redis not connect: {}'.format(err))
+        Logger.error('redis not connect: {}'.format(err))
 
     try:
         app.run(host=args.host, port=args.port)

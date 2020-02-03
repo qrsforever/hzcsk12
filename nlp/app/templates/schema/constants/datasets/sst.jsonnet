@@ -49,6 +49,7 @@
         grad_norm: 5.0,
         shuffle: true,
         num_serialized_models_to_keep: 2,
+        model_save_interval: 0.3,
         summary_interval: 5,
         validation_metric: '+accuracy',
         distributed: false,

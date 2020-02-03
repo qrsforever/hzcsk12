@@ -63,7 +63,7 @@ def k12ai_consul_service(name, timeout=15):
         return RPCServiceAgent(service['Address'], service['Port'], timeout)
 
 
-def k12ai_consul_message(op, user, uuid, msgtype, message, clear=False):
+def k12ai_consul_message(user, op, sname, uuid, msgtype, message, clear=False):
     client = consul.Consul(g_consul_addr, port=g_consul_port)
     service = client.agent.services().get('k12ai')
     if not service:
@@ -73,10 +73,10 @@ def k12ai_consul_message(op, user, uuid, msgtype, message, clear=False):
     data = {
             'version': '0.1.0',
             'type': msgtype,
-            'tag': 'k12ai',
             'user': user,
+            'op': op,
+            'service_name': sname,
             'service_uuid': uuid,
-            'op': op
             } # noqa
 
     now_time = time.time()
@@ -91,5 +91,5 @@ def k12ai_consul_message(op, user, uuid, msgtype, message, clear=False):
     if g_consul_debug:
         if clear:
             client.kv.delete('framework/%s/%s' % (user, uuid), recurse=True)
-        key = 'framework/%s/%s/%s/%s/%s' % (user, uuid, op, msgtype, data['datetime'])
+        key = 'framework/%s/%s/%s/%s/%s' % (user, uuid, op.split('.')[0], msgtype, data['datetime'])
         client.kv.put(key, json.dumps(data, indent=2))

@@ -8,7 +8,7 @@ local _Utils = import '../../../utils/helper.libsonnet';
 
 {
     get(jid):: {
-        type: '_ignore_',
+        type: 'V',
         objs: [
             {
                 type: 'H',
@@ -17,6 +17,7 @@ local _Utils = import '../../../utils/helper.libsonnet';
                     _Utils.int(jid + '.num_epochs', 'Epochs Count', def=20, ddd=true),
                     _Utils.int(jid + '.patience', 'Patience', def=10, ddd=true),
                     _Utils.int(jid + '.summary_interval', 'Summary Interval', def=100, ddd=true),
+                    _Utils.int(jid + '.model_save_interval', 'Model Save Interval', def=0.001, ddd=true, tips='interval seconds in single epoch'),
                     {
                         _id_: jid + '.validation_metric',
                         name: { en: 'Validation Metric', cn: self.en },

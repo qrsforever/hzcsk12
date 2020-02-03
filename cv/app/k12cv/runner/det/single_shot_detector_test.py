@@ -19,6 +19,7 @@ from lib.tools.helper.dc_helper import DCHelper
 from runner.det.single_shot_detector_test import SingleShotDetectorTest as SSDT
 from k12cv.tools.util.rpc_message import hzcsk12_send_message
 
+
 class SingleShotDetectorTest(object):
     def __init__(self, configer):
         self.configer = configer

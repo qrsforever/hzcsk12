@@ -15,6 +15,7 @@ hostname=`hostname`
 hostaddr=`ifconfig eth0| grep inet\ | awk '{print $2}' | awk -F: '{print $2}'`
 
 log_fil=/tmp/k12ai_log.txt
+k12logs=/tmp/k12logs
 
 # service name, address and ports
 redis_addr='117.51.156.111'
@@ -391,6 +392,7 @@ __start_service()
     fi
     debug=0
 
+    cd $k12logs
     if [[ x$1 == xai ]]
     then
         __start_k12ai_service $arg
@@ -407,6 +409,7 @@ __start_service()
     then
         __start_k12rl_service nocheck $arg
     fi
+    cd - >/dev/null
 }
 
 __main()
@@ -417,6 +420,10 @@ __main()
     else
         sudo touch ${log_fil}
         sudo chmod 777 ${log_fil}
+    fi
+    if [[ ! -d $k12logs ]]
+    then
+        mkdir -p $k12logs
     fi
 
     if [[ x$1 == xsingle ]]
@@ -430,7 +437,7 @@ __main()
     fi
     __service_environment_check
 
-    cd /tmp
+    cd $k12logs
     __start_consul_service
     __start_k12ai_service $2
     __start_k12cv_service $2

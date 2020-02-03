@@ -24,6 +24,6 @@ local _Utils = import '../../utils/helper.libsonnet';
                 _Utils.int('sampler.eval_max_trajectories', 'Max Trajectories', def=100),
             ],
         },
-        _Utils.bool('_k12.sampler.mid_batch_reset', 'Mid Batch Reset', def=false, tips='whether  environment resets during itr'),
+        _Utils.bool('_k12.sampler.mid_batch_reset', 'Mid Batch Reset', def=true, readonly=true, tips='whether environment resets during itr'),
     ],
 }

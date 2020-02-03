@@ -8,8 +8,7 @@ local _Utils = import '../utils/helper.libsonnet';
 
 [
     {
-        name: { en: 'Affinity', cn: self.en },
-        type: '_ignore_',
+        type: 'V',
         objs: (import 'affinity/__init__.jsonnet').get(),
     },
     {

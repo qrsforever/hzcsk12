@@ -4,6 +4,8 @@
 // @version 1.0
 // @date 2020-01-02 15:46
 
+local _Utils = import '../../utils/helper.libsonnet';
+
 {
     get(jid):: {
         _id_: '_k12.' + jid + '.type',

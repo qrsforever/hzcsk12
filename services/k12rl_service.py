@@ -9,7 +9,7 @@
 
 import os, time
 import argparse
-import logging, json
+import json
 import _jsonnet
 import zerorpc
 import docker
@@ -20,17 +20,11 @@ from pyhocon import HOCONConverter
 from k12ai_consul import k12ai_consul_init, k12ai_consul_register, k12ai_consul_message
 from k12ai_utils import k12ai_utils_topdir
 from k12ai_errmsg import k12ai_error_message as _err_msg
+from k12ai_logger import (k12ai_set_loglevel, k12ai_set_logfile, Logger)
+
+_DEBUG_ = True if os.environ.get("K12RL_DEBUG") else False
 
 service_name = 'k12rl'
-
-if os.environ.get("K12RL_DEBUG"):
-    LEVEL = logging.DEBUG
-else:
-    LEVEL = logging.INFO
-
-logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s', level=LEVEL)
-
-logger = logging.getLogger(__name__)
 
 g_app_quit = False
 
@@ -42,7 +36,7 @@ def _delay_do_consul(host, port):
             k12ai_consul_register(service_name, host, port)
             break
         except Exception as err:
-            logger.info("consul agent service register err", err)
+            Logger.info("consul agent service register err: {}".format(err))
             time.sleep(3)
 
 
@@ -53,14 +47,14 @@ class RLServiceRPC(object):
             image='hzcsai_com/k12rl',
             data_root='/data',
             workdir='/hzcsk12/rl'):
-        self._debug = LEVEL == logging.DEBUG
+        self._debug = _DEBUG_
         self._host = host
         self._port = port
         self._image = image
         self._docker = docker.from_env()
         self._workdir = workdir
         self._projdir = os.path.join(k12ai_utils_topdir(), 'rl')
-        logger.info('workdir:%s, projdir:%s', self._workdir, self._projdir)
+        Logger.info('workdir:%s, projdir:%s' % (self._workdir, self._projdir))
 
         self.userscache_dir = '%s/users' % data_root
         self.datasets_dir = '%s/datasets/cv' % data_root
@@ -72,14 +66,16 @@ class RLServiceRPC(object):
         if isinstance(message, dict):
             if 'err_type' in message:
                 errtype = message['err_type']
-                if errtype == 'MemoryError':
+                if errtype == 'ConfigMissingException':
+                    code = 100210
+                elif errtype == 'MemoryError':
                     code = 100901
                 elif errtype == 'NotImplementedError':
                     code = 100902
                 else:
                     code = 100999
                 message = _err_msg(code, ext_info=message)
-        k12ai_consul_message(op, user, uuid, msgtype, message, clear)
+        k12ai_consul_message(user, op, 'k12rl', uuid, msgtype, message, clear)
 
     def _get_container(self, user, uuid):
         try:
@@ -115,7 +111,7 @@ class RLServiceRPC(object):
         return 100000, None
 
     def _run(self, op, user, uuid, command=None):
-        logger.info(command)
+        Logger.info(command)
         message = None
         rm_flag = True
         labels = {
@@ -179,7 +175,7 @@ class RLServiceRPC(object):
         return 100000, json.dumps(json.loads(schema_json), separators=(',', ':'))
 
     def execute(self, op, user, uuid, params):
-        logger.info("call execute(%s, %s, %s)", op, user, uuid)
+        Logger.info("call execute(%s, %s, %s)" % (op, user, uuid))
         container = self._get_container(user, uuid)
         phase, action = op.split('.')
         if action == 'stop':
@@ -247,12 +243,16 @@ if __name__ == "__main__":
             help="data root: datasets, pretrained, users")
     args = parser.parse_args()
 
-    k12ai_consul_init(args.consul_addr, args.consul_port, LEVEL == logging.DEBUG)
+    if _DEBUG_:
+        k12ai_set_loglevel('debug')
+    k12ai_set_logfile('k12rl.log')
+
+    k12ai_consul_init(args.consul_addr, args.consul_port, _DEBUG_)
 
     thread = Thread(target=_delay_do_consul, args=(args.host, args.port))
     thread.start()
 
-    logger.info('start zerorpc server on %s:%d', args.host, args.port)
+    Logger.info(f'start zerorpc server on {args.host}:{args.port}')
 
     try:
         app = zerorpc.Server(RLServiceRPC(

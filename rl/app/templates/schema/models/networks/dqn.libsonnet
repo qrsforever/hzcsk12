@@ -7,7 +7,7 @@
 local _Utils = import '../../utils/helper.libsonnet';
 
 {
-    type: '_ignore_',
+    type: 'V',
     objs: [
         {
             _id_: '_k12.model.name',

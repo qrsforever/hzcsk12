@@ -42,6 +42,7 @@ from rlpyt.samplers.parallel.gpu.collectors import (GpuResetCollector, GpuWaitRe
 # runner
 from rlpyt.runners.async_rl import (AsyncRlEval, AsyncRl)
 from rlpyt.runners.minibatch_rl import (MinibatchRlEval, MinibatchRl)
+from k12rl.runners.RLEvaluate import (MinibatchRlEvalOnce, AsyncRlEvalOnce)
 
 # algo & agent
 from rlpyt.algos.dqn.dqn import DQN
@@ -61,8 +62,34 @@ def _signal_handler(sig, frame):
         _k12log('k12rl_signal')
 
 
-def _rl_runner(task, async_, mode, netw, optim, config):
+def _rl_check(config):
+    async_ = config.get('affinity.async_sample', default=False)
 
+    task = config.get('_k12.task')
+    if task not in ('atari'):
+        raise NotImplementedError(f'task: {task}')
+
+    netw = config.get('_k12.model.network')
+    if netw not in ('dqn'):
+        raise NotImplementedError(f'network type: {netw}')
+
+    mode = config.get('_k12.sampler.mode')
+    if mode not in ('serial', 'cpu', 'gpu', 'alternating'):
+        raise NotImplementedError(f'sampler mode: {mode}')
+
+    optim = config.get('_k12.optim.type')
+    if optim not in ('adam', 'rmsprop'):
+        raise NotImplementedError(f'optimize type: {optim}')
+
+    # TODO work around
+    if async_ and mode != 'gpu' and not config.get('affinity.n_gpu', default=None):
+        config.put('affinity.n_gpu', torch.cuda.device_count())
+
+    return async_, task, netw, mode, optim
+
+
+def _rl_runner(config, phase):
+    async_, task, netw, mode, optim = _rl_check(config)
     model = config.get('_k12.model.name')
     reset = config.get('_k12.sampler.mid_batch_reset')
     alter = config.get('affinity.alternating', default=False)
@@ -96,10 +123,13 @@ def _rl_runner(task, async_, mode, netw, optim, config):
             Sampler = AlternatingSampler if alter else GpuSampler
             Collector = GpuResetCollector if reset else GpuWaitResetCollector
 
-    if async_:
-        Runner = AsyncRlEval if eval_ else AsyncRl
-    else:
-        Runner = MinibatchRlEval if eval_ else MinibatchRl 
+    if phase == 'train':
+        if async_:
+            Runner = AsyncRlEval if eval_ else AsyncRl
+        else:
+            Runner = MinibatchRlEval if eval_ else MinibatchRl 
+    elif phase == 'evaluate':
+        Runner = AsyncRlEvalOnce if async_ else MinibatchRlEvalOnce
 
     if netw == 'dqn':
         if model == 'dqn':
@@ -137,30 +167,9 @@ def _rl_runner(task, async_, mode, netw, optim, config):
     return Runner(algo=algo, agent=agent, sampler=sampler, affinity=affinity, **config['runner'])
 
 
-def _rl_train(out_dir, config):
-    async_ = config.get('affinity.async_sample')
+def _rl_train(out_dir, config, phase):
 
-    task = config.get('_k12.task')
-    if task not in ('atari'):
-        raise NotImplementedError(f'task: {task}')
-
-    netw = config.get('_k12.model.network')
-    if netw not in ('dqn'):
-        raise NotImplementedError(f'network type: {netw}')
-
-    mode = config.get('_k12.sampler.mode')
-    if mode not in ('serial', 'cpu', 'gpu', 'alternating'):
-        raise NotImplementedError(f'sampler mode: {mode}')
-
-    optim = config.get('_k12.optim.type')
-    if optim not in ('adam', 'rmsprop'):
-        raise NotImplementedError(f'optimize type: {optim}')
-
-    # TODO work around
-    if async_ and mode != 'gpu' and not config.get('affinity.n_gpu', default=None):
-        config.put('affinity.n_gpu', torch.cuda.device_count())
-
-    runner = _rl_runner(task, async_, mode, netw, optim, config)
+    runner = _rl_runner(config, phase)
 
     with context.logger_context(out_dir, 'rl', 'k12', config):
         runner.train()
@@ -191,12 +200,12 @@ if __name__ == "__main__":
 
     context.LOG_DIR = args.out_dir
 
-    _k12log('k12rl_running')
+    _k12log(f'k12rl_running:{args.phase}')
     try:
-        if args.phase == 'train':
+        if args.phase == 'train' or args.phase == 'evaluate':
             with open(os.path.join(args.config_file), 'r') as f:
                 config = ConfigFactory.from_dict(json.load(f))
-            _rl_train(context.LOG_DIR, config)
+            _rl_train(context.LOG_DIR, config, args.phase)
         else:
             raise NotImplementedError(f'phase: {args.phase}')
     except Exception:
