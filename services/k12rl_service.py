@@ -67,14 +67,16 @@ class RLServiceRPC(object):
             if 'err_type' in message:
                 errtype = message['err_type']
                 if errtype == 'ConfigMissingException':
-                    code = 100210
+                    code = 100233
                 elif errtype == 'MemoryError':
                     code = 100901
                 elif errtype == 'NotImplementedError':
                     code = 100902
+                elif errtype == 'ConfigurationError':
+                    code = 100903
                 else:
                     code = 100999
-                message = _err_msg(code, ext_info=message)
+                message = _err_msg(code, exc_info=message)
         k12ai_consul_message(user, op, 'k12rl', uuid, msgtype, message, clear)
 
     def _get_container(self, user, uuid):
@@ -96,7 +98,7 @@ class RLServiceRPC(object):
 
     def _prepare_environ(self, user, uuid, params):
         if not params or not isinstance(params, dict):
-            return 100203, 'parameters type is not dict'
+            return 100231, 'parameters type is not dict'
 
         if '_k12.task' in params.keys():
             config_tree = ConfigFactory.from_dict(params)

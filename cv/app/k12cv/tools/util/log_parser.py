@@ -145,10 +145,10 @@ def _parse_error(filename, lineno, message):
         return _err_msg('ConfigurationError')
 
     if re.search(r'Model: \w+ not valid!', message):
-        return _err_msg('ConfigurationError')
+        return _err_msg('InvalidModel')
 
     if re.search(r'Optimizer \w+ is not valid.', message):
-        return _err_msg('ConfigurationError')
+        return _err_msg('InvalidOptimizerMethod')
 
     if re.search(r'Policy:\w+ is not valid.', message):
         return _err_msg('ConfigurationError')
@@ -160,10 +160,10 @@ def _parse_error(filename, lineno, message):
         return _err_msg('ConfigurationError')
 
     if re.search(r'Invalid pad mode: \w+', message):
-        return _err_msg('ConfigurationError')
+        return _err_msg('InvalidPadMode')
 
     if re.search(r'Anchor Method \w+ not valid.', message):
-        return _err_msg('ConfigurationError')
+        return _err_msg('InvalidAnchorMethod')
 
     return _err_msg('UnkownError')
 

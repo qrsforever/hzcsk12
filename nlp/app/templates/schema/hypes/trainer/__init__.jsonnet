@@ -6,26 +6,24 @@
 
 local _Utils = import '../../utils/helper.libsonnet';
 
-{
-    get(jid):: {
-        _id_: '_k12.' + jid + '.type',
+[
+    {
+        _id_: '_k12.' + 'trainer.type',
         name: { en: 'Trainer Type', cn: self.en },
         type: 'string-enum-trigger',
         objs: [
             {
                 name: { en: 'default', cn: self.en },
                 value: 'default',
-                trigger: (import 'type/default.libsonnet').get(jid),
+                trigger: { objs: [] },
             },
             {
                 name: { en: 'callback', cn: self.en },
                 value: 'callback',
-                trigger: {
-                    objs: [],
-                },
+                trigger: { objs: [] },
             },
         ],
         readonly: true,
         default: self.objs[0].value,
     },
-}
+] + (import 'type/default.libsonnet').get('trainer')

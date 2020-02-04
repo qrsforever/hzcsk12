@@ -160,7 +160,7 @@ def _framework_execute():
 
 @app.route('/k12ai/private/message', methods=['POST', 'GET'])
 def _framework_message():
-    Logger.debug('call _framework_message')
+    # Logger.debug('call _framework_message')
     try:
         if g_redis:
             msgtype = request.args.get("type", default='unknown')

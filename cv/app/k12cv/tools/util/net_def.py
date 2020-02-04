@@ -12,6 +12,7 @@ import os
 
 from vulkan.builders.net_builder import NetBuilder
 
+
 def build_custom_model(cache_dir, net_def, model_name):
     save_dir = '{}/custom'.format(cache_dir)
     if not os.path.exists(save_dir):
@@ -20,6 +21,7 @@ def build_custom_model(cache_dir, net_def, model_name):
     net = net_builder.build_net()
     net.write_net('{}/{}.py'.format(save_dir, model_name))
     return save_dir
+
 
 def load_custom_model(cache_dir, model_name):
     save_dir = '{}/custom'.format(cache_dir)

@@ -67,13 +67,17 @@ class NLPServiceRPC(object):
         if isinstance(message, dict):
             if 'err_type' in message:
                 errtype = message['err_type']
-                if errtype == 'ConfigurationError':
-                    code = 100305
-                elif errtype == 'MemoryError':
+                if errtype == 'MemoryError':
                     code = 100901
+                elif errtype == 'NotImplementedError':
+                    code = 100902
+                elif errtype == 'ConfigurationError':
+                    code = 100903
+                elif errtype == 'FileNotFoundError':
+                    code = 100904
                 else:
                     code = 100399
-                message = _err_msg(code, ext_info=message)
+                message = _err_msg(code, exc_info=message)
         k12ai_consul_message(user, op, 'k12nlp', uuid, msgtype, message, clear)
 
     def _get_container(self, user, uuid):
@@ -95,7 +99,7 @@ class NLPServiceRPC(object):
 
     def _prepare_environ(self, user, uuid, params):
         if not params or not isinstance(params, dict):
-            return 100203, 'parameters type is not dict'
+            return 100231, 'parameters type is not dict'
 
         resume = True
         test_file = ''
@@ -218,7 +222,7 @@ class NLPServiceRPC(object):
                 return 100208, 'not found model.tar.gz'
             input_file = result['test_file']
             if not input_file:
-                return 100209, f'{user}-{uuid}-{op}'
+                return 100232, f'{user}-{uuid}-{op}'
             command = f'allennlp evaluate /cache/output/model.tar.gz {input_file}'
         elif phase == 'predict':
             raise('not impl yet')

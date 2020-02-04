@@ -4,8 +4,8 @@
 // @version 1.0
 // @date 2019-12-26 15:20
 
+(import 'trainer/__init__.jsonnet') +
 [
-    (import 'trainer/__init__.jsonnet').get('trainer'),
     {
         type: 'accordion',
         objs: [

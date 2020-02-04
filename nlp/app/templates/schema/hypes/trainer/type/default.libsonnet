@@ -7,78 +7,80 @@
 local _Utils = import '../../../utils/helper.libsonnet';
 
 {
-    get(jid):: {
-        type: 'V',
-        objs: [
-            {
-                type: 'H',
-                objs: [
-                    _Utils.int(jid + '.cuda_device', 'CUDA Device', def=0),
-                    _Utils.int(jid + '.num_epochs', 'Epochs Count', def=20, ddd=true),
-                    _Utils.int(jid + '.patience', 'Patience', def=10, ddd=true),
-                    _Utils.int(jid + '.summary_interval', 'Summary Interval', def=100, ddd=true),
-                    _Utils.int(jid + '.model_save_interval', 'Model Save Interval', def=0.001, ddd=true, tips='interval seconds in single epoch'),
-                    {
-                        _id_: jid + '.validation_metric',
-                        name: { en: 'Validation Metric', cn: self.en },
-                        type: 'string-enum',
-                        objs: [
-                            {
-                                name: { en: '-loss', cn: self.en },
-                                value: '-loss',
+    get(jid):: [
+        {
+            type: 'H',
+            objs: [
+                _Utils.int(jid + '.cuda_device', 'CUDA Device', def=0),
+                _Utils.int(jid + '.num_epochs', 'Epochs Count', def=20, ddd=true),
+                _Utils.int(jid + '.patience', 'Patience', def=10, ddd=true),
+            ],
+        },
+        {
+            type: 'H',
+            objs: [
+                _Utils.int(jid + '.summary_interval', 'Summary Interval', def=100, ddd=true),
+                _Utils.int(jid + '.model_save_interval', 'Save Interval', def=0.03, ddd=true, tips='interval seconds in single epoch'),
+                {
+                    _id_: jid + '.validation_metric',
+                    name: { en: 'Validation Metric', cn: self.en },
+                    type: 'string-enum',
+                    objs: [
+                        {
+                            name: { en: '-loss', cn: self.en },
+                            value: '-loss',
+                        },
+                        {
+                            name: { en: '+accuracy', cn: self.en },
+                            value: '+accuracy',
+                        },
+                    ],
+                    default: self.objs[0].value,
+                },
+            ],
+        },
+        {
+            type: 'H',
+            objs: [
+                {
+                    _id_: '_k12.' + jid + 'grad_norm.bool',
+                    name: { en: 'Grad Norm', cn: self.en },
+                    type: 'bool-trigger',
+                    objs: [
+                        {
+                            value: true,
+                            trigger: {
+                                objs: [
+                                    _Utils.float(jid + '.grad_norm', 'Value', def=1.0),
+                                ],
                             },
-                            {
-                                name: { en: '+accuracy', cn: self.en },
-                                value: '+accuracy',
+                        },
+                        {
+                            value: false,
+                            trigger: {},
+                        },
+                    ],
+                },
+                {
+                    _id_: '_k12.' + jid + 'grad_clipping.bool',
+                    name: { en: 'Grad Clipping', cn: self.en },
+                    type: 'bool-trigger',
+                    objs: [
+                        {
+                            value: true,
+                            trigger: {
+                                objs: [
+                                    _Utils.float(jid + '.grad_clipping', 'Value', def=1.0),
+                                ],
                             },
-                        ],
-                        default: self.objs[0].value,
-                    },
-                ],
-            },
-            {
-                type: 'H',
-                objs: [
-                    {
-                        _id_: '_k12.' + jid + 'grad_norm.bool',
-                        name: { en: 'Grad Norm', cn: self.en },
-                        type: 'bool-trigger',
-                        objs: [
-                            {
-                                value: true,
-                                trigger: {
-                                    objs: [
-                                        _Utils.float(jid + '.grad_norm', 'Value', def=1.0),
-                                    ],
-                                },
-                            },
-                            {
-                                value: false,
-                                trigger: {},
-                            },
-                        ],
-                    },
-                    {
-                        _id_: '_k12.' + jid + 'grad_clipping.bool',
-                        name: { en: 'Grad Clipping', cn: self.en },
-                        type: 'bool-trigger',
-                        objs: [
-                            {
-                                value: true,
-                                trigger: {
-                                    objs: [
-                                        _Utils.float(jid + '.grad_clipping', 'Value', def=1.0),
-                                    ],
-                                },
-                            },
-                            {
-                                value: false,
-                                trigger: {},
-                            },
-                        ],
-                    },
-                ],
-            },
-        ],
-    },
+                        },
+                        {
+                            value: false,
+                            trigger: {},
+                        },
+                    ],
+                },
+            ],
+        },
+    ],
 }
