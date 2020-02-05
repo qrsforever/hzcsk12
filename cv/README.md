@@ -18,6 +18,13 @@
 
 QRS
 
+# torchcv最新更新
+
+```
+commit 9d263fa046228402ddc5217ad099d1d2e54f9042
+Date:   Mon Jan 6 17:43:51 2020 +0800
+```
+
 # torchcv修改记录
 
 | 文件 | 原因 |

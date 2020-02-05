@@ -15,6 +15,8 @@ try:
 except ModuleNotFoundError:
     def hzcsk12_log_parser(*args, **kwargs):
         pass
+except Exception as err:
+    print("import error:{}".format(err))
 
 
 DEFAULT_LOG_LEVEL = 'info'

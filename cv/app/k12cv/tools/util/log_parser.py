@@ -95,6 +95,10 @@ def _parse_metrics(filename, lineno, message):
                     _metrics_['training_loss'] = float(result.get('train_loss', '0'))
                     _metrics_['training_speed'] = float(result.get('batch_time_avg', '0'))
                     _metrics_['lr'] = eval(result.get('learning_rate', '0'))
+                    if _isepoch_:
+                        _metrics_['training_progress'] = float(_metrics_['training_epochs']) / _maxiter_
+                    else:
+                        _metrics_['training_progress'] = float(_metrics_['training_iters']) / _maxiter_
             elif message.startswith('Test Time'):
                 res = re.search(r'Test Time (?P<batch_time_sum>\d+\.?\d*)s, '
                         r'\((?P<batch_time_avg>\d+\.?\d*)\)\t'
@@ -131,6 +135,7 @@ def _parse_error(filename, lineno, message):
         _message['err_text'] = message
         hzcsk12_send_message('error', _message)
         hzcsk12_send_message('status', {'value': 'exit', 'way': 'error'})
+        print(_message)
 
     if message == 'Image type is invalid.':
         return _err_msg('ImageTypeError')
@@ -138,7 +143,7 @@ def _parse_error(filename, lineno, message):
     if message == 'Tensor size is not valid.':
         return _err_msg('TensorSizeError')
 
-    if re.search(r'\w+ Method: \w+ is not valid.', message):
+    if re.search(r'Method: \w+ is not valid.', message):
         return _err_msg('ConfigurationError')
 
     if re.search(r'Not support BN type: \w+.', message):
@@ -188,6 +193,7 @@ def _parse_except(filename, lineno, message):
         message['trackback'].append(err)
     hzcsk12_send_message('error', message)
     hzcsk12_send_message('status', {'value': 'exit', 'way': 'crash'})
+    print(message)
 
 
 def hzcsk12_log_parser(level, filename, lineno, message):

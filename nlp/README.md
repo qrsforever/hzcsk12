@@ -23,3 +23,12 @@ QRS
 | `allennlp/allennlp/commands/__init__.py` | 捕获异常 |
 | `allennlp/allennlp/training/util.py` | 收集metrics |
 | `allennlp/allennlp/training/trainer.py` | 收集metrics |
+
+
+# TODO
+
+版本有问题: `err_type': 'KeyError', 'err_text': "'num_tokens'`
+```
+commit bae0c55e8c447811d9fa13f1c48f3e2576ab0dcc
+Date:   Tue Feb 4 18:43:32 2020 -0800
+```

@@ -1,24 +1,25 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-# @file custom_ssd300.py
+# @file custom_ssd.py
 # @brief
 # @author QRS
 # @version 1.0
-# @date 2019-12-04 16:20:44
+# @date 2020-02-05 16:47
+
 
 from torch import nn
 
-from model.det.nets.vgg16_ssd300 import (Vgg16SSD300, SSDHead, L2Norm)
+from model.det.nets.vgg16_ssd512 import (Vgg16SSD512, SSDHead, L2Norm)
 from model.det.layers.ssd_detection_layer import SSDDetectionLayer
 from model.det.layers.ssd_target_generator import SSDTargetGenerator
 
 from k12cv.tools.util.net_def import load_custom_model
 
 
-class CustomSSD300(Vgg16SSD300):
+class CustomSSD512(Vgg16SSD512):
     def __init__(self, configer):
-        super(Vgg16SSD300, self).__init__()
+        super(Vgg16SSD512, self).__init__()
         self.configer = configer
         cache_dir = configer.get('network.checkpoints_root')
         model_name = self.configer.get('network.model_name')

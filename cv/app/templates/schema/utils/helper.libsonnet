@@ -25,6 +25,14 @@ local _network_maps = {
         method: 'single_shot_detector',
         name: { en: 'ssd512', cn: self.en },
     },
+    custom_ssd300: {
+        method: 'single_shot_detector',
+        name: { en: 'ssd300', cn: self.en },
+    },
+    custom_ssd512: {
+        method: 'single_shot_detector',
+        name: { en: 'ssd512', cn: self.en },
+    },
     lffdv2: {
         method: 'single_shot_detector',
         name: { en: 'lffdv2', cn: self.en },

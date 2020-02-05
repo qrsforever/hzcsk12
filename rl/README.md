@@ -1,7 +1,14 @@
 https://rlpyt.readthedocs.io/
 https://github.com/astooke/rlpyt     
 
-# rlpyt 修改记录
+# rlpyt最新更新
+
+```
+commit d797dd8835a91a7b2902563a097c83ed7c8d3e92
+Date:   Mon Jan 27 13:30:36 2020 -0800
+```
+
+# rlpyt修改记录
 
 | 文件 | 原因 |
 |:----|:----|

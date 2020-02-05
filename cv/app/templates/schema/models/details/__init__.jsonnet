@@ -14,7 +14,7 @@ local _Utils = import '../../utils/helper.libsonnet';
                 _Utils.string('network.checkpoints_root', 'Checkpoint Root', def='/cache', ddd=true, readonly=true),
                 _Utils.string('network.checkpoints_dir', 'Checkpoint Path', def='ckpts', ddd=true, readonly=true),
                 _Utils.string('_k12.network.pretrained_path', 'Pretrained Root', def='/pretrained', readonly=true),
-            ] + if _Utils.network == 'vgg16_ssd300' then
+            ] + if std.endsWith(_Utils.network, '_ssd300') then
                 [
                     _Utils.intarray('anchor.num_anchor_list', 'Anchor List', def=[4, 6, 6, 6, 4, 4], readonly=true),
                     _Utils.intarray('anchor.cur_anchor_sizes', 'Anchor Sizes', def=[30, 60, 111, 162, 213, 264, 315], readonly=true),
@@ -23,7 +23,7 @@ local _Utils = import '../../utils/helper.libsonnet';
                     _Utils.intarray('network.num_feature_list', 'Feature List', def=[512, 1024, 512, 256, 256, 256], readonly=true),
                     _Utils.intarray('network.stride_list', 'Stride List', def=[8, 16, 30, 60, 100, 300], readonly=true),
                     _Utils.intarray('network.head_index_list', 'Head Index List', def=[0, 1, 2, 3, 4, 5], readonly=true),
-                ] else if _Utils.network == 'vgg16_ssd512' then
+                ] else if std.endsWith(_Utils.network, '_ssd512') then
                 [
                     _Utils.intarray('anchor.num_anchor_list', 'Anchor List', def=[4, 6, 6, 6, 6, 4, 4], readonly=true),
                     _Utils.intarray('anchor.cur_anchor_sizes', 'Anchor Sizes', def=[35, 76, 153, 230, 307, 384, 460, 537], readonly=true),
