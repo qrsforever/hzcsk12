@@ -5,6 +5,7 @@
 // @date 2020-01-08 18:13
 
 local _Utils = import '../../utils/helper.libsonnet';
+local _IsCustom = std.startsWith(_Utils.network, 'custom_');
 
 {
     get()::
@@ -13,8 +14,12 @@ local _Utils = import '../../utils/helper.libsonnet';
             name: { en: 'Backbone', cn: self.en },
             type: 'string-enum',
             objs: (import 'vgg.libsonnet').get() +
-                  (import 'resnet.libsonnet').get(),
-            default: _Utils.get_default_value(self._id_, 'vgg16'),
+                  (import 'resnet.libsonnet').get() +
+                  (if _IsCustom then [
+                       { name: { en: 'custom', cn: self.en }, value: 'custom' },
+                   ] else []),
+            default: if _IsCustom then 'custom' else _Utils.get_default_value(self._id_, 'vgg16'),
+            readonly: _IsCustom,
         } else if _Utils.method == 'single_shot_detector' then {
             _id_: 'network.backbone',
             name: { en: 'Backbone', cn: self.en },
@@ -23,7 +28,7 @@ local _Utils = import '../../utils/helper.libsonnet';
                 { name: { en: 'vgg16', cn: self.en }, value: 'vgg16' },
                 { name: { en: 'custom', cn: self.en }, value: 'custom' },
             ],
-            default: if std.startsWith(_Utils.network, 'custom_') then 'custom' else 'vgg16',
+            default: if _IsCustom then 'custom' else 'vgg16',
             readonly: true,
         } else {
         },

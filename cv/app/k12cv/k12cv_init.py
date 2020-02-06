@@ -15,22 +15,27 @@ from k12cv.runner.cls.image_classifier_test import ImageClassifierTest
 from k12cv.runner.det.single_shot_detector_test import SingleShotDetectorTest
 from k12cv.model.det.nets.custom_ssd300 import CustomSSD300
 from k12cv.model.det.nets.custom_ssd512 import CustomSSD512
+from k12cv.model.cls.nets.custom_base import CustomBaseModel
 from k12cv.tools.util.net_def import build_custom_model
 from k12cv.tools.util.rpc_message import hzcsk12_send_message
 
 from runner.runner_selector import CLS_TEST_DICT, DET_TEST_DICT
 from model.det.model_manager import DET_MODEL_DICT
+from model.cls.model_manager import CLS_MODEL_DICT
 
 
 # change the original method to hzcsk12 hook
-def _hook_runner_selector(configer):
+def _hook_runner_selector(configer, custom):
     task = configer.get('task')
     Log.info("_hook_runner_selector(%s)" % task)
     if task == 'cls':
+        if custom:
+            CLS_MODEL_DICT['custom_base'] = CustomBaseModel
         CLS_TEST_DICT['image_classifier'] = ImageClassifierTest
     elif task == 'det':
-        DET_MODEL_DICT['custom_ssd300'] = CustomSSD300
-        DET_MODEL_DICT['custom_ssd512'] = CustomSSD512
+        if custom:
+            DET_MODEL_DICT['custom_ssd300'] = CustomSSD300
+            DET_MODEL_DICT['custom_ssd512'] = CustomSSD512
         DET_TEST_DICT['single_shot_detector'] = SingleShotDetectorTest
     else:
         Log.info("not impl")
@@ -42,6 +47,7 @@ def _check_custom_model(configer):
     Log.info('model name[%s]' % model_name)
     if model_name.split("_")[0] == "custom":
         if model_name not in (
+                'custom_base',
                 'custom_ssd300',
                 'custom_ssd512'):
             Log.error('Model: {} not valid!'.format(model_name))
@@ -52,14 +58,24 @@ def _check_custom_model(configer):
         net_def_fil = os.path.join(net_def_dir, '%s.txt' % model_name)
         with open(net_def_fil, 'w') as fout:
             fout.write(net_def_str)
+        return True
+    return False
 
 
 def hzcsk12_cv_init(configer):
     Log.debug('hzcsk12_cv_init')
 
-    _check_custom_model(configer)
+    # Check
+    # if configer.get('phase') == 'test':
+    #     configer.update('network.resume_continue', True)
+    # if configer.get('network.resume_continue'):
+    #     ckpts_name = configer.get('network.checkpoints_name')
+    #     resume_path = '/cache/ckpts/%s_latest.pth' % ckpts_name
+    #     configer.update('network.resume', resume_path)
 
-    _hook_runner_selector(configer)
+    custom = _check_custom_model(configer)
+
+    _hook_runner_selector(configer, custom)
 
     metric = configer.get('solver.lr.metric')
     if metric == 'epoch':

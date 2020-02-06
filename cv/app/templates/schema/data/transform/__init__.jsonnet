@@ -231,6 +231,7 @@ local _augment_transform(jid, label) = {
                     type: '_ignore_',
                     objs: [
                         _data_transform('test.data_transformer', 'Test'),
+                        _augment_transform('test', 'Test'),
                     ],
                 },
             ],

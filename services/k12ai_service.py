@@ -142,6 +142,11 @@ def _framework_execute():
         service_params = reqjson.get('service_params', None)
         if isinstance(service_params, str):
             service_params = json.loads(service_params)
+        # TODO only test
+        if service_name == 'k12cv':
+            custom_model = reqjson.get('custom_model', None)
+            if custom_model:
+                service_params['network.net_def'] = custom_model
     except Exception:
         return json.dumps(_err_msg(100101, exc=True))
 

@@ -98,7 +98,7 @@ class NLPServiceRPC(object):
         return usercache
 
     def _prepare_environ(self, user, uuid, params):
-        if not params or not isinstance(params, dict):
+        if not isinstance(params, dict):
             return 100231, 'parameters type is not dict'
 
         resume = True

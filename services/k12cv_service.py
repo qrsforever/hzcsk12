@@ -67,7 +67,9 @@ class CVServiceRPC(object):
         if isinstance(message, dict):
             if 'err_type' in message:
                 errtype = message['err_type']
-                if errtype == 'InvalidModel':
+                if errtype == 'ModelFileNotFound':
+                    code = 100208
+                elif errtype == 'InvalidModel':
                     code = 100302
                 elif errtype == 'InvalidOptimizerMethod':
                     code = 100303
@@ -108,8 +110,15 @@ class CVServiceRPC(object):
         return usercache
 
     def _prepare_environ(self, phase, user, uuid, params):
-        if not params or not isinstance(params, dict):
+        if not isinstance(params, dict):
             return 100231, 'parameters type is not dict'
+
+        config_file = '%s/config.json' % self._get_cache_dir(user, uuid)
+
+        # if phase == 'evaluate' and len(params) == 0:
+        #     if os.path.exists(config_file):
+        #         return 100000, None
+        #     return 100209, f'config file:{config_file} not found'
 
         if '_k12.data.dataset_name' in params.keys():
             config_tree = ConfigFactory.from_dict(params)
@@ -120,6 +129,8 @@ class CVServiceRPC(object):
                 config_tree.put('train.aug_trans.trans_seq', [])
             if config_tree.get('val.aug_trans.trans_seq', default=None) is None:
                 config_tree.put('val.aug_trans.trans_seq', [])
+            if config_tree.get('test.aug_trans.trans_seq', default=None) is None:
+                config_tree.put('test.aug_trans.trans_seq', [])
             for k, v in _k12ai_tree.get('trans_seq_group.train', default={}).items():
                 if v == 'trans_seq':
                     config_tree.put('train.aug_trans.trans_seq', [k], append=True)
@@ -130,6 +141,11 @@ class CVServiceRPC(object):
                     config_tree.put('val.aug_trans.trans_seq', [k], append=True)
                 if v == 'shuffle_trans_seq':
                     config_tree.put('val.aug_trans.shuffle_trans_seq', [k], append=True)
+            for k, v in _k12ai_tree.get('trans_seq_group.test', default={}).items():
+                if v == 'trans_seq':
+                    config_tree.put('test.aug_trans.trans_seq', [k], append=True)
+                if v == 'shuffle_trans_seq':
+                    config_tree.put('test.aug_trans.shuffle_trans_seq', [k], append=True)
 
             # CheckPoints
             model_name = config_tree.get('network.model_name', default='unknow')
@@ -158,7 +174,6 @@ class CVServiceRPC(object):
         else:
             config_str = json.dumps(params)
 
-        config_file = '%s/config.json' % self._get_cache_dir(user, uuid)
         with open(config_file, 'w') as fout:
             fout.write(config_str)
 

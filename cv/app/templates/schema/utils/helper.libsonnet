@@ -17,6 +17,10 @@ local _network_maps = {
         method: 'image_classifier',
         name: { en: 'distill', cn: self.en },
     },
+    custom_base: {
+        method: 'image_classifier',
+        name: { en: 'base', cn: self.en },
+    },
     vgg16_ssd300: {
         method: 'single_shot_detector',
         name: { en: 'ssd300', cn: self.en },
