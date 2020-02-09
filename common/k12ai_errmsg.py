@@ -43,7 +43,8 @@ ERRORS = {
         100901: {'en': 'out of memory', 'cn': '常见错误: 内存溢出'},
         100902: {'en': 'not implemented yet', 'cn': '常见错误: 尚未实现'},
         100903: {'en': 'configuration error', 'cn': '常见错误: 参数配置错误'},
-        100904: {'en': 'file is not found', 'cn': '常见错误: 文件不存在'},
+        100904: {'en': 'missing key configuration', 'cn': '常见错误: 配置中缺少参数'},
+        100905: {'en': 'file is not found', 'cn': '常见错误: 文件不存在'},
         999999: {'en': 'unknown error!', 'cn': '常见错误: 不可知错误'},
 }
 

@@ -30,6 +30,10 @@ k12ai_service_name=k12ai
 k12ai_addr=$hostaddr
 k12ai_port=8119
 
+k12ml_service_name=k12ml
+k12ml_addr=$hostaddr
+k12ml_port=8129
+
 k12cv_service_name=k12cv
 k12cv_addr=$hostaddr
 k12cv_port=8139
@@ -277,6 +281,40 @@ __start_k12ai_service()
     fi
 }
 
+# 3. check or start k12ml service
+__start_k12ml_service()
+{
+    use_image="hzcsai_com/k12ml"
+    if [[ x$2 == xfg ]]
+    then
+        result=0
+        cmdstr=
+    else
+        result=$(__service_health_check ${k12ml_service_name})
+        cmdstr="nohup"
+    fi
+    if [[ $result != 1 ]]
+    then
+        export K12ML_DEBUG=$debug
+        if [[ x$1 == xcheck ]]
+        then
+            __service_image_check $use_image
+        fi
+        cmdstr="$cmdstr python3 ${top_dir}/services/k12ml_service.py \
+            --host ${k12ml_addr} \
+            --port ${k12ml_port} \
+            --consul_addr ${consul_addr} \
+            --consul_port ${consul_port} \
+            --image $use_image"
+
+        echo $cmdstr
+        __run_command $cmdstr
+        __script_logout "start k12ml service"
+    else
+        __script_logout "check k12ml service"
+    fi
+}
+
 # 4. check or start k12cv service
 __start_k12cv_service()
 {
@@ -397,6 +435,10 @@ __start_service()
     then
         __start_k12ai_service $arg
     fi
+    if [[ x$1 == xml ]]
+    then
+        __start_k12ml_service nocheck $arg
+    fi
     if [[ x$1 == xcv ]]
     then
         __start_k12cv_service nocheck $arg
@@ -440,6 +482,7 @@ __main()
     cd $k12logs
     __start_consul_service
     __start_k12ai_service $2
+    __start_k12ml_service $2
     __start_k12cv_service $2
     __start_k12nlp_service $2
     __start_k12rl_service $2

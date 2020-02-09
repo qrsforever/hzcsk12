@@ -74,7 +74,7 @@ class NLPServiceRPC(object):
                 elif errtype == 'ConfigurationError':
                     code = 100903
                 elif errtype == 'FileNotFoundError':
-                    code = 100904
+                    code = 100905
                 else:
                     code = 100399
                 message = _err_msg(code, exc_info=message)

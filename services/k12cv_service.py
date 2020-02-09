@@ -69,6 +69,8 @@ class CVServiceRPC(object):
                 errtype = message['err_type']
                 if errtype == 'ModelFileNotFound':
                     code = 100208
+                if errtype == 'ConfigMissingException':
+                    code = 100233
                 elif errtype == 'InvalidModel':
                     code = 100302
                 elif errtype == 'InvalidOptimizerMethod':

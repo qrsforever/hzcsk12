@@ -15,7 +15,7 @@ local _Utils = import '../../utils/helper.libsonnet';
             {
                 name: { en: 'sgd', cn: self.en },
                 value: 'sgd',
-                trigger: (import 'type/sgd.libsonnet').get(jid + '.sdg'),
+                trigger: (import 'type/sgd.libsonnet').get(jid + '.sgd'),
             },
             {
                 name: { en: 'adam', cn: self.en },

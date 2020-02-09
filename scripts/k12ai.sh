@@ -30,7 +30,7 @@ then
 else
     if [[ $# > 0 ]]
     then
-        if [[ x$1 == xai ]] || [[ x$1 == xcv ]] || [[ x$1 == xnlp ]] || [[ x$1 == xrl ]]
+        if [[ x$1 == xai ]] || [[ x$1 == xml ]] || [[ x$1 == xcv ]] || [[ x$1 == xnlp ]] || [[ x$1 == xrl ]]
         then
             act=$2
             if [[ x$2 == x ]]

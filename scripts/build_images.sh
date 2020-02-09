@@ -15,12 +15,6 @@ VENDOR=hzcsai_com
 MAJOR_K12AI=1
 MINOR_K12AI=1
 
-MAJOR_K12CV=1
-MINOR_K12CV=1
-
-MAJOR_K12NLP=1
-MINOR_K12NLP=1
-
 DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
 VERSION=$(git describe --tags --always)
 URL=$(git config --get remote.origin.url)
@@ -120,7 +114,7 @@ __build_image()
 __main()
 {
     image='all'
-    if [[ x$1 == xai ]] || [[ x$1 == xcv ]] || [[ x$1 == xnlp ]] || [[ x$1 == xrl ]]
+    if [[ x$1 == xai ]] || [[ x$1 == xml ]] || [[ x$1 == xcv ]] || [[ x$1 == xnlp ]] || [[ x$1 == xrl ]]
     then
         image=$1
         shift
@@ -132,12 +126,13 @@ __main()
     fi
     if [[ x$image == xall ]]
     then
-        __build_image "k12ai" $MAJOR_K12AI $MINOR_K12AI Dockerfile.ai $force
-        __build_image "k12cv" $MAJOR_K12CV $MINOR_K12CV cv/Dockerfile.cv $force
-        __build_image "k12nlp" $MAJOR_K12NLP $MINOR_K12NLP nlp/Dockerfile.nlp $force
-        __build_image "k12rl" $MAJOR_K12NLP $MINOR_K12NLP rl/Dockerfile.rl $force
+        __build_image "k12ai"  $MAJOR_K12AI $MINOR_K12AI Dockerfile.ai $force
+        __build_image "k12ml"  $MAJOR_K12AI $MINOR_K12AI ml/Dockerfile.ml $force
+        __build_image "k12cv"  $MAJOR_K12AI $MINOR_K12AI cv/Dockerfile.cv $force
+        __build_image "k12nlp" $MAJOR_K12AI $MINOR_K12AI nlp/Dockerfile.nlp $force
+        __build_image "k12rl"  $MAJOR_K12AI $MINOR_K12AI rl/Dockerfile.rl $force
     else
-        __build_image "k12$image" $MAJOR_K12NLP $MINOR_K12NLP $image/Dockerfile.$image $force
+        __build_image "k12$image" $MAJOR_K12AI $MINOR_K12AI $image/Dockerfile.$image $force
     fi
 }
 

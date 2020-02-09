@@ -16,6 +16,9 @@ VENDOR=hzcsai_com
 K12AI_PROJECT=k12ai
 K12AI_PORT=8118
 
+K12ML_PROJECT=k12ml
+K12ML_PORT=8128
+
 K12CV_PROJECT=k12cv
 K12CV_PORT=8138
 
@@ -73,9 +76,19 @@ __main()
     then
         __start_notebook $K12AI_PROJECT $K12AI_PORT \
             --env PYTHONPATH=$DST_DIR/hzcsnote \
+            --volume $TOP_DIR/ml/app:$DST_DIR/hzcsnote/ml/app \
             --volume $TOP_DIR/cv/app:$DST_DIR/hzcsnote/cv/app \
             --volume $TOP_DIR/nlp/app:$DST_DIR/hzcsnote/nlp/app \
             --volume $TOP_DIR/rl/app:$DST_DIR/hzcsnote/rl/app \
+            --volume /data:/data
+    fi
+
+    if [[ x$1 == xml ]]
+    then
+        __start_notebook $K12ML_PROJECT $K12ML_PORT \
+            --runtime nvidia --shm-size=4g --ulimit memlock=-1 --ulimit stack=67108864 \
+            --volume $TOP_DIR/ml/app:$DST_DIR/ml/app \
+            --volume $TOP_DIR/ml/mla/mla:$DST_DIR/ml/mla\
             --volume /data:/data
     fi
 
