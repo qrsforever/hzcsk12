@@ -49,9 +49,9 @@ def _parse_metrics(filename, lineno, message):
                     _metrics_['training_speed'] = float(result.get('batch_time_avg', '0'))
                     _metrics_['lr'] = eval(result.get('learning_rate', '0'))
                     if _isepoch_:
-                        _metrics_['training_progress'] = float(_metrics_['training_epochs']) / _maxiter_
+                        _metrics_['training_progress'] = round(float(_metrics_['training_epochs']) / _maxiter_, 4)
                     else:
-                        _metrics_['training_progress'] = float(_metrics_['training_iters']) / _maxiter_
+                        _metrics_['training_progress'] = round(float(_metrics_['training_iters']) / _maxiter_, 4)
             elif message.startswith('TestLoss = '):
                 res = re.search(r'TestLoss = .*loss: (?P<val_loss>\d+\.?\d*).*', message)
                 if res:
@@ -96,9 +96,9 @@ def _parse_metrics(filename, lineno, message):
                     _metrics_['training_speed'] = float(result.get('batch_time_avg', '0'))
                     _metrics_['lr'] = eval(result.get('learning_rate', '0'))
                     if _isepoch_:
-                        _metrics_['training_progress'] = float(_metrics_['training_epochs']) / _maxiter_
+                        _metrics_['training_progress'] = round(float(_metrics_['training_epochs']) / _maxiter_, 4)
                     else:
-                        _metrics_['training_progress'] = float(_metrics_['training_iters']) / _maxiter_
+                        _metrics_['training_progress'] = round(float(_metrics_['training_iters']) / _maxiter_, 4)
             elif message.startswith('Test Time'):
                 res = re.search(r'Test Time (?P<batch_time_sum>\d+\.?\d*)s, '
                         r'\((?P<batch_time_avg>\d+\.?\d*)\)\t'
@@ -110,9 +110,16 @@ def _parse_metrics(filename, lineno, message):
                 res = re.search(r'Val mAP: (?P<mAP>\d+\.?\d*)', message)
                 if res:
                     result = res.groupdict()
-                    _metrics_['validation_mAP'] = float(result.get('mAP', '0'))
+                    _metrics_['validation_mAP'] = round(float(result.get('mAP', '0')), 4)
             else:
                 return
+        elif filename == 'single_shot_detector_test.py':
+            if message.startswith('Test mAP:'):
+                res = re.search(r'Test mAP: (?P<mAP>\d+\.?\d*)', message)
+                if res:
+                    result = res.groupdict()
+                    _metrics_['evaluate_mAP'] = round(float(result.get('mAP', '0')), 4)
+                    _metrics_['evaluate_progress'] = 1.0
         elif filename == 'main.py':
             if message.startswith('k12cv_finish'):
                 hzcsk12_send_message('status', {'value': 'exit', 'way': 'finish'})

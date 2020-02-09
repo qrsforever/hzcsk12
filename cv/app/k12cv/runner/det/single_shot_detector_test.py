@@ -24,7 +24,6 @@ import lib.data.transforms as trans
 from lib.data.collate import collate
 
 from runner.det.single_shot_detector_test import SingleShotDetectorTest as SSDT
-from k12cv.tools.util.rpc_message import hzcsk12_send_message
 
 
 class SingleShotDetectorTest(object):
@@ -63,8 +62,7 @@ class SingleShotDetectorTest(object):
                         [item['ori_labels'] for item in DCHelper.tolist(data_dict['meta'])])
 
             mAP = self.det_running_score.get_mAP()
-            Log.info('Val mAP: {}'.format(mAP))
-            hzcsk12_send_message('metrics', {'evaluate_mAP': mAP})
+            Log.info('Test mAP: {}'.format(mAP))
 
     def __get_object_list(self, batch_detections):
         batch_pred_bboxes = list()
