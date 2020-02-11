@@ -1,0 +1,30 @@
+{
+    "task": "classifier",
+    "method": "sklearn_wrapper",
+    "data": {
+        "type": "sklearn",
+        "dataset": "iris",
+        "sampling": {
+            "test_size": 0.25,
+            "random_state": 1,
+            "shuffle": true
+        }
+    },
+    "model": {
+        "name": "svc",
+        "args": {
+            "C": 1.0,
+            "kernel": "rbf",
+            "degree": 3,
+            "gamma": "0.2",
+            "coef0": 0.0,
+            "shrinking": true,
+            "probability": false,
+            "tol": 1e-3,
+            "cache_size": 200.0,
+            "max_iter": 1000,
+            "decision_function_shape": "ovr",
+            "random_state": 1
+        }
+    }
+}
