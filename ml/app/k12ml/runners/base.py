@@ -9,8 +9,8 @@
 
 
 class BaseRunner:
-    def fit(self):
+    def train(self):
         raise NotImplementedError
 
-    def predict(self):
+    def evaluate(self):
         raise NotImplementedError

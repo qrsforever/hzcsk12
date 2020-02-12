@@ -13,11 +13,9 @@ class DataLoader:
         self._configer = configer
 
     def get_dataset(self):
-        if 'sklearn' == self._configer.get('data.type'):
+        data_dir = self._configer.get('data.data_dir')
+        if data_dir.startswith('load_'):
             from k12ml.data.sklearn_dataset import sk_get_dataset
-            return sk_get_dataset(
-                    self._configer.get('data.dataset'),
-                    self._configer.get('data.sampling')
-            )
+            return sk_get_dataset(data_dir, self._configer.get('data.sampling'))
         else:
             raise NotImplementedError

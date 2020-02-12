@@ -47,7 +47,7 @@ class Logger(object):
     @staticmethod
     def check_logger():
         if Logger.logger is None:
-            Logger.init(log_level=_LOG_LEVEL_)
+            Logger.init('k12ml', level=_LOG_LEVEL_)
 
     @staticmethod
     def debug(message):

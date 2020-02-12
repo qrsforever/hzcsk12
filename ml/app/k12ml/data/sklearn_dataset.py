@@ -12,5 +12,5 @@ import sklearn.datasets
 
 
 def sk_get_dataset(dataset, kwargs):
-    data = getattr(sklearn.datasets, "load_%s" % dataset)()
+    data = getattr(sklearn.datasets, dataset)()
     return train_test_split(data.data, data.target, **kwargs)

@@ -74,6 +74,8 @@ class MLServiceRPC(object):
                     code = 100902
                 elif errtype == 'ConfigurationError':
                     code = 100903
+                elif errtype == 'FileNotFoundError':
+                    code = 100905
                 else:
                     code = 100999
                 message = _err_msg(code, exc_info=message)
@@ -100,7 +102,7 @@ class MLServiceRPC(object):
         if not isinstance(params, dict):
             return 100231, 'parameters type is not dict'
 
-        if '_k12.task' in params.keys():
+        if '_k12.data.dataset_name' in params.keys():
             config_tree = ConfigFactory.from_dict(params)
             config_str = HOCONConverter.convert(config_tree, 'json')
         else:
@@ -197,8 +199,6 @@ class MLServiceRPC(object):
 
         command = 'python {}'.format('%s/app/k12ml/main.py' % self._workdir)
         command += ' --phase %s --config_file /cache/config.json' % phase
-        command += ' --out_dir /cache/output'
-        print(command)
         Thread(target=lambda: self._run(op=op, user=user, uuid=uuid, command=command),
             daemon=True).start()
         return 100000, None

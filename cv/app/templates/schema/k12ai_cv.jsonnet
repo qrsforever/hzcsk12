@@ -4,6 +4,8 @@
 // @version 1.0
 // @date 2020-01-06 11:29
 
+local _Utils = import 'utils/helper.libsonnet';
+
 {
     type: 'page',
     objs: [
@@ -20,6 +22,23 @@
                     type: '_ignore_',
                     objs: import 'models/assemble.jsonnet',
                 },
+            ] + (
+                if std.startsWith(_Utils.network, 'custom_') then [
+                    {
+                        name: { en: 'Custom', cn: self.en },
+                        type: '_ignore_',
+                        objs: [
+                            {
+                                _id_: 'network.net_def',
+                                type: 'iframe',
+                                html: '',
+                                width: 800,
+                                height: 400,
+                            },
+                        ],
+                    },
+                ] else []
+            ) + [
                 {
                     name: { en: 'Hypes', cn: self.en },
                     type: '_ignore_',

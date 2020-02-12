@@ -2,8 +2,7 @@
     "task": "classifier",
     "method": "sklearn_wrapper",
     "data": {
-        "type": "sklearn",
-        "dataset": "iris",
+        "data_dir": "load_iris",
         "sampling": {
             "test_size": 0.25,
             "random_state": 1,

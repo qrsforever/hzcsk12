@@ -9,6 +9,14 @@ local _network_maps = {
         method: 'sklearn_wrapper',
         name: { en: 'svc', cn: self.en },
     },
+    svr: {
+        method: 'sklearn_wrapper',
+        name: { en: 'svr', cn: self.en },
+    },
+    random_forest: {
+        method: 'sklearn_wrapper',
+        name: { en: 'random forest', cn: self.en },
+    },
 };
 
 {
@@ -45,6 +53,8 @@ local _network_maps = {
 
     // default dataset, can set default value
     datasets:: {
+        [if $.dataset_name == 'iris' then 'iris']: import '../constants/datasets/iris.jsonnet',
+        [if $.dataset_name == 'diabetes' then 'diabetes']: import '../constants/datasets/diabetes.jsonnet',
     },
 
     // basic type node generator function
@@ -139,4 +149,31 @@ local _network_maps = {
         [if height > 0 then 'height']: height,
         [if readonly then 'readonly']: readonly,
     },
+
+    booltrigger(id, en, cn='', def=false, ddd=false, tips='', width=-1, height=-1, readonly=false, trigger=[]):: {
+        _id_: id,
+        name: { en: en, cn: if std.length(cn) == 0 then self.en else cn },
+        type: 'bool-trigger',
+        objs: [
+            {
+                name: { en: 'Enable', cn: self.en },
+                value: true,
+                trigger: {
+                    type: '_ignore_',
+                    objs: trigger,
+                },
+            },
+            {
+                name: { en: 'Disable', cn: self.en },
+                value: false,
+                trigger: {},
+            },
+        ],
+        default: if ddd then $.get_default_value(id, def) else def,
+        [if std.length(tips) > 0 then 'tips']: tips,
+        [if width > 0 then 'width']: width,
+        [if height > 0 then 'height']: height,
+        [if readonly then 'readonly']: readonly,
+    },
+
 }

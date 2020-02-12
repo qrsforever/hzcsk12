@@ -10,7 +10,7 @@ local _Utils = import '../utils/helper.libsonnet';
     {
         type: 'H',
         objs: [
-            _Utils.string('task', 'Task', def=_Utils.task, readonly=true),
+            _Utils.string('task', 'Task', def=_Utils.task, readonly=true, tips='task type'),
             _Utils.string('method', 'Method', def=_Utils.method, ddd=true, readonly=true),
             _Utils.bool('data.include_val', 'Include Val', def=false),
         ],

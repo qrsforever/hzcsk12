@@ -11,6 +11,31 @@ import os
 import argparse
 from pyhocon import ConfigFactory
 from k12ml.utils.logger import Logger
+from k12ml.utils.rpc_message import hzcsk12_send_message as _sendmsg
+
+
+def _do_train(configer):
+    Logger.info(f'{configer}')
+    task = configer.get('task')
+    if task == 'classifier':
+        from k12ml.models.classification import k12ai_get_model
+        model_name = configer.get('model.name')
+        model_algo = k12ai_get_model(model_name)(configer.get(f'model.{model_name}'))
+    elif task == 'regressor':
+        from k12ml.models.regression import k12ai_get_model
+        model_name = configer.get('model.name')
+        model_algo = k12ai_get_model(model_name)(configer.get(f'model.{model_name}'))
+    else:
+        raise NotImplementedError
+
+    if configer.get('method') == 'sklearn_wrapper':
+        from k12ml.runners.sklearn_wrapper import SKRunner
+        runner = SKRunner(model_algo, configer)
+        metrics = runner.train()
+        _sendmsg(metrics)
+        Logger.info(metrics)
+    else:
+        raise NotImplementedError
 
 
 if __name__ == "__main__":
@@ -20,7 +45,7 @@ if __name__ == "__main__":
             default=None,
             type=str,
             dest='phase',
-            help="phase: fit, predict")
+            help="phase: train, evaluate")
     parser.add_argument(
             '--config_file',
             default=None,
@@ -29,23 +54,14 @@ if __name__ == "__main__":
             help="configure file")
     args = parser.parse_args()
 
-    if args.phase == 'fit':
-        if not os.path.exists(args.config_file):
-            Logger.error('config file {} is not exists!'.format(args.config_file))
-            exit(1)
-
-        configer = ConfigFactory.parse_file(args.config_file)
-        if configer.get('task') == 'classifier':
-            from k12ml.models.classification import k12ai_get_model
-            model = k12ai_get_model(configer.get('model.name'))(configer.get('model.args'))
-            if configer.get('method') == 'sklearn_wrapper':
-                from k12ml.runners.sklearn_wrapper import SKRunner
-                runner = SKRunner(model, configer)
-                runner.fit()
-                runner.predict()
-            else:
-                raise NotImplementedError
+    try:
+        _sendmsg('k12ml_running')
+        if args.phase == 'train':
+            if not os.path.exists(args.config_file):
+                raise FileNotFoundError("file {} not found".format(args.config_file))
+            _do_train(ConfigFactory.parse_file(args.config_file))
         else:
             raise NotImplementedError
-    else:
-        raise NotImplementedError
+        _sendmsg('k12ml_finish')
+    except Exception:
+        _sendmsg('k12ml_except')

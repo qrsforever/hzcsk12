@@ -18,27 +18,9 @@ local _Utils = import '../utils/helper.libsonnet';
     {
         type: 'H',
         objs: [
-            _Utils.string('data.type', 'Type', def='sklearn', readonly=true),
-            {
-                _id_: 'data.dataset',
-                name: { en: 'Dataset', cn: self.en },
-                type: 'string-enum',
-                objs: [
-                    {
-                        name: { en: 'iris', cn: self.en },
-                        value: 'iris',
-                    },
-                ],
-                default: 'iris',
-            },
+            _Utils.float('data.sampling.test_size', 'Test Size', def=0.25, ddd=true),
+            _Utils.int('data.sampling.random_state', 'Random State', def=1, ddd=true),
+            _Utils.bool('data.sampling.shuffle', 'Shuffle', def=true, ddd=true),
         ],
     },
-    {
-        type: 'H',
-        objs: [
-            _Utils.float('data.sampling.test_size', 'Test Size', def=0.25),
-            _Utils.int('data.sampling.random_state', 'Random State', def=1),
-            _Utils.bool('data.sampling.shuffle', 'Shuffle', def=true),
-        ],
-    },
-]
+] + (import 'details/__init__.jsonnet').get()

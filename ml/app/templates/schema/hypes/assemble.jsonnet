@@ -7,11 +7,4 @@
 local _Utils = import '../utils/helper.libsonnet';
 
 [
-    {
-        type: 'H',
-        objs: [
-            _Utils.int('model.args.max_iter', 'degree', def=1000),
-            _Utils.float('model.args.cache_size', 'cache_size', def=200.0),
-        ],
-    },
 ]
