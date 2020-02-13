@@ -2,10 +2,10 @@
     task: 'classifier',
     method: 'sklearn_wrapper',
     data: {
-        num_samples: 150,
-        num_features: 4,
-        num_classes: 3,
-        data_path: 'load_iris',
+        num_samples: 569,
+        num_features: 30,
+        num_classes: 2,
+        data_path: 'load_breast_cancer',
         sampling: {
             test_size: 0.25,
             random_state: 1,
@@ -13,10 +13,10 @@
         },
     },
     model: {
-        type: 'svc',
+        type: 'random_forest',
         svc: {
             C: 1.0,
-            kernel: 'rbf',
+            kernel: 'linner',
             degree: 3,
             gamma: '0.2',
             coef0: 0.0,
@@ -28,7 +28,7 @@
             decision_function_shape: 'ovr',
         },
         random_forest: {
-            n_estimators: 10,
+            n_estimators: 100,
             criterion: 'gini',
             min_samples_split: 2,
             min_samples_leaf: 1,
@@ -41,6 +41,7 @@
             verbose: 0,
             oob_score: false,
             bootstrap: false,
+            random_state: 42,
         },
     },
 }

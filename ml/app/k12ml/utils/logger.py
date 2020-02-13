@@ -33,7 +33,7 @@ class Logger(object):
     @staticmethod
     def init(
             filename, level='info', when='D', backCount=3,
-            fmt='%(asctime)s - %(filename)s - %(funcName)s:%(lineno)d - %(levelname)s: %(message)s'):  # noqa
+            fmt='%(asctime)s - %(levelname)s: %(message)s'):  # noqa
         # pathname, filename
         Logger.logger = logging.getLogger(filename)
         Logger.logger.setLevel(_LEVELS_.get(level))

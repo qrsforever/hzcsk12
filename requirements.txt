@@ -11,6 +11,7 @@ matplotlib>=2.2.3
 GPUtil
 psutil
 pyhocon
+seaborn
 
 # rpc
 zerorpc

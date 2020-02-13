@@ -2,10 +2,10 @@
     task: 'classifier',
     method: 'sklearn_wrapper',
     data: {
-        num_samples: 150,
-        num_features: 4,
-        num_classes: 3,
-        data_path: 'load_iris',
+        num_samples: 1797,
+        num_features: 64,
+        num_classes: 10,
+        data_path: 'load_digits',
         sampling: {
             test_size: 0.25,
             random_state: 1,
@@ -13,7 +13,10 @@
         },
     },
     model: {
-        type: 'svc',
+        type: 'knn',
+        knn: {
+
+        },
         svc: {
             C: 1.0,
             kernel: 'rbf',

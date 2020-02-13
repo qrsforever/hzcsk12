@@ -59,27 +59,27 @@ local _network_maps = {
         [if readonly then 'readonly']: readonly,
     },
 
-    int(id, en, cn='', def=0, ddd=false, tips='', min=-1, max=-1, width=-1, height=-1, readonly=false):: {
+    int(id, en, cn='', def=0, ddd=false, tips='', min=-999666, max=-999666, width=-1, height=-1, readonly=false):: {
         _id_: id,
         name: { en: en, cn: if std.length(cn) == 0 then self.en else cn },
         type: 'int',
         default: if ddd then $.get_default_value(id, def) else def,
         [if std.length(tips) > 0 then 'tips']: tips,
-        [if min > 0 then 'min']: min,
-        [if max > 0 then 'max']: max,
+        [if min != -999666 then 'min']: min,
+        [if max != -999666 then 'max']: max,
         [if width > 0 then 'width']: width,
         [if height > 0 then 'height']: height,
         [if readonly then 'readonly']: readonly,
     },
 
-    float(id, en, cn='', def=0, ddd=false, tips='', min=-1, max=-1, width=-1, height=-1, readonly=false):: {
+    float(id, en, cn='', def=0, ddd=false, tips='', min=-999666, max=-999666, width=-1, height=-1, readonly=false):: {
         _id_: id,
         name: { en: en, cn: if std.length(cn) == 0 then self.en else cn },
         type: 'float',
         default: if ddd then $.get_default_value(id, def) else def,
         [if std.length(tips) > 0 then 'tips']: tips,
-        [if min > 0 then 'min']: min,
-        [if max > 0 then 'max']: max,
+        [if min != -999666 then 'min']: min,
+        [if max != -999666 then 'max']: max,
         [if width > 0 then 'width']: width,
         [if height > 0 then 'height']: height,
         [if readonly then 'readonly']: readonly,

@@ -8,6 +8,7 @@
 # @date 2020-02-11 18:33
 
 from k12ml.models.base import K12Algorithm
+from sklearn.svm import SVC as Algo
 from sklearn.metrics import accuracy_score
 
 
@@ -17,8 +18,7 @@ class SKSVC(K12Algorithm):
         self._algo = None
 
     def fit(self, X, Y):
-        from sklearn.svm import SVC
-        self._algo = SVC(**self._kwargs)
+        self._algo = Algo(**self._kwargs)
         self._algo.fit(X, Y)
         return self
 
@@ -32,4 +32,7 @@ class SKSVC(K12Algorithm):
         self.fit(X_train, Y_train)
         Y_prediction = self.predict(X_test)
         accs = accuracy_score(Y_test, Y_prediction)
-        return {'accuracy_score': accs}
+        return {
+                'algorithm': self._algo.__class__.__name__,
+                'accuracy_score': accs
+        }

@@ -2,10 +2,10 @@
     task: 'classifier',
     method: 'sklearn_wrapper',
     data: {
-        num_samples: 150,
-        num_features: 4,
+        num_samples: 178,
+        num_features: 13,
         num_classes: 3,
-        data_path: 'load_iris',
+        data_path: 'load_wine',
         sampling: {
             test_size: 0.25,
             random_state: 1,
@@ -13,7 +13,10 @@
         },
     },
     model: {
-        type: 'svc',
+        type: 'gaussian_nb',
+        gaussian_nb: {
+            var_smoothing: 1e-9,
+        },
         svc: {
             C: 1.0,
             kernel: 'rbf',

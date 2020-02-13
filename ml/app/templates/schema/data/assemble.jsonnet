@@ -18,7 +18,7 @@ local _Utils = import '../utils/helper.libsonnet';
     {
         type: 'H',
         objs: [
-            _Utils.float('data.sampling.test_size', 'Test Size', def=0.25, ddd=true),
+            _Utils.float('data.sampling.test_size', 'Test Size', def=0.25, ddd=true, max=0.999999),
             _Utils.int('data.sampling.random_state', 'Random State', def=1, ddd=true),
             _Utils.bool('data.sampling.shuffle', 'Shuffle', def=true, ddd=true),
         ],

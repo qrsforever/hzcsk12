@@ -13,7 +13,7 @@ class DataLoader:
         self._configer = configer
 
     def get_dataset(self):
-        data_dir = self._configer.get('data.data_dir')
+        data_dir = self._configer.get('data.data_path')
         if data_dir.startswith('load_'):
             from k12ml.data.sklearn_dataset import sk_get_dataset
             return sk_get_dataset(data_dir, self._configer.get('data.sampling'))

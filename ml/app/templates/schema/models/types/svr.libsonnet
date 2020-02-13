@@ -38,7 +38,7 @@ local _Utils = import '../../utils/helper.libsonnet';
                             value: 'precomputed',
                         },
                     ],
-                    default: 'rbf',
+                    default: _Utils.get_default_value('model.svr.kernel', 'rbf'),
                 },
                 {
                     _id_: 'model.svr.gamma',
@@ -77,7 +77,7 @@ local _Utils = import '../../utils/helper.libsonnet';
         {
             type: 'H',
             objs: [
-                _Utils.float('model.svr.tol', 'Tolerance', def=0.001),
+                _Utils.float('model.svr.tol', 'Tolerance', def=0.001, max=0.999999),
                 _Utils.float('model.svr.cache_size', 'Cache Size', def=200.0),
                 _Utils.float('model.svr.epsilon', 'Epsilon', def=0.1),
             ],

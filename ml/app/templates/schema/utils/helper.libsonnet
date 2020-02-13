@@ -13,6 +13,18 @@ local _network_maps = {
         method: 'sklearn_wrapper',
         name: { en: 'svr', cn: self.en },
     },
+    knn: {
+        method: 'sklearn_wrapper',
+        name: { en: 'knn', cn: self.en },
+    },
+    gaussian_nb: {
+        method: 'sklearn_wrapper',
+        name: { en: 'Gaussian NB', cn: self.en },
+    },
+    decision_tree: {
+        method: 'sklearn_wrapper',
+        name: { en: 'decision tree', cn: self.en },
+    },
     random_forest: {
         method: 'sklearn_wrapper',
         name: { en: 'random forest', cn: self.en },
@@ -54,7 +66,12 @@ local _network_maps = {
     // default dataset, can set default value
     datasets:: {
         [if $.dataset_name == 'iris' then 'iris']: import '../constants/datasets/iris.jsonnet',
+        [if $.dataset_name == 'digits' then 'digits']: import '../constants/datasets/digits.jsonnet',
         [if $.dataset_name == 'diabetes' then 'diabetes']: import '../constants/datasets/diabetes.jsonnet',
+        [if $.dataset_name == 'wine' then 'wine']: import '../constants/datasets/wine.jsonnet',
+        [if $.dataset_name == 'boston' then 'boston']: import '../constants/datasets/boston.jsonnet',
+        [if $.dataset_name == 'linnerud' then 'linnerud']: import '../constants/datasets/linnerud.jsonnet',
+        [if $.dataset_name == 'breast_cancer' then 'breast_cancer']: import '../constants/datasets/breast_cancer.jsonnet',
     },
 
     // basic type node generator function
@@ -69,27 +86,27 @@ local _network_maps = {
         [if readonly then 'readonly']: readonly,
     },
 
-    int(id, en, cn='', def=0, ddd=false, tips='', min=-1, max=-1, width=-1, height=-1, readonly=false):: {
+    int(id, en, cn='', def=0, ddd=false, tips='', min=-999666, max=-999666, width=-1, height=-1, readonly=false):: {
         _id_: id,
         name: { en: en, cn: if std.length(cn) == 0 then self.en else cn },
         type: 'int',
         default: if ddd then $.get_default_value(id, def) else def,
         [if std.length(tips) > 0 then 'tips']: tips,
-        [if min > 0 then 'min']: min,
-        [if max > 0 then 'max']: max,
+        [if min != -999666 then 'min']: min,
+        [if max != -999666 then 'max']: max,
         [if width > 0 then 'width']: width,
         [if height > 0 then 'height']: height,
         [if readonly then 'readonly']: readonly,
     },
 
-    float(id, en, cn='', def=0, ddd=false, tips='', min=-1, max=-1, width=-1, height=-1, readonly=false):: {
+    float(id, en, cn='', def=0, ddd=false, tips='', min=-999666, max=-999666, width=-1, height=-1, readonly=false):: {
         _id_: id,
         name: { en: en, cn: if std.length(cn) == 0 then self.en else cn },
         type: 'float',
         default: if ddd then $.get_default_value(id, def) else def,
         [if std.length(tips) > 0 then 'tips']: tips,
-        [if min > 0 then 'min']: min,
-        [if max > 0 then 'max']: max,
+        [if min != -999666 then 'min']: min,
+        [if max != -999666 then 'max']: max,
         [if width > 0 then 'width']: width,
         [if height > 0 then 'height']: height,
         [if readonly then 'readonly']: readonly,

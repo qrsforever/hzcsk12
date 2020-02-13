@@ -1,14 +1,14 @@
-// @file random_forest.libsonnet
+// @file decision_tree.libsonnet
 // @brief
 // @author QRS
 // @version 1.0
-// @date 2020-02-12 17:39
+// @date 2020-02-13 17:59
 
 
 local _Utils = import '../../utils/helper.libsonnet';
 
 local _C_Criterion = {
-    _id_: 'model.random_forest.criterion',
+    _id_: 'model.decision_tree.criterion',
     name: { en: 'Criterion', cn: self.en },
     type: 'string-enum',
     objs: [
@@ -25,7 +25,7 @@ local _C_Criterion = {
 };
 
 local _R_Criterion = {
-    _id_: 'model.random_forest.criterion',
+    _id_: 'model.decision_tree.criterion',
     name: { en: 'Criterion', cn: self.en },
     type: 'string-enum',
     objs: [
@@ -46,15 +46,7 @@ local _R_Criterion = {
         {
             type: 'H',
             objs: [
-                _Utils.int('model.random_forest.n_estimators', 'Estimators', def=10, ddd=true, min=1),
-                _Utils.int('model.random_forest.n_jobs', 'Jobs', def=1, min=1),
-                _Utils.bool('model.random_forest.oob_score', 'OOB Score', def=false),
-            ],
-        },
-        {
-            type: 'H',
-            objs: [
-                _Utils.float('model.random_forest.max_features', 'Max Features', def=0.3, ddd=true, max=0.999999),
+                _Utils.float('model.decision_tree.max_features', 'Max Features', def=0.3, ddd=true, max=1.0),
                 (
                     if 'classifier' == _Utils.task
                     then
@@ -62,49 +54,63 @@ local _R_Criterion = {
                     else
                         _R_Criterion
                 ),
-                _Utils.bool('model.random_forest.warm_start', 'Warm Start', def=false),
+                {
+                    _id_: 'model.decision_tree.splitter',
+                    name: { en: 'Splitter', cn: self.en },
+                    type: 'string-enum',
+                    objs: [
+                        {
+                            name: { en: 'best', cn: self.en },
+                            value: 'best',
+                        },
+                        {
+                            name: { en: 'random', cn: self.en },
+                            value: 'random',
+                        },
+                    ],
+                    default: 'random',
+                },
             ],
         },
         {
             type: 'H',
             objs: [
-                _Utils.int('model.random_forest.min_samples_split', 'Min S Split', def=2),
-                _Utils.int('model.random_forest.min_samples_leaf', 'Min S Leaf', def=1),
-                _Utils.bool('model.random_forest.bootstrap', 'Bootstrap', def=true),
+                _Utils.int('model.decision_tree.min_samples_split', 'Min S Split', def=2),
+                _Utils.int('model.decision_tree.min_samples_leaf', 'Min S Leaf', def=1),
             ],
         },
         {
             type: 'H',
             objs: [
-                _Utils.float('model.random_forest.min_weight_fraction_leaf', 'Min WF Leaf', def=0.0, max=0.999999),
-                _Utils.float('model.random_forest.min_impurity_decrease', 'Min Impurity Dec', def=0.0),
-                _Utils.int('model.random_forest.verbose', 'Verbose', def=0),
+                _Utils.float('model.decision_tree.min_weight_fraction_leaf', 'Min WF Leaf', def=0.0, max=0.999999),
+                _Utils.float('model.decision_tree.min_impurity_decrease', 'Min Impurity Dec', def=0.0),
+                _Utils.bool('model.decision_tree.presort', 'Presort', def=false),
             ],
         },
         {
             type: 'H',
             objs: [
-                _Utils.booltrigger('_k12.model.random_forest.max_depth',
+                _Utils.booltrigger('_k12.model.decision_tree.max_depth',
                                    'Max Depth',
                                    def=false,
-                                   trigger=[_Utils.int('model.random_forest.max_depth', 'Value', def=5, ddd=true)]),
-                _Utils.booltrigger('_k12.model.random_forest.max_leaf_nodes',
+                                   trigger=[_Utils.int('model.decision_tree.max_depth', 'Value', def=5, ddd=true)]),
+                _Utils.booltrigger('_k12.model.decision_tree.max_leaf_nodes',
                                    'Max Leaf Nodes',
                                    def=false,
-                                   trigger=[_Utils.int('model.random_forest.max_leaf_nodes', 'Value', def=15, ddd=true)]),
-                _Utils.booltrigger('_k12.model.random_forest.random_state',
+                                   trigger=[_Utils.int('model.decision_tree.max_leaf_nodes', 'Value', def=15, ddd=true)]),
+                _Utils.booltrigger('_k12.model.decision_tree.random_state',
                                    'Random State',
                                    def=false,
-                                   trigger=[_Utils.int('model.random_forest.random_state', 'Value', def=1, ddd=true)]),
+                                   trigger=[_Utils.int('model.decision_tree.random_state', 'Value', def=1, ddd=true)]),
             ] + (
                 if 'classifier' == _Utils.task then [
                     _Utils.booltrigger(
-                        '_k12.model.random_forest.class_weight',
+                        '_k12.model.decision_tree.class_weight',
                         'Class Weight',
                         def=false,
                         trigger=[
                             {
-                                _id_: 'model.random_forest.class_weight',
+                                _id_: 'model.decision_tree.class_weight',
                                 name: { en: 'Value', cn: self.en },
                                 type: 'string-enum',
                                 objs: [

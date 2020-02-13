@@ -93,7 +93,7 @@ local _Utils = import '../../utils/helper.libsonnet';
         {
             type: 'H',
             objs: [
-                _Utils.float('model.svc.tol', 'Tolerance', def=0.001),
+                _Utils.float('model.svc.tol', 'Tolerance', def=0.001, max=0.999999),
                 _Utils.float('model.svc.cache_size', 'Cache Size', def=200.0),
                 _Utils.bool('model.svc.probability', 'Probability', def=false),
             ],

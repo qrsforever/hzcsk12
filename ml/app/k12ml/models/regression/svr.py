@@ -8,6 +8,7 @@
 # @date 2020-02-11 18:33
 
 from k12ml.models.base import K12Algorithm
+from sklearn.svm import SVR as Algo
 from sklearn.metrics import r2_score
 
 
@@ -17,8 +18,7 @@ class SKSVR(K12Algorithm):
         self._algo = None
 
     def fit(self, X, Y):
-        from sklearn.svm import SVR
-        self._algo = SVR(**self._kwargs)
+        self._algo = Algo(**self._kwargs)
         self._algo.fit(X, Y)
         return self
 
@@ -32,4 +32,7 @@ class SKSVR(K12Algorithm):
         self.fit(X_train, Y_train)
         Y_prediction = self.predict(X_test)
         r2score = r2_score(Y_test, Y_prediction)
-        return {'r2_score': r2score}
+        return {
+                'algorithm': self._algo.__class__.__name__,
+                'r2_score': r2score
+        }
