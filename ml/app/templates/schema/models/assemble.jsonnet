@@ -21,6 +21,8 @@ local _Utils = import '../utils/helper.libsonnet';
         (import 'types/svr.libsonnet').get()
     else if 'knn' == _Utils.network then
         (import 'types/knn.libsonnet').get()
+    else if 'kmeans' == _Utils.network then
+        (import 'types/kmeans.libsonnet').get()
     else if 'gaussian_nb' == _Utils.network then
         (import 'types/gaussian_nb.libsonnet').get()
     else if 'decision_tree' == _Utils.network then

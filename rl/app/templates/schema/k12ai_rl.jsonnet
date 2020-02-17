@@ -11,23 +11,19 @@
             type: 'tab',
             objs: [
                 {
-                    name: { en: 'Data', cn: self.en },
-                    type: '_ignore_',
+                    name: { en: 'Data', cn: '数据' },
                     objs: import 'data/assemble.jsonnet',
                 },
                 {
-                    name: { en: 'Model', cn: self.en },
-                    type: '_ignore_',
+                    name: { en: 'Model', cn: '模型' },
                     objs: import 'models/assemble.jsonnet',
                 },
                 {
-                    name: { en: 'Hypes', cn: self.en },
-                    type: '_ignore_',
+                    name: { en: 'Hypes', cn: '超参' },
                     objs: import 'hypes/assemble.jsonnet',
                 },
                 {
                     name: { en: 'Train', cn: self.en },
-                    type: '_ignore_',
                     objs: [
                         {
                             _id_: '_k12.iframe.train',
@@ -38,7 +34,6 @@
                 },
                 {
                     name: { en: 'Evaluate', cn: self.en },
-                    type: '_ignore_',
                     objs: [
                         {
                             _id_: '_k12.iframe.evaluate',

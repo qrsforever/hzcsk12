@@ -8,14 +8,9 @@ local _Utils = import '../../utils/helper.libsonnet';
 
 {
     get(jid, navi):: [
-        {
-            type: 'H',
-            objs: [
-                _Utils.string(jid + '.granularity', 'granularity', def='5-class'),
-                _Utils.bool(jid + '.lazy', 'lazy', def=true),
-                _Utils.bool(jid + '.use_subtrees', 'use subtrees', def=false),
-            ],
-        },
+        _Utils.string(jid + '.granularity', 'granularity', def='5-class', tips='2-class, 3-class, 5-class'),
+        _Utils.bool(jid + '.lazy', 'lazy', def=false),
+        _Utils.bool(jid + '.use_subtrees', 'use subtrees', def=false),
         {
             _id_: '_k12.token_indexers.single_id',
             name: { en: 'single_id', cn: self.en },

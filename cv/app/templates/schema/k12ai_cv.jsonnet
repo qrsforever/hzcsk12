@@ -13,19 +13,19 @@ local _Utils = import 'utils/helper.libsonnet';
             type: 'tab',
             objs: [
                 {
-                    name: { en: 'Data', cn: self.en },
+                    name: { en: 'Data', cn: '数据' },
                     type: '_ignore_',
                     objs: import 'data/assemble.jsonnet',
                 },
                 {
-                    name: { en: 'Model', cn: self.en },
+                    name: { en: 'Model', cn: '模型' },
                     type: '_ignore_',
                     objs: import 'models/assemble.jsonnet',
                 },
             ] + (
                 if std.startsWith(_Utils.network, 'custom_') then [
                     {
-                        name: { en: 'Custom', cn: self.en },
+                        name: { en: 'Custom', cn: '自定义' },
                         type: '_ignore_',
                         objs: [
                             {
@@ -40,7 +40,7 @@ local _Utils = import 'utils/helper.libsonnet';
                 ] else []
             ) + [
                 {
-                    name: { en: 'Hypes', cn: self.en },
+                    name: { en: 'Hypes', cn: '超参' },
                     type: '_ignore_',
                     objs: import 'hypes/assemble.jsonnet',
                 },

@@ -17,6 +17,10 @@ local _network_maps = {
         method: 'sklearn_wrapper',
         name: { en: 'knn', cn: self.en },
     },
+    kmeans: {
+        method: 'sklearn_wrapper',
+        name: { en: 'kmeans', cn: self.en },
+    },
     gaussian_nb: {
         method: 'sklearn_wrapper',
         name: { en: 'Gaussian NB', cn: self.en },

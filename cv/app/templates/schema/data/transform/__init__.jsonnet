@@ -32,6 +32,7 @@ local _pad_mode(jid) = {
             value: 'pad_center',
         },
     ],
+    default: _Utils.get_default_value(self._id_, self.objs[1].value),
 };
 
 local _data_transform(jid, label) = {

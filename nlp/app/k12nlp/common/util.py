@@ -51,6 +51,7 @@ def hzcsk12_send_message(msgtype, message, end=False):
 
 
 def hzcsk12_error_message(errmsg):
+    print(errmsg)
     if errmsg.startswith('k12nlp_running'):
         hzcsk12_send_message('status', {'value': 'running'})
         return
@@ -62,7 +63,6 @@ def hzcsk12_error_message(errmsg):
     if errmsg.startswith('k12nlp_error'):
         hzcsk12_send_message('error', errmsg)
         hzcsk12_send_message('status', {'value': 'exit', 'way': 'error'})
-        print(errmsg)
         return
 
     if errmsg.startswith('k12nlp_except'):

@@ -128,9 +128,8 @@ def main(prog: str = None, subcommand_overrides: Dict[str, Subcommand] = None) -
             args.func(args)
             logger.info("+++success+++")
             _k12log('k12nlp_finish')
-        except Exception as err:
+        except Exception:
             logger.info("+++fail+++")
-            logger.info("{}".format(err))
             _k12log('k12nlp_except')
     else:
         parser.print_help()

@@ -1,5 +1,5 @@
 {
-    task: 'classifier',
+    task: '',
     method: 'sklearn_wrapper',
     data: {
         num_samples: 150,
@@ -41,6 +41,17 @@
             verbose: 0,
             oob_score: false,
             bootstrap: false,
+        },
+        kmeans: {
+            n_clusters: 3,
+            init: 'k-means++',
+            n_init: 10,
+            max_iter: 300,
+            tol: 1e-4,
+            verbose: 0,
+            copy_x: true,
+            algorithm: 'auto',
+            random_state: 11,
         },
     },
 }

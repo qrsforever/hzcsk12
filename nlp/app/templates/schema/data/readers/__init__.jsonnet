@@ -13,6 +13,7 @@ local _READERS = {
                 name: { en: 'SST Tokens', cn: self.en },
                 value: 'sst_tokens',
                 trigger: {
+                    type: '_ignore_',
                     objs: (import 'sst.libsonnet').get(jid, navi),
                 },
             },

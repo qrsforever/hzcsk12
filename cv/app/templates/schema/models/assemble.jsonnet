@@ -63,23 +63,24 @@ local _Utils = import '../utils/helper.libsonnet';
                           ],
                       },
                   ] else []
-              ) + (
-                  if std.startsWith(_Utils.network, 'custom_') then [
-                      {
-                          name: { en: 'Custom', cn: self.en },
-                          type: '_ignore_',
-                          objs: [
-                              {
-                                  _id_: 'network.net_def',
-                                  type: 'iframe',
-                                  html: '',
-                                  width: 800,
-                                  height: 400,
-                              },
-                          ],
-                      },
-                  ] else []
               )
+              // + (
+              //     if std.startsWith(_Utils.network, 'custom_') then [
+              //         {
+              //             name: { en: 'Custom', cn: self.en },
+              //             type: '_ignore_',
+              //             objs: [
+              //                 {
+              //                     _id_: 'network.net_def',
+              //                     type: 'iframe',
+              //                     html: '',
+              //                     width: 800,
+              //                     height: 400,
+              //                 },
+              //             ],
+              //         },
+              //     ] else []
+              // )
               + [
                   {
                       name: { en: 'Details', cn: self.en },

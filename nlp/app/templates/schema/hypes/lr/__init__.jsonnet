@@ -20,11 +20,6 @@
                             type: 'string-enum-trigger',
                             objs: [
                                 {
-                                    name: { en: 'ReduceLROnPlateau', cn: self.en },
-                                    value: 'reduce_on_plateau',
-                                    trigger: (import 'type/reduce_on_plateau.libsonnet').get(jid),
-                                },
-                                {
                                     name: { en: 'StepLR', cn: self.en },
                                     value: 'step',
                                     trigger: (import 'type/step.libsonnet').get(jid),
@@ -38,6 +33,11 @@
                                     name: { en: 'ExponentialLR', cn: self.en },
                                     value: 'exponential',
                                     trigger: (import 'type/exponential.libsonnet').get(jid),
+                                },
+                                {
+                                    name: { en: 'ReduceLROnPlateau', cn: self.en },
+                                    value: 'reduce_on_plateau',
+                                    trigger: (import 'type/reduce_on_plateau.libsonnet').get(jid),
                                 },
                             ],
                             default: self.objs[0].value,
