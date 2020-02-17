@@ -17,7 +17,7 @@ _RPCEnable = -1
 K12NLP_OP, K12NLP_USER, K12NLP_UUID = None, None, None
 
 
-def hzcsk12_send_message(msgtype, message, end=False):
+def hzcsk12_send_message(msgtype, message):
     global _RPCClient, _RPCEnable, K12NLP_OP, K12NLP_USER, K12NLP_UUID
 
     if _RPCEnable == 0:
@@ -44,8 +44,6 @@ def hzcsk12_send_message(msgtype, message, end=False):
             if epochs:
                 message['training_epochs'] = epochs + 1
             _RPCClient.send_message(K12NLP_OP, K12NLP_USER, K12NLP_UUID, msgtype, message)
-        if end:
-            _RPCClient.close()
     except Exception:
         pass
 

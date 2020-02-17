@@ -669,7 +669,7 @@ class Trainer(TrainerBase):
 
         # QRS: add
         metrics['training_progress'] = 1
-        _k12msg('metrics', metrics, end=True)
+        _k12msg('metrics', metrics)
 
         # Load the best model state before returning
         best_model_state = self._checkpointer.best_model_state()

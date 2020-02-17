@@ -1,7 +1,8 @@
 #!/bin/bash
 
 check=`python3 -c "import ssl" 2>&1`
-if [[ x$check != x ]]
+pyver=`python3 --version | cut -d\  -f2`
+if [[ x$check != x ]] || [[ $pyver != "3.6.8" ]]
 then
     echo "############"
     echo "1. sudo apt-get install libreadline-gplv2-dev libncursesw5-dev libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev"
@@ -75,6 +76,14 @@ then
     sudo pip3 install pyhocon
 else
     echo "pyhocon ok"
+fi
+
+check=`python3 -c "import _jsonnet" 2>&1`
+if [[ x$check != x ]]
+then
+    sudo pip3 install jsonnet
+else
+    echo "jsonnet ok"
 fi
 
 check=`python3 -c "import redis" 2>&1`

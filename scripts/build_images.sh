@@ -44,7 +44,7 @@ __build_image()
     build_flag=0
 
     force=$5
-    if [[ x$force == x ]]
+    if [[ x$force == x0 ]]
     then
         items=($(docker images --filter "label=org.label-schema.name=$REPOSITORY" --format "{{.Tag}}"))
         count=${#items[@]}
@@ -81,7 +81,12 @@ __build_image()
     then
         echo "build image: $REPOSITORY:$TAG"
 
-        cd $TOP_DIR/$DESTDIR
+        if [[ $DESTDIR == 'ai' ]]
+        then
+            cd $TOP_DIR
+        else
+            cd $TOP_DIR/$DESTDIR
+        fi
 
         if [[ $PROJECT == "k12ai" ]] && [[ ! -d .jupyter_config ]]
         then

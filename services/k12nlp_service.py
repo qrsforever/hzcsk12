@@ -217,13 +217,13 @@ class NLPServiceRPC(object):
                         flag = '--recover'
             command = 'allennlp train /cache/config.json %s --serialization-dir /cache/output' % flag
         elif phase == 'evaluate':
-            model_file_outer = os.path.join(cache_dir_outer, 'output', 'model.tar.gz')
+            model_file_outer = os.path.join(cache_dir_outer, 'output', 'best.th')
             if not os.path.exists(model_file_outer):
-                return 100208, 'not found model.tar.gz'
+                return 100208, 'not found model files'
             input_file = result['test_file']
             if not input_file:
                 return 100232, f'{user}-{uuid}-{op}'
-            command = f'allennlp evaluate /cache/output/model.tar.gz {input_file}'
+            command = f'allennlp evaluate /cache/output {input_file}'
         elif phase == 'predict':
             raise('not impl yet')
 

@@ -99,13 +99,6 @@ def _framework_schema():
         service_task = reqjson['service_task']
         dataset_name = reqjson['dataset_name']
         network_type = reqjson['network_type']
-        # Test
-        if service_task == 'seg':
-            import _jsonnet
-            schema_file = os.environ.get("TEST_SCHEMA_FILE")
-            schema_json = _jsonnet.evaluate_file(schema_file)
-            return json.dumps(_err_msg(data=json.dumps(json.loads(schema_json), separators=(',', ':'))))
-
         assert network_type != '', 'network_type'
     except json.decoder.JSONDecodeError:
         return json.dumps(_err_msg(100103, request.get_data().decode()))

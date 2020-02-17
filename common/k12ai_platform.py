@@ -211,3 +211,11 @@ def k12ai_platform_control(op, user, uuid, params, isasync):
 
     if op == 'container.stop':
         return _stop_container(op, user, uuid, params)
+
+
+def k12ai_platform_cpu_count():
+    return psutil.cpu_count()
+
+
+def k12ai_platform_gpu_count():
+    return len(GPUtil.getGPUs())

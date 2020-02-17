@@ -12,6 +12,8 @@ local _network_maps = {
 
 {
     version:: '0.0.1b',
+    num_cpu:: std.extVar('num_cpu'),
+    num_gpu:: std.extVar('num_gpu'),
     task:: std.extVar('task'),
     network:: std.extVar('network'),
     network_name:: if std.objectHas(_network_maps, $.network) then _network_maps[$.network].name else 'unkown',

@@ -11,8 +11,21 @@ top_dir=`cd $(dirname $cur_fil)/..; pwd`
 debug=1
 use_image='unkown'
 
+ifnames=("eth0" "ens3")
+__find_ipaddr() {
+    for ifname in ${ifnames[*]}
+    do
+        result=`ifconfig $ifname 2>&1 | grep -v "error"`
+        if [[ x$result != x ]]
+        then
+            ip=`echo "$result" | grep inet\ | awk '{print $2}' | awk -F: '{print $2}'`
+            echo $ip
+            break
+        fi
+    done
+}
 hostname=`hostname`
-hostaddr=`ifconfig eth0| grep inet\ | awk '{print $2}' | awk -F: '{print $2}'`
+hostaddr=$(__find_ipaddr)
 
 log_fil=/tmp/k12ai_log.txt
 k12logs=/tmp/k12logs
