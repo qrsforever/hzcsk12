@@ -69,27 +69,27 @@ redis_port=10090
 redis_pswd='qY3Zh4xLPZNMkaz3'
 
 consul_name=consul-dev
-consul_addr=$hostaddr
+consul_addr=$hostlanip
 consul_port=8500
 
 k12ai_service_name=k12ai
-k12ai_addr=$hostaddr
+k12ai_addr=$hostlanip
 k12ai_port=8119
 
 k12ml_service_name=k12ml
-k12ml_addr=$hostaddr
+k12ml_addr=$hostlanip
 k12ml_port=8129
 
 k12cv_service_name=k12cv
-k12cv_addr=$hostaddr
+k12cv_addr=$hostlanip
 k12cv_port=8139
 
 k12nlp_service_name=k12nlp
-k12nlp_addr=$hostaddr
+k12nlp_addr=$hostlanip
 k12nlp_port=8149
 
 k12rl_service_name=k12rl
-k12rl_addr=$hostaddr
+k12rl_addr=$hostlanip
 k12rl_port=8159
 
 export HOST_NAME=${hostname}

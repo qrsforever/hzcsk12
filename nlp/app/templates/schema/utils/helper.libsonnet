@@ -12,10 +12,16 @@ local _network_maps = {
 
 {
     version:: '0.0.1b',
+    debug:: std.extVar('debug'),
+    net_ip:: std.extVar('net_ip'),
+    num_cpu:: std.extVar('num_cpu'),
+    num_gpu:: std.extVar('num_gpu'),
     task:: std.extVar('task'),
     network:: std.extVar('network'),
     network_name:: if std.objectHas(_network_maps, $.network) then _network_maps[$.network].name else 'unkown',
     dataset_name:: std.extVar('dataset_name'),
+    notebook_url:: 'http://' + $.net_ip + ':8118/notebooks/nlp/tasks/' +
+                   $.task + '_' + $.network + '_' + $.dataset_name + '.ipynb',
 
     // usage: get_value(confg, 'a.b.c', 100)
     get_value(obj, keystr, def)::
@@ -96,6 +102,17 @@ local _network_maps = {
         [if readonly then 'readonly']: readonly,
     },
 
+    text(id, en, cn='', def='', ddd=false, tips='', width=-1, height=-1, readonly=false):: {
+        _id_: id,
+        name: { en: en, cn: if std.length(cn) == 0 then self.en else cn },
+        type: 'text',
+        default: if ddd then $.get_default_value(id, def) else def,
+        [if std.length(tips) > 0 then 'tips']: tips,
+        [if width > 0 then 'width']: width,
+        [if height > 0 then 'height']: height,
+        [if readonly then 'readonly']: readonly,
+    },
+
     intarray(id, en, cn='', def=[], ddd=false, tips='', width=-1, height=-1, readonly=false):: {
         _id_: id,
         name: { en: en, cn: if std.length(cn) == 0 then self.en else cn },
@@ -122,6 +139,32 @@ local _network_maps = {
         _id_: id,
         name: { en: en, cn: if std.length(cn) == 0 then self.en else cn },
         type: 'string-array',
+        default: if ddd then $.get_default_value(id, def) else def,
+        [if std.length(tips) > 0 then 'tips']: tips,
+        [if width > 0 then 'width']: width,
+        [if height > 0 then 'height']: height,
+        [if readonly then 'readonly']: readonly,
+    },
+
+    booltrigger(id, en, cn='', def=false, ddd=false, tips='', width=-1, height=-1, readonly=false, trigger=[]):: {
+        _id_: id,
+        name: { en: en, cn: if std.length(cn) == 0 then self.en else cn },
+        type: 'bool-trigger',
+        objs: [
+            {
+                name: { en: 'Enable', cn: self.en },
+                value: true,
+                trigger: {
+                    type: '_ignore_',
+                    objs: trigger,
+                },
+            },
+            {
+                name: { en: 'Disable', cn: self.en },
+                value: false,
+                trigger: {},
+            },
+        ],
         default: if ddd then $.get_default_value(id, def) else def,
         [if std.length(tips) > 0 then 'tips']: tips,
         [if width > 0 then 'width']: width,

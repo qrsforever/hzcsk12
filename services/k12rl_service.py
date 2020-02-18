@@ -17,7 +17,7 @@ from threading import Thread
 from pyhocon import ConfigFactory
 from pyhocon import HOCONConverter
 
-from k12ai_consul import k12ai_consul_init, k12ai_consul_register, k12ai_consul_message
+from k12ai_consul import (k12ai_consul_init, k12ai_consul_register, k12ai_consul_message)
 from k12ai_utils import (k12ai_utils_topdir, k12ai_utils_netip)
 from k12ai_errmsg import k12ai_error_message as _err_msg
 from k12ai_logger import (k12ai_set_loglevel, k12ai_set_logfile, Logger)
@@ -174,13 +174,16 @@ class RLServiceRPC(object):
         schema_file = os.path.join(self._projdir, 'app', 'templates', 'schema', 'k12ai_rl.jsonnet')
         if not os.path.exists(schema_file):
             return 100206, f'{schema_file}'
-        schema_json = _jsonnet.evaluate_file(schema_file, ext_vars={
-            'net_ip': self._netip,
-            'num_cpu': str(self._cpu_count),
-            'num_gpu': str(self._gpu_count),
-            'task': task,
-            'network': netw,
-            'dataset_name': dataset_name})
+        schema_json = _jsonnet.evaluate_file(schema_file,
+            ext_vars={
+                'net_ip': self._netip,
+                'task': task,
+                'network': netw,
+                'dataset_name': dataset_name},
+            ext_codes={
+                'debug': 'true' if self._debug else 'false',
+                'num_cpu': str(self._cpu_count),
+                'num_gpu': str(self._gpu_count)})
         return 100000, json.dumps(json.loads(schema_json), separators=(',', ':'))
 
     def execute(self, op, user, uuid, params):

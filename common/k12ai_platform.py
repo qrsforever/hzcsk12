@@ -15,7 +15,7 @@ from subprocess import Popen, PIPE
 from threading import Thread
 
 from k12ai_errmsg import k12ai_error_message as _err_msg
-from k12ai_utils import k12ai_utils_hostip as _get_hostip
+from k12ai_utils import k12ai_utils_lanip as _get_hostip
 from k12ai_consul import k12ai_consul_message as _send_message
 
 g_docker = None

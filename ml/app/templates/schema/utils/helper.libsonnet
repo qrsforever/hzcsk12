@@ -37,11 +37,17 @@ local _network_maps = {
 
 {
     version:: '0.0.1b',
+    debug:: std.extVar('debug'),
+    net_ip:: std.extVar('net_ip'),
+    num_cpu:: std.extVar('num_cpu'),
+    num_gpu:: std.extVar('num_gpu'),
     task:: std.extVar('task'),
     network:: std.extVar('network'),
     method:: if std.objectHas(_network_maps, $.network) then _network_maps[$.network].method else 'unkown',
     network_name:: if std.objectHas(_network_maps, $.network) then _network_maps[$.network].name else 'unkown',
     dataset_name:: std.extVar('dataset_name'),
+    notebook_url:: 'http://' + $.net_ip + ':8118/notebooks/ml/tasks/' +
+                   $.task + '_' + $.network + '_' + $.dataset_name + '.ipynb',
 
     get_value(obj, keystr, def)::
         if std.type(obj) == 'object' && std.length(keystr) > 1
