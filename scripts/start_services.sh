@@ -12,7 +12,7 @@ debug=1
 use_image='unkown'
 
 ifnames=("eth0" "ens3")
-__find_ipaddr() {
+__find_lanip() {
     for ifname in ${ifnames[*]}
     do
         result=`ifconfig $ifname 2>&1 | grep -v "error"`
@@ -20,12 +20,45 @@ __find_ipaddr() {
         then
             ip=`echo "$result" | grep inet\ | awk '{print $2}' | awk -F: '{print $2}'`
             echo $ip
-            break
+            return
         fi
     done
+    exit -1
 }
+
+__find_netip() {
+    result=`curl -s icanhazip.com`
+    if [[ x$result != x ]]
+    then
+        echo "$result"
+        return
+    fi
+    result=`wget -qO - ifconfig.co`
+    if [[ x$result != x ]]
+    then
+        echo "$result"
+        return
+    fi
+    result=`curl ipecho.net/plain`
+    if [[ x$result != x ]]
+    then
+        echo "$result"
+        return
+    fi
+    exit -1
+}
+
 hostname=`hostname`
-hostaddr=$(__find_ipaddr)
+hostlanip=$(__find_lanip)
+hostnetip=$(__find_netip)
+
+echo -e "\n####\thostname($hostname), hostlanip($hostlanip), hostnetip($hostnetip)\t####"
+
+if [[ x$hostnetip == x ]]
+then
+    echo "Cann't get netip"
+    exit -1
+fi
 
 log_fil=/tmp/k12ai_log.txt
 k12logs=/tmp/k12logs
@@ -60,7 +93,8 @@ k12rl_addr=$hostaddr
 k12rl_port=8159
 
 export HOST_NAME=${hostname}
-export HOST_ADDR=${hostaddr}
+export HOST_LANIP=${hostlanip}
+export HOST_NETIP=${hostnetip}
 export PYTHONPATH=${top_dir}/common:$PYTHONPATH
 
 # global function

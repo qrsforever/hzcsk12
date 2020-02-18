@@ -12,6 +12,7 @@ local _network_maps = {
 
 {
     version:: '0.0.1b',
+    net_ip:: std.extVar('net_ip'),
     num_cpu:: std.extVar('num_cpu'),
     num_gpu:: std.extVar('num_gpu'),
     task:: std.extVar('task'),

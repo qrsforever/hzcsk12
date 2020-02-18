@@ -22,6 +22,14 @@ else
     echo "flask ok!"
 fi
 
+check=`python3 -c "import flask_cors" 2>&1`
+if [[ x$check != x ]]                         
+then
+    sudo pip3 install flask_cors
+else
+    echo "flask_cors ok!"
+fi
+
 check=`python3 -c "import consul" 2>&1`
 if [[ x$check != x ]]
 then

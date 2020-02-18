@@ -18,7 +18,7 @@ from pyhocon import ConfigFactory
 from pyhocon import HOCONConverter
 
 from k12ai_consul import k12ai_consul_init, k12ai_consul_register, k12ai_consul_message
-from k12ai_utils import k12ai_utils_topdir
+from k12ai_utils import (k12ai_utils_topdir, k12ai_utils_netip)
 from k12ai_errmsg import k12ai_error_message as _err_msg
 from k12ai_logger import (k12ai_set_loglevel, k12ai_set_logfile, Logger)
 from k12ai_platform import (k12ai_platform_cpu_count, k12ai_platform_gpu_count)
@@ -51,6 +51,7 @@ class RLServiceRPC(object):
         self._debug = _DEBUG_
         self._host = host
         self._port = port
+        self._netip = k12ai_utils_netip()
         self._cpu_count = k12ai_platform_cpu_count()
         self._gpu_count = k12ai_platform_gpu_count()
         self._image = image
@@ -174,6 +175,7 @@ class RLServiceRPC(object):
         if not os.path.exists(schema_file):
             return 100206, f'{schema_file}'
         schema_json = _jsonnet.evaluate_file(schema_file, ext_vars={
+            'net_ip': self._netip,
             'num_cpu': str(self._cpu_count),
             'num_gpu': str(self._gpu_count),
             'task': task,

@@ -19,12 +19,16 @@ def k12ai_utils_topdir():
 
 def k12ai_utils_hostname():
     val = os.environ.get('HOST_NAME', None)
-    if not val:
-        return socket.gethostname()
-    return val
+    if val:
+        return val
+    return socket.gethostname()
 
 
-def k12ai_utils_hostip():
+def k12ai_utils_lanip():
+    val = os.environ.get('HOST_LANIP', None)
+    if val:
+        return val
+
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
         s.connect(('8.8.8.8',80))
@@ -35,6 +39,9 @@ def k12ai_utils_hostip():
 
 
 def k12ai_utils_netip():
+    val = os.environ.get('HOST_NETIP', None)
+    if val:
+        return val
     result = os.popen('curl -s http://txt.go.sohu.com/ip/soip| grep -P -o -i "(\d+\.\d+.\d+.\d+)"', 'r') # noqa
     if result:
         return result.read().strip('\n')
