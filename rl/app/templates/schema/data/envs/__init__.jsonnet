@@ -4,6 +4,8 @@
 // @version 1.0
 // @date 2020-01-17 22:13
 
+local _Utils = import '../../utils/helper.libsonnet';
+
 {
     get():: [
         {
@@ -13,12 +15,20 @@
                 {
                     name: { en: 'Train', cn: self.en },
                     type: '_ignore_',
-                    objs: (import 'atari.libsonnet').get('env', 'Train'),
+                    objs: if _Utils.task == 'atari' then
+                        (import 'atari.libsonnet').get('env', 'Train')
+                    else if _Utils.task == 'mujoco' then
+                        (import 'mujoco.libsonnet').get('env', 'Train')
+                    else [],
                 },
                 {
                     name: { en: 'Evaluate', cn: self.en },
                     type: '_ignore_',
-                    objs: (import 'atari.libsonnet').get('eval_env', 'Evaluate'),
+                    objs: if _Utils.task == 'atari' then
+                        (import 'atari.libsonnet').get('eval_env', 'Evaluate')
+                    else if _Utils.task == 'mujoco' then
+                        (import 'mujoco.libsonnet').get('eval_env', 'Evaluate')
+                    else [],
                 },
             ],
         },

@@ -10,24 +10,33 @@ local _Utils = import '../../utils/helper.libsonnet';
     type: 'V',
     objs: [
         {
+            type: 'H',
+            objs: [
+                _Utils.string('_k12.model.network', 'Network', def=_Utils.network, readonly=true),
+                _Utils.bool('model.dueling', 'Dueling', def=false),
+                _Utils.bool('algo.double_dqn', 'Double', def=false),
+            ],
+        },
+        {
             _id_: '_k12.model.name',
             name: { en: 'Model', cn: self.en },
-            type: 'string-enum-trigger',
+            // type: 'string-enum-trigger',
+            type: 'string-enum',
             objs: [
                 {
                     name: { en: 'DQN', cn: self.en },
                     value: 'dqn',
-                    trigger: {},
+                    // trigger: {},
                 },
                 {
                     name: { en: 'CatDQN', cn: self.en },
                     value: 'catdqn',
-                    trigger: {},
+                    // trigger: {},
                 },
                 {
                     name: { en: 'R2D1', cn: self.en },
                     value: 'r2d1',
-                    trigger: {},
+                    // trigger: {},
                 },
             ],
             default: self.objs[0].value,

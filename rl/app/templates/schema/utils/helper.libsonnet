@@ -8,6 +8,9 @@ local _network_maps = {
     dqn: {
         name: { en: 'DQN', cn: self.en },
     },
+    pg: {
+        name: { en: 'PG', cn: self.en },
+    },
 };
 
 {
@@ -49,7 +52,6 @@ local _network_maps = {
 
     // default dataset, can set default value
     datasets:: {
-        [if $.dataset_name == 'pong' then 'atari']: import '../constants/datasets/atari.jsonnet',
     },
 
     // basic type node generator function

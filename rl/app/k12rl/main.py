@@ -34,6 +34,7 @@ from rlpyt.samplers.async_.gpu_sampler import AsyncGpuSampler
 from rlpyt.samplers.async_.alternating_sampler import AsyncAlternatingSampler
 
 # collectors
+from rlpyt.samplers.collections import TrajInfo
 from rlpyt.samplers.async_.collectors import (DbCpuResetCollector, DbCpuWaitResetCollector)
 from rlpyt.samplers.async_.collectors import (DbGpuResetCollector, DbGpuWaitResetCollector)
 from rlpyt.samplers.parallel.cpu.collectors import (CpuResetCollector, CpuWaitResetCollector)
@@ -49,12 +50,29 @@ from rlpyt.algos.dqn.dqn import DQN
 from rlpyt.algos.dqn.cat_dqn import CategoricalDQN
 from rlpyt.algos.dqn.r2d1 import R2D1
 
+from rlpyt.algos.pg.a2c import A2C
+from rlpyt.algos.pg.ppo import PPO
+from rlpyt.algos.qpg.ddpg import DDPG # noqa
+from rlpyt.algos.qpg.sac import SAC # noqa
+from rlpyt.algos.qpg.td3 import TD3 # noqa
+
+from rlpyt.agents.qpg.ddpg_agent import DdpgAgent # noqa
+from rlpyt.agents.qpg.sac_agent import SacAgent # noqa
+from rlpyt.agents.qpg.td3_agent import Td3Agent # noqa
+
 # atari
 from rlpyt.envs.atari.atari_env import AtariEnv, AtariTrajInfo
 from rlpyt.agents.dqn.atari.atari_dqn_agent import AtariDqnAgent
 from rlpyt.agents.dqn.atari.atari_catdqn_agent import AtariCatDqnAgent
 from rlpyt.agents.dqn.atari.atari_r2d1_agent import AtariR2d1Agent
 from rlpyt.agents.dqn.atari.atari_r2d1_agent import AtariR2d1AlternatingAgent
+from rlpyt.agents.pg.atari import AtariFfAgent
+from rlpyt.agents.pg.atari import AtariLstmAgent
+
+# mujoco
+from rlpyt.envs.gym import make as gym_make
+from rlpyt.agents.pg.mujoco import MujocoFfAgent
+from rlpyt.agents.pg.mujoco import MujocoLstmAgent
 
 
 def _signal_handler(sig, frame):
@@ -66,11 +84,11 @@ def _rl_check(config):
     async_ = config.get('affinity.async_sample', default=False)
 
     task = config.get('_k12.task')
-    if task not in ('atari'):
+    if task not in ('atari', 'mujoco'):
         raise NotImplementedError(f'task: {task}')
 
     netw = config.get('_k12.model.network')
-    if netw not in ('dqn'):
+    if netw not in ('dqn', 'pg'):
         raise NotImplementedError(f'network type: {netw}')
 
     mode = config.get('_k12.sampler.mode')
@@ -98,6 +116,49 @@ def _rl_runner(config, phase):
     if task == 'atari':
         Env = AtariEnv
         Traj = AtariTrajInfo
+    elif task == 'mujoco':
+        Env = gym_make
+        Traj = TrajInfo
+        config.put('agent', {})
+
+    if netw == 'dqn':
+        if model == 'dqn':
+            Algo = DQN
+            if task == 'atari':
+                Agent = AtariDqnAgent
+        elif model == 'catdqn':
+            Algo = CategoricalDQN
+            if task == 'atari':
+                Agent = AtariCatDqnAgent
+        elif model == 'r2d1':
+            Algo = R2D1
+            if task == 'atari':
+                if mode == 'alternating':
+                    Agent = AtariR2d1AlternatingAgent
+                else:
+                    Agent = AtariR2d1Agent
+    elif netw == 'pg':
+        type_ = config.get('_k12.model.algo', default='none')
+        if model == 'a2c':
+            Algo = A2C
+            if type_ == 'ff':
+                Agent = AtariFfAgent if task == 'atari' else MujocoFfAgent 
+            elif type_ == 'lstm':
+                Agent = AtariLstmAgent if task == 'atari' else MujocoLstmAgent 
+            else:
+                raise NotImplementedError(f'algo type:{type_}')
+        elif model == 'ppo':
+            Algo = PPO
+            if type_ == 'ff':
+                Agent = AtariFfAgent if task == 'atari' else MujocoFfAgent 
+            elif type_ == 'lstm':
+                Agent = AtariLstmAgent if task == 'atari' else MujocoLstmAgent 
+            else:
+                raise NotImplementedError(f'algo type:{type_}')
+        else:
+            raise NotImplementedError(f'algo:{model}')
+    elif netw == 'qpg':
+        raise NotImplementedError(f'network:{netw}')
 
     affinity = make_affinity(**config['affinity'])
 
@@ -130,23 +191,6 @@ def _rl_runner(config, phase):
             Runner = MinibatchRlEval if eval_ else MinibatchRl 
     elif phase == 'evaluate':
         Runner = AsyncRlEvalOnce if async_ else MinibatchRlEvalOnce
-
-    if netw == 'dqn':
-        if model == 'dqn':
-            Algo = DQN
-            if task == 'atari':
-                Agent = AtariDqnAgent
-        elif model == 'catdqn':
-            Algo = CategoricalDQN
-            if task == 'atari':
-                Agent = AtariCatDqnAgent
-        elif model == 'r2d1':
-            Algo = R2D1
-            if task == 'atari':
-                if mode == 'alternating':
-                    Agent = AtariR2d1AlternatingAgent
-                else:
-                    Agent = AtariR2d1Agent
 
     sampler = Sampler(
             EnvCls=Env,

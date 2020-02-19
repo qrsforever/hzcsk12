@@ -35,7 +35,7 @@ ENV TZ=Asia/Shanghai \
     PATH=${CUDA_HOME}/bin/:$PATH \
     LD_LIBRARY_PATH=${CUDA_HOME}/lib:${CUDA_HOME}/lib64:$LD_LIBRARY_PATH \
     NVIDIA_VISIBLE_DEVICES=all \
-    NVIDIA_DRIVER_CAPABILITIES=compute,utility \
+    NVIDIA_DRIVER_CAPABILITIES=compute,utility
 
 WORKDIR /hzcsk12
 
@@ -44,7 +44,7 @@ RUN sed -i 's/http:\/\/archive\.ubuntu\.com\/ubuntu\//http:\/\/mirrors\.intra\.d
 RUN apt-get update --fix-missing
 RUN apt-get install -y tzdata bzip2 unzip ca-certificates gcc git curl wget nfs-common htop psmisc \
     libc-dev libevent-dev libglib2.0-0 libsm6 libxext6 libxrender1 libfontconfig1 build-essential \
-    python3-opengl ffmpeg && \
+    xvfb python3-opengl ffmpeg && \
     rm -rf /var/lib/apt/lists/*  && \
     ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 # RUN apt-get install -y openssh-server openssh-client

@@ -7,29 +7,9 @@
 local _Utils = import '../../utils/helper.libsonnet';
 
 {
-    get():: [
-        {
-            type: 'H',
-            objs: [
-                {
-                    _id_: '_k12.model.network',
-                    name: { en: 'Network', cn: self.en },
-                    type: 'string-enum',
-                    objs: [
-                        {
-                            name: _Utils.network_name,
-                            value: _Utils.network,
-                        },
-                    ],
-                    default: self.objs[0].value,
-                    readonly: true,
-                },
-                _Utils.bool('model.dueling', 'Dueling', def=false),
-                _Utils.bool('algo.double_dqn', 'Double', def=false),
-            ],
-        },
-    ] + if _Utils.network == 'dqn'
-    then
+    get():: if _Utils.network == 'dqn' then
         [import 'dqn.libsonnet']
+    else if _Utils.network == 'pg' then
+        [import 'pg.libsonnet']
     else [],
 }

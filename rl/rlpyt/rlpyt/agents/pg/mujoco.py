@@ -14,9 +14,9 @@ class MujocoMixin:
 
     def make_env_to_model_kwargs(self, env_spaces):
         """Extract observation_shape and action_size."""
-        assert len(env_spaces.action.shape) == 1
+        # assert len(env_spaces.action.shape) == 1
         return dict(observation_shape=env_spaces.observation.shape,
-                    action_size=env_spaces.action.shape[0])
+                    action_size=2)# env_spaces.action.shape[0])
 
 
 class MujocoFfAgent(MujocoMixin, GaussianPgAgent):

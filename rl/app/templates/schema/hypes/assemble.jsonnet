@@ -10,11 +10,6 @@
         type: 'accordion',
         objs: [
             {
-                name: { en: 'Algo', cn: self.en },
-                type: '_ignore_',
-                objs: (import 'algo/__init__.jsonnet').get(),
-            },
-            {
                 name: { en: 'Replay', cn: self.en },
                 type: '_ignore_',
                 objs: (import 'replay/__init__.jsonnet').get(),

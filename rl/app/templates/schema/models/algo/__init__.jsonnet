@@ -19,5 +19,8 @@ local _Utils = import '../../utils/helper.libsonnet';
     ] + if _Utils.network == 'dqn'
     then
         [import 'dqn.libsonnet']
+    else if _Utils.network == 'pg'
+    then
+        [import 'pg.libsonnet']
     else [],
 }
