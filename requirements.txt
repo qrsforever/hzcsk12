@@ -15,6 +15,7 @@ seaborn
 
 xvfb
 gym
+gym[atari]
 
 # rpc
 zerorpc

@@ -25,38 +25,34 @@ LABEL org.label-schema.schema-version="1.0" \
 
 LABEL com.nvidia.volumes.needed="nvidia_driver"
 
-ENV TZ=Asia/Shanghai
-ENV LC_ALL=C.UTF-8
-ENV LANG=C.UTF-8
-ENV PYTHONIOENCODING=utf-8
-
 ARG CUDA_HOME="/usr/local/cuda"
-ENV CUDA_HOME=${CUDA_HOME}
-
-ENV PATH ${CUDA_HOME}/bin/:$PATH
-ENV LD_LIBRARY_PATH ${CUDA_HOME}/lib:${CUDA_HOME}/lib64
-ENV NVIDIA_VISIBLE_DEVICES all
-ENV NVIDIA_DRIVER_CAPABILITIES compute,utility
+ENV TZ=Asia/Shanghai \
+    LC_ALL=C.UTF-8 \
+    LANG=C.UTF-8 \
+    PYTHONIOENCODING=utf-8 \
+    DEBIAN_FRONTEND=noninteractive \
+    CUDA_HOME=${CUDA_HOME} \
+    PATH=${CUDA_HOME}/bin/:$PATH \
+    LD_LIBRARY_PATH=${CUDA_HOME}/lib:${CUDA_HOME}/lib64:$LD_LIBRARY_PATH \
+    NVIDIA_VISIBLE_DEVICES=all \
+    NVIDIA_DRIVER_CAPABILITIES=compute,utility \
 
 WORKDIR /hzcsk12
 
 # apt install
 RUN sed -i 's/http:\/\/archive\.ubuntu\.com\/ubuntu\//http:\/\/mirrors\.intra\.didiyun\.com\/ubuntu\//g' /etc/apt/sources.list
 RUN apt-get update --fix-missing
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata
-RUN apt-get install -y vim bzip2 unzip ca-certificates gcc git curl wget nfs-common htop psmisc
+RUN apt-get install -y tzdata bzip2 unzip ca-certificates gcc git curl wget nfs-common htop psmisc \
+    libc-dev libevent-dev libglib2.0-0 libsm6 libxext6 libxrender1 libfontconfig1 build-essential \
+    python3-opengl ffmpeg && \
+    rm -rf /var/lib/apt/lists/*  && \
+    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 # RUN apt-get install -y openssh-server openssh-client
-RUN apt-get install -y libc-dev libevent-dev libglib2.0-0 libsm6 libxext6 libxrender1 libfontconfig1 build-essential
-RUN apt-get install -y python3-opengl
-RUN rm -rf /var/lib/apt/lists/*
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # pip install
 COPY external/docker/pip/pip.conf /root/.pip/pip.conf
 COPY requirements.txt .
-RUN pip install --no-cache-dir --timeout 120 -r requirements.txt
-RUN rm requirements.txt
-
+RUN pip install --no-cache-dir --timeout 120 -r requirements.txt && rm requirements.txt
 RUN mkdir -p external
 
 # install apex
@@ -86,10 +82,10 @@ RUN pip install -U jupyter \
 ARG jupyter_data_dir=/root/.local/share/jupyter
 ARG jupyter_conf_dir=/root/.jupyter
 
-RUN jupyter contrib nbextension install
-RUN jupyter nbextensions_configurator enable
-RUN mkdir -p ${jupyter_data_dir}/nbextensions
+RUN jupyter contrib nbextension install && \
+    jupyter nbextensions_configurator enable && \
+    mkdir -p ${jupyter_data_dir}/nbextensions && \
+    jupyter notebook --generate-config -y
+COPY .jupyter_config/jupyter_notebook_config.json ${jupyter_conf_dir}/jupyter_notebook_config.json
 COPY .jupyter_config/vim_binding ${jupyter_data_dir}/nbextensions/vim_binding
 RUN jupyter nbextension enable vim_binding/vim_binding
-RUN jupyter notebook --generate-config -y
-COPY .jupyter_config/jupyter_notebook_config.json ${jupyter_conf_dir}/jupyter_notebook_config.json
