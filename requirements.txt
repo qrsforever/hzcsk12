@@ -13,6 +13,9 @@ psutil
 pyhocon
 seaborn
 
+xvfb
+gym
+
 # rpc
 zerorpc
 python-consul
