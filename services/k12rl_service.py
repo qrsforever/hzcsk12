@@ -78,6 +78,8 @@ class RLServiceRPC(object):
                     code = 100902
                 elif errtype == 'ConfigurationError':
                     code = 100903
+                elif errtype == 'FileNotFoundError':
+                    code = 100905
                 else:
                     code = 100999
                 message = _err_msg(code, exc_info=message)
@@ -208,8 +210,6 @@ class RLServiceRPC(object):
 
         command = 'python {}'.format('%s/app/k12rl/main.py' % self._workdir)
         command += ' --phase %s --config_file /cache/config.json' % phase
-        command += ' --out_dir /cache/output'
-        print(command)
         Thread(target=lambda: self._run(op=op, user=user, uuid=uuid, command=command),
             daemon=True).start()
         return 100000, None
