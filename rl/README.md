@@ -14,7 +14,7 @@ Date:   Mon Jan 27 13:30:36 2020 -0800
 |:----|:----|
 |`rlpyt/rlpyt/utils/logging/logger.py` | hook log |
 |`rlpyt/rlpyt/samplers/parallel/worker.py` | 解决work进程异常导致主进程死等 |
-
+|`rlpyt/rlpyt/envs/gym.py` | 支持离散action游戏如: CartPole |
 
 # TODO
 

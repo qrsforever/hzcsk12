@@ -1,6 +1,7 @@
 atari-py
 # mujoco-py
 pyprind
+gym[atari]
 
 # Tmp
 pyhocon

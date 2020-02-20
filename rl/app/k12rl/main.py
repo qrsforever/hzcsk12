@@ -74,6 +74,8 @@ from rlpyt.envs.gym import make as gym_make
 from rlpyt.agents.pg.mujoco import MujocoFfAgent
 from rlpyt.agents.pg.mujoco import MujocoLstmAgent
 
+_run_ID = '0'
+
 
 def _signal_handler(sig, frame):
     if sig == signal.SIGUSR1:
@@ -142,17 +144,17 @@ def _rl_runner(config, phase):
         if model == 'a2c':
             Algo = A2C
             if type_ == 'ff':
-                Agent = AtariFfAgent if task == 'atari' else MujocoFfAgent 
+                Agent = AtariFfAgent if task == 'atari' else MujocoFfAgent
             elif type_ == 'lstm':
-                Agent = AtariLstmAgent if task == 'atari' else MujocoLstmAgent 
+                Agent = AtariLstmAgent if task == 'atari' else MujocoLstmAgent
             else:
                 raise NotImplementedError(f'algo type:{type_}')
         elif model == 'ppo':
             Algo = PPO
             if type_ == 'ff':
-                Agent = AtariFfAgent if task == 'atari' else MujocoFfAgent 
+                Agent = AtariFfAgent if task == 'atari' else MujocoFfAgent
             elif type_ == 'lstm':
-                Agent = AtariLstmAgent if task == 'atari' else MujocoLstmAgent 
+                Agent = AtariLstmAgent if task == 'atari' else MujocoLstmAgent
             else:
                 raise NotImplementedError(f'algo type:{type_}')
         else:
@@ -184,14 +186,6 @@ def _rl_runner(config, phase):
             Sampler = AlternatingSampler if alter else GpuSampler
             Collector = GpuResetCollector if reset else GpuWaitResetCollector
 
-    if phase == 'train':
-        if async_:
-            Runner = AsyncRlEval if eval_ else AsyncRl
-        else:
-            Runner = MinibatchRlEval if eval_ else MinibatchRl 
-    elif phase == 'evaluate':
-        Runner = AsyncRlEvalOnce if async_ else MinibatchRlEvalOnce
-
     sampler = Sampler(
             EnvCls=Env,
             env_kwargs=config['env'],
@@ -199,23 +193,49 @@ def _rl_runner(config, phase):
             TrajInfoCls=Traj,
             eval_env_kwargs=config['eval_env'],
             **config['sampler'])
-    
+
     # OptimCls
     if optim == 'adam':
         Optim = torch.optim.Adam
     else:
         Optim = torch.optim.RMSprop
 
-    algo = Algo(OptimCls=Optim, optim_kwargs=config['optim'], **config['algo'])
-    agent = Agent(model_kwargs=config['model'], **config['agent'])
+    if phase == 'train':
+        algo = Algo(OptimCls=Optim, optim_kwargs=config['optim'], **config['algo'])
+        agent = Agent(model_kwargs=config['model'], **config['agent'])
+        if async_:
+            Runner = AsyncRlEval if eval_ else AsyncRl
+        else:
+            Runner = MinibatchRlEval if eval_ else MinibatchRl
+    elif phase == 'evaluate':
+        snapshot_pth = os.path.join(context.LOG_DIR, f'run_{_run_ID}', 'params.pkl')
+        if not os.path.exists(snapshot_pth):
+            raise FileNotFoundError(f'model file: {snapshot_pth}')
+        snapshot = torch.load(snapshot_pth)
+        agent_state_dict = snapshot['agent_state_dict']
+        if 'model' in agent_state_dict:
+            agent_state_dict = agent_state_dict['model']
+        optimizer_state_dict = snapshot['optimizer_state_dict']
+        algo = Algo(OptimCls=Optim, optim_kwargs=config['optim'], **config['algo'],
+                initial_optim_state_dict=optimizer_state_dict)
+        agent = Agent(model_kwargs=config['model'], **config['agent'],
+                initial_model_state_dict=agent_state_dict)
+        Runner = AsyncRlEvalOnce if async_ else MinibatchRlEvalOnce
+
     return Runner(algo=algo, agent=agent, sampler=sampler, affinity=affinity, **config['runner'])
 
 
-def _rl_train(out_dir, config, phase):
+def _rl_train(config, phase):
+
+    context.LOG_DIR = config.get('_k12.out_dir', default='/cache/output')
 
     runner = _rl_runner(config, phase)
 
-    with context.logger_context(out_dir, 'rl', 'k12', config):
+    snapshot_mode = 'last'
+    if phase == 'evaluate':
+        snapshot_mode = 'none'
+
+    with context.logger_context(context.LOG_DIR, _run_ID, 'k12', config, snapshot_mode):
         runner.train()
 
 
@@ -230,26 +250,18 @@ if __name__ == "__main__":
             help="phase")
     parser.add_argument(
             '--config_file',
-            default='/cache',
+            default='/cache/config.json',
             type=str,
             dest='config_file',
             help="config file")
-    parser.add_argument(
-            '--out_dir',
-            default='/cache',
-            type=str,
-            dest='out_dir',
-            help="log dir")
     args = parser.parse_args()
-
-    context.LOG_DIR = args.out_dir
 
     _k12log(f'k12rl_running:{args.phase}')
     try:
         if args.phase == 'train' or args.phase == 'evaluate':
             with open(os.path.join(args.config_file), 'r') as f:
                 config = ConfigFactory.from_dict(json.load(f))
-            _rl_train(context.LOG_DIR, config, args.phase)
+            _rl_train(config, args.phase)
         else:
             raise NotImplementedError(f'phase: {args.phase}')
     except Exception:
