@@ -96,7 +96,7 @@ local _network_maps = {
         [if $.dataset_name == 'Animals' then 'Animals']: import '../constants/datasets/Animals.jsonnet',
         [if $.dataset_name == 'Boats' then 'Boats']: import '../constants/datasets/Boats.jsonnet',
         [if $.dataset_name == 'Chars74K' then 'Chars74K']: import '../constants/datasets/Chars74K.jsonnet',
-        [if $.dataset_name == 'dogAndCats' then 'dogAndCat']: import '../constants/datasets/dogAndCats.jsonnet',
+        [if $.dataset_name == 'dogsVsCats' then 'dogsVsCats']: import '../constants/datasets/dogsVsCats.jsonnet',
         [if $.dataset_name == 'Dogs' then 'Dogs']: import '../constants/datasets/Dogs.jsonnet',
         [if $.dataset_name == 'EMNIST_Balanced' then 'EMNIST_Balanced']: import '../constants/datasets/EMNIST_Balanced.jsonnet',
         [if $.dataset_name == 'EMNIST_Digits' then 'EMNIST_Digits']: import '../constants/datasets/EMNIST_Digits.jsonnet',

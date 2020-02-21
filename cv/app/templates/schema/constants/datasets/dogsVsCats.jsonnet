@@ -5,7 +5,7 @@
     data: {
         num_records: 25000,
         num_classes: 2,
-        data_dir: '/datasets/dogAndCat',
+        data_dir: '/datasets/dogsVsCats',
         image_tool: 'cv2',
         input_mode: 'BGR',
         workers: 4,
