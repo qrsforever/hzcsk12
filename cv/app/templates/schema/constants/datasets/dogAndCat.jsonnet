@@ -3,23 +3,23 @@
     task: 'cls',
     method: 'image_classifier',
     data: {
-        num_records: 60000,
-        num_classes: 10,
-        data_dir: '/datasets/cifar10',
-        image_tool: 'pil',
-        input_mode: 'RGB',
-        workers: 1,
+        num_records: 25000,
+        num_classes: 2,
+        data_dir: '/datasets/dogAndCat',
+        image_tool: 'cv2',
+        input_mode: 'BGR',
+        workers: 4,
         normalize: {
-            div_value: 1,
+            div_value: 255,
             mean: [
                 0.485,
                 0.456,
                 0.406,
             ],
             std: [
-                0.229,
-                0.224,
-                0.225,
+                0.485,
+                0.456,
+                0.406,
             ],
         },
     },
@@ -162,18 +162,7 @@
     },
     _k12: {
         detail: {
-            name_seq: [
-                'plane',
-                'car',
-                'bird',
-                'cat',
-                'deer',
-                'dog',
-                'frog',
-                'horse',
-                'ship',
-                'truck',
-            ],
+            name_seq: ['dog', 'cat'],
         },
     },
 }

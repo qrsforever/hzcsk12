@@ -80,6 +80,7 @@ __main()
             --volume $TOP_DIR/cv/app:$DST_DIR/hzcsnote/cv/app \
             --volume $TOP_DIR/nlp/app:$DST_DIR/hzcsnote/nlp/app \
             --volume $TOP_DIR/rl/app:$DST_DIR/hzcsnote/rl/app \
+            --volume $TOP_DIR/common:$DST_DIR/hzcsnote/k12libs/common \
             --volume /data:/data
     fi
 

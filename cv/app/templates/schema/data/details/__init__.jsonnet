@@ -18,7 +18,7 @@ local _Datasets = {
             type: 'H',
             objs: [
                 _Utils.string('_k12.data.dataset_name', 'Dataset Name', def=_Utils.dataset_name, readonly=true),
-                _Utils.string('data.data_dir', 'Dataset Path', def='unkown', ddd=true, readonly=true),
+                _Utils.string('data.data_dir', 'Dataset Path', def='/datasets/' + _Utils.dataset_name, ddd=true, readonly=true),
             ] + (
                 if _Utils.task == 'det'
                 then
@@ -45,5 +45,6 @@ local _Datasets = {
                 _Utils.int('data.normalize.div_value', 'Div Value', def=255, ddd=true, readonly=true),
             ],
         },
+        _Utils.stringarray('_k12.detail.name_seq', 'Name Seq', def=[], ddd=true, width=600, readonly=true),
     ],
 }
