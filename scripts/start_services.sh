@@ -5,6 +5,14 @@
 # author: QRS
 #=================================================================
 
+
+EXE=`ps -o comm= $PPID`
+if [[ $EXE != 'k12ai.sh' ]]
+then
+    echo "Can't run by itself, You can run k12ai.sh instead."
+    exit 0
+fi
+
 cur_fil=${BASH_SOURCE[0]}
 top_dir=`cd $(dirname $cur_fil)/..; pwd`
 
@@ -118,18 +126,34 @@ __run_command()
 
 __kill_service()
 {
-    if [[ x$1 == x ]]
+    if [[ x$1 == xall ]]
     then
-        return
-    fi
-    str=`ps -eo pid,args | grep k12$1_service | grep -v grep`
-    if [[ x$str != x ]]
+        IFS_OLD=$IFS
+        IFS=$'\n'
+        for str in `ps -eo pid,args | grep k12$1_service | grep -v grep`
+        do
+            if [[ x$str != x ]]
+            then
+                pid=`echo $str | awk '{print $1}'`
+                if [[ x$pid != x ]]
+                then
+                    kill -9 $pid
+                    __script_logout "(killed) $str"
+                fi
+            fi
+        done
+        IFS=$IFS_OLD
+    elif [[ x$1 != x ]]
     then
-        pid=`echo $str | awk '{print $1}'`
-        if [[ x$pid != x ]]
+        str=`ps -eo pid,args | grep k12$1_service | grep -v grep`
+        if [[ x$str != x ]]
         then
-            __script_logout $str
-            kill -9 $pid
+            pid=`echo $str | awk '{print $1}'`
+            if [[ x$pid != x ]]
+            then
+                kill -9 $pid
+                __script_logout "(killed) $str"
+            fi
         fi
     fi
 }
@@ -214,7 +238,7 @@ __service_health_check()
 {
     if [[ x$1 == x ]]
     then
-        __script_logout "need service name"
+        # __script_logout "need service name"
         echo "-1"
         return
     fi
@@ -237,7 +261,7 @@ __service_health_check()
     done
     if (( try_count == 0 ))
     then
-        __script_logout "check $service_name health fail"
+        # __script_logout "check $service_name health fail"
         echo "0"
     fi
     echo "1"
@@ -295,14 +319,19 @@ __start_consul_service()
             -datacenter=k12ai -client='0.0.0.0' -ui
         __script_logout "start consul service"
     else
-        __script_logout "check consul service"
+        __script_logout "consul service is ok."
     fi
 }
 
 # 2. check or start k12ai service
 __start_k12ai_service()
 {
-    if [[ x$1 == xfg ]]
+    [ x$1 != xstart ] && __kill_service ai
+    if [[ x$1 == xstop ]]
+    then
+        return
+    fi
+    if [[ x$2 == xfg ]]
     then
         result=0
         cmdstr=
@@ -325,13 +354,18 @@ __start_k12ai_service()
         __run_command $cmdstr
         __script_logout "start k12ai service"
     else
-        __script_logout "check k12ai service"
+        __script_logout "k12ai service is already running"
     fi
 }
 
 # 3. check or start k12ml service
 __start_k12ml_service()
 {
+    [ x$1 != xstart ] && __kill_service ml
+    if [[ x$1 == xstop ]]
+    then
+        return
+    fi
     use_image="hzcsai_com/k12ml"
     if [[ x$2 == xfg ]]
     then
@@ -344,10 +378,6 @@ __start_k12ml_service()
     if [[ $result != 1 ]]
     then
         export K12ML_DEBUG=$debug
-        if [[ x$1 == xcheck ]]
-        then
-            __service_image_check $use_image
-        fi
         cmdstr="$cmdstr python3 ${top_dir}/services/k12ml_service.py \
             --host ${k12ml_addr} \
             --port ${k12ml_port} \
@@ -359,13 +389,18 @@ __start_k12ml_service()
         __run_command $cmdstr
         __script_logout "start k12ml service"
     else
-        __script_logout "check k12ml service"
+        __script_logout "k12ml service is already running"
     fi
 }
 
 # 4. check or start k12cv service
 __start_k12cv_service()
 {
+    [ x$1 != xstart ] && __kill_service cv
+    if [[ x$1 == xstop ]]
+    then
+        return
+    fi
     use_image="hzcsai_com/k12cv"
     if [[ x$2 == xfg ]]
     then
@@ -378,10 +413,6 @@ __start_k12cv_service()
     if [[ $result != 1 ]]
     then
         export K12CV_DEBUG=$debug
-        if [[ x$1 == xcheck ]]
-        then
-            __service_image_check $use_image
-        fi
         cmdstr="$cmdstr python3 ${top_dir}/services/k12cv_service.py \
             --host ${k12cv_addr} \
             --port ${k12cv_port} \
@@ -393,13 +424,18 @@ __start_k12cv_service()
         __run_command $cmdstr
         __script_logout "start k12cv service"
     else
-        __script_logout "check k12cv service"
+        __script_logout "k12cv service is already running"
     fi
 }
 
 # 5. check or start k12nlp service
 __start_k12nlp_service()
 {
+    [ x$1 != xstart ] && __kill_service nlp
+    if [[ x$1 == xstop ]]
+    then
+        return
+    fi
     use_image="hzcsai_com/k12nlp"
     if [[ x$2 == xfg ]]
     then
@@ -412,10 +448,6 @@ __start_k12nlp_service()
     if [[ $result != 1 ]]
     then
         export K12NLP_DEBUG=$debug
-        if [[ x$1 == xcheck ]]
-        then
-            __service_image_check $use_image
-        fi
         cmdstr="$cmdstr python3 ${top_dir}/services/k12nlp_service.py \
             --host ${k12nlp_addr} \
             --port ${k12nlp_port} \
@@ -426,13 +458,18 @@ __start_k12nlp_service()
          __run_command $cmdstr
         __script_logout "start k12nlp service"
     else
-        __script_logout "check k12nlp service"
+        __script_logout "k12nlp service is already running"
     fi
 }
 
 # 6. check or start k12rl service
 __start_k12rl_service()
 {
+    [ x$1 != xstart ] && __kill_service rl
+    if [[ x$1 == xstop ]]
+    then
+        return
+    fi
     use_image="hzcsai_com/k12rl"
     if [[ x$2 == xfg ]]
     then
@@ -445,10 +482,6 @@ __start_k12rl_service()
     if [[ $result != 1 ]]
     then
         export K12RL_DEBUG=$debug
-        if [[ x$1 == xcheck ]]
-        then
-            __service_image_check $use_image
-        fi
         cmdstr="$cmdstr python3 ${top_dir}/services/k12rl_service.py \
             --host ${k12rl_addr} \
             --port ${k12rl_port} \
@@ -459,7 +492,7 @@ __start_k12rl_service()
         __run_command $cmdstr
         __script_logout "start k12rl service"
     else
-        __script_logout "check k12rl service"
+        __script_logout "k12rl service is already running"
     fi
 }
 
@@ -472,32 +505,32 @@ __start_service()
     elif [[ x$2 == xrestart ]]
     then
         __kill_service $1
-        arg=fg
+        fgbg=fg
     else
-        arg=bg
+        fgbg=bg
     fi
     debug=0
 
     cd $k12logs
     if [[ x$1 == xai ]]
     then
-        __start_k12ai_service $arg
+        __start_k12ai_service $fgbg
     fi
     if [[ x$1 == xml ]]
     then
-        __start_k12ml_service nocheck $arg
+        __start_k12ml_service $fgbg
     fi
     if [[ x$1 == xcv ]]
     then
-        __start_k12cv_service nocheck $arg
+        __start_k12cv_service $fgbg
     fi
     if [[ x$1 == xnlp ]]
     then
-        __start_k12nlp_service nocheck $arg
+        __start_k12nlp_service $fgbg
     fi
     if [[ x$1 == xrl ]]
     then
-        __start_k12rl_service nocheck $arg
+        __start_k12rl_service $fgbg
     fi
     cd - >/dev/null
 }
@@ -516,24 +549,20 @@ __main()
         mkdir -p $k12logs
     fi
 
-    if [[ x$1 == xsingle ]]
-    then
-        __start_service $2 $3
-        return
-    fi
     if [[ x$1 == xrelease ]]
     then
         debug=0
     fi
+
     __service_environment_check
 
     cd $k12logs
     __start_consul_service
-    __start_k12ai_service $2
-    __start_k12ml_service $2
-    __start_k12cv_service $2
-    __start_k12nlp_service $2
-    __start_k12rl_service $2
+    [ $2 == all -o $2 == ai ]  && __start_k12ai_service  $3 $4 
+    [ $2 == all -o $2 == ml ]  && __start_k12ml_service  $3 $4
+    [ $2 == all -o $2 == cv ]  && __start_k12cv_service  $3 $4
+    [ $2 == all -o $2 == rl ]  && __start_k12rl_service  $3 $4
+    [ $2 == all -o $2 == nlp ] && __start_k12nlp_service $3 $4
     cd - > /dev/null
 }
 

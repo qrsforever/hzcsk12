@@ -21,7 +21,7 @@ __main()
             sudo mount -t nfs dataserver:/data /data2
         fi
     fi
-    $top_dir/scripts/start_services.sh dev nocheck
+    $top_dir/scripts/start_services.sh dev all start "bg"
 }
 
 if [[ x$1 == x ]]
@@ -30,19 +30,32 @@ then
 else
     if [[ $# > 0 ]] && [[ $1 != 'help' ]]
     then
-        if [[ x$1 == xai ]] || [[ x$1 == xml ]] || [[ x$1 == xcv ]] || [[ x$1 == xnlp ]] || [[ x$1 == xrl ]]
+        act=$2
+        if [[ x$2 == x ]]
         then
-            act=$2
-            if [[ x$2 == x ]]
+            act="restart"
+        fi
+        if [[ $act != start ]] && [[ $act != stop ]] && [[ $act != restart ]]
+        then
+            echo "Wrong action: [start|stop|restart]"
+            exit 0
+        fi
+        bgfg=$3
+        if [[ x$3 == x ]]
+        then
+            bgfg="bg"
+        fi
+        if [[ x$1 == xall ]] || [[ x$1 == xai ]] || [[ x$1 == xml ]] || [[ x$1 == xcv ]] || [[ x$1 == xnlp ]] || [[ x$1 == xrl ]]
+        then
+            if [[ $1 == all ]]
             then
-                act="restart"
+                bgfg="bg"
             fi
-            if [[ $act == start ]] || [[ $act == stop ]] || [[ $act == restart ]]
-            then
-                $top_dir/scripts/start_services.sh single $1 $act
-            fi
+            $top_dir/scripts/start_services.sh dev $1 $act $bgfg
+        else
+            echo "Wrong task: [all|ai|ml|cv|nlp|rl]]"
         fi
     else
-        echo "k12ai.sh [ai|cv|nlp|rl] [start|stop|restart]"
+        echo "k12ai.sh [all|ai|ml|cv|nlp|rl] [start|stop|restart] [bg|fg]"
     fi
 fi
