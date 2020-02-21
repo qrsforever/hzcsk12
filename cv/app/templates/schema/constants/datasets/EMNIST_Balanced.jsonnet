@@ -58,8 +58,8 @@
         data_transformer: {
             size_mode: 'fix_size',
             input_size: [
-                32,
-                32,
+                28,
+                28,
             ],
             align_method: 'only_pad',
         },
@@ -72,8 +72,8 @@
         data_transformer: {
             size_mode: 'fix_size',
             input_size: [
-                32,
-                32,
+                28,
+                28,
             ],
             align_method: 'only_pad',
         },

@@ -58,10 +58,10 @@
         data_transformer: {
             size_mode: 'fix_size',
             input_size: [
-                32,
-                32,
+                224,
+                224,
             ],
-            align_method: 'only_pad',
+            align_method: 'scale_and_pad',
         },
     },
     val: {
@@ -72,10 +72,10 @@
         data_transformer: {
             size_mode: 'fix_size',
             input_size: [
-                32,
-                32,
+                224,
+                224,
             ],
-            align_method: 'only_pad',
+            align_method: 'scale_and_pad',
         },
     },
     test: {

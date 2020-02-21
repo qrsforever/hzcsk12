@@ -13,6 +13,8 @@ psutil
 pyhocon
 seaborn
 
+gym[atari]
+
 # rpc
 zerorpc
 python-consul
