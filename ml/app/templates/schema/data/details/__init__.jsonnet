@@ -25,5 +25,6 @@ local _Utils = import '../../utils/helper.libsonnet';
                      _Utils.int('data.num_classes', 'Num Classes', def=0, ddd=true, readonly=true),
                  ] else []),
         },
+        _Utils.text('_k12.detail.description', 'Description', def='', ddd=true, width=800, readonly=true),
     ],
 }

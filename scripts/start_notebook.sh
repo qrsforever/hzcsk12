@@ -63,7 +63,7 @@ __start_notebook()
         docker run -dit --name ${JNAME} --restart unless-stopped \
             --volume $SOURCE_NOTE_DIR:$TARGET_NOTE_DIR \
             ${@:3:$#} --network host --hostname ${JNAME} ${REPOSITORY} \
-            /bin/bash -c "umask 0000; xvfb-run -s \"-screen 0 1400x900x24\" jupyter notebook --no-browser --notebook-dir=$TARGET_NOTE_DIR --allow-root --ip=0.0.0.0 --port=$PORT"
+            /bin/bash -c "umask 0000; xvfb-run -a -s \"-screen 0 1400x900x24\" jupyter notebook --no-browser --notebook-dir=$TARGET_NOTE_DIR --allow-root --ip=0.0.0.0 --port=$PORT"
 
     else
         echo "$JNAME: already run!!!"

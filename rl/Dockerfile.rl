@@ -43,4 +43,5 @@ RUN pip install --editable .
 
 ENV PYTHONPATH=/hzcsk12/rl/app:/hzcsk12/rl/rlpyt:$PYTHONPATH
 
+# ENTRYPOINT ["/bin/bash", "-c", "/usr/bin/xvfb-run -a $@", ""]
 CMD ["/bin/bash"]

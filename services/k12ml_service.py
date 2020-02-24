@@ -61,8 +61,7 @@ class MLServiceRPC(object):
         Logger.info('workdir:%s, projdir:%s' % (self._workdir, self._projdir))
 
         self.userscache_dir = '%s/users' % data_root
-        self.datasets_dir = '%s/datasets/cv' % data_root
-        self.pretrained_dir = '%s/pretrained/cv' % data_root
+        self.datasets_dir = '%s/datasets/ml' % data_root
 
     def send_message(self, op, user, uuid, msgtype, message, clear=False):
         if not msgtype:
@@ -108,6 +107,7 @@ class MLServiceRPC(object):
 
         if '_k12.data.dataset_name' in params.keys():
             config_tree = ConfigFactory.from_dict(params)
+            config_tree.pop('_k12.detail.description')
             config_str = HOCONConverter.convert(config_tree, 'json')
         else:
             config_str = json.dumps(params)

@@ -7,6 +7,8 @@
 # @version 1.0
 # @date 2020-02-11 21:30
 
+from k12ml.data.datasets import k12ai_get_loader
+
 
 class DataLoader:
     def __init__(self, configer):
@@ -17,5 +19,6 @@ class DataLoader:
         if data_dir.startswith('load_'):
             from k12ml.data.sklearn_dataset import sk_get_dataset
             return sk_get_dataset(data_dir, self._configer.get('data.sampling'))
-        else:
-            raise NotImplementedError
+
+        data_loader = k12ai_get_loader(data_dir.split('/')[-1])
+        return data_loader.get_dataset(data_dir, self._configer.get('data.sampling'))

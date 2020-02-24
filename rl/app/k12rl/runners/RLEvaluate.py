@@ -12,10 +12,13 @@ from rlpyt.runners.minibatch_rl import MinibatchRlEval
 from rlpyt.runners.async_rl import AsyncRlEval
 from rlpyt.utils.synchronize import drain_queue
 
+# from gym.wrappers import Monitor
+
 
 class MinibatchRlEvalOnce(MinibatchRlEval):
     def train(self):
         self.startup()
+        # Monitor(self.sampler.eval_collector.envs[0], "/cache", force=True)
         eval_traj_infos, eval_time = self.evaluate_agent(0)
         self.log_diagnostics(0, eval_traj_infos, eval_time)
 

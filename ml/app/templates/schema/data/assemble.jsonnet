@@ -23,4 +23,14 @@ local _Utils = import '../utils/helper.libsonnet';
             _Utils.bool('data.sampling.shuffle', 'Shuffle', def=true, ddd=true),
         ],
     },
-] + (import 'details/__init__.jsonnet').get()
+    {
+        type: 'accordion',
+        objs: [
+            {
+                name: { en: 'Details', cn: self.en },
+                type: '_ignore_',
+                objs: (import 'details/__init__.jsonnet').get(),
+            },
+        ],
+    },
+]

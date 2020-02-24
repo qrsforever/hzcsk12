@@ -33,6 +33,10 @@ local _network_maps = {
         method: 'sklearn_wrapper',
         name: { en: 'random forest', cn: self.en },
     },
+    logistic: {
+        method: 'sklearn_wrapper',
+        name: { en: 'logistic', cn: self.en },
+    },
 };
 
 {
@@ -82,6 +86,8 @@ local _network_maps = {
         [if $.dataset_name == 'boston' then 'boston']: import '../constants/datasets/boston.jsonnet',
         [if $.dataset_name == 'linnerud' then 'linnerud']: import '../constants/datasets/linnerud.jsonnet',
         [if $.dataset_name == 'breast_cancer' then 'breast_cancer']: import '../constants/datasets/breast_cancer.jsonnet',
+
+        [if $.dataset_name == 'sf-crime' then 'sf-crime']: import '../constants/datasets/sf-crime.jsonnet',
     },
 
     // basic type node generator function

@@ -23,7 +23,7 @@
                     objs: import 'hypes/assemble.jsonnet',
                 },
                 {
-                    name: { en: 'Train', cn: self.en },
+                    name: { en: 'Train', cn: '训练' },
                     objs: [
                         {
                             _id_: '_k12.iframe.train',
@@ -33,7 +33,7 @@
                     ],
                 },
                 {
-                    name: { en: 'Evaluate', cn: self.en },
+                    name: { en: 'Evaluate', cn: '评估' },
                     objs: [
                         {
                             _id_: '_k12.iframe.evaluate',

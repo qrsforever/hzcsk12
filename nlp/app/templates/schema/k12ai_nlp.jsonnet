@@ -26,7 +26,7 @@
                     objs: import 'hypes/assemble.jsonnet',
                 },
                 {
-                    name: { en: 'Train', cn: self.en },
+                    name: { en: 'Train', cn: '训练' },
                     type: '_ignore_',
                     objs: [
                         {
@@ -37,7 +37,7 @@
                     ],
                 },
                 {
-                    name: { en: 'Evaluate', cn: self.en },
+                    name: { en: 'Evaluate', cn: '评估' },
                     type: '_ignore_',
                     objs: [
                         {
