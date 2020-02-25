@@ -21,8 +21,9 @@ class SFCrimeDataLoader(K12DataLoader):
         if not os.path.exists(train_csv):
             raise FileNotFoundError(f'dataset: {train_csv}')
 
-        # Date
         train_data_df = pd.read_csv(train_csv, parse_dates=['Dates'])
+
+        # Date
         train_data_df['Year'] = train_data_df['Dates'].dt.year
         train_data_df['Month'] = train_data_df['Dates'].dt.month
         train_data_df['Day'] = train_data_df['Dates'].dt.day

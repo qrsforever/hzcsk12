@@ -14,11 +14,11 @@ import traceback
 
 _RPCClient = None
 _RPCEnable = -1
-K12NLP_OP, K12NLP_USER, K12NLP_UUID = None, None, None
+K12NLP_TOKEN, K12NLP_OP, K12NLP_USER, K12NLP_UUID = None, None, None, None
 
 
 def hzcsk12_send_message(msgtype, message):
-    global _RPCClient, _RPCEnable, K12NLP_OP, K12NLP_USER, K12NLP_UUID
+    global _RPCClient, _RPCEnable, K12NLP_TOKEN, K12NLP_OP, K12NLP_USER, K12NLP_UUID
 
     if _RPCEnable == 0:
         return
@@ -29,6 +29,7 @@ def hzcsk12_send_message(msgtype, message):
         if not host or not port:
             _RPCEnable = 0
             return
+        K12NLP_TOKEN = os.environ.get('K12NLP_TOKEN', 'Unkown')
         K12NLP_OP = os.environ.get('K12NLP_OP', 'Unkown')
         K12NLP_USER = os.environ.get('K12NLP_USER', 'Unkown')
         K12NLP_UUID = os.environ.get('K12NLP_UUID', 'Unkown')
@@ -43,7 +44,7 @@ def hzcsk12_send_message(msgtype, message):
             epochs = message.get('training_epochs', None)
             if epochs:
                 message['training_epochs'] = epochs + 1
-            _RPCClient.send_message(K12NLP_OP, K12NLP_USER, K12NLP_UUID, msgtype, message)
+            _RPCClient.send_message(K12NLP_TOKEN, K12NLP_OP, K12NLP_USER, K12NLP_UUID, msgtype, message)
     except Exception:
         pass
 

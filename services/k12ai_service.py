@@ -124,6 +124,7 @@ def _framework_execute():
     Logger.info('call _framework_execute')
     try:
         reqjson = json.loads(request.get_data().decode())
+        token = reqjson['token']
         user = reqjson['user']
         op = reqjson['op']
         if op not in ('train.start', 'train.stop',
@@ -150,7 +151,7 @@ def _framework_execute():
     if not agent:
         return json.dumps(_err_msg(100201, f'service name:{service_name}'))
     try:
-        code, msg = agent.execute(op, user, service_uuid, service_params)
+        code, msg = agent.execute(token, op, user, service_uuid, service_params)
         return json.dumps(_err_msg(code, msg))
     except Exception:
         return json.dumps(_err_msg(100202, exc=True))

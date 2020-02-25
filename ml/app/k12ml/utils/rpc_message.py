@@ -14,11 +14,11 @@ import traceback
 
 _RPCClient = None
 _RPCEnable = -1
-K12ML_OP, K12ML_USER, K12ML_UUID = None, None, None
+K12ML_TOKEN, K12ML_OP, K12ML_USER, K12ML_UUID = None, None, None, None
 
 
 def _rpc_send_message(msgtype, message, end=False):
-    global _RPCClient, _RPCEnable, K12ML_OP, K12ML_USER, K12ML_UUID
+    global _RPCClient, _RPCEnable, K12ML_TOKEN, K12ML_OP, K12ML_USER, K12ML_UUID
 
     if _RPCEnable == 0:
         return
@@ -29,6 +29,7 @@ def _rpc_send_message(msgtype, message, end=False):
         if not host or not port:
             _RPCEnable = 0
             return
+        K12ML_TOKEN = os.environ.get('K12ML_TOKEN', 'Unkown')
         K12ML_OP = os.environ.get('K12ML_OP', 'Unkown')
         K12ML_USER = os.environ.get('K12ML_USER', 'Unkown')
         K12ML_UUID = os.environ.get('K12ML_UUID', 'Unkown')
@@ -40,7 +41,7 @@ def _rpc_send_message(msgtype, message, end=False):
 
     try:
         if message:
-            _RPCClient.send_message(K12ML_OP, K12ML_USER, K12ML_UUID, msgtype, message)
+            _RPCClient.send_message(K12ML_TOKEN, K12ML_OP, K12ML_USER, K12ML_UUID, msgtype, message)
         if end:
             _RPCClient.close()
     except Exception:

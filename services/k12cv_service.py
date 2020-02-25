@@ -65,7 +65,7 @@ class CVServiceRPC(object):
         self.datasets_dir = '%s/datasets/cv' % data_root
         self.pretrained_dir = '%s/pretrained/cv' % data_root
 
-    def send_message(self, op, user, uuid, msgtype, message, clear=False):
+    def send_message(self, token, op, user, uuid, msgtype, message, clear=False):
         if not msgtype:
             return
         if isinstance(message, dict):
@@ -96,7 +96,7 @@ class CVServiceRPC(object):
                 else:
                     code = 100399
                 message = _err_msg(code, exc_info=message)
-        k12ai_consul_message(user, op, 'k12cv', uuid, msgtype, message, clear)
+        k12ai_consul_message(token, user, op, 'k12cv', uuid, msgtype, message, clear)
 
     def _get_container(self, user, uuid):
         try:
@@ -185,7 +185,7 @@ class CVServiceRPC(object):
 
         return 100000, None
 
-    def _run(self, op, user, uuid, command=None):
+    def _run(self, token, op, user, uuid, command=None):
         Logger.info(command)
         message = None
         rm_flag = True
@@ -218,34 +218,35 @@ class CVServiceRPC(object):
             volumes[f'{self._projdir}/torchcv/main.py'] = {'bind': f'{self._workdir}/torchcv/main.py', 'mode': 'rw'}
 
         environs = {
-                'K12CV_RPC_HOST': '%s' % self._host,
-                'K12CV_RPC_PORT': '%s' % self._port,
-                'K12CV_OP': '%s' % op,
-                'K12CV_USER': '%s' % user,
-                'K12CV_UUID': '%s' % uuid
-                } # noqa
+            'K12CV_RPC_HOST': '%s' % self._host,
+            'K12CV_RPC_PORT': '%s' % self._port,
+            'K12CV_TOKEN': '%s' % token,
+            'K12CV_OP': '%s' % op,
+            'K12CV_USER': '%s' % user,
+            'K12CV_UUID': '%s' % uuid
+        }
         kwargs = {
-                'name': '%s-%s-%s' % (op, user, uuid),
-                'auto_remove': rm_flag,
-                'detach': True,
-                'runtime': 'nvidia',
-                'labels': labels,
-                'volumes': volumes,
-                'environment': environs,
-                'shm_size': '4g',
-                'mem_limit': '8g',
-                } # noqa
+            'name': '%s-%s-%s' % (op, user, uuid),
+            'auto_remove': rm_flag,
+            'detach': True,
+            'runtime': 'nvidia',
+            'labels': labels,
+            'volumes': volumes,
+            'environment': environs,
+            'shm_size': '4g',
+            'mem_limit': '8g',
+        } 
 
-        self.send_message(op, user, uuid, "status", {'value': 'starting'}, clear=True)
+        self.send_message(token, op, user, uuid, "status", {'value': 'starting'}, clear=True)
         try:
             self._docker.containers.run(self._image, command, **kwargs)
             return
         except Exception:
             message = _err_msg(100203, f'container image:{self._image}', exc=True)
-            self.send_message(op, user, uuid, "status", {'value': 'exit', 'way': 'docker'})
+            self.send_message(token, op, user, uuid, "status", {'value': 'exit', 'way': 'docker'})
 
         if message:
-            self.send_message(op, user, uuid, "error", message)
+            self.send_message(token, op, user, uuid, "error", message)
 
     def schema(self, task, netw, dataset_name):
         schema_file = os.path.join(self._projdir, 'app', 'templates', 'schema', 'k12ai_cv.jsonnet')
@@ -263,7 +264,7 @@ class CVServiceRPC(object):
                 'num_gpu': str(self._gpu_count)})
         return 100000, json.dumps(json.loads(schema_json), separators=(',', ':'))
 
-    def execute(self, op, user, uuid, params):
+    def execute(self, token, op, user, uuid, params):
         Logger.info("call execute(%s, %s, %s)" % (op, user, uuid))
         container = self._get_container(user, uuid)
         phase, action = op.split('.')
@@ -271,7 +272,7 @@ class CVServiceRPC(object):
             if container is None or container.status != 'running':
                 return 100205, None
             container.kill()
-            self.send_message('%s.start' % phase, user, uuid, "status", {'value': 'exit', 'way': 'manual'})
+            self.send_message(token, '%s.start' % phase, user, uuid, "status", {'value': 'exit', 'way': 'manual'})
             return 100000, None
 
         if container:
@@ -295,7 +296,7 @@ class CVServiceRPC(object):
         elif phase == 'predict':
             raise('not impl yet')
 
-        Thread(target=lambda: self._run(op=op, user=user, uuid=uuid, command=command),
+        Thread(target=lambda: self._run(token=token, op=op, user=user, uuid=uuid, command=command),
             daemon=True).start()
         return 100000, None
 

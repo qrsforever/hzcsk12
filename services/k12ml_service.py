@@ -63,7 +63,7 @@ class MLServiceRPC(object):
         self.userscache_dir = '%s/users' % data_root
         self.datasets_dir = '%s/datasets/ml' % data_root
 
-    def send_message(self, op, user, uuid, msgtype, message, clear=False):
+    def send_message(self, token, op, user, uuid, msgtype, message, clear=False):
         if not msgtype:
             return
         if isinstance(message, dict):
@@ -82,7 +82,7 @@ class MLServiceRPC(object):
                 else:
                     code = 100999
                 message = _err_msg(code, exc_info=message)
-        k12ai_consul_message(user, op, 'k12ml', uuid, msgtype, message, clear)
+        k12ai_consul_message(token, user, op, 'k12ml', uuid, msgtype, message, clear)
 
     def _get_container(self, user, uuid):
         try:
@@ -118,7 +118,7 @@ class MLServiceRPC(object):
 
         return 100000, None
 
-    def _run(self, op, user, uuid, command=None):
+    def _run(self, token, op, user, uuid, command=None):
         Logger.info(command)
         message = None
         rm_flag = True
@@ -144,6 +144,7 @@ class MLServiceRPC(object):
         environs = {
             'K12ML_RPC_HOST': '%s' % self._host,
             'K12ML_RPC_PORT': '%s' % self._port,
+            'K12ML_TOKEN': '%s' % token,
             'K12ML_OP': '%s' % op,
             'K12ML_USER': '%s' % user,
             'K12ML_UUID': '%s' % uuid
@@ -160,16 +161,16 @@ class MLServiceRPC(object):
             'mem_limit': '8g',
         }
 
-        self.send_message(op, user, uuid, "status", {'value': 'starting'}, clear=True)
+        self.send_message(token, op, user, uuid, "status", {'value': 'starting'}, clear=True)
         try:
             self._docker.containers.run(self._image, command, **kwargs)
             return
         except Exception:
             message = _err_msg(100302, 'container image:{}'.format(self._image), exc=True)
-            self.send_message(op, user, uuid, "status", {'value': 'exit', 'way': 'docker'})
+            self.send_message(token, op, user, uuid, "status", {'value': 'exit', 'way': 'docker'})
 
         if message:
-            self.send_message(op, user, uuid, "error", message)
+            self.send_message(token, op, user, uuid, "error", message)
 
     def schema(self, task, netw, dataset_name):
         schema_file = os.path.join(self._projdir, 'app', 'templates', 'schema', 'k12ai_ml.jsonnet')
@@ -187,7 +188,7 @@ class MLServiceRPC(object):
                 'num_gpu': str(self._gpu_count)})
         return 100000, json.dumps(json.loads(schema_json), separators=(',', ':'))
 
-    def execute(self, op, user, uuid, params):
+    def execute(self, token, op, user, uuid, params):
         Logger.info("call execute(%s, %s, %s)" % (op, user, uuid))
         container = self._get_container(user, uuid)
         phase, action = op.split('.')
@@ -195,7 +196,7 @@ class MLServiceRPC(object):
             if container is None or container.status != 'running':
                 return 100205, None
             container.kill()
-            self.send_message('%s.start' % phase, user, uuid, "status", {'value': 'exit', 'way': 'manual'})
+            self.send_message(token, '%s.start' % phase, user, uuid, "status", {'value': 'exit', 'way': 'manual'})
             return 100000, None
 
         if container:
@@ -209,7 +210,7 @@ class MLServiceRPC(object):
 
         command = 'python {}'.format('%s/app/k12ml/main.py' % self._workdir)
         command += ' --phase %s --config_file /cache/config.json' % phase
-        Thread(target=lambda: self._run(op=op, user=user, uuid=uuid, command=command),
+        Thread(target=lambda: self._run(token=token, op=op, user=user, uuid=uuid, command=command),
             daemon=True).start()
         return 100000, None
 

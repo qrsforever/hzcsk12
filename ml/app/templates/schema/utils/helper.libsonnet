@@ -88,6 +88,7 @@ local _network_maps = {
         [if $.dataset_name == 'breast_cancer' then 'breast_cancer']: import '../constants/datasets/breast_cancer.jsonnet',
 
         [if $.dataset_name == 'sf-crime' then 'sf-crime']: import '../constants/datasets/sf-crime.jsonnet',
+        [if $.dataset_name == 'titanic' then 'titanic']: import '../constants/datasets/titanic.jsonnet',
     },
 
     // basic type node generator function
