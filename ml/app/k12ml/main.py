@@ -16,22 +16,10 @@ from k12ml.utils.rpc_message import hzcsk12_send_message as _sendmsg
 
 def _do_train(configer):
     Logger.info(f'{configer}')
-    task = configer.get('task')
-    if task == 'classifier':
-        from k12ml.models.classification import k12ai_get_model
-    elif task == 'regressor':
-        from k12ml.models.regression import k12ai_get_model
-    elif task == 'cluster':
-        from k12ml.models.clustering import k12ai_get_model
-    else:
-        raise NotImplementedError
-
-    model_name = configer.get('model.name')
-    model_algo = k12ai_get_model(model_name)(configer.get(f'model.{model_name}'))
 
     if configer.get('method') == 'sklearn_wrapper':
         from k12ml.runners.sklearn_wrapper import SKRunner
-        runner = SKRunner(model_algo, configer)
+        runner = SKRunner(configer)
         metrics = runner.train()
         _sendmsg(metrics)
         Logger.info(metrics)

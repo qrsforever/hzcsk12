@@ -31,5 +31,7 @@ local _Utils = import '../utils/helper.libsonnet';
         (import 'types/random_forest.libsonnet').get()
     else if 'logistic' == _Utils.network then
         (import 'types/logistic.libsonnet').get()
+    else if 'gradient_boosting' == _Utils.network then
+        (import 'types/gradient_boosting.libsonnet').get()
     else []
 )

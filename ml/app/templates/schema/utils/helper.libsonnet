@@ -37,6 +37,10 @@ local _network_maps = {
         method: 'sklearn_wrapper',
         name: { en: 'logistic', cn: self.en },
     },
+    gradient_boosting: {
+        method: 'sklearn_wrapper',
+        name: { en: 'logistic', cn: self.en },
+    },
 };
 
 {
@@ -89,6 +93,7 @@ local _network_maps = {
 
         [if $.dataset_name == 'sf-crime' then 'sf-crime']: import '../constants/datasets/sf-crime.jsonnet',
         [if $.dataset_name == 'titanic' then 'titanic']: import '../constants/datasets/titanic.jsonnet',
+        [if $.dataset_name == 'house-prices' then 'house-prices']: import '../constants/datasets/house-prices.jsonnet',
     },
 
     // basic type node generator function

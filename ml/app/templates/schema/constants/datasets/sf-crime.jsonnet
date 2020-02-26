@@ -37,15 +37,7 @@
     _k12: {
         detail: {
             description: |||
-                1. Dates - timestamp of the crime incident
-                2. Category - category of the crime incident
-                3. Descript - detailed description of the crime incident
-                4. DayOfWeek - the day of the week
-                5. PdDistrict - name of the Police Department District
-                6. Resolution - how the crime incident was resolved
-                7. Address - the approximate street address of the crime incident
-                8. X - Longitude
-                9. Y - Latitude
+                https://www.kaggle.com/c/sf-crime
             |||,
         },
     },
