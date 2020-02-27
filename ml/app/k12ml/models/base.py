@@ -9,11 +9,12 @@
 
 
 class K12Algorithm:
-    def __init__(self):
-        pass
-
     def fit(self, X, Y):
         raise NotImplementedError
 
     def predict(self, X):
         raise NotImplementedError
+
+    def train(self, X_train, y_train, X_test):
+        self.fit(X_train, y_train)
+        return self.predict(X_test)

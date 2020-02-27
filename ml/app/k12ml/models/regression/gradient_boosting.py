@@ -10,7 +10,6 @@
 
 from k12ml.models.base import K12Algorithm
 from sklearn.ensemble import GradientBoostingRegressor as Algo
-from sklearn.metrics import r2_score
 
 
 class SKGradientBoosting(K12Algorithm):
@@ -28,12 +27,6 @@ class SKGradientBoosting(K12Algorithm):
             raise NotImplementedError
         return self._algo.predict(X)
 
-    def train(self, dataloader):
-        X_train, X_test, Y_train, Y_test = dataloader.get_dataset()
-        self.fit(X_train, Y_train)
-        Y_prediction = self.predict(X_test)
-        r2score = r2_score(Y_test, Y_prediction)
-        return {
-                'algorithm': self._algo.__class__.__name__,
-                'r2_score': r2score
-        }
+    def train(self, X_train, y_train, X_test):
+        self.fit(X_train, y_train)
+        return self.predict(X_test)

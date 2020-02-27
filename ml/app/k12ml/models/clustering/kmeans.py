@@ -25,11 +25,3 @@ class SKKmeans(K12Algorithm):
         if self._algo is None:
             raise NotImplementedError
         return self._algo.predict(X)
-
-    def train(self, dataloader):
-        X_train, X_test, Y_train, Y_test = dataloader.get_dataset()
-        self.fit(X_train, Y_train)
-        self.predict(X_test)
-        return {
-                'algorithm': self._algo.__class__.__name__,
-        }

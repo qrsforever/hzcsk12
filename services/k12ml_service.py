@@ -107,7 +107,10 @@ class MLServiceRPC(object):
 
         if '_k12.data.dataset_name' in params.keys():
             config_tree = ConfigFactory.from_dict(params)
-            config_tree.pop('_k12.detail.description')
+            _k12ai_tree = config_tree.pop('_k12')
+            for k, v in _k12ai_tree.get('metrics', default={}).items():
+                if v and not config_tree.get('metrics.%s' % k, default=None):
+                    config_tree.put('metrics.%s' % k, {})
             config_str = HOCONConverter.convert(config_tree, 'json')
         else:
             config_str = json.dumps(params)

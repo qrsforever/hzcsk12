@@ -34,4 +34,15 @@ local _Utils = import '../utils/helper.libsonnet';
     else if 'gradient_boosting' == _Utils.network then
         (import 'types/gradient_boosting.libsonnet').get()
     else []
-)
+) + [
+    {
+        type: 'accordion',
+        objs: [
+            {
+                name: { en: 'Metrics', cn: self.en },
+                type: '_ignore_',
+                objs: (import 'metrics/__init__.jsonnet').get(),
+            },
+        ],
+    },
+]

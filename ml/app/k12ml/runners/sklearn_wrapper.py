@@ -16,10 +16,13 @@ class SKRunner(BaseRunner):
         task = configer.get('task')
         if task == 'classifier':
             from k12ml.models.classification import k12ai_get_model
+            from k12ml.metrics.sk.classification import k12ai_get_metrics
         elif task == 'regressor':
             from k12ml.models.regression import k12ai_get_model
+            from k12ml.metrics.sk.regression import k12ai_get_metrics
         elif task == 'cluster':
             from k12ml.models.clustering import k12ai_get_model
+            from k12ml.metrics.sk.clustering import k12ai_get_metrics
         else:
             raise NotImplementedError
 
@@ -28,6 +31,10 @@ class SKRunner(BaseRunner):
 
         self._model = k12ai_get_model(model_name)(model_args)
         self._dataloader = DataLoader(configer)
+        self._metrics = lambda y_true, y_pred, \
+                kwargs=configer.get('metrics'): k12ai_get_metrics(y_true, y_pred, kwargs)
 
     def train(self):
-        return self._model.train(self._dataloader)
+        X_train, X_test, y_train, y_test = self._dataloader.get_dataset()
+        y_pred = self._model.train(X_train, y_train, X_test)
+        return self._metrics(y_test, y_pred)
