@@ -16,7 +16,7 @@ from flask_cors import CORS
 from threading import Thread
 
 from k12ai_consul import k12ai_consul_init, k12ai_consul_register, k12ai_consul_service
-from k12ai_platform import k12ai_platform_stats, k12ai_platform_control
+from k12ai_platform import k12ai_platform_stats, k12ai_platform_control, k12ai_platform_memory_free
 from k12ai_errmsg import k12ai_error_message as _err_msg
 from k12ai_logger import (k12ai_set_loglevel, k12ai_set_logfile, Logger)
 
@@ -136,7 +136,7 @@ def _framework_execute():
         service_params = reqjson.get('service_params', None)
         if isinstance(service_params, str):
             service_params = json.loads(service_params)
-        # TODO only test
+        # TODO not good
         if service_name == 'k12cv':
             custom_model = reqjson.get('custom_model', None)
             if custom_model:
@@ -152,7 +152,10 @@ def _framework_execute():
         return json.dumps(_err_msg(100201, f'service name:{service_name}'))
     try:
         code, msg = agent.execute(token, op, user, service_uuid, service_params)
-        return json.dumps(_err_msg(code, msg))
+        if code != 100000:
+            return json.dumps(_err_msg(code, msg))
+        else:
+            return json.dumps(_err_msg(code, k12ai_platform_memory_free()))
     except Exception:
         return json.dumps(_err_msg(100202, exc=True))
 

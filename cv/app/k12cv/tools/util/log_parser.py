@@ -10,12 +10,24 @@
 import sys
 import re
 import traceback
+import resource
+from torch import cuda
 
 from k12cv.tools.util.rpc_message import hzcsk12_send_message
 
 _isepoch_ = True
 _maxiter_ = -1
 _metrics_ = {}
+
+
+def _get_memory(device=None):
+    data = {}
+    data['cpu_max_memory_rss'] = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    data['gpu_max_memory_allocated'] = cuda.max_memory_allocated(device)
+    data['gpu_max_memory_cached'] = cuda.max_memory_cached(device)
+    data['gpu_memory_allocated'] = cuda.memory_allocated(device)
+    data['gpu_memory_cached'] = cuda.memory_cached(device)
+    return data
 
 
 def _parse_metrics(filename, lineno, message):
@@ -122,6 +134,7 @@ def _parse_metrics(filename, lineno, message):
                     _metrics_['evaluate_progress'] = 1.0
         elif filename == 'main.py':
             if message.startswith('k12cv_finish'):
+                hzcsk12_send_message('metrics', {**_metrics_, **_get_memory()})
                 hzcsk12_send_message('status', {'value': 'exit', 'way': 'finish'})
                 return
         else:

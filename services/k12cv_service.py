@@ -235,7 +235,7 @@ class CVServiceRPC(object):
             'environment': environs,
             'shm_size': '4g',
             'mem_limit': '8g',
-        } 
+        }
 
         self.send_message(token, op, user, uuid, "status", {'value': 'starting'}, clear=True)
         try:

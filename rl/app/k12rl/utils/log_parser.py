@@ -11,6 +11,8 @@ import os, sys
 import re
 import traceback
 import numpy as np
+import resource
+from torch import cuda
 
 from k12rl.utils.rpc_message import hzcsk12_send_message
 from k12rl.utils import hzcsk12_kill
@@ -18,6 +20,16 @@ from k12rl.utils import hzcsk12_kill
 g_phase = ''
 g_iters = 0
 g_metrics = {}
+
+
+def _get_memory(device=None):
+    data = {}
+    data['cpu_max_memory_rss'] = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    data['gpu_max_memory_allocated'] = cuda.max_memory_allocated(device)
+    data['gpu_max_memory_cached'] = cuda.max_memory_cached(device)
+    data['gpu_memory_allocated'] = cuda.memory_allocated(device)
+    data['gpu_memory_cached'] = cuda.memory_cached(device)
+    return data
 
 
 def _log_tabular(key, val):
@@ -64,7 +76,10 @@ def hzcsk12_log_message(msginfo):
         return
 
     if msginfo.startswith('k12rl_finish'):
-        hzcsk12_send_message('status', {'value': 'exit', 'way': 'finish'})
+        hzcsk12_send_message('status', {
+            'value': 'exit', 
+            'way': 'finish',
+            'memory': _get_memory()})
         hzcsk12_kill(os.getpid())
         return
 

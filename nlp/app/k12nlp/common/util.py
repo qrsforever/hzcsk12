@@ -11,10 +11,22 @@ import os
 import sys
 import zerorpc
 import traceback
+import resource
+from torch import cuda
 
 _RPCClient = None
 _RPCEnable = -1
 K12NLP_TOKEN, K12NLP_OP, K12NLP_USER, K12NLP_UUID = None, None, None, None
+
+
+def _get_memory(device=None):
+    data = {}
+    data['cpu_max_memory_rss'] = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    data['gpu_max_memory_allocated'] = cuda.max_memory_allocated(device)
+    data['gpu_max_memory_cached'] = cuda.max_memory_cached(device)
+    data['gpu_memory_allocated'] = cuda.memory_allocated(device)
+    data['gpu_memory_cached'] = cuda.memory_cached(device)
+    return data
 
 
 def hzcsk12_send_message(msgtype, message):
@@ -42,8 +54,11 @@ def hzcsk12_send_message(msgtype, message):
     try:
         if message:
             epochs = message.get('training_epochs', None)
+            progss = message.get('training_progress', 0.0)
             if epochs:
                 message['training_epochs'] = epochs + 1
+            if progss >= 1.0:
+                message = {**message, **_get_memory()}
             _RPCClient.send_message(K12NLP_TOKEN, K12NLP_OP, K12NLP_USER, K12NLP_UUID, msgtype, message)
     except Exception:
         pass
