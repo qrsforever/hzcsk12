@@ -18,7 +18,7 @@ from pyhocon import HOCONConverter
 from k12ai.k12ai_base import ServiceRPC
 from k12ai import (
         k12ai_consul_init, k12ai_consul_register, k12ai_consul_message,
-        k12ai_utils_netip, k12ai_utils_diff,
+        k12ai_utils_netip,
         k12ai_error_message,
         k12ai_set_loglevel, k12ai_set_logfile, Logger,
         k12ai_platform_cpu_count, k12ai_platform_gpu_count)
@@ -48,26 +48,12 @@ class MLServiceRPC(ServiceRPC):
         self._cpu_count = k12ai_platform_cpu_count()
         self._gpu_count = k12ai_platform_gpu_count()
 
-    def send_message(self, token, op, user, uuid, msgtype, message, clear=False):
-        if not msgtype:
-            return
-        if isinstance(message, dict):
-            if 'err_type' in message:
-                errtype = message['err_type']
-                if errtype == 'ConfigMissingException':
-                    code = 100233
-                elif errtype == 'MemoryError':
-                    code = 100901
-                elif errtype == 'NotImplementedError':
-                    code = 100902
-                elif errtype == 'ConfigurationError':
-                    code = 100903
-                elif errtype == 'FileNotFoundError':
-                    code = 100905
-                else:
-                    code = 100999
-                message = k12ai_error_message(code, exc_info=message)
-        k12ai_consul_message(token, user, op, 'k12ml', uuid, msgtype, message, clear)
+    def errtype2errcode(self, errtype):
+        if errtype == 'ConfigMissingException':
+            errcode = 100233
+        else:
+            errcode = -1
+        return errcode
 
     def make_container_volumes(self):
         volumes = {}

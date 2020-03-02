@@ -7,11 +7,7 @@
 # @version 1.0
 # @date 2019-12-02 18:47:50
 
-import sys
 import re
-import traceback
-import resource
-from torch import cuda
 
 from k12ai.common import k12ai_send_message
 from k12ai.common import k12ai_status_message

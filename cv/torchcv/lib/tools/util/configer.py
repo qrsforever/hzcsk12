@@ -80,6 +80,12 @@ class Configer(object):
 
         self.params_root.put(key, value, append)
 
+    # QRS add
+    def pop(self, key, default=None):
+        if key in self.params_root:
+            return self.params_root.pop(key, default)
+        return default
+
     def resume(self, config_dict):
         self.params_root = ConfigFactory.from_dict(config_dict)
 

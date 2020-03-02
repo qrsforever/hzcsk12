@@ -11,16 +11,14 @@ import os, time
 import argparse
 import json
 import zerorpc
-import docker
 from threading import Thread
 from pyhocon import ConfigFactory
 from pyhocon import HOCONConverter
 
 from k12ai.k12ai_base import ServiceRPC
 from k12ai import (
-        k12ai_consul_init, k12ai_consul_register, k12ai_consul_message,
-        k12ai_utils_netip, k12ai_utils_diff,
-        k12ai_error_message,
+        k12ai_consul_init, k12ai_consul_register,
+        k12ai_utils_netip,
         k12ai_set_loglevel, k12ai_set_logfile, Logger,
         k12ai_platform_cpu_count, k12ai_platform_gpu_count)
 
@@ -39,6 +37,7 @@ def _delay_do_consul(host, port):
             Logger.info("consul agent service register err: {}".format(err))
             time.sleep(3)
 
+
 class RLServiceRPC(ServiceRPC):
 
     def __init__(self, host, port, image, dataroot):
@@ -48,26 +47,12 @@ class RLServiceRPC(ServiceRPC):
         self._cpu_count = k12ai_platform_cpu_count()
         self._gpu_count = k12ai_platform_gpu_count()
 
-    def send_message(self, token, op, user, uuid, msgtype, message, clear=False):
-        if not msgtype:
-            return
-        if isinstance(message, dict):
-            if 'err_type' in message:
-                errtype = message['err_type']
-                if errtype == 'ConfigMissingException':
-                    code = 100233
-                elif errtype == 'MemoryError':
-                    code = 100901
-                elif errtype == 'NotImplementedError':
-                    code = 100902
-                elif errtype == 'ConfigurationError':
-                    code = 100903
-                elif errtype == 'FileNotFoundError':
-                    code = 100905
-                else:
-                    code = 100999
-                message = _err_msg(code, exc_info=message)
-        k12ai_consul_message(token, user, op, 'k12rl', uuid, msgtype, message, clear)
+    def errtype2errcode(self, errtype):
+        if errtype == 'ConfigMissingException':
+            errcode = 100233
+        else:
+            errcode = -1
+        return errcode 
 
     def make_container_volumes(self):
         volumes = {}
@@ -84,7 +69,6 @@ class RLServiceRPC(ServiceRPC):
             'mem_limit': '8g'
         }
         return kwargs
-
 
     def make_container_command(self, op, cachedir, params):
         config_file = f'{cachedir}/config.json'

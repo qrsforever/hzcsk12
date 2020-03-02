@@ -29,4 +29,5 @@ from k12ai.k12ai_logger import (
 
 from k12ai.k12ai_platform import (
         k12ai_platform_cpu_count,
-        k12ai_platform_gpu_count)
+        k12ai_platform_gpu_count,
+        k12ai_platform_memory_free)

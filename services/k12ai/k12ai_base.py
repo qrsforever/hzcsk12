@@ -14,6 +14,8 @@ from threading import Thread
 
 from k12ai import k12ai_utils_topdir
 from k12ai import k12ai_error_message
+from k12ai import k12ai_consul_message
+from k12ai import Logger
 
 
 class ServiceRPC(object):
@@ -34,6 +36,28 @@ class ServiceRPC(object):
         self._jschema = os.path.join(self._projdir, 'app', 'templates', 'schema', f'k12ai_{self._sname}.jsonnet')
 
     def send_message(self, token, op, user, uuid, msgtype, message, clear=False):
+        if not msgtype:
+            return
+        if isinstance(message, dict) and 'err_type' in message:
+            errtype = message['err_type']
+            errcode = self.errtype2errcode(errtype)
+            if errcode < 0:
+                if errtype == 'MemoryError':
+                    errcode = 100901
+                elif errtype == 'NotImplementedError':
+                    errcode = 100902
+                elif errtype == 'ConfigurationError':
+                    errcode = 100903
+                elif errtype == 'FileNotFoundError':
+                    errcode = 100905
+                else:
+                    errcode = 100399
+                message = k12ai_error_message(errcode, exc_info=message)
+            else:
+                message = k12ai_error_message(errcode, exc_info=message)
+        k12ai_consul_message(token, user, op, f'k12{self._sname}', uuid, msgtype, message, clear)
+
+    def errtype2errcode(self, errtype):
         raise NotImplementedError
 
     def make_container_command(self, op, cachedir, params):
@@ -66,7 +90,6 @@ class ServiceRPC(object):
         return usercache
 
     def run_container(self, token, op, user, uuid, command):
-        print(command)
         message = None
         labels = {
             'k12ai.service.name': f'k12{self._sname}',
@@ -110,6 +133,7 @@ class ServiceRPC(object):
             self.send_message(token, op, user, uuid, "error", message)
 
     def schema(self, task, netw, dataset_name):
+        Logger.info(f'{task}, {netw}, {dataset_name}')
         if not os.path.exists(self._jschema):
             return 100206, f'{self._jschema}'
         ext_vars, ext_codes = self.make_schema_kwargs()
@@ -125,6 +149,7 @@ class ServiceRPC(object):
         return 100000, json.dumps(json.loads(schema_json), separators=(',', ':'))
 
     def execute(self, token, op, user, uuid, params):
+        Logger.info(f'{token}, {op}, {user}, {uuid}')
         container = self.get_container(user, uuid)
         phase, action = op.split('.')
         if action == 'stop':

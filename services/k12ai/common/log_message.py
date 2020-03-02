@@ -8,12 +8,12 @@
 # @date 2020-03-01 23:56
 
 import sys
-import os
 import traceback
 import resource
 import torch
 
 from k12ai.common.rpc_message import k12ai_send_message
+
 
 def k12ai_except_message():
     exc_type, exc_value, exc_tb = sys.exc_info()
@@ -63,7 +63,7 @@ def k12ai_status_message(what, msg=None):
     if what.startswith('k12ai_error'):
         k12ai_send_message('error', msg)
         k12ai_send_message('status', {'value': 'exit', 'way': 'error'})
-        print(errmsg)
+        print(msg)
         return
 
     if what.startswith('k12ai_except'):

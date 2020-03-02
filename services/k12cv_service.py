@@ -17,9 +17,8 @@ from pyhocon import HOCONConverter
 
 from k12ai.k12ai_base import ServiceRPC
 from k12ai import (
-        k12ai_consul_init, k12ai_consul_register, k12ai_consul_message,
+        k12ai_consul_init, k12ai_consul_register,
         k12ai_utils_netip,
-        k12ai_error_message,
         k12ai_set_loglevel, k12ai_set_logfile, Logger,
         k12ai_platform_cpu_count, k12ai_platform_gpu_count)
 
@@ -50,38 +49,26 @@ class CVServiceRPC(ServiceRPC):
 
         self._pretrained_dir = '%s/pretrained/cv' % dataroot
 
-    def send_message(self, token, op, user, uuid, msgtype, message, clear=False):
-        if not msgtype:
-            return
-        if isinstance(message, dict):
-            if 'err_type' in message:
-                errtype = message['err_type']
-                if errtype == 'ModelFileNotFound':
-                    code = 100208
-                if errtype == 'ConfigMissingException':
-                    code = 100233
-                elif errtype == 'InvalidModel':
-                    code = 100302
-                elif errtype == 'InvalidOptimizerMethod':
-                    code = 100303
-                elif errtype == 'InvalidPadMode':
-                    code = 100304
-                elif errtype == 'InvalidAnchorMethod':
-                    code = 100305
-                elif errtype == 'ImageTypeError':
-                    code = 100306
-                elif errtype == 'TensorSizeError':
-                    code = 100307
-                elif errtype == 'MemoryError':
-                    code = 100901
-                elif errtype == 'NotImplementedError':
-                    code = 100902
-                elif errtype == 'ConfigurationError':
-                    code = 100903
-                else:
-                    code = 100399
-                message = k12ai_error_message(code, exc_info=message)
-        k12ai_consul_message(token, user, op, 'k12cv', uuid, msgtype, message, clear)
+    def errtype2errcode(self, errtype):
+        if errtype == 'ModelFileNotFound':
+            errcode = 100208
+        if errtype == 'ConfigMissingException':
+            errcode = 100233
+        elif errtype == 'InvalidModel':
+            errcode = 100302
+        elif errtype == 'InvalidOptimizerMethod':
+            errcode = 100303
+        elif errtype == 'InvalidPadMode':
+            errcode = 100304
+        elif errtype == 'InvalidAnchorMethod':
+            errcode = 100305
+        elif errtype == 'ImageTypeError':
+            errcode = 100306
+        elif errtype == 'TensorSizeError':
+            errcode = 100307
+        else:
+            errcode = -1
+        return errcode
 
     def make_container_volumes(self):
         volumes = {self._pretrained_dir: {'bind': '/pretrained', 'mode': 'rw'}}
@@ -141,14 +128,6 @@ class CVServiceRPC(ServiceRPC):
             config_tree.put('network.checkpoints_root', '/cache')
             config_tree.put('network.checkpoints_name', ckpts_name)
             config_tree.put('network.checkpoints_dir', 'ckpts')
-            # Pretrained
-            pretrained = config_tree.get('network.pretrained', default=False)
-            config_tree.pop('network.pretrained', default=None)
-            if pretrained:
-                _file = PRETRAINED_MODELS.get(backbone, 'nofile')
-                if os.path.exists('%s/%s' % (self.pretrained_dir, _file)):
-                    config_tree.put('network.pretrained', '/pretrained/%s' % _file)
-
             config_str = HOCONConverter.convert(config_tree, 'json')
         else:
             config_str = json.dumps(params)
@@ -164,7 +143,7 @@ class CVServiceRPC(ServiceRPC):
         if op.startswith('train'):
             command += ' --phase train'
         elif op.startswith('evaluate'):
-            command += ' --phase test --out_dir /cache/output'
+            command += ' --phase test --test_dir todo --out_dir /cache/output'
         else:
             raise NotImplementedError
         return 100000, command
