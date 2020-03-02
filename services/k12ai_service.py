@@ -15,10 +15,10 @@ from flask import Flask, request
 from flask_cors import CORS
 from threading import Thread
 
-from k12ai_consul import k12ai_consul_init, k12ai_consul_register, k12ai_consul_service
-from k12ai_platform import k12ai_platform_stats, k12ai_platform_control, k12ai_platform_memory_free
-from k12ai_errmsg import k12ai_error_message as _err_msg
-from k12ai_logger import (k12ai_set_loglevel, k12ai_set_logfile, Logger)
+from k12ai.k12ai_consul import k12ai_consul_init, k12ai_consul_register, k12ai_consul_service
+from k12ai.k12ai_platform import k12ai_platform_stats, k12ai_platform_control, k12ai_platform_memory_free
+from k12ai.k12ai_errmsg import k12ai_error_message as _err_msg
+from k12ai.k12ai_logger import (k12ai_set_loglevel, k12ai_set_logfile, Logger)
 
 _DEBUG_ = True if os.environ.get("K12AI_DEBUG") else False
 
