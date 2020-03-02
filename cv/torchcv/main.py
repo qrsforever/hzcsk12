@@ -18,13 +18,8 @@ from lib.tools.util.configer import Configer
 from lib.tools.util.logger import Logger as Log
 
 # QRS: add
-try:
-    from k12ai.k12cv_init import hzcsk12_cv_init
-except ModuleNotFoundError:
-    def hzcsk12_cv_init(configer):
-        pass
-except Exception as err:
-    print("import error:{}".format(err))
+from k12ai.k12cv_init import k12ai_cv_init
+from k12ai.common import k12ai_status_message
 
 
 def str2bool(v):
@@ -174,7 +169,8 @@ if __name__ == "__main__":
 
     try:
         # QRS: add
-        hzcsk12_cv_init(configer)
+        k12ai_cv_init(configer)
+        k12ai_status_message('k12ai_running')
 
         runner_selector = RunnerSelector(configer)
         runner = None
@@ -201,10 +197,9 @@ if __name__ == "__main__":
         else:
             Log.error('Phase: {} is not valid.'.format(configer.get('phase')))
             exit(1)
-    except Exception as err:
+        k12ai_status_message('k12ai_finish')
+    except Exception:
         # QRS: add for catch internal except
-        Log.critical('except: {}'.format(err))
-    else:
-        Log.info('k12ai_finish')
+        k12ai_status_message('k12ai_except')
     finally:
         pass

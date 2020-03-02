@@ -85,6 +85,7 @@ __build_image()
         then
             cd $TOP_DIR
         else
+            cp -arf $TOP_DIR/services/k12ai/common $TOP_DIR/$DESTDIR/app/k12ai/
             cd $TOP_DIR/$DESTDIR
         fi
 
@@ -103,6 +104,11 @@ __build_image()
             --build-arg COMMIT=$COMMIT \
             --build-arg BRANCH=$BRANCH \
             --file $DOCKERFILE .
+
+        if [[ $DESTDIR != 'ai' ]]
+        then
+            rm -rf $TOP_DIR/$DESTDIR/app/k12ai/common/*
+        fi
 
         if [[ $? != 0 ]]
         then

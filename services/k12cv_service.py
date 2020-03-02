@@ -10,19 +10,17 @@
 import os, time
 import argparse
 import json
-import _jsonnet
 import zerorpc
-import docker
 from threading import Thread
 from pyhocon import ConfigFactory
 from pyhocon import HOCONConverter
 
 from k12ai.k12ai_base import ServiceRPC
 from k12ai import (
-        k12ai_consul_init, k12ai_consul_register, k12ai_consul_message, \
-        k12ai_utils_topdir, k12ai_utils_netip, \
-        k12ai_error_message, \
-        k12ai_set_loglevel, k12ai_set_logfile, Logger, \
+        k12ai_consul_init, k12ai_consul_register, k12ai_consul_message,
+        k12ai_utils_netip,
+        k12ai_error_message,
+        k12ai_set_loglevel, k12ai_set_logfile, Logger,
         k12ai_platform_cpu_count, k12ai_platform_gpu_count)
 
 _DEBUG_ = True if os.environ.get("K12AI_DEBUG") else False
@@ -51,44 +49,6 @@ class CVServiceRPC(ServiceRPC):
         self._gpu_count = k12ai_platform_gpu_count()
 
         self._pretrained_dir = '%s/pretrained/cv' % dataroot
-
-    def make_container_command(self, op):
-        command = 'python -m torch.distributed.launch --nproc_per_node=1 {}'.format(
-                '%s/torchcv/main.py' % self._workdir)
-
-        command += ' --config_file /cache/config.json'
-
-        if op.startswith('train'):
-            command += ' --phase train'
-        elif op.startswith('evaluate'):
-            command += ' --phase test --out_dir /cache/output'
-        else:
-            raise NotImplementedError
-        return command
-
-    def make_container_volumes(self):
-        volumes = {self._pretrained_dir: {'bind': '/pretrained', 'mode': 'rw'}}
-        if self._debug:
-            volumes[f'{self._projdir}/app'] = {'bind': f'{self._workdir}/app', 'mode': 'rw'}
-            volumes[f'{self._projdir}/torchcv/data'] = {'bind': f'{self._workdir}/torchcv/data', 'mode': 'rw'}
-            volumes[f'{self._projdir}/torchcv/metric'] = {'bind': f'{self._workdir}/torchcv/metric', 'mode': 'rw'}
-            volumes[f'{self._projdir}/torchcv/model'] = {'bind': f'{self._workdir}/torchcv/model', 'mode': 'rw'}
-            volumes[f'{self._projdir}/torchcv/runner'] = {'bind': f'{self._workdir}/torchcv/runner', 'mode': 'rw'}
-            volumes[f'{self._projdir}/torchcv/lib/data'] = {'bind': f'{self._workdir}/torchcv/lib/data', 'mode': 'rw'}
-            volumes[f'{self._projdir}/torchcv/lib/model'] = {'bind': f'{self._workdir}/torchcv/lib/model', 'mode': 'rw'}
-            volumes[f'{self._projdir}/torchcv/lib/runner'] = {'bind': f'{self._workdir}/torchcv/lib/runner', 'mode': 'rw'}
-            volumes[f'{self._projdir}/torchcv/lib/tools'] = {'bind': f'{self._workdir}/torchcv/lib/tools', 'mode': 'rw'}
-            volumes[f'{self._projdir}/torchcv/main.py'] = {'bind': f'{self._workdir}/torchcv/main.py', 'mode': 'rw'}
-        return volumes
-
-    def make_container_kwargs(self):
-        kwargs = {
-            'auto_remove': not self._debug,
-            'runtime': 'nvidia',
-            'shm_size': '4g',
-            'mem_limit': '8g'
-        }
-        return kwargs
 
     def send_message(self, token, op, user, uuid, msgtype, message, clear=False):
         if not msgtype:
@@ -120,17 +80,38 @@ class CVServiceRPC(ServiceRPC):
                     code = 100903
                 else:
                     code = 100399
-                message =k12ai_error_message(code, exc_info=message)
+                message = k12ai_error_message(code, exc_info=message)
         k12ai_consul_message(token, user, op, 'k12cv', uuid, msgtype, message, clear)
 
-    def make_config(self, cachedir, params):
+    def make_container_volumes(self):
+        volumes = {self._pretrained_dir: {'bind': '/pretrained', 'mode': 'rw'}}
+        if self._debug:
+            volumes[f'{self._projdir}/app'] = {'bind': f'{self._workdir}/app', 'mode': 'rw'}
+            volumes[f'{self._projdir}/torchcv/data'] = {'bind': f'{self._workdir}/torchcv/data', 'mode': 'rw'}
+            volumes[f'{self._projdir}/torchcv/metric'] = {'bind': f'{self._workdir}/torchcv/metric', 'mode': 'rw'}
+            volumes[f'{self._projdir}/torchcv/model'] = {'bind': f'{self._workdir}/torchcv/model', 'mode': 'rw'}
+            volumes[f'{self._projdir}/torchcv/runner'] = {'bind': f'{self._workdir}/torchcv/runner', 'mode': 'rw'}
+            volumes[f'{self._projdir}/torchcv/lib/data'] = {'bind': f'{self._workdir}/torchcv/lib/data', 'mode': 'rw'}
+            volumes[f'{self._projdir}/torchcv/lib/model'] = {'bind': f'{self._workdir}/torchcv/lib/model', 'mode': 'rw'}
+            volumes[f'{self._projdir}/torchcv/lib/runner'] = {'bind': f'{self._workdir}/torchcv/lib/runner', 'mode': 'rw'}
+            volumes[f'{self._projdir}/torchcv/lib/tools'] = {'bind': f'{self._workdir}/torchcv/lib/tools', 'mode': 'rw'}
+            volumes[f'{self._projdir}/torchcv/main.py'] = {'bind': f'{self._workdir}/torchcv/main.py', 'mode': 'rw'}
+        return volumes
 
+    def make_container_kwargs(self):
+        kwargs = {
+            'auto_remove': not self._debug,
+            'runtime': 'nvidia',
+            'shm_size': '4g',
+            'mem_limit': '8g'
+        }
+        return kwargs
+
+    def make_container_command(self, op, cachedir, params):
         config_file = f'{cachedir}/config.json'
-
         if '_k12.data.dataset_name' in params.keys():
             config_tree = ConfigFactory.from_dict(params)
             _k12ai_tree = config_tree.pop('_k12')
-
             # Aug Trans
             if config_tree.get('train.aug_trans.trans_seq', default=None) is None:
                 config_tree.put('train.aug_trans.trans_seq', [])
@@ -153,7 +134,6 @@ class CVServiceRPC(ServiceRPC):
                     config_tree.put('test.aug_trans.trans_seq', [k], append=True)
                 if v == 'shuffle_trans_seq':
                     config_tree.put('test.aug_trans.shuffle_trans_seq', [k], append=True)
-
             # CheckPoints
             model_name = config_tree.get('network.model_name', default='unknow')
             backbone = config_tree.get('network.backbone', default='unknow')
@@ -161,7 +141,6 @@ class CVServiceRPC(ServiceRPC):
             config_tree.put('network.checkpoints_root', '/cache')
             config_tree.put('network.checkpoints_name', ckpts_name)
             config_tree.put('network.checkpoints_dir', 'ckpts')
-
             # Pretrained
             pretrained = config_tree.get('network.pretrained', default=False)
             config_tree.pop('network.pretrained', default=None)
@@ -177,12 +156,24 @@ class CVServiceRPC(ServiceRPC):
         with open(config_file, 'w') as fout:
             fout.write(config_str)
 
-        return 100000, None
+        command = 'python -m torch.distributed.launch --nproc_per_node=1 {}'.format(
+                '%s/torchcv/main.py' % self._workdir)
+
+        command += ' --config_file /cache/config.json'
+
+        if op.startswith('train'):
+            command += ' --phase train'
+        elif op.startswith('evaluate'):
+            command += ' --phase test --out_dir /cache/output'
+        else:
+            raise NotImplementedError
+        return 100000, command
 
     def make_schema_kwargs(self):
         ext_vars = {'net_ip': self._netip}
         ext_codes = {'num_cpu': str(self._cpu_count), 'num_gpu': str(self._gpu_count)}
         return ext_vars, ext_codes
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -238,7 +229,8 @@ if __name__ == "__main__":
     try:
         app = zerorpc.Server(CVServiceRPC(
             host=args.host, port=args.port,
-            image=args.image, dataroot=args.data_root))
+            image=args.image,
+            dataroot=args.data_root))
         app.bind('tcp://%s:%d' % (args.host, args.port))
         app.run()
     finally:

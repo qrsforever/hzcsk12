@@ -7,11 +7,11 @@ from rlpyt.utils.collections import AttrDict
 from rlpyt.utils.logging import logger
 from rlpyt.utils.seed import set_seed
 
-# hzcsk12
+# QRS
 try:
-    from k12rl.utils import hzcsk12_except
+    from k12ai.utils import k12ai_except
 except ModuleNotFoundError:
-    def hzcsk12_except(*args, **kwargs):
+    def k12ai_except(*args, **kwargs):
         pass
 
 
@@ -41,7 +41,7 @@ def initialize_worker(rank, seed=None, cpu=None, torch_threads=None):
     logger.log(log_str)
 
 
-@hzcsk12_except
+@k12ai_except
 def sampling_process(common_kwargs, worker_kwargs):
     """Target function used for forking parallel worker processes in the
     samplers. After ``initialize_worker()``, it creates the specified number

@@ -13,21 +13,12 @@ import traceback
 import resource
 from torch import cuda
 
-from k12ai.common import k12ai_send_message # noqa
+from k12ai.common import k12ai_send_message
+from k12ai.common import k12ai_status_message
 
 _isepoch_ = True
 _maxiter_ = -1
 _metrics_ = {}
-
-
-def _get_memory(device=None):
-    data = {}
-    data['cpu_max_memory_rss'] = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-    data['gpu_max_memory_allocated'] = cuda.max_memory_allocated(device)
-    data['gpu_max_memory_cached'] = cuda.max_memory_cached(device)
-    data['gpu_memory_allocated'] = cuda.memory_allocated(device)
-    data['gpu_memory_cached'] = cuda.memory_cached(device)
-    return data
 
 
 def _parse_metrics(filename, lineno, message):
@@ -132,11 +123,6 @@ def _parse_metrics(filename, lineno, message):
                     result = res.groupdict()
                     _metrics_['evaluate_mAP'] = round(float(result.get('mAP', '0')), 4)
                     _metrics_['evaluate_progress'] = 1.0
-        elif filename == 'main.py':
-            if message.startswith('k12cv_finish'):
-                k12ai_send_message('metrics', {**_metrics_, **_get_memory()})
-                k12ai_send_message('status', {'value': 'exit', 'way': 'finish'})
-                return
         else:
             return
         # send message to k12cv service
@@ -153,9 +139,7 @@ def _parse_error(filename, lineno, message):
         _message['linenum'] = lineno
         _message['err_type'] = err_type
         _message['err_text'] = message
-        k12ai_send_message('error', _message)
-        k12ai_send_message('status', {'value': 'exit', 'way': 'error'})
-        print(_message)
+        return k12ai_status_message('k12ai_error', _message)
 
     if message == 'Image type is invalid.':
         return _err_msg('ImageTypeError')
@@ -194,26 +178,7 @@ def _parse_error(filename, lineno, message):
 
 
 def _parse_except(filename, lineno, message):
-    exc_type, exc_value, exc_tb = sys.exc_info()
-    message = { # noqa: E126
-            'filename': filename,
-            'linenum': lineno,
-            'err_type': exc_type.__name__,
-            'err_text': str(exc_value)
-            }
-    message['trackback'] = []
-    tbs = traceback.extract_tb(exc_tb)
-    for tb in tbs:
-        err = { # noqa: E126
-                'filename': tb.filename,
-                'linenum': tb.lineno,
-                'funcname': tb.name,
-                'source': tb.line
-                }
-        message['trackback'].append(err)
-    k12ai_send_message('error', message)
-    k12ai_send_message('status', {'value': 'exit', 'way': 'crash'})
-    print(message)
+    return k12ai_status_message('k12ai_except')
 
 
 def k12ai_log_parser(level, filename, lineno, message):

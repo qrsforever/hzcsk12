@@ -15,7 +15,7 @@ from model.cls.model_manager import ModelManager
 from metric.cls.cls_running_score import ClsRunningScore
 from lib.tools.util.logger import Logger as Log
 
-from k12ai.tools.util.rpc_message import hzcsk12_send_message
+from k12ai.common import k12ai_send_message
 
 
 class ImageClassifierTest(object):
@@ -56,7 +56,7 @@ class ImageClassifierTest(object):
                 top1 = top1['out']
                 top3 = top3['out']
                 top5 = top5['out']
-            hzcsk12_send_message('metrics', {
+            k12ai_send_message('metrics', {
                 'evaluate_iters': 1,
                 'evaluate_progress': 1.0,
                 'evaluate_accuracy': top1,

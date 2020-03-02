@@ -13,6 +13,8 @@ import docker
 from threading import Thread
 
 from k12ai import k12ai_utils_topdir
+from k12ai import k12ai_error_message
+
 
 class ServiceRPC(object):
 
@@ -23,7 +25,7 @@ class ServiceRPC(object):
         self._host = host
         self._port = port
         self._debug = debug
-        self._workdir = f'/hzcsk12/k12{self._sname}'
+        self._workdir = f'/hzcsk12/{self._sname}'
         self._projdir = os.path.join(k12ai_utils_topdir(), self._sname)
 
         self._datadir = f'{dataroot}/datasets/{self._sname}'
@@ -34,10 +36,7 @@ class ServiceRPC(object):
     def send_message(self, token, op, user, uuid, msgtype, message, clear=False):
         raise NotImplementedError
 
-    def make_config(self, cachedir, params):
-        raise NotImplementedError
-
-    def make_container_command(self, op):
+    def make_container_command(self, op, cachedir, params):
         raise NotImplementedError
 
     def make_container_volumes(self):
@@ -66,7 +65,8 @@ class ServiceRPC(object):
             os.makedirs(usercache)
         return usercache
 
-    def run_container(self, token, op, user, uuid):
+    def run_container(self, token, op, user, uuid, command):
+        print(command)
         message = None
         labels = {
             'k12ai.service.name': f'k12{self._sname}',
@@ -74,8 +74,6 @@ class ServiceRPC(object):
             'k12ai.service.user': user,
             'k12ai.service.uuid': uuid
         }
-
-        command = self.make_container_command(op)
 
         volumes = self.make_container_volumes()
         volumes[f'{self._datadir}'] = {'bind': f'/datasets', 'mode': 'rw'}
@@ -107,7 +105,7 @@ class ServiceRPC(object):
             self._docker.containers.run(f'{self._image}', command, **kwargs)
             return
         except Exception:
-            message = _err_msg(100203, f'container image:{self._image}', exc=True)
+            message = k12ai_error_message(100203, f'container image:{self._image}', exc=True)
             self.send_message(token, op, user, uuid, "status", {'value': 'exit', 'way': 'docker'})
             self.send_message(token, op, user, uuid, "error", message)
 
@@ -115,7 +113,6 @@ class ServiceRPC(object):
         if not os.path.exists(self._jschema):
             return 100206, f'{self._jschema}'
         ext_vars, ext_codes = self.make_schema_kwargs()
-        print(ext_vars,ext_codes)
         schema_json = _jsonnet.evaluate_file(self._jschema,
                 ext_vars={
                     'task': task,
@@ -145,10 +142,10 @@ class ServiceRPC(object):
         if not isinstance(params, dict):
             return 100231, 'parameters type is not dict'
 
-        code, result = self.make_config(self.get_cache_dir(user, uuid), params)
+        code, command = self.make_container_command(op, self.get_cache_dir(user, uuid), params)
         if code != 100000:
-            return code, result
+            return code, command
 
-        Thread(target=lambda: self.run_container(token=token, op=op, user=user, uuid=uuid),
+        Thread(target=lambda: self.run_container(token=token, op=op, user=user, uuid=uuid, command=command),
             daemon=True).start()
         return 100000, None

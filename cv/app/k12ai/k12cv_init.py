@@ -62,8 +62,8 @@ def _check_custom_model(configer):
     return False
 
 
-def hzcsk12_cv_init(configer):
-    Log.debug('hzcsk12_cv_init')
+def k12ai_cv_init(configer):
+    Log.debug('k12ai_cv_init')
 
     # Check
     if configer.get('phase') == 'test':

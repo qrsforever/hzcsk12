@@ -9,8 +9,6 @@
 
 import traceback
 
-from k12ai.common.err_message import k12ai_except_message as gen_exc_info
-
 ERRORS = {
         100000: {'en': 'success', 'cn': '成功'},
         100101: {'en': 'api parameter key is not found', 'cn': 'API参数错误: 非法Key'},
@@ -47,6 +45,25 @@ ERRORS = {
         100905: {'en': 'file is not found', 'cn': '常见错误: 文件不存在'},
         999999: {'en': 'unknown error!', 'cn': '常见错误: 不可知错误'},
 }
+
+
+def gen_exc_info():
+    exc_type, exc_value, exc_tb = sys.exc_info()
+    message = {
+        'err_type': exc_type.__name__,
+        'err_text': str(exc_value)
+    }
+    message['trackback'] = []
+    tbs = traceback.extract_tb(exc_tb)
+    for tb in tbs:
+        err = {
+            'filename': tb.filename,
+            'linenum': tb.lineno,
+            'funcname': tb.name,
+            'source': tb.line
+        }
+        message['trackback'].append(err)
+    return message
 
 
 def k12ai_error_message(code=100000, data=None, stack=False, exc=False, exc_info=None):

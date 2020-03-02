@@ -10,22 +10,20 @@
 import os, time
 import argparse
 import json
-import _jsonnet
 import zerorpc
-import docker
 from threading import Thread
 from pyhocon import ConfigFactory
 from pyhocon import HOCONConverter
 
-from k12ai_consul import (k12ai_consul_init, k12ai_consul_register, k12ai_consul_message)
-from k12ai_utils import (k12ai_utils_topdir, k12ai_utils_netip)
-from k12ai_errmsg import k12ai_error_message as _err_msg
-from k12ai_logger import (k12ai_set_loglevel, k12ai_set_logfile, Logger)
-from k12ai_platform import (k12ai_platform_cpu_count, k12ai_platform_gpu_count)
+from k12ai.k12ai_base import ServiceRPC
+from k12ai import (
+        k12ai_consul_init, k12ai_consul_register, k12ai_consul_message,
+        k12ai_utils_netip, k12ai_utils_diff,
+        k12ai_error_message,
+        k12ai_set_loglevel, k12ai_set_logfile, Logger,
+        k12ai_platform_cpu_count, k12ai_platform_gpu_count)
 
 _DEBUG_ = True if os.environ.get("K12AI_DEBUG") else False
-
-service_name = 'k12ml'
 
 g_app_quit = False
 
@@ -34,35 +32,21 @@ def _delay_do_consul(host, port):
     time.sleep(3)
     while not g_app_quit:
         try:
-            k12ai_consul_register(service_name, host, port)
+            k12ai_consul_register('k12ml', host, port)
             break
         except Exception as err:
             Logger.info("consul agent service register err: {}".format(err))
             time.sleep(3)
 
 
-class MLServiceRPC(object):
+class MLServiceRPC(ServiceRPC):
 
-    def __init__(self,
-            host, port,
-            image='hzcsai_com/k12ml',
-            data_root='/data',
-            workdir='/hzcsk12/ml'):
-        self._debug = _DEBUG_
-        self._host = host
-        self._port = port
+    def __init__(self, host, port, image, dataroot):
+        super().__init__('ml', host, port, image, dataroot, _DEBUG_)
+
         self._netip = k12ai_utils_netip()
         self._cpu_count = k12ai_platform_cpu_count()
         self._gpu_count = k12ai_platform_gpu_count()
-        self._image = image
-        self._docker = docker.from_env()
-        self._workdir = workdir
-        self._projdir = os.path.join(k12ai_utils_topdir(), 'ml')
-        self._commlib = os.path.join(k12ai_utils_topdir(), 'common', '_delta_')
-        Logger.info('workdir:%s, projdir:%s' % (self._workdir, self._projdir))
-
-        self.userscache_dir = '%s/users' % data_root
-        self.datasets_dir = '%s/datasets/ml' % data_root
 
     def send_message(self, token, op, user, uuid, msgtype, message, clear=False):
         if not msgtype:
@@ -82,29 +66,26 @@ class MLServiceRPC(object):
                     code = 100905
                 else:
                     code = 100999
-                message = _err_msg(code, exc_info=message)
+                message = k12ai_error_message(code, exc_info=message)
         k12ai_consul_message(token, user, op, 'k12ml', uuid, msgtype, message, clear)
 
-    def _get_container(self, user, uuid):
-        try:
-            cons = self._docker.containers.list(all=True, filters={'label': [
-                'k12ai.service.user=%s'%user,
-                'k12ai.service.uuid=%s'%uuid]})
-            if len(cons) == 1:
-                return cons[0]
-        except docker.errors.NotFound:
-            pass
-        return None
+    def make_container_volumes(self):
+        volumes = {}
+        if self._debug:
+            volumes[f'{self._projdir}/app'] = {'bind': f'{self._workdir}/app', 'mode':'rw'}
+        return volumes
 
-    def _get_cache_dir(self, user, uuid):
-        usercache = '%s/%s/%s' % (self.userscache_dir, user, uuid)
-        if not os.path.exists(usercache):
-            os.makedirs(usercache)
-        return usercache
+    def make_container_kwargs(self):
+        kwargs = {
+            'auto_remove': not self._debug,
+            'runtime': 'nvidia',
+            'shm_size': '2g',
+            'mem_limit': '4g'
+        }
+        return kwargs
 
-    def _prepare_environ(self, user, uuid, params):
-        if not isinstance(params, dict):
-            return 100231, 'parameters type is not dict'
+    def make_container_command(self, op, cachedir, params):
+        config_file = f'{cachedir}/config.json'
 
         if '_k12.data.dataset_name' in params.keys():
             config_tree = ConfigFactory.from_dict(params)
@@ -116,109 +97,22 @@ class MLServiceRPC(object):
         else:
             config_str = json.dumps(params)
 
-        config_file = '%s/config.json' % self._get_cache_dir(user, uuid)
         with open(config_file, 'w') as fout:
             fout.write(config_str)
 
-        return 100000, None
+        command = 'python {}'.format('%s/app/k12ai/main.py' % self._workdir)
+        if op.startswith('train'):
+            command += ' --phase train --config_file /cache/config.json'
+        elif op.startswith('evaluate'):
+            command += ' --phase evaluate --config_file /cache/config.json'
+        else:
+            raise NotImplementedError
+        return 100000, command
 
-    def _run(self, token, op, user, uuid, command=None):
-        Logger.info(command)
-        message = None
-        rm_flag = True
-        labels = {
-            'k12ai.service.name': service_name,
-            'k12ai.service.op': op,
-            'k12ai.service.user': user,
-            'k12ai.service.uuid': uuid
-        }
-
-        usercache_dir = self._get_cache_dir(user, uuid)
-
-        volumes = {
-            self.datasets_dir: {'bind': '/datasets', 'mode': 'rw'},
-            usercache_dir: {'bind': '/cache', 'mode': 'rw'},
-        }
-
-        if self._debug:
-            rm_flag = False
-            volumes[f'{self._projdir}/app'] = {'bind': f'{self._workdir}/app', 'mode': 'rw'}
-            volumes[f'{self._projdir}/mla/mla'] = {'bind': f'{self._workdir}/mla', 'mode': 'rw'}
-
-            volumes[f'{self._commlib}'] = {'bind': f'{self._workdir}/app/k12ai/common', 'mode': 'rw'}
-
-        environs = {
-            'K12AI_RPC_HOST': '%s' % self._host,
-            'K12AI_RPC_PORT': '%s' % self._port,
-            'K12AI_TOKEN': '%s' % token,
-            'K12AI_OP': '%s' % op,
-            'K12AI_USER': '%s' % user,
-            'K12AI_UUID': '%s' % uuid
-        }
-        kwargs = {
-            'name': '%s-%s-%s' % (op, user, uuid),
-            'auto_remove': rm_flag,
-            'detach': True,
-            'runtime': 'nvidia',
-            'labels': labels,
-            'volumes': volumes,
-            'environment': environs,
-            'shm_size': '4g',
-            'mem_limit': '8g',
-        }
-
-        self.send_message(token, op, user, uuid, "status", {'value': 'starting'}, clear=True)
-        try:
-            self._docker.containers.run(self._image, command, **kwargs)
-            return
-        except Exception:
-            message = _err_msg(100302, 'container image:{}'.format(self._image), exc=True)
-            self.send_message(token, op, user, uuid, "status", {'value': 'exit', 'way': 'docker'})
-
-        if message:
-            self.send_message(token, op, user, uuid, "error", message)
-
-    def schema(self, task, netw, dataset_name):
-        schema_file = os.path.join(self._projdir, 'app', 'templates', 'schema', 'k12ai_ml.jsonnet')
-        if not os.path.exists(schema_file):
-            return 100206, f'{schema_file}'
-        schema_json = _jsonnet.evaluate_file(schema_file,
-            ext_vars={
-                'net_ip': self._netip,
-                'task': task,
-                'network': netw,
-                'dataset_name': dataset_name},
-            ext_codes={
-                'debug': 'true' if self._debug else 'false',
-                'num_cpu': str(self._cpu_count),
-                'num_gpu': str(self._gpu_count)})
-        return 100000, json.dumps(json.loads(schema_json), separators=(',', ':'))
-
-    def execute(self, token, op, user, uuid, params):
-        Logger.info("call execute(%s, %s, %s)" % (op, user, uuid))
-        container = self._get_container(user, uuid)
-        phase, action = op.split('.')
-        if action == 'stop':
-            if container is None or container.status != 'running':
-                return 100205, None
-            container.kill()
-            self.send_message(token, '%s.start' % phase, user, uuid, "status", {'value': 'exit', 'way': 'manual'})
-            return 100000, None
-
-        if container:
-            if container.status == 'running':
-                return 100204, None
-            container.remove()
-
-        code, result = self._prepare_environ(user, uuid, params)
-        if code != 100000:
-            return code, result
-
-        command = 'python {}'.format('%s/app/k12ml/main.py' % self._workdir)
-        command += ' --phase %s --config_file /cache/config.json' % phase
-        Thread(target=lambda: self._run(token=token, op=op, user=user, uuid=uuid, command=command),
-            daemon=True).start()
-        return 100000, None
+    def make_schema_kwargs(self):
+        ext_vars = {'net_ip': self._netip}
+        ext_codes = {'num_cpu': str(self._cpu_count), 'num_gpu': str(self._gpu_count)}
+        return ext_vars, ext_codes
 
 
 if __name__ == "__main__":
@@ -276,7 +170,7 @@ if __name__ == "__main__":
         app = zerorpc.Server(MLServiceRPC(
             host=args.host, port=args.port,
             image=args.image,
-            data_root=args.data_root
+            dataroot=args.data_root
         ))
         app.bind('tcp://%s:%d' % (args.host, args.port))
         app.run()

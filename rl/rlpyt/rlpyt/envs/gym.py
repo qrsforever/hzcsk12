@@ -11,7 +11,7 @@ from rlpyt.utils.collections import is_namedtuple_class
 
 # QRS: add
 from gym.spaces.discrete import Discrete
-from k12rl.spaces.discrete_wrapper import DiscreteSpaceWrapper
+from k12ai.spaces.discrete_wrapper import DiscreteSpaceWrapper
 
 
 class GymEnvWrapper(Wrapper):
