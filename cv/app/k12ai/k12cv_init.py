@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-# @file k12cv_init.py
+# @file k12ai_init.py
 # @brief
 # @author QRS
 # @version 1.0
@@ -11,13 +11,13 @@ import os
 
 from lib.tools.util.logger import Logger as Log
 
-from k12cv.runner.cls.image_classifier_test import ImageClassifierTest
-from k12cv.runner.det.single_shot_detector_test import SingleShotDetectorTest
-from k12cv.model.det.nets.custom_ssd300 import CustomSSD300
-from k12cv.model.det.nets.custom_ssd512 import CustomSSD512
-from k12cv.model.cls.nets.custom_base import CustomBaseModel
-from k12cv.tools.util.net_def import build_custom_model
-from k12cv.tools.util.rpc_message import hzcsk12_send_message
+from k12ai.runner.cls.image_classifier_test import ImageClassifierTest
+from k12ai.runner.det.single_shot_detector_test import SingleShotDetectorTest
+from k12ai.model.det.nets.custom_ssd300 import CustomSSD300
+from k12ai.model.det.nets.custom_ssd512 import CustomSSD512
+from k12ai.model.cls.nets.custom_base import CustomBaseModel
+from k12ai.tools.util.net_def import build_custom_model
+from k12ai.common import k12ai_send_message # noqa
 
 from runner.runner_selector import CLS_TEST_DICT, DET_TEST_DICT
 from model.det.model_manager import DET_MODEL_DICT
@@ -66,12 +66,13 @@ def hzcsk12_cv_init(configer):
     Log.debug('hzcsk12_cv_init')
 
     # Check
-    # if configer.get('phase') == 'test':
-    #     configer.update('network.resume_continue', True)
-    # if configer.get('network.resume_continue'):
-    #     ckpts_name = configer.get('network.checkpoints_name')
-    #     resume_path = '/cache/ckpts/%s_latest.pth' % ckpts_name
-    #     configer.update('network.resume', resume_path)
+    if configer.get('phase') == 'test':
+        configer.update('network.resume_continue', True)
+    if configer.get('network.resume_continue'):
+        ck_root = configer.get('network.checkpoints_root')
+        ck_dir = configer.get('network.checkpoints_dir')
+        ck_name = configer.get('network.checkpoints_name')
+        configer.update('network.resume', f'/{ck_root}/{ck_dir}/{ck_name}_latest.pth')
 
     custom = _check_custom_model(configer)
 
@@ -85,4 +86,4 @@ def hzcsk12_cv_init(configer):
         max_iters = configer.get('solver.max_iters')
         Log.info('_k12ai.solver.lr.metric: iters, max: %d' % max_iters)
 
-    hzcsk12_send_message('status', {'value': 'running'})
+    k12ai_send_message('status', {'value': 'running'})

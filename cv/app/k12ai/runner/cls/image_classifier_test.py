@@ -15,7 +15,7 @@ from model.cls.model_manager import ModelManager
 from metric.cls.cls_running_score import ClsRunningScore
 from lib.tools.util.logger import Logger as Log
 
-from k12cv.tools.util.rpc_message import hzcsk12_send_message
+from k12ai.tools.util.rpc_message import hzcsk12_send_message
 
 
 class ImageClassifierTest(object):

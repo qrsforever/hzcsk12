@@ -13,7 +13,7 @@ import traceback
 import resource
 from torch import cuda
 
-from k12cv.tools.util.rpc_message import hzcsk12_send_message
+from k12ai.common import k12ai_send_message # noqa
 
 _isepoch_ = True
 _maxiter_ = -1
@@ -134,13 +134,13 @@ def _parse_metrics(filename, lineno, message):
                     _metrics_['evaluate_progress'] = 1.0
         elif filename == 'main.py':
             if message.startswith('k12cv_finish'):
-                hzcsk12_send_message('metrics', {**_metrics_, **_get_memory()})
-                hzcsk12_send_message('status', {'value': 'exit', 'way': 'finish'})
+                k12ai_send_message('metrics', {**_metrics_, **_get_memory()})
+                k12ai_send_message('status', {'value': 'exit', 'way': 'finish'})
                 return
         else:
             return
         # send message to k12cv service
-        hzcsk12_send_message('metrics', _metrics_)
+        k12ai_send_message('metrics', _metrics_)
     except Exception as err:
         print(err)
 
@@ -153,8 +153,8 @@ def _parse_error(filename, lineno, message):
         _message['linenum'] = lineno
         _message['err_type'] = err_type
         _message['err_text'] = message
-        hzcsk12_send_message('error', _message)
-        hzcsk12_send_message('status', {'value': 'exit', 'way': 'error'})
+        k12ai_send_message('error', _message)
+        k12ai_send_message('status', {'value': 'exit', 'way': 'error'})
         print(_message)
 
     if message == 'Image type is invalid.':
@@ -211,12 +211,12 @@ def _parse_except(filename, lineno, message):
                 'source': tb.line
                 }
         message['trackback'].append(err)
-    hzcsk12_send_message('error', message)
-    hzcsk12_send_message('status', {'value': 'exit', 'way': 'crash'})
+    k12ai_send_message('error', message)
+    k12ai_send_message('status', {'value': 'exit', 'way': 'crash'})
     print(message)
 
 
-def hzcsk12_log_parser(level, filename, lineno, message):
+def k12ai_log_parser(level, filename, lineno, message):
     if level == 'info':
         _parse_metrics(filename, lineno, message)
     elif level == 'error':

@@ -9,7 +9,7 @@
 
 from model.cls.nets.base_model import BaseModel
 
-from k12cv.tools.util.net_def import load_custom_model
+from k12ai.tools.util.net_def import load_custom_model
 
 
 class CustomBaseModel(BaseModel):

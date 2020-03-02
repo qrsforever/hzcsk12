@@ -3,3 +3,4 @@ cauchy/extensions/**/*.so
 cauchy.egg-info
 dist
 .torchcv
+app/k12ai/common

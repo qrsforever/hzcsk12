@@ -11,9 +11,9 @@ import sys
 
 # QRS: add
 try:
-    from k12cv.tools.util.log_parser import hzcsk12_log_parser
+    from k12ai.tools.util.log_parser import k12ai_log_parser
 except ModuleNotFoundError:
-    def hzcsk12_log_parser(*args, **kwargs):
+    def k12ai_log_parser(*args, **kwargs):
         pass
 except Exception as err:
     print("import error:{}".format(err))
@@ -79,7 +79,7 @@ class Logger(object):
         lineno = sys._getframe().f_back.f_lineno
         prefix = '[{}, {}]'.format(filename,lineno)
         # QRS: add
-        hzcsk12_log_parser('info', filename, lineno, message)
+        k12ai_log_parser('info', filename, lineno, message)
         Logger.logger.info('{} {}'.format(prefix, message))
 
     @staticmethod
@@ -89,7 +89,7 @@ class Logger(object):
         lineno = sys._getframe().f_back.f_lineno
         prefix = '[{}, {}]'.format(filename,lineno)
         # QRS: add
-        hzcsk12_log_parser('warn', filename, lineno, message)
+        k12ai_log_parser('warn', filename, lineno, message)
         Logger.logger.warn('{} {}'.format(prefix, message))
 
     @staticmethod
@@ -99,7 +99,7 @@ class Logger(object):
         lineno = sys._getframe().f_back.f_lineno
         prefix = '[{}, {}]'.format(filename,lineno)
         # QRS: add
-        hzcsk12_log_parser('error', filename, lineno, message)
+        k12ai_log_parser('error', filename, lineno, message)
         Logger.logger.error('{} {}'.format(prefix, message))
 
     @staticmethod
@@ -109,7 +109,7 @@ class Logger(object):
         lineno = sys._getframe().f_back.f_lineno
         prefix = '[{}, {}]'.format(filename,lineno)
         # QRS: add
-        hzcsk12_log_parser('critical', filename, lineno, message)
+        k12ai_log_parser('critical', filename, lineno, message)
         Logger.logger.critical('{} {}'.format(prefix, message))
 
 

@@ -19,7 +19,7 @@ from lib.tools.util.logger import Logger as Log
 
 # QRS: add
 try:
-    from k12cv.k12cv_init import hzcsk12_cv_init
+    from k12ai.k12cv_init import hzcsk12_cv_init
 except ModuleNotFoundError:
     def hzcsk12_cv_init(configer):
         pass
@@ -205,6 +205,6 @@ if __name__ == "__main__":
         # QRS: add for catch internal except
         Log.critical('except: {}'.format(err))
     else:
-        Log.info('k12cv_finish')
+        Log.info('k12ai_finish')
     finally:
         pass

@@ -13,7 +13,7 @@ from model.det.nets.vgg16_ssd300 import (Vgg16SSD300, SSDHead, L2Norm)
 from model.det.layers.ssd_detection_layer import SSDDetectionLayer
 from model.det.layers.ssd_target_generator import SSDTargetGenerator
 
-from k12cv.tools.util.net_def import load_custom_model
+from k12ai.tools.util.net_def import load_custom_model
 
 
 class CustomSSD300(Vgg16SSD300):
