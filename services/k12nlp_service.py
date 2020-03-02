@@ -23,7 +23,7 @@ from k12ai_errmsg import k12ai_error_message as _err_msg
 from k12ai_logger import (k12ai_set_loglevel, k12ai_set_logfile, Logger)
 from k12ai_platform import (k12ai_platform_cpu_count, k12ai_platform_gpu_count)
 
-_DEBUG_ = True if os.environ.get("K12NLP_DEBUG") else False
+_DEBUG_ = True if os.environ.get("K12AI_DEBUG") else False
 
 service_name = 'k12nlp'
 
@@ -58,6 +58,7 @@ class NLPServiceRPC(object):
         self._docker = docker.from_env()
         self._workdir = workdir
         self._projdir = os.path.join(k12ai_utils_topdir(), 'nlp')
+        self._commlib = os.path.join(k12ai_utils_topdir(), 'common', '_delta_')
         Logger.info('workdir:%s, projdir:%s' % (self._workdir, self._projdir))
 
         self.userscache_dir = '%s/users' % data_root
@@ -149,13 +150,15 @@ class NLPServiceRPC(object):
             volumes[f'{self._projdir}/allennlp/allennlp'] = {'bind': f'{self._workdir}/allennlp', 'mode':'rw'}
             volumes[f'{self._projdir}/allennlp-reading-comprehension/allennlp_rc'] = {'bind': f'{self._workdir}/allennlp_rc', 'mode':'rw'}
 
+            volumes[f'{self._commlib}'] = {'bind': f'{self._workdir}/app/k12ai/common', 'mode': 'rw'}
+
         environs = {
-            'K12NLP_RPC_HOST': '%s' % self._host,
-            'K12NLP_RPC_PORT': '%s' % self._port,
-            'K12NLP_TOKEN': '%s' % token,
-            'K12NLP_OP': '%s' % op,
-            'K12NLP_USER': '%s' % user,
-            'K12NLP_UUID': '%s' % uuid
+            'K12AI_RPC_HOST': '%s' % self._host,
+            'K12AI_RPC_PORT': '%s' % self._port,
+            'K12AI_TOKEN': '%s' % token,
+            'K12AI_OP': '%s' % op,
+            'K12AI_USER': '%s' % user,
+            'K12AI_UUID': '%s' % uuid
         }
         kwargs = {
             'name': '%s-%s-%s' % (op, user, uuid),
