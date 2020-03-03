@@ -16,11 +16,10 @@ from pyhocon import ConfigFactory
 from pyhocon import HOCONConverter
 
 from k12ai.k12ai_base import ServiceRPC
-from k12ai import (
-        k12ai_consul_init, k12ai_consul_register,
-        k12ai_utils_netip, k12ai_utils_diff,
-        k12ai_set_loglevel, k12ai_set_logfile, Logger,
-        k12ai_platform_cpu_count, k12ai_platform_gpu_count)
+from k12ai.k12ai_consul import (k12ai_consul_init, k12ai_consul_register)
+from k12ai.k12ai_utils import (k12ai_utils_netip, k12ai_utils_diff)
+from k12ai.k12ai_logger import (k12ai_set_loglevel, k12ai_set_logfile, Logger)
+from k12ai.k12ai_platform import (k12ai_platform_cpu_count, k12ai_platform_gpu_count)
 
 _DEBUG_ = True if os.environ.get("K12AI_DEBUG") else False
 

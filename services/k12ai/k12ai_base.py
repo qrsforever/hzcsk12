@@ -12,10 +12,10 @@ import json, _jsonnet
 import docker
 from threading import Thread
 
-from k12ai import k12ai_utils_topdir
-from k12ai import k12ai_error_message
-from k12ai import k12ai_consul_message
-from k12ai import Logger
+from k12ai.k12ai_utils import k12ai_utils_topdir
+from k12ai.k12ai_errmsg import k12ai_error_message
+from k12ai.k12ai_consul import k12ai_consul_message
+from k12ai.k12ai_logger import Logger
 
 
 class ServiceRPC(object):

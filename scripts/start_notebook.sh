@@ -76,12 +76,12 @@ __main()
     if [[ x$1 == x ]] || [[ x$1 == xall ]] || [[ x$1 == xai ]]
     then
         __start_notebook $K12AI_PROJECT $K12AI_PORT \
-            --env PYTHONPATH=$DST_DIR/hzcsnote \
+            --env PYTHONPATH=$DST_DIR/hzcsnote:$DST_DIR/hzcsnote/k12libs \
             --volume $TOP_DIR/ml/app:$DST_DIR/hzcsnote/ml/app \
             --volume $TOP_DIR/cv/app:$DST_DIR/hzcsnote/cv/app \
             --volume $TOP_DIR/nlp/app:$DST_DIR/hzcsnote/nlp/app \
             --volume $TOP_DIR/rl/app:$DST_DIR/hzcsnote/rl/app \
-            --volume $TOP_DIR/common:$DST_DIR/hzcsnote/k12libs/common \
+            --volume $TOP_DIR/services/k12ai:$DST_DIR/hzcsnote/k12libs/k12ai \
             --volume /data:/data
     fi
 

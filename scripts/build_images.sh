@@ -81,7 +81,7 @@ __build_image()
     then
         echo "build image: $REPOSITORY:$TAG"
 
-        if [[ $DESTDIR == 'ai' ]]
+        if [[ $DESTDIR == '.' ]]
         then
             cd $TOP_DIR
         else
@@ -105,7 +105,7 @@ __build_image()
             --build-arg BRANCH=$BRANCH \
             --file $DOCKERFILE .
 
-        if [[ $DESTDIR != 'ai' ]]
+        if [[ $DESTDIR != '.' ]]
         then
             rm -rf $TOP_DIR/$DESTDIR/app/k12ai/common/*
         fi
