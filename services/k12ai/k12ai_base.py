@@ -43,7 +43,7 @@ class ServiceRPC(object):
     def send_message(self, token, op, user, uuid, msgtype, message, clear=False):
         if not msgtype:
             return
-        if isinstance(message, dict) and 'err_type' in message:
+        if msgtype == 'error' and 'err_type' in message:
             errtype = message['err_type']
             errcode = self.errtype2errcode(errtype)
             if errcode < 0:
@@ -127,6 +127,7 @@ class ServiceRPC(object):
             **self.make_container_environs()
         }
 
+        # W: don't set hostname
         kwargs = {
             'name': '%s-%s-%s' % (op, user, uuid),
             'detach': True,
@@ -139,7 +140,6 @@ class ServiceRPC(object):
 
         self.send_message(token, op, user, uuid, "status", {'value': 'starting'}, clear=True)
         try:
-
             self._docker.containers.run(f'{self._image}', command, **kwargs)
             return
         except Exception:

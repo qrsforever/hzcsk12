@@ -36,34 +36,17 @@ def k12ai_except_message():
     return message
 
 
-def k12ai_memstat_message(memfree=False):
-    cpuinfos = []
-    gpuinfos = []
-
-    # cpu
-    cpuinfo = {
-        'max_memory_MB': round(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024, 3),
-        'max_memory_MB_': round(resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss / 1024, 3)
-    }
-    if memfree:
-        cpuinfo['memory_free_MB'] = round(psutil.virtual_memory().available / 1024**2, 3)
-
-    cpuinfos.append(cpuinfo)
-
-    # gpu, now only one device
-    gpuinfo = {
-        'max_memory_MB': round(torch.cuda.max_memory_allocated() / 1024**2, 3),
-        'max_memory_MB_': round(torch.cuda.max_memory_cached() / 1024**2, 3),
-        'memory_allocated': round(torch.cuda.memory_allocated() / 1024**2, 3),
-        'memory_cached': round(torch.cuda.memory_cached() / 1024**2, 3)
-    }
-    if memfree:
-        gpuinfo['memory_free_MB'] = round(GPUtil.getGPUs()[0].memoryFree, 3)
-    gpuinfos.append(gpuinfo)
-
+def k12ai_memstat_message():
+    # not all gpus
     message = {
-        'cpu': cpuinfos,
-        'gpu': gpuinfos
+        'app_cpu_memory_usage_MB': round(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024, 3),
+        'app_gpu_memory_usage_MB': round(torch.cuda.max_memory_allocated() / 1024**2, 3),
+        'sys_cpu_memory_free_MB': round(psutil.virtual_memory().available / 1024**2, 3),
+        'sys_gpu_memory_free_MB': round(GPUtil.getGPUs()[0].memoryFree, 3),
+        'app_cpu_max_memory_children_MB': round(resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss / 1024, 3),
+        'app_gpu_max_memory_cached_MB': round(torch.cuda.max_memory_cached() / 1024**2, 3),
+        'app_gpu_memory_allocated_MB': round(torch.cuda.memory_allocated() / 1024**2, 3),
+        'app_gpu_memory_cached_MB': round(torch.cuda.memory_cached() / 1024**2, 3)
     }
     return message
 
@@ -76,7 +59,6 @@ class MessageReport(object):
 
     @staticmethod
     def status(what, msg=None):
-        print(f'status: {what}')
         if what == MessageReport.RUNNING:
             k12ai_send_message('status', {'value': 'running'})
             return
@@ -92,8 +74,11 @@ class MessageReport(object):
             return
 
         if what == MessageReport.FINISH:
-            k12ai_send_message('memstat', k12ai_memstat_message(True))
-            k12ai_send_message('status', {'value': 'exit', 'way': 'finish'})
+            k12ai_send_message('status', {
+                'value': 'exit',
+                'way': 'finish',
+                'memstat': k12ai_memstat_message()
+            })
             return
 
     @staticmethod

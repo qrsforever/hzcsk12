@@ -17,7 +17,7 @@ from threading import Thread
 
 from k12ai.k12ai_errmsg import k12ai_error_message as _err_msg
 from k12ai.k12ai_consul import (k12ai_consul_init, k12ai_consul_register, k12ai_consul_service)
-from k12ai.k12ai_platform import (k12ai_platform_stats, k12ai_platform_control, k12ai_platform_memory_free)
+from k12ai.k12ai_platform import (k12ai_platform_stats, k12ai_platform_control)
 from k12ai.k12ai_logger import (k12ai_set_loglevel, k12ai_set_logfile, Logger)
 
 _DEBUG_ = True if os.environ.get("K12AI_DEBUG") else False
@@ -152,10 +152,7 @@ def _framework_execute():
         return json.dumps(_err_msg(100201, f'service name:{service_name}'))
     try:
         code, msg = agent.execute(token, op, user, service_uuid, service_params)
-        if code != 100000:
-            return json.dumps(_err_msg(code, msg))
-        else:
-            return json.dumps(_err_msg(code, k12ai_platform_memory_free()))
+        return json.dumps(_err_msg(code, msg))
     except Exception:
         return json.dumps(_err_msg(100202, exc=True))
 

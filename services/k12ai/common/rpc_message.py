@@ -42,5 +42,8 @@ def k12ai_send_message(msgtype, message, end=False):
             _RPCClient.send_message(K12AI_TOKEN, K12AI_OP, K12AI_USER, K12AI_UUID, msgtype, message)
         if end:
             _RPCClient.close()
+
+        if msgtype == 'error':
+            print(message)
     except Exception:
         pass

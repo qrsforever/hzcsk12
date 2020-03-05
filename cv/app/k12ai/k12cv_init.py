@@ -80,9 +80,6 @@ def _check_custom_model(configer):
 def k12ai_cv_init(configer):
     Log.debug('k12ai_cv_init')
 
-    from k12ai.common.log_message import k12ai_memstat_message
-    print(k12ai_memstat_message())
-
     # Check
     if configer.get('phase') == 'test':
         configer.update('network.resume_continue', True)

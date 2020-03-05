@@ -85,12 +85,12 @@ def k12ai_consul_message(token, user, op, sname, uuid, msgtype, message, clear=F
     data['datetime'] = time.strftime('%Y%m%d%H%M%S', time.localtime(now_time))
     data['data'] = message
 
-    # service
-    api = 'http://{}:{}/k12ai/private/message?type={}'.format(service['Address'], service['Port'], msgtype)
-    requests.post(api, json=data)
-
     if g_consul_debug:
         if clear:
             client.kv.delete('framework/%s/%s' % (user, uuid), recurse=True)
         key = 'framework/%s/%s/%s/%s/%s' % (user, uuid, op.split('.')[0], msgtype, data['datetime'])
         client.kv.put(key, json.dumps(data, indent=2))
+
+    # service
+    api = 'http://{}:{}/k12ai/private/message?type={}'.format(service['Address'], service['Port'], msgtype)
+    requests.post(api, json=data)
