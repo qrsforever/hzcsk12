@@ -19,7 +19,7 @@ from lib.tools.util.logger import Logger as Log
 
 # QRS: add
 from k12ai.k12cv_init import k12ai_cv_init
-from k12ai.common import k12ai_status_message
+from k12ai.common.log_message import MessageReport
 
 
 def str2bool(v):
@@ -170,7 +170,7 @@ if __name__ == "__main__":
     try:
         # QRS: add
         k12ai_cv_init(configer)
-        k12ai_status_message('k12ai_running')
+        MessageReport.status(MessageReport.RUNNING)
 
         runner_selector = RunnerSelector(configer)
         runner = None
@@ -197,9 +197,9 @@ if __name__ == "__main__":
         else:
             Log.error('Phase: {} is not valid.'.format(configer.get('phase')))
             exit(1)
-        k12ai_status_message('k12ai_finish')
+        MessageReport.status(MessageReport.FINISH)
     except Exception:
         # QRS: add for catch internal except
-        k12ai_status_message('k12ai_except')
+        MessageReport.status(MessageReport.EXCEPT)
     finally:
         pass

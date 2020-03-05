@@ -9,16 +9,16 @@
 
 import re
 
-from k12ai.common import k12ai_send_message
-from k12ai.common import k12ai_status_message
+from k12ai.common.log_message import MessageReport
 
 _isepoch_ = True
 _maxiter_ = -1
 _metrics_ = {}
+_memstat_ = False
 
 
 def _parse_metrics(filename, lineno, message):
-    global _isepoch_, _maxiter_ , _metrics_
+    global _isepoch_, _maxiter_ , _metrics_, _memstat_
     try:
         if filename == 'k12cv_init.py':
             if message.startswith('_k12ai.solver.lr.metric: '):
@@ -51,11 +51,13 @@ def _parse_metrics(filename, lineno, message):
                         _metrics_['training_progress'] = round(float(_metrics_['training_epochs']) / _maxiter_, 4)
                     else:
                         _metrics_['training_progress'] = round(float(_metrics_['training_iters']) / _maxiter_, 4)
+                _memstat_ = False
             elif message.startswith('TestLoss = '):
                 res = re.search(r'TestLoss = .*loss: (?P<val_loss>\d+\.?\d*).*', message)
                 if res:
                     result = res.groupdict()
                     _metrics_['validation_loss'] = float(result.get('val_loss', '0'))
+                _memstat_ = True
                 return
             elif message.startswith('Top1 ACC = '):
                 res = re.search(r'Top1 ACC = .*\'out\': (?P<acc>\d+\.?\d*).*', message)
@@ -98,6 +100,7 @@ def _parse_metrics(filename, lineno, message):
                         _metrics_['training_progress'] = round(float(_metrics_['training_epochs']) / _maxiter_, 4)
                     else:
                         _metrics_['training_progress'] = round(float(_metrics_['training_iters']) / _maxiter_, 4)
+                _memstat_ = False
             elif message.startswith('Test Time'):
                 res = re.search(r'Test Time (?P<batch_time_sum>\d+\.?\d*)s, '
                         r'\((?P<batch_time_avg>\d+\.?\d*)\)\t'
@@ -105,11 +108,13 @@ def _parse_metrics(filename, lineno, message):
                 if res:
                     result = res.groupdict()
                     _metrics_['validation_loss'] = float(result.get('loss_avg', '0'))
+                _memstat_ = True
             elif message.startswith('Val mAP:'):
                 res = re.search(r'Val mAP: (?P<mAP>\d+\.?\d*)', message)
                 if res:
                     result = res.groupdict()
                     _metrics_['validation_mAP'] = round(float(result.get('mAP', '0')), 4)
+                _memstat_ = True
             else:
                 return
         elif filename == 'single_shot_detector_test.py':
@@ -119,10 +124,12 @@ def _parse_metrics(filename, lineno, message):
                     result = res.groupdict()
                     _metrics_['evaluate_mAP'] = round(float(result.get('mAP', '0')), 4)
                     _metrics_['evaluate_progress'] = 1.0
+                _memstat_ = True
         else:
             return
         # send message to k12cv service
-        k12ai_send_message('metrics', _metrics_)
+        MessageReport.metrics(_metrics_, memstat=_memstat_)
+
     except Exception as err:
         print(err)
 
@@ -135,7 +142,7 @@ def _parse_error(filename, lineno, message):
         _message['linenum'] = lineno
         _message['err_type'] = err_type
         _message['err_text'] = message
-        return k12ai_status_message('k12ai_error', _message)
+        MessageReport.status(MessageReport.ERROR, _message)
 
     if message == 'Image type is invalid.':
         return _err_msg('ImageTypeError')
@@ -174,7 +181,7 @@ def _parse_error(filename, lineno, message):
 
 
 def _parse_except(filename, lineno, message):
-    return k12ai_status_message('k12ai_except')
+    return MessageReport.status(MessageReport.EXCEPT)
 
 
 def k12ai_log_parser(level, filename, lineno, message):

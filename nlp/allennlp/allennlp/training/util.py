@@ -23,11 +23,7 @@ from allennlp.models.archival import CONFIG_NAME
 from allennlp.nn import util as nn_util
 
 # QRS: add for report message
-try:
-    from k12ai.common import k12ai_send_message as _k12msg
-except ModuleNotFoundError:
-    def k12ai_send_message(*args, **kwargs):
-        pass
+from k12ai.common.log_message import MessageReport
 
 logger = logging.getLogger(__name__)
 
@@ -456,7 +452,7 @@ def evaluate(
                 _metrics['evaluate_loss'] = metrics['loss']
                 _metrics['evaluate_accuracy'] = metrics['accuracy']
                 _metrics['evaluate_progress'] = float(batch_count) / generator_tqdm.total
-                k12ai_send_message('metrics', _metrics)
+                MessageReport.metrics(_metrics)
 
         final_metrics = model.get_metrics(reset=True)
         if loss_count > 0:
@@ -473,7 +469,7 @@ def evaluate(
         _metrics['evaluate_loss'] = final_metrics['loss']
         _metrics['evaluate_accuracy'] = final_metrics['accuracy']
         _metrics['evaluate_progress'] = 1.0
-        k12ai_send_message('metrics', _metrics, end=True)
+        MessageReport.metrics(_metrics)
         return final_metrics
 
 

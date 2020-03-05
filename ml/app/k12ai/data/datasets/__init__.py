@@ -8,7 +8,7 @@
 # @date 2020-02-24 20:54
 
 import os
-from k12ai.utils.misc import find_components
+from k12ai.common.util_misc import find_components
 from k12ai.data.base import K12DataLoader
 
 _datasets = find_components(

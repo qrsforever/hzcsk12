@@ -222,8 +222,8 @@ def k12ai_platform_gpu_count():
 
 
 def k12ai_platform_memory_free():
-    info = {}
-    info['cpu_memory_free'] = psutil.virtual_memory().available
-    # TODO multiple gpu
-    info['gpu_memory_free'] = GPUtil.getGPUs()[0].memoryFree
-    return info
+    infos = {
+        'cpu': [{'memory_free_MB': round(psutil.virtual_memory().available / 1024**2, 4)}],
+        'gpu': [{'memory_free_MB': round(GPUtil.getGPUs()[0].memoryFree, 3)}],
+    }
+    return infos

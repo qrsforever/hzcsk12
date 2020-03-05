@@ -17,7 +17,6 @@ from k12ai.model.det.nets.custom_ssd300 import CustomSSD300
 from k12ai.model.det.nets.custom_ssd512 import CustomSSD512
 from k12ai.model.cls.nets.custom_base import CustomBaseModel
 from k12ai.tools.util.net_def import build_custom_model
-from k12ai.common import k12ai_send_message # noqa
 
 from runner.runner_selector import CLS_TEST_DICT, DET_TEST_DICT
 from model.det.model_manager import DET_MODEL_DICT
@@ -81,6 +80,9 @@ def _check_custom_model(configer):
 def k12ai_cv_init(configer):
     Log.debug('k12ai_cv_init')
 
+    from k12ai.common.log_message import k12ai_memstat_message
+    print(k12ai_memstat_message())
+
     # Check
     if configer.get('phase') == 'test':
         configer.update('network.resume_continue', True)
@@ -109,5 +111,3 @@ def k12ai_cv_init(configer):
     else:
         max_iters = configer.get('solver.max_iters')
         Log.info('_k12ai.solver.lr.metric: iters, max: %d' % max_iters)
-
-    k12ai_send_message('status', {'value': 'running'})

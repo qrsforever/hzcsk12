@@ -8,8 +8,9 @@
 # @date 2020-01-22 20:00
 
 import sys, os, signal
-import psutil
 import traceback
+import psutil
+from k12ai.utils.log_parser import k12ai_set_phase
 
 
 def k12ai_except(func):

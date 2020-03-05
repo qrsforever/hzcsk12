@@ -109,6 +109,7 @@ local _network_maps = {
         [if $.dataset_name == 'kannada' then 'kannada']: import '../constants/datasets/kannada.jsonnet',
         [if $.dataset_name == 'kannada_dig' then 'kannada_dig']: import '../constants/datasets/kannada_dig.jsonnet',
         [if $.dataset_name == 'VOC07+12_DET' then 'VOC07+12_DET']: import '../constants/datasets/VOC07+12_DET.jsonnet',
+        [if $.dataset_name == 'cellular' then 'cellular']: import '../constants/datasets/cellular.jsonnet',
     },
 
     // basic type node generator function

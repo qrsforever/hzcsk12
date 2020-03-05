@@ -20,7 +20,6 @@ local _Utils = import '../../../utils/helper.libsonnet';
             type: 'H',
             objs: [
                 _Utils.int(jid + '.summary_interval', 'Summary Interval', def=100, ddd=true),
-                _Utils.int(jid + '.model_save_interval', 'Save Interval', def=0.03, ddd=true, tips='interval seconds in single epoch'),
                 {
                     _id_: jid + '.validation_metric',
                     name: { en: 'Validation Metric', cn: self.en },

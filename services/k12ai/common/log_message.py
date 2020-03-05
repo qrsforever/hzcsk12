@@ -11,6 +11,8 @@ import sys
 import traceback
 import resource
 import torch
+import GPUtil
+import psutil
 
 from k12ai.common.rpc_message import k12ai_send_message
 
@@ -34,40 +36,68 @@ def k12ai_except_message():
     return message
 
 
-def k12ai_memory_message(device=None):
-    message = {}
-    message['cpu_max_memory_rss'] = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-    message['gpu_max_memory_allocated'] = torch.cuda.max_memory_allocated(device)
-    message['gpu_max_memory_cached'] = torch.cuda.max_memory_cached(device)
-    message['gpu_memory_allocated'] = torch.cuda.memory_allocated(device)
-    message['gpu_memory_cached'] = torch.cuda.memory_cached(device)
+def k12ai_memstat_message(memfree=False):
+    cpuinfos = []
+    gpuinfos = []
+
+    # cpu
+    cpuinfo = {
+        'max_memory_MB': round(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024, 3),
+        'max_memory_MB_': round(resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss / 1024, 3)
+    }
+    if memfree:
+        cpuinfo['memory_free_MB'] = round(psutil.virtual_memory().available / 1024**2, 3)
+
+    cpuinfos.append(cpuinfo)
+
+    # gpu, now only one device
+    gpuinfo = {
+        'max_memory_MB': round(torch.cuda.max_memory_allocated() / 1024**2, 3),
+        'max_memory_MB_': round(torch.cuda.max_memory_cached() / 1024**2, 3),
+        'memory_allocated': round(torch.cuda.memory_allocated() / 1024**2, 3),
+        'memory_cached': round(torch.cuda.memory_cached() / 1024**2, 3)
+    }
+    if memfree:
+        gpuinfo['memory_free_MB'] = round(GPUtil.getGPUs()[0].memoryFree, 3)
+    gpuinfos.append(gpuinfo)
+
+    message = {
+        'cpu': cpuinfos,
+        'gpu': gpuinfos
+    }
     return message
 
 
-def k12ai_status_message(what, msg=None):
-    if what.startswith('k12ai_metrics'):
-        k12ai_send_message('metrics', msg)
-        return
+class MessageReport(object):
+    RUNNING = 1
+    ERROR = 2
+    EXCEPT = 3
+    FINISH = 4
 
-    if what.startswith('k12ai_running'):
-        k12ai_send_message('status', {'value': 'running'})
-        return
+    @staticmethod
+    def status(what, msg=None):
+        print(f'status: {what}')
+        if what == MessageReport.RUNNING:
+            k12ai_send_message('status', {'value': 'running'})
+            return
 
-    if what.startswith('k12ai_finish'):
-        k12ai_send_message('status', {
-            'value': 'exit',
-            'way': 'finish',
-            'memory': k12ai_memory_message()})
-        return
+        if what == MessageReport.ERROR:
+            k12ai_send_message('error', msg or {})
+            k12ai_send_message('status', {'value': 'exit', 'way': 'error'})
+            return
 
-    if what.startswith('k12ai_error'):
-        k12ai_send_message('error', msg)
-        k12ai_send_message('status', {'value': 'exit', 'way': 'error'})
-        print(msg)
-        return
+        if what == MessageReport.EXCEPT:
+            k12ai_send_message('error', msg or k12ai_except_message())
+            k12ai_send_message('status', {'value': 'exit', 'way': 'crash'})
+            return
 
-    if what.startswith('k12ai_except'):
-        message = k12ai_except_message()
-        k12ai_send_message('error', message)
-        k12ai_send_message('status', {'value': 'exit', 'way': 'crash'})
-        print(message)
+        if what == MessageReport.FINISH:
+            k12ai_send_message('memstat', k12ai_memstat_message(True))
+            k12ai_send_message('status', {'value': 'exit', 'way': 'finish'})
+            return
+
+    @staticmethod
+    def metrics(metrics, memstat=False, end=False):
+        if memstat:
+            metrics['memstat'] = k12ai_memstat_message()
+        k12ai_send_message('metrics', metrics, end)

@@ -7,17 +7,19 @@
 # @version 1.0
 # @date 2020-01-22 15:19
 
-import os, sys
 import re
-import traceback
 import numpy as np
 
-from k12ai.common import k12ai_status_message
-from k12ai.utils import k12ai_kill
+from k12ai.common.log_message import MessageReport
 
 g_phase = ''
 g_iters = 0
 g_metrics = {}
+
+
+def k12ai_set_phase(phase):
+    global g_phase 
+    g_phase = phase
 
 
 def _log_tabular(key, val):
@@ -29,7 +31,6 @@ def _log_tabular(key, val):
 
     val = 0 if np.isnan(val) else val
 
-    print("key = ", key)
     if g_phase == 'train':
         if key == "Iteration":
             g_metrics = {}
@@ -47,23 +48,13 @@ def _log_tabular(key, val):
             return
         if key == "lossAverage":
             g_metrics['training_loss'] = val
-            k12ai_status_message('k12ai_metrics', g_metrics)
+            MessageReport.metrics(g_metrics)
     elif g_phase == 'evaluate':
         if key == "GameScoreAverage":
             g_metrics['evaluate_score'] = val
             g_metrics['evaluate_progress'] = 1.0
-            k12ai_status_message('k12ai_metrics', g_metrics)
+            MessageReport.metrics(g_metrics)
             return
-
-
-def k12ai_log_message(what, msg=None):
-    global g_phase 
-    if what.startswith('k12ai_running'):
-        g_phase = msg
-        return k12ai_status_message(what)
-
-    k12ai_status_message(what, msg)
-    k12ai_kill(os.getpid())
 
 
 def k12ai_log_parser(key_or_msg, val=None):

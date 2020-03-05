@@ -12,10 +12,11 @@ import json, _jsonnet
 import docker
 from threading import Thread
 
-from k12ai.k12ai_utils import k12ai_utils_topdir
+from k12ai.k12ai_utils import (k12ai_utils_topdir, k12ai_utils_netip)
 from k12ai.k12ai_errmsg import k12ai_error_message
 from k12ai.k12ai_consul import k12ai_consul_message
 from k12ai.k12ai_logger import Logger
+from k12ai.k12ai_platform import (k12ai_platform_cpu_count, k12ai_platform_gpu_count)
 
 
 class ServiceRPC(object):
@@ -29,6 +30,10 @@ class ServiceRPC(object):
         self._debug = debug
         self._workdir = f'/hzcsk12/{self._sname}'
         self._projdir = os.path.join(k12ai_utils_topdir(), self._sname)
+
+        self._netip = k12ai_utils_netip()
+        self._cpu_count = k12ai_platform_cpu_count()
+        self._gpu_count = k12ai_platform_gpu_count()
 
         self._datadir = f'{dataroot}/datasets/{self._sname}'
         self._userdir = f'{dataroot}/users'
@@ -58,25 +63,31 @@ class ServiceRPC(object):
         k12ai_consul_message(token, user, op, f'k12{self._sname}', uuid, msgtype, message, clear)
 
     def errtype2errcode(self, errtype):
-        raise NotImplementedError
+        return {}
 
     def make_container_command(self, op, cachedir, params):
         raise NotImplementedError
 
+    def make_container_labels(self):
+        return {}
+
     def make_container_volumes(self):
-        raise NotImplementedError
+        return {}
+
+    def make_container_environs(self):
+        return {}
 
     def make_container_kwargs(self):
-        raise NotImplementedError
+        return {}
 
     def make_schema_kwargs(self):
-        raise NotImplementedError
+        return {}, {}
 
     def get_container(self, user, uuid):
         try:
             cons = self._docker.containers.list(all=True, filters={'label': [
-                'k12ai.service.user=%s'%user,
-                'k12ai.service.uuid=%s'%uuid]})
+                f'k12ai.service.user={user}',
+                f'k12ai.service.uuid={uuid}']})
             if len(cons) == 1:
                 return cons[0]
         except docker.errors.NotFound:
@@ -84,7 +95,7 @@ class ServiceRPC(object):
         return None
 
     def get_cache_dir(self, user, uuid):
-        usercache = '%s/%s/%s' % (self._userdir, user, uuid)
+        usercache = f'{self._userdir}/{user}/{uuid}'
         if not os.path.exists(usercache):
             os.makedirs(usercache)
         return usercache
@@ -95,21 +106,25 @@ class ServiceRPC(object):
             'k12ai.service.name': f'k12{self._sname}',
             'k12ai.service.op': op,
             'k12ai.service.user': user,
-            'k12ai.service.uuid': uuid
+            'k12ai.service.uuid': uuid,
+            **self.make_container_labels()
         }
 
-        volumes = self.make_container_volumes()
-        volumes[f'{self._datadir}'] = {'bind': f'/datasets', 'mode': 'rw'}
-        volumes[f'{self._commlib}'] = {'bind': f'{self._workdir}/app/k12ai/common', 'mode': 'rw'}
-        volumes[self.get_cache_dir(user, uuid)] = {'bind': f'/cache', 'mode': 'rw'}
+        volumes = {
+            f'{self._datadir}': {'bind': f'/datasets', 'mode': 'rw'},
+            f'{self._commlib}': {'bind': f'{self._workdir}/app/k12ai/common', 'mode': 'rw'},
+            self.get_cache_dir(user, uuid): {'bind': f'/cache', 'mode': 'rw'},
+            **self.make_container_volumes()
+        }
 
         environs = {
-            'K12AI_RPC_HOST': '%s' % self._host,
-            'K12AI_RPC_PORT': '%s' % self._port,
-            'K12AI_TOKEN': '%s' % token,
-            'K12AI_OP': '%s' % op,
-            'K12AI_USER': '%s' % user,
-            'K12AI_UUID': '%s' % uuid
+            'K12AI_RPC_HOST': self._host,
+            'K12AI_RPC_PORT': self._port,
+            'K12AI_TOKEN': token,
+            'K12AI_OP': op,
+            'K12AI_USER': user,
+            'K12AI_UUID': uuid,
+            **self.make_container_environs()
         }
 
         kwargs = {
@@ -132,8 +147,8 @@ class ServiceRPC(object):
             self.send_message(token, op, user, uuid, "status", {'value': 'exit', 'way': 'docker'})
             self.send_message(token, op, user, uuid, "error", message)
 
-    def schema(self, task, netw, dataset_name):
-        Logger.info(f'{task}, {netw}, {dataset_name}')
+    def schema(self, task, netw, dname):
+        Logger.info(f'{task}, {netw}, {dname}')
         if not os.path.exists(self._jschema):
             return 100206, f'{self._jschema}'
         ext_vars, ext_codes = self.make_schema_kwargs()
@@ -141,10 +156,12 @@ class ServiceRPC(object):
                 ext_vars={
                     'task': task,
                     'network': netw,
-                    'dataset_name': dataset_name,
+                    'dataset_name': dname,
+                    'net_ip': self._netip,
                     **ext_vars},
                 ext_codes={
                     'debug': 'true' if self._debug else 'false',
+                    'num_cpu': str(self._cpu_count), 'num_gpu': str(self._gpu_count),
                     **ext_codes})
         return 100000, json.dumps(json.loads(schema_json), separators=(',', ':'))
 

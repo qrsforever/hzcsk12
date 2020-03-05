@@ -17,9 +17,8 @@ from pyhocon import HOCONConverter
 
 from k12ai.k12ai_base import ServiceRPC
 from k12ai.k12ai_consul import (k12ai_consul_init, k12ai_consul_register)
-from k12ai.k12ai_utils import (k12ai_utils_netip, k12ai_utils_diff)
+from k12ai.k12ai_utils import k12ai_utils_diff
 from k12ai.k12ai_logger import (k12ai_set_loglevel, k12ai_set_logfile, Logger)
-from k12ai.k12ai_platform import (k12ai_platform_cpu_count, k12ai_platform_gpu_count)
 
 _DEBUG_ = True if os.environ.get("K12AI_DEBUG") else False
 
@@ -41,10 +40,6 @@ class NLPServiceRPC(ServiceRPC):
 
     def __init__(self, host, port, image, dataroot):
         super().__init__('nlp', host, port, image, dataroot, _DEBUG_)
-
-        self._netip = k12ai_utils_netip()
-        self._cpu_count = k12ai_platform_cpu_count()
-        self._gpu_count = k12ai_platform_gpu_count()
 
         self._pretrained_dir = '%s/pretrained/nlp' % dataroot
         self._nltk_data_dir = '%s/nltk_data' % dataroot
@@ -107,11 +102,6 @@ class NLPServiceRPC(ServiceRPC):
         else:
             raise NotImplementedError
         return 100000, command
-
-    def make_schema_kwargs(self):
-        ext_vars = {'net_ip': self._netip}
-        ext_codes = {'num_cpu': str(self._cpu_count), 'num_gpu': str(self._gpu_count)}
-        return ext_vars, ext_codes
 
 
 if __name__ == "__main__":

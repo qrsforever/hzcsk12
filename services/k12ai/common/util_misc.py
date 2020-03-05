@@ -1,11 +1,11 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-# @file misc.py
+# @file util_misc.py
 # @brief
 # @author QRS
 # @version 1.0
-# @date 2020-02-11 20:01
+# @date 2020-03-04 17:28
 
 import importlib
 import inspect

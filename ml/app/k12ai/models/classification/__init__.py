@@ -8,7 +8,7 @@
 # @date 2020-02-11 20:00
 
 import os
-from k12ai.utils.misc import find_components
+from k12ai.common.util_misc import find_components
 from k12ai.models.base import K12Algorithm
 
 _classifiers = find_components(

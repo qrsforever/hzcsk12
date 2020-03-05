@@ -12,6 +12,7 @@ GPUtil
 psutil
 pyhocon
 seaborn
+pynvml
 
 gym[atari]
 

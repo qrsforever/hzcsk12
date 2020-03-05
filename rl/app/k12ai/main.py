@@ -15,7 +15,8 @@ import torch
 from pyhocon import ConfigFactory
 
 # K12AI
-from k12ai.utils.log_parser import k12ai_log_message
+from k12ai.utils import (k12ai_set_phase, k12ai_kill)
+from k12ai.common.log_message import MessageReport
 
 # utils
 from rlpyt.utils.logging import context
@@ -79,7 +80,7 @@ _run_ID = '0'
 
 def _signal_handler(sig, frame):
     if sig == signal.SIGUSR1:
-        k12ai_log_message('k12ai_error', {'err_type': 'signal', 'err_text': 'handle quit signal'})
+        MessageReport.status(MessageReport.ERROR, {'err_type': 'signal', 'err_text': 'handle quit signal'})
 
 
 def _rl_check(config):
@@ -256,7 +257,8 @@ if __name__ == "__main__":
             help="config file")
     args = parser.parse_args()
 
-    k12ai_log_message('k12ai_running', args.phase)
+    k12ai_set_phase(args.phase)
+    MessageReport.status(MessageReport.RUNNING)
     try:
         if args.phase == 'train' or args.phase == 'evaluate':
             with open(os.path.join(args.config_file), 'r') as f:
@@ -264,6 +266,8 @@ if __name__ == "__main__":
             _rl_train(config, args.phase)
         else:
             raise NotImplementedError(f'phase: {args.phase}')
-        k12ai_log_message('k12ai_finish')
+        MessageReport.status(MessageReport.FINISH)
     except Exception:
-        k12ai_log_message('k12ai_except')
+        MessageReport.status(MessageReport.EXCEPT)
+    finally:
+        k12ai_kill(os.getpid())

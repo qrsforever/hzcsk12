@@ -11,7 +11,7 @@ import os
 import argparse
 from pyhocon import ConfigFactory
 from k12ai.utils.logger import Logger
-from k12ai.common import k12ai_status_message
+from k12ai.common.log_message import MessageReport
 
 
 def _do_train(configer):
@@ -21,8 +21,8 @@ def _do_train(configer):
         from k12ai.runners.sklearn_wrapper import SKRunner
         runner = SKRunner(configer)
         metrics = runner.train()
-        k12ai_status_message('k12ai_metrics', metrics)
         Logger.info(metrics)
+        MessageReport.metrics(metrics)
     else:
         raise NotImplementedError
 
@@ -44,13 +44,13 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     try:
-        k12ai_status_message('k12ai_running')
+        MessageReport.status(MessageReport.RUNNING)
         if args.phase == 'train':
             if not os.path.exists(args.config_file):
                 raise FileNotFoundError("file {} not found".format(args.config_file))
             _do_train(ConfigFactory.parse_file(args.config_file))
         else:
             raise NotImplementedError
-        k12ai_status_message('k12ai_finish')
+        MessageReport.status(MessageReport.FINISH)
     except Exception:
-        k12ai_status_message('k12ai_except')
+        MessageReport.status(MessageReport.EXCEPT)

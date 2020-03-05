@@ -11,5 +11,4 @@
 
 # flake8: noqa
 
-from k12ai.common.rpc_message import k12ai_send_message
-from k12ai.common.log_message import k12ai_status_message
+from k12ai.common.log_message import MessageReport

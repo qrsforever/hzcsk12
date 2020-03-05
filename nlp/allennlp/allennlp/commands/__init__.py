@@ -18,11 +18,7 @@ from allennlp.commands.print_results import PrintResults
 from allennlp.common.util import import_submodules
 
 # QRS: add for catch except info
-try:
-    from k12ai.common import k12ai_status_message
-except ModuleNotFoundError:
-    def k12ai_status_message(*args, **kwargs):
-        pass
+from k12ai.common.log_message import MessageReport
 
 logger = logging.getLogger(__name__)
 
@@ -123,13 +119,13 @@ def main(prog: str = None, subcommand_overrides: Dict[str, Subcommand] = None) -
             import_submodules(package_name)
 
         # QRS: add for catch execpt info
-        k12ai_status_message('k12ai_running')
+        MessageReport.status(MessageReport.RUNNING)
         try:
             args.func(args)
             logger.info("+++success+++")
-            k12ai_status_message('k12ai_finish', end=True)
+            MessageReport.status(MessageReport.FINISH)
         except Exception:
             logger.info("+++fail+++")
-            k12ai_status_message('k12ai_except')
+            MessageReport.status(MessageReport.EXCEPT)
     else:
         parser.print_help()
