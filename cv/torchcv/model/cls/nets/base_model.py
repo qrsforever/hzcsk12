@@ -18,7 +18,8 @@ class BaseModel(nn.Module):
         self.flag = flag if len(flag) == 0 else "{}_".format(flag)
         self.net = ModuleHelper.get_backbone(
             backbone=configer.get('network.{}backbone'.format(self.flag)),
-            pretrained=configer.get('network.{}pretrained'.format(self.flag))
+            pretrained=configer.get('network.{}pretrained'.format(self.flag)),
+            num_classes=self.configer.get('data.num_classes')
         )
         self.valid_loss_dict = configer.get('loss.loss_weights', configer.get('loss.loss_type'))
 

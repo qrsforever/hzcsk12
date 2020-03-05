@@ -4,7 +4,7 @@
     method: 'image_classifier',
     data: {
         num_records: 438204,
-        num_classes: 1137,
+        num_classes: 1138,
         data_dir: '/datasets/cellular',
         image_tool: 'cv2',
         input_mode: 'BGR',
