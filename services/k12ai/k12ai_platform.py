@@ -181,7 +181,7 @@ def _query_stats(docker, op, user, uuid, params):
             message['containers'] = _get_container_infos(docker)
         if params.get('services', False):
             message['services'] = _get_service_infos(docker, user, uuid)
-        k12ai_consul_message('default', user, op, 'k12ai', uuid, 'result', k12ai_error_message(data=message))
+        k12ai_consul_message('default', user, op, 'k12ai', uuid, 'result', k12ai_error_message(content=message))
     return 100000, message
 
 

@@ -8,13 +8,18 @@
 # @date 2020-03-01 23:56
 
 import sys
+import time
 import traceback
-import resource
 import torch
 import GPUtil
 import psutil
 
+from torch.cuda import (max_memory_allocated, memory_allocated, max_memory_cached, memory_cached)
+from resource import (getrusage, RUSAGE_SELF, RUSAGE_CHILDREN)
 from k12ai.common.rpc_message import k12ai_send_message
+
+g_starttime = None
+g_memstat = {}
 
 
 def k12ai_except_message():
@@ -37,18 +42,30 @@ def k12ai_except_message():
 
 
 def k12ai_memstat_message():
-    # not all gpus
-    message = {
-        'app_cpu_memory_usage_MB': round(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024, 3),
-        'app_gpu_memory_usage_MB': round(torch.cuda.max_memory_allocated() / 1024**2, 3),
+    global g_memstat
+
+    def _peak_update(key, value, flg):
+        denom = 1024**2 if flg == 2 else 1024
+        g_memstat[key] = max(g_memstat.get(key, 0), round(value / denom, 3))
+        return g_memstat[key]
+
+    app_cpu_usage = 0.0
+    app_cpu_usage += _peak_update('peak_cpu_self_ru_maxrss', getrusage(RUSAGE_SELF).ru_maxrss, 1)
+    app_cpu_usage += _peak_update('peak_cpu_children_ru_maxrss', getrusage(RUSAGE_CHILDREN).ru_maxrss, 1)
+    app_gpu_usage = 0.0
+    for i, g in enumerate(GPUtil.getGPUs(), 0):
+        _peak_update(f'peak_gpu_{i}_memory_cached_MB', memory_cached(i), 2)
+        _peak_update(f'peak_gpu_{i}_memory_allocated_MB', memory_allocated(i), 2)
+        _peak_update(f'peak_gpu_{i}_max_memory_cached_MB', max_memory_cached(i), 2)
+        app_gpu_usage += _peak_update(f'peak_gpu_{i}_max_memory_allocated_MB', max_memory_allocated(i), 2)
+
+    return {
+        'app_cpu_memory_usage_MB': app_cpu_usage,
+        'app_gpu_memory_usage_MB': app_gpu_usage,
         'sys_cpu_memory_free_MB': round(psutil.virtual_memory().available / 1024**2, 3),
         'sys_gpu_memory_free_MB': round(GPUtil.getGPUs()[0].memoryFree, 3),
-        'app_cpu_max_memory_children_MB': round(resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss / 1024, 3),
-        'app_gpu_max_memory_cached_MB': round(torch.cuda.max_memory_cached() / 1024**2, 3),
-        'app_gpu_memory_allocated_MB': round(torch.cuda.memory_allocated() / 1024**2, 3),
-        'app_gpu_memory_cached_MB': round(torch.cuda.memory_cached() / 1024**2, 3)
+        **g_memstat
     }
-    return message
 
 
 class MessageReport(object):
@@ -60,23 +77,32 @@ class MessageReport(object):
     @staticmethod
     def status(what, msg=None):
         if what == MessageReport.RUNNING:
-            k12ai_send_message('status', {'value': 'running'})
+            global g_starttime
+            g_starttime = time.time()
+            k12ai_send_message('error', {
+                'status': 'running',
+                'memstat': k12ai_memstat_message()
+            })
             return
 
         if what == MessageReport.ERROR:
-            k12ai_send_message('error', msg or {})
-            k12ai_send_message('status', {'value': 'exit', 'way': 'error'})
+            k12ai_send_message('error', {
+                'status': 'error',
+                'errinfo': msg or {}
+            })
             return
 
         if what == MessageReport.EXCEPT:
-            k12ai_send_message('error', msg or k12ai_except_message())
-            k12ai_send_message('status', {'value': 'exit', 'way': 'crash'})
+            k12ai_send_message('error', {
+                'status': 'crash',
+                'errinfo': msg or k12ai_except_message()
+            })
             return
 
         if what == MessageReport.FINISH:
-            k12ai_send_message('status', {
-                'value': 'exit',
-                'way': 'finish',
+            k12ai_send_message('error', {
+                'status': 'finish',
+                'uptime': int(time.time() - g_starttime),
                 'memstat': k12ai_memstat_message()
             })
             return

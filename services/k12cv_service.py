@@ -82,8 +82,8 @@ class CVServiceRPC(ServiceRPC):
         kwargs = {
             'auto_remove': not self._debug,
             'runtime': 'nvidia',
-            'shm_size': '4g',
-            'mem_limit': '8g'
+            'shm_size': '10g',
+            'mem_limit': '10g'
         }
         return kwargs
 

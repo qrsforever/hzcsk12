@@ -12,6 +12,12 @@ import traceback
 
 ERRORS = {
         100000: {'en': 'success', 'cn': '成功'},
+        100001: {'en': 'program staring', 'cn': '程序正在启动'},
+        100002: {'en': 'program running', 'cn': '程序正在运行'},
+        100003: {'en': 'program normal exit', 'cn': '程序正常结束'},
+        100004: {'en': 'program stop manually', 'cn': '程序手动停止'},
+
+
         100101: {'en': 'api parameter key is not found', 'cn': 'API参数错误: 非法Key'},
         100102: {'en': 'api parameter value is invalid', 'cn': 'API参数错误: 非法Value'},
         100103: {'en': 'api parameter json format error', 'cn': 'API参数错误: 非法Json格式'},
@@ -44,6 +50,9 @@ ERRORS = {
         100903: {'en': 'configuration error', 'cn': '常见错误: 参数配置错误'},
         100904: {'en': 'missing key configuration', 'cn': '常见错误: 配置中缺少参数'},
         100905: {'en': 'file is not found', 'cn': '常见错误: 文件不存在'},
+        100906: {'en': 'CUDA out of memory', 'cn': '常见错误: CUDA内存溢出'},
+        100999: {'en': 'unkown error!', 'cn': '不可知错误'},
+
         999999: {'en': 'unknown error!', 'cn': '常见错误: 不可知错误'},
 }
 
@@ -67,26 +76,21 @@ def gen_exc_info():
     return message
 
 
-def k12ai_error_message(code=100000, data=None, stack=False, exc=False, exc_info=None):
+def k12ai_error_message(code=100000, content=None, expand=None, exc=False):
     msg = {}
     msg['code'] = code
     txt = ERRORS.get(code, None)
     if txt:
         msg['message'] = txt
-    if data:
-        msg['data'] = data
+
+    if content:
+        msg['data'] = content
+
+    if expand:
+        msg['expand'] = expand
+
     if exc:
-        msg['detail'] = gen_exc_info()
-    else:
-        if exc_info:
-            msg['detail'] = exc_info
-        else:
-            if stack:
-                stack = traceback.extract_stack(limit=2)[0]
-                msg['detail'] = {
-                    'filename': stack[0],
-                    'linenum': stack[1],
-                    'funcname': stack[2]
-                }
-    print(msg)
+        msg['expand'] = {}
+        msg['expand']['excinfo'] = gen_exc_info()
+    # print(msg)
     return msg

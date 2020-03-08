@@ -13,7 +13,7 @@ import docker
 from threading import Thread
 
 from k12ai.k12ai_utils import (k12ai_utils_topdir, k12ai_utils_netip)
-from k12ai.k12ai_errmsg import k12ai_error_message
+from k12ai.k12ai_errmsg import (k12ai_error_message, gen_exc_info)
 from k12ai.k12ai_consul import k12ai_consul_message
 from k12ai.k12ai_logger import Logger
 from k12ai.k12ai_platform import (k12ai_platform_cpu_count, k12ai_platform_gpu_count)
@@ -43,23 +43,43 @@ class ServiceRPC(object):
     def send_message(self, token, op, user, uuid, msgtype, message, clear=False):
         if not msgtype:
             return
-        if msgtype == 'error' and 'err_type' in message:
-            errtype = message['err_type']
-            errcode = self.errtype2errcode(errtype)
-            if errcode < 0:
-                if errtype == 'MemoryError':
-                    errcode = 100901
-                elif errtype == 'NotImplementedError':
-                    errcode = 100902
-                elif errtype == 'ConfigurationError':
-                    errcode = 100903
-                elif errtype == 'FileNotFoundError':
-                    errcode = 100905
+        if msgtype == 'error':
+            if 'errinfo' in message:
+                errtype = message['errinfo']['err_type']
+                errtext = message['errinfo']['err_text']
+                errcode = self.errtype2errcode(errtype)
+                if errcode < 0:
+                    if errtype == 'MemoryError':
+                        errcode = 100901
+                    elif errtype == 'NotImplementedError':
+                        errcode = 100902
+                    elif errtype == 'ConfigurationError':
+                        errcode = 100903
+                    elif errtype == 'FileNotFoundError':
+                        errcode = 100905
+                    elif errtype == 'RuntimeError':
+                        if errtext.startswith('CUDA out of memory'):
+                            errcode = 100906
+                        else:
+                            errcode = 100999
+                    else:
+                        errcode = 999999 
+                    message = k12ai_error_message(errcode, expand=message)
                 else:
-                    errcode = 100399
-                message = k12ai_error_message(errcode, exc_info=message)
+                    message = k12ai_error_message(errcode, expand=message)
             else:
-                message = k12ai_error_message(errcode, exc_info=message)
+                # Status
+                if 'starting' == message['status']:
+                    errcode = 100001
+                elif 'running' == message['status']:
+                    errcode = 100002
+                elif 'finish' == message['status']:
+                    errcode = 100003
+                elif 'stop' == message['status']:
+                    errcode = 100004
+                else:
+                    errcode = 999999
+                message = k12ai_error_message(errcode, expand=message)
         k12ai_consul_message(token, user, op, f'k12{self._sname}', uuid, msgtype, message, clear)
 
     def errtype2errcode(self, errtype):
@@ -101,7 +121,6 @@ class ServiceRPC(object):
         return usercache
 
     def run_container(self, token, op, user, uuid, command):
-        message = None
         labels = {
             'k12ai.service.name': f'k12{self._sname}',
             'k12ai.service.op': op,
@@ -138,14 +157,15 @@ class ServiceRPC(object):
             **self.make_container_kwargs()
         }
 
-        self.send_message(token, op, user, uuid, "status", {'value': 'starting'}, clear=True)
+        self.send_message(token, op, user, uuid, "error", {'status': 'starting'}, clear=True)
         try:
             self._docker.containers.run(f'{self._image}', command, **kwargs)
             return
         except Exception:
-            message = k12ai_error_message(100203, f'container image:{self._image}', exc=True)
-            self.send_message(token, op, user, uuid, "status", {'value': 'exit', 'way': 'docker'})
-            self.send_message(token, op, user, uuid, "error", message)
+            self.send_message(token, op, user, uuid, "error", {
+                'value': 'exiting', 'way': 'docker',
+                'errinfo': gen_exc_info()
+            })
 
     def schema(self, task, netw, dname):
         Logger.info(f'{task}, {netw}, {dname}')
@@ -173,7 +193,7 @@ class ServiceRPC(object):
             if container is None or container.status != 'running':
                 return 100205, None
             container.kill()
-            self.send_message(token, '%s.start' % phase, user, uuid, "status", {'value': 'exit', 'way': 'manual'})
+            self.send_message(token, '%s.start' % phase, user, uuid, "error", {'status': 'stop'})
             return 100000, None
 
         if container:
