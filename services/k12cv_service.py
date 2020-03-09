@@ -63,6 +63,16 @@ class CVServiceRPC(ServiceRPC):
             errcode = -1
         return errcode
 
+    def container_on_finished(self, op, user, uuid, message):
+        if op.startswith('train') and isinstance(message, dict):
+            environs = self.get_container_environs(user, uuid)
+            if environs:
+                message['environ'] = {}
+                message['environ']['dataset_name'] = environs['K12AI_DATASET_NAME']
+                message['environ']['model_name'] = environs['K12AI_MODEL_NAME']
+                message['environ']['batch_size'] = environs['K12AI_BATCH_SIZE']
+        return 100003
+
     def make_container_volumes(self):
         volumes = {self._pretrained_dir: {'bind': '/pretrained', 'mode': 'rw'}}
         if self._debug:
@@ -78,7 +88,15 @@ class CVServiceRPC(ServiceRPC):
             volumes[f'{self._projdir}/torchcv/main.py'] = {'bind': f'{self._workdir}/torchcv/main.py', 'mode': 'rw'}
         return volumes
 
-    def make_container_kwargs(self):
+    def make_container_environs(self, op, params):
+        environs = {}
+        if op.startswith('train'):
+            environs['K12AI_DATASET_NAME'] = params['_k12.data.dataset_name']
+            environs['K12AI_MODEL_NAME'] = params['network.backbone']
+            environs['K12AI_BATCH_SIZE'] = params['train.batch_size']
+        return environs
+
+    def make_container_kwargs(self, op, params):
         kwargs = {
             'auto_remove': not self._debug,
             'runtime': 'nvidia',

@@ -63,7 +63,7 @@ class ServiceRPC(object):
                         else:
                             errcode = 100999
                     else:
-                        errcode = 999999 
+                        errcode = 999999
                     message = k12ai_error_message(errcode, expand=message)
                 else:
                     message = k12ai_error_message(errcode, expand=message)
@@ -73,10 +73,10 @@ class ServiceRPC(object):
                     errcode = 100001
                 elif 'running' == message['status']:
                     errcode = 100002
-                elif 'finish' == message['status']:
-                    errcode = 100003
                 elif 'stop' == message['status']:
                     errcode = 100004
+                elif 'finish' == message['status']:
+                    errcode = self.container_on_finished(op, user, uuid, message)
                 else:
                     errcode = 999999
                 message = k12ai_error_message(errcode, expand=message)
@@ -84,6 +84,9 @@ class ServiceRPC(object):
 
     def errtype2errcode(self, errtype):
         return {}
+
+    def container_on_finished(self, op, user, uuid, message):
+        return 100003
 
     def make_container_command(self, op, cachedir, params):
         raise NotImplementedError
@@ -94,10 +97,10 @@ class ServiceRPC(object):
     def make_container_volumes(self):
         return {}
 
-    def make_container_environs(self):
+    def make_container_environs(self, op, params):
         return {}
 
-    def make_container_kwargs(self):
+    def make_container_kwargs(self, op, params):
         return {}
 
     def make_schema_kwargs(self):
@@ -114,13 +117,25 @@ class ServiceRPC(object):
             pass
         return None
 
+    def get_container_environs(self, user, uuid):
+        con = self.get_container(user, uuid)
+        if not con:
+            return None
+        environs = {}
+        for item in con.attrs['Config']['Env']:
+            if not item.startswith('K12AI_'):
+                continue
+            key, val = item.split('=')
+            environs[key] = val
+        return environs
+
     def get_cache_dir(self, user, uuid):
         usercache = f'{self._userdir}/{user}/{uuid}'
         if not os.path.exists(usercache):
             os.makedirs(usercache)
         return usercache
 
-    def run_container(self, token, op, user, uuid, command):
+    def run_container(self, token, op, user, uuid, params, command):
         labels = {
             'k12ai.service.name': f'k12{self._sname}',
             'k12ai.service.op': op,
@@ -143,7 +158,7 @@ class ServiceRPC(object):
             'K12AI_OP': op,
             'K12AI_USER': user,
             'K12AI_UUID': uuid,
-            **self.make_container_environs()
+            **self.make_container_environs(op, params)
         }
 
         # W: don't set hostname
@@ -154,7 +169,7 @@ class ServiceRPC(object):
             'labels': labels,
             'volumes': volumes,
             'environment': environs,
-            **self.make_container_kwargs()
+            **self.make_container_kwargs(op, params)
         }
 
         self.send_message(token, op, user, uuid, "error", {'status': 'starting'}, clear=True)
@@ -208,6 +223,7 @@ class ServiceRPC(object):
         if code != 100000:
             return code, command
 
-        Thread(target=lambda: self.run_container(token=token, op=op, user=user, uuid=uuid, command=command),
+        Thread(target=lambda: self.run_container(token=token, op=op, user=user, uuid=uuid, params=params, command=command),
             daemon=True).start()
-        return 100000, None
+
+        return 10000, None

@@ -54,7 +54,7 @@ class MLServiceRPC(ServiceRPC):
             volumes[f'{self._projdir}/app'] = {'bind': f'{self._workdir}/app', 'mode':'rw'}
         return volumes
 
-    def make_container_kwargs(self):
+    def make_container_kwargs(self, op, params):
         kwargs = {
             'auto_remove': not self._debug,
             'runtime': 'nvidia',

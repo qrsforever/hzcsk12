@@ -72,8 +72,7 @@ log_fil=/tmp/k12ai_log.txt
 k12logs=/tmp/k12logs
 
 # service name, address and ports
-# redis_addr='117.51.156.111'
-redis_addr='117.51.137.172'
+redis_addr=${REDIS_ADDR:-'117.51.137.172'}
 redis_port=10090
 redis_pswd='qY3Zh4xLPZNMkaz3'
 

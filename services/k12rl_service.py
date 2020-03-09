@@ -54,7 +54,7 @@ class RLServiceRPC(ServiceRPC):
             volumes[f'{self._projdir}/rlpyt'] = {'bind': f'{self._workdir}/rlpyt', 'mode': 'rw'}
         return volumes
 
-    def make_container_kwargs(self):
+    def make_container_kwargs(self, op, params):
         kwargs = {
             'auto_remove': not self._debug,
             'runtime': 'nvidia',

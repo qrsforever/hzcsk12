@@ -57,7 +57,7 @@ class NLPServiceRPC(ServiceRPC):
             volumes[f'{self._projdir}/allennlp/allennlp'] = {'bind': f'{self._workdir}/allennlp', 'mode':'rw'}
         return volumes
 
-    def make_container_kwargs(self):
+    def make_container_kwargs(self, op, params):
         kwargs = {
             'auto_remove': not self._debug,
             'runtime': 'nvidia',

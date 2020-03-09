@@ -10,7 +10,6 @@
 import sys
 import time
 import traceback
-import torch
 import GPUtil
 import psutil
 
