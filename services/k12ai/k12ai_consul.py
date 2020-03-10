@@ -63,7 +63,7 @@ def k12ai_consul_service(name, timeout=15):
         return RPCServiceAgent(service['Address'], service['Port'], timeout)
 
 
-def k12ai_consul_message(token, user, op, sname, uuid, msgtype, message, clear=False):
+def k12ai_consul_message(sname, token, op, user, uuid, msgtype, message, clear=False):
     client = consul.Consul(g_consul_addr, port=g_consul_port)
     service = client.agent.services().get('k12ai')
     if not service:

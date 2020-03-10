@@ -181,7 +181,7 @@ def _query_stats(docker, op, user, uuid, params):
             message['containers'] = _get_container_infos(docker)
         if params.get('services', False):
             message['services'] = _get_service_infos(docker, user, uuid)
-        k12ai_consul_message('default', user, op, 'k12ai', uuid, 'result', k12ai_error_message(content=message))
+        k12ai_consul_message('k12ai', uuid, op, user, uuid, 'result', k12ai_error_message(content=message), clear=True)
     return 100000, message
 
 
@@ -192,7 +192,7 @@ def _stop_container(op, user, uuid, params):
         if con.status == 'running':
             con.kill()
     except docker.errors.NotFound:
-        return 100301, f'container:{cid}'
+        return 100205, f'container:{cid}'
     return 100000, None
 
 

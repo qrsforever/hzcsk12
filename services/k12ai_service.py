@@ -54,13 +54,13 @@ def _platform_stats():
         service_params = reqjson.get('service_params', None)
         if isinstance(service_params, str):
             service_params = json.loads(service_params)
-        isasync = reqjson.get('async', False)
+        isasync = reqjson.get('isasync', False)
     except Exception:
         return json.dumps(_err_msg(100101, exc=True))
 
     try:
         code, msg = k12ai_platform_stats(op, user, service_uuid, service_params, isasync)
-        return json.dumps(_err_msg(100202 if code < 0 else 100000, msg))
+        return json.dumps(_err_msg(code, msg))
     except Exception:
         return json.dumps(_err_msg(100202, exc=True))
 
@@ -84,7 +84,7 @@ def _platform_control():
 
     try:
         code, msg = k12ai_platform_control(op, user, service_uuid, service_params, isasync)
-        return json.dumps(_err_msg(100202 if code < 0 else 100000, msg))
+        return json.dumps(_err_msg(code, msg))
     except Exception:
         return json.dumps(_err_msg(100202, exc=True))
 

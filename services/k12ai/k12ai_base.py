@@ -80,7 +80,7 @@ class ServiceRPC(object):
                 else:
                     errcode = 999999
                 message = k12ai_error_message(errcode, expand=message)
-        k12ai_consul_message(token, user, op, f'k12{self._sname}', uuid, msgtype, message, clear)
+        k12ai_consul_message(f'k12{self._sname}', token, op, user, uuid, msgtype, message, clear)
 
     def errtype2errcode(self, errtype):
         return {}
@@ -226,4 +226,4 @@ class ServiceRPC(object):
         Thread(target=lambda: self.run_container(token=token, op=op, user=user, uuid=uuid, params=params, command=command),
             daemon=True).start()
 
-        return 10000, None
+        return 100000, None
