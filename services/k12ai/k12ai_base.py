@@ -16,7 +16,7 @@ from k12ai.k12ai_utils import (k12ai_utils_topdir, k12ai_utils_netip)
 from k12ai.k12ai_errmsg import (k12ai_error_message, gen_exc_info)
 from k12ai.k12ai_consul import k12ai_consul_message
 from k12ai.k12ai_logger import Logger
-from k12ai.k12ai_platform import (k12ai_platform_cpu_count, k12ai_platform_gpu_count)
+from k12ai.k12ai_platform import (k12ai_platform_cpu_count, k12ai_platform_gpu_count, k12ai_platform_memory_free)
 
 
 class ServiceRPC(object):
@@ -135,6 +135,12 @@ class ServiceRPC(object):
             os.makedirs(usercache)
         return usercache
 
+    def get_app_memstat(self, params):
+        return {
+            'app_cpu_memory_usage_MB': 6000,
+            'app_gpu_memory_usage_MB': 6000,
+        }
+
     def run_container(self, token, op, user, uuid, params, command):
         labels = {
             'k12ai.service.name': f'k12{self._sname}',
@@ -199,6 +205,13 @@ class ServiceRPC(object):
                     'num_cpu': str(self._cpu_count), 'num_gpu': str(self._gpu_count),
                     **ext_codes})
         return 100000, json.dumps(json.loads(schema_json), separators=(',', ':'))
+
+    def memstat(self, params):
+        result = {
+            **self.get_app_memstat(params),
+            **k12ai_platform_memory_free()
+        }
+        return 100000, result
 
     def execute(self, token, op, user, uuid, params):
         Logger.info(f'{token}, {op}, {user}, {uuid}')

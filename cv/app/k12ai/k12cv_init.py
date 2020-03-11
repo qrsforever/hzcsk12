@@ -81,13 +81,13 @@ def k12ai_cv_init(configer):
     Log.debug('k12ai_cv_init')
 
     # Check
-    if configer.get('phase') == 'test':
-        configer.update('network.resume_continue', True)
-    if configer.get('network.resume_continue'):
-        ck_root = configer.get('network.checkpoints_root')
-        ck_dir = configer.get('network.checkpoints_dir')
-        ck_name = configer.get('network.checkpoints_name')
-        configer.update('network.resume', f'{ck_root}/{ck_dir}/{ck_name}_latest.pth')
+    # if configer.get('phase') == 'test':
+    #     configer.update('network.resume_continue', True)
+    # if configer.get('network.resume_continue'):
+    #     ck_root = configer.get('network.checkpoints_root')
+    #     ck_dir = configer.get('network.checkpoints_dir')
+    #     ck_name = configer.get('network.checkpoints_name')
+    #     configer.update('network.resume', f'{ck_root}/{ck_dir}/{ck_name}_latest.pth')
     # Pretrained
     pretrained = configer.get('network.pretrained')
     configer.update('network.pretrained', None)

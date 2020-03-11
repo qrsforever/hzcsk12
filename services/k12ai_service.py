@@ -102,8 +102,8 @@ def _framework_schema():
         assert network_type != '', 'network_type'
     except json.decoder.JSONDecodeError:
         return json.dumps(_err_msg(100103, request.get_data().decode()))
-    except AssertionError as aerr:
-        return json.dumps(_err_msg(100102, str(aerr)))
+    except AssertionError as verr:
+        return json.dumps(_err_msg(100102, str(verr)))
     except KeyError as kerr:
         return json.dumps(_err_msg(100101, str(kerr)))
     except Exception as uerr:
@@ -114,6 +114,34 @@ def _framework_schema():
         return json.dumps(_err_msg(100201, f'service name:{service_name}'))
     try:
         code, msg = agent.schema(service_task, network_type, dataset_name)
+        return json.dumps(_err_msg(code, msg))
+    except Exception:
+        return json.dumps(_err_msg(100207, exc=True))
+
+
+@app.route('/k12ai/framework/memstat', methods=['POST'])
+def _framework_memstat():
+    Logger.info('call _framework_memstat')
+    try:
+        reqjson = json.loads(request.get_data().decode())
+        service_name = reqjson['service_name']
+        service_params = reqjson.get('service_params', None)
+        if isinstance(service_params, str):
+            service_params = json.loads(service_params)
+    except json.decoder.JSONDecodeError:
+        return json.dumps(_err_msg(100103, request.get_data().decode()))
+    except AssertionError as verr:
+        return json.dumps(_err_msg(100102, str(verr)))
+    except KeyError as kerr:
+        return json.dumps(_err_msg(100101, str(kerr)))
+    except Exception as uerr:
+        return json.dumps(_err_msg(100199, str(uerr)))
+
+    agent = k12ai_consul_service(service_name)
+    if not agent:
+        return json.dumps(_err_msg(100201, f'service name:{service_name}'))
+    try:
+        code, msg = agent.memstat(service_params)
         return json.dumps(_err_msg(code, msg))
     except Exception:
         return json.dumps(_err_msg(100207, exc=True))

@@ -230,12 +230,17 @@ def k12ai_platform_gpu_count():
     return g_gpu_count
 
 
-def k12ai_platform_memory_free():
-    infos = {'cpu_memory_free': psutil.virtual_memory().available}
-    gpus = GPUtil.getGPUs()
-    for i, g in enumerate(gpus, 0):
-        infos[f'gpu_{i}_memory_free'] = g.memoryFree * 1024 * 1024
-    return infos
+def k12ai_platform_memory_free(unit='M'):
+    if unit not in ('M'):
+        raise AssertionError
+    sys_gpu_mfree = []
+    for i, g in enumerate(GPUtil.getGPUs(), 0):
+        sys_gpu_mfree.append(round(GPUtil.getGPUs()[i].memoryFree, 3))
+    result = {
+        'sys_cpu_memory_free_MB': round(psutil.virtual_memory().available / 1024**2, 3),
+        'sys_gpu_memory_free_MB': sys_gpu_mfree,
+    }
+    return result
 
 
 def k12ai_platform_memory_stat(container):

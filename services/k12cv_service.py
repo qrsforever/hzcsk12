@@ -105,6 +105,22 @@ class CVServiceRPC(ServiceRPC):
         }
         return kwargs
 
+    def get_app_memstat(self, params):
+        # TODO
+        bs = params['train.batch_size']
+        if bs <= 32:
+            gmem = 4500
+        elif bs == 64:
+            gmem = 5500
+        elif bs == 128:
+            gmem = 6000
+        else:
+            gmem = 10000
+        return {
+            'app_cpu_memory_usage_MB': 6000,
+            'app_gpu_memory_usage_MB': gmem,
+        }
+
     def make_container_command(self, op, cachedir, params):
         config_file = f'{cachedir}/config.json'
         if '_k12.data.dataset_name' in params.keys():
@@ -139,6 +155,14 @@ class CVServiceRPC(ServiceRPC):
             config_tree.put('network.checkpoints_root', '/cache')
             config_tree.put('network.checkpoints_name', ckpts_name)
             config_tree.put('network.checkpoints_dir', 'ckpts')
+            if op.startswith('evaluate'):
+                config_tree.put('network.resume_continue', True)
+            if config_tree.get('network.resume_continue'):
+                resume_path = '%s/ckpts/%s_latest.pth' % (cachedir, ckpts_name)
+                if os.path.exists(resume_path):
+                    config_tree.put('network.resume', f'/cache/ckpts/{ckpts_name}_latest.pth')
+                else:
+                    return 100208, f'{ckpts_name}_latest.pth'
             config_str = HOCONConverter.convert(config_tree, 'json')
         else:
             config_str = json.dumps(params)

@@ -52,17 +52,19 @@ def k12ai_memstat_message():
     app_cpu_usage += _peak_update('peak_cpu_self_ru_maxrss', getrusage(RUSAGE_SELF).ru_maxrss, 1)
     app_cpu_usage += _peak_update('peak_cpu_children_ru_maxrss', getrusage(RUSAGE_CHILDREN).ru_maxrss, 1)
     app_gpu_usage = 0.0
+    sys_gpu_mfree = []
     for i, g in enumerate(GPUtil.getGPUs(), 0):
         _peak_update(f'peak_gpu_{i}_memory_cached_MB', memory_cached(i), 2)
         _peak_update(f'peak_gpu_{i}_memory_allocated_MB', memory_allocated(i), 2)
         _peak_update(f'peak_gpu_{i}_max_memory_cached_MB', max_memory_cached(i), 2)
         app_gpu_usage += _peak_update(f'peak_gpu_{i}_max_memory_allocated_MB', max_memory_allocated(i), 2)
+        sys_gpu_mfree.append(round(GPUtil.getGPUs()[i].memoryFree, 3))
 
     return {
         'app_cpu_memory_usage_MB': app_cpu_usage,
         'app_gpu_memory_usage_MB': app_gpu_usage,
         'sys_cpu_memory_free_MB': round(psutil.virtual_memory().available / 1024**2, 3),
-        'sys_gpu_memory_free_MB': round(GPUtil.getGPUs()[0].memoryFree, 3),
+        'sys_gpu_memory_free_MB': sys_gpu_mfree,
         **g_memstat
     }
 
@@ -107,7 +109,7 @@ class MessageReport(object):
             return
 
     @staticmethod
-    def metrics(metrics, memstat=False, end=False):
+    def metrics(metrics, memstat=True, end=False):
         if memstat:
             metrics['memstat'] = k12ai_memstat_message()
         k12ai_send_message('metrics', metrics, end)
