@@ -15,6 +15,9 @@ from metric.cls.cls_running_score import ClsRunningScore
 from model.cls.model_manager import ModelManager
 from data.cls.data_loader import DataLoader
 
+# QRS: add
+from k12ai.tools.util.log_parser import k12ai_model_post
+
 
 class ImageClassifier(object):
     """
@@ -127,6 +130,9 @@ class ImageClassifier(object):
             start_time = time.time()
             self.runner_state['iters'] += 1
 
+            # QRS: add
+            k12ai_model_post('train', self, self.cls_net, data_dict)
+
             # Print the log info & reset the states.
             if self.runner_state['iters'] % self.solver_dict['display_iter'] == 0:
                 Log.info('Train Epoch: {0}\tTrain Iteration: {1}\t'
@@ -171,6 +177,9 @@ class ImageClassifier(object):
                 # Update the vars of the val phase.
                 self.batch_time.update(time.time() - start_time)
                 start_time = time.time()
+
+            # QRS: add
+            k12ai_model_post('val', self, self.cls_net, data_dict)
 
             RunnerHelper.save_net(self, self.cls_net)
             # Print the log info & reset the states.

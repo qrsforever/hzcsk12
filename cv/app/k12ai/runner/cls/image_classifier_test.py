@@ -15,7 +15,10 @@ from model.cls.model_manager import ModelManager
 from metric.cls.cls_running_score import ClsRunningScore
 from lib.tools.util.logger import Logger as Log
 
-from k12ai.common import MessageReport
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import precision_recall_fscore_support
+from k12ai.common.log_message import MessageReport
+from k12ai.tools.util.log_parser import k12ai_model_post # noqa
 
 
 class ImageClassifierTest(object):
@@ -42,16 +45,23 @@ class ImageClassifierTest(object):
     def test(self, test_dir, out_dir):
         # don't need 'test_dir' and 'out_dir', only need test.json
         with torch.no_grad():
+            targets_list = []
+            predicted_list = []
             for j, data_dict in enumerate(self.val_loader):
                 data_dict = RunnerHelper.to_device(self, data_dict)
                 out = self.cls_net(data_dict)
                 out_dict, label_dict, loss_dict = RunnerHelper.gather(self, out)
                 self.running_score.update(out_dict, label_dict)
+                targets_list.append(label_dict['out'].cpu())
+                predicted_list.append(out_dict['out'].max(1)[1].cpu())
+
+            targets, predicted = torch.cat(targets_list), torch.cat(predicted_list)
+            print(confusion_matrix(targets, predicted))
+            print(precision_recall_fscore_support(targets, predicted, average='macro'))
 
             top1 = RunnerHelper.dist_avg(self, self.running_score.get_top1_acc())
             top3 = RunnerHelper.dist_avg(self, self.running_score.get_top3_acc())
             top5 = RunnerHelper.dist_avg(self, self.running_score.get_top5_acc())
-            print(top1, top3, self.running_score.get_top1_acc())
             if isinstance(top1, dict) and 'out' in top1.keys():
                 top1 = top1['out']
                 top3 = top3['out']

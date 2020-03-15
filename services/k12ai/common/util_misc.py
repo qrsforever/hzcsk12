@@ -11,6 +11,10 @@ import importlib
 import inspect
 import pkgutil
 import sys
+import base64
+import torch
+import torchvision # noqa
+import numpy as np
 from collections import OrderedDict
 
 
@@ -27,3 +31,16 @@ def find_components(package, directory, base_class):
                         obj != base_class:
                     components[module_name] = obj 
     return components
+
+
+def base64_image(path):
+    with open(path,'rb') as fw:
+        img = base64.b64encode(fw.read())
+    return img.decode()
+
+
+def make_histogram(values, bins=10):
+    if isinstance(values, torch.autograd.Variable):
+        values = values.data
+    values = values.cpu().numpy().astype(float).reshape(-1)
+    return np.histogram(values, bins=bins)

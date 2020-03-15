@@ -8,13 +8,21 @@
 # @date 2019-12-02 18:47:50
 
 import re
+import torch
+import torchvision
 
 from k12ai.common.log_message import MessageReport
+from k12ai.common.util_misc import base64_image
 
 _isepoch_ = True
 _maxiter_ = -1
 _metrics_ = {}
 _memstat_ = False
+_myepoch_ = -1
+
+
+def _tensor_to_list(x):
+    return x.cpu().numpy().astype(float).reshape(-1).tolist()
 
 
 def _parse_metrics(filename, lineno, message):
@@ -193,3 +201,45 @@ def k12ai_log_parser(level, filename, lineno, message):
         _parse_except(filename, lineno, message)
     else:
         print('Not impl yet!')
+
+
+def k12ai_model_post(phase, runner, model, data):
+    global _myepoch_
+    iters, epoch, display_iter = runner.runner_state['iters'], runner.runner_state['epoch'], runner.solver_dict['display_iter']
+    metrics = {'epoch': epoch, 'iters': iters}
+    sendflg = False
+    if iters == 1:
+        # report input image grid
+        img_path = '/cache/grid.png'
+        num = data['img'].size(0) if data['img'].size(0) < 16 else 16
+        torchvision.utils.save_image(torchvision.utils.make_grid(data['img'].data[:num], nrow=4), img_path)
+        imgstr = base64_image(img_path) # noqa
+        metrics['images'] = {'input_grid': imgstr}
+        sendflg = True
+
+    if _myepoch_ != epoch and epoch < 20:
+        # report model first conv2d
+        for key, module in model.named_modules():
+            if isinstance(module, torch.nn.Conv2d):
+                metrics['histograms'] = {}
+                if module.weight is not None:
+                    metrics['histograms'] = {
+                        **metrics['histograms'],
+                        'conv2d_1_weight': _tensor_to_list(module.weight.data),
+                        'conv2d_1_weight_grad': _tensor_to_list(module.weight.grad.data)
+                    }
+                if module.bias is not None:
+                    metrics['histograms'] = {
+                        **metrics['histograms'],
+                        'conv2d_1_bias': _tensor_to_list(module.bias.data),
+                        'conv2d_1_bias_grad': _tensor_to_list(module.bias.grad.data)
+                    }
+                sendflg = True
+                break
+        _myepoch_ = epoch
+
+    if phase == 'train' and iters % display_iter == 0:
+        metrics['scalars'] = {}
+
+    if sendflg:
+        MessageReport.metrics(metrics)

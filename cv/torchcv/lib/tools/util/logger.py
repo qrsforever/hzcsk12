@@ -10,13 +10,7 @@ import os
 import sys
 
 # QRS: add
-try:
-    from k12ai.tools.util.log_parser import k12ai_log_parser
-except ModuleNotFoundError:
-    def k12ai_log_parser(*args, **kwargs):
-        pass
-except Exception as err:
-    print("import error:{}".format(err))
+from k12ai.tools.util.log_parser import k12ai_log_parser
 
 
 DEFAULT_LOG_LEVEL = 'info'

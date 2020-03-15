@@ -108,14 +108,18 @@ class CVServiceRPC(ServiceRPC):
     def get_app_memstat(self, params):
         # TODO
         bs = params['train.batch_size']
+        dn = params['_k12.data.dataset_name']
+        mm = 1
+        if dn == 'dogsVsCats':
+            mm = 2
         if bs <= 32:
-            gmem = 4500
+            gmem = 4500 * mm
         elif bs == 64:
-            gmem = 5500
+            gmem = 5500 * mm
         elif bs == 128:
-            gmem = 6000
+            gmem = 6000 * mm
         else:
-            gmem = 10000
+            gmem = 10000 * mm
         return {
             'app_cpu_memory_usage_MB': 6000,
             'app_gpu_memory_usage_MB': gmem,

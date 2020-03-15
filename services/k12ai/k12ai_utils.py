@@ -11,6 +11,9 @@ import socket
 import os
 import json
 
+_LANIP = None
+_NETIP = None
+
 
 def k12ai_utils_topdir():
     return os.path.abspath(
@@ -25,27 +28,32 @@ def k12ai_utils_hostname():
 
 
 def k12ai_utils_lanip():
+    global _LANIP
+    if _LANIP:
+        return _LANIP
     val = os.environ.get('HOST_LANIP', None)
-    if val:
-        return val
-
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    try:
-        s.connect(('8.8.8.8',80))
-        return s.getsockname()[0]
-    finally:
-        s.close()
-    return ''
+    if not val:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            s.connect(('8.8.8.8',80))
+            val = s.getsockname()[0]
+        finally:
+            s.close()
+    _LANIP = val
+    return _LANIP 
 
 
 def k12ai_utils_netip():
+    global _NETIP
+    if _NETIP:
+        return _NETIP
     val = os.environ.get('HOST_NETIP', None)
-    if val:
-        return val
-    result = os.popen('curl -s http://txt.go.sohu.com/ip/soip| grep -P -o -i "(\d+\.\d+.\d+.\d+)"', 'r') # noqa
-    if result:
-        return result.read().strip('\n')
-    return ''
+    if not val:
+        result = os.popen('curl -s http://txt.go.sohu.com/ip/soip| grep -P -o -i "(\d+\.\d+.\d+.\d+)"', 'r') # noqa
+        if result:
+            val = result.read().strip('\n')
+    _NETIP = val
+    return _NETIP
 
 
 def k12ai_utils_diff(conf1, conf2):

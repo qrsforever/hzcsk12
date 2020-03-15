@@ -13,31 +13,34 @@ local _Utils = import '../utils/helper.libsonnet';
             {
                 _id_: 'solver.lr.metric',
                 name: { en: 'Metric', cn: self.en },
-                type: 'string-enum-trigger',
+                // type: 'string-enum-trigger',
+                type: 'string-enum',
                 objs: [
                     {
                         name: { en: 'epoch', cn: self.en },
                         value: 'epoch',
-                        trigger: {
-                            type: '_ignore_',
-                            objs: [
-                                _Utils.int('solver.max_epoch', 'Max Epoch', def=100, ddd=true),
-                            ],
-                        },
+                        // trigger: {
+                        //     type: '_ignore_',
+                        //     objs: [
+                        //         _Utils.int('solver.max_epoch', 'Max Epoch', def=100, ddd=true),
+                        //     ],
+                        // },
                     },
                     {
                         name: { en: 'iters', cn: self.en },
                         value: 'iters',
-                        trigger: {
-                            type: '_ignore_',
-                            objs: [
-                                _Utils.int('solver.max_iters', 'Max Iters', def=10000, ddd=true),
-                            ],
-                        },
+                        // trigger: {
+                        //     type: '_ignore_',
+                        //     objs: [
+                        //         _Utils.int('solver.max_iters', 'Max Iters', def=10000, ddd=true),
+                        //     ],
+                        // },
                     },
                 ],
+                readonly: true,
                 default: 'epoch',
             },
+            _Utils.int('solver.max_epoch', 'Max Epoch', def=100, ddd=true),
         ],
     },
     {

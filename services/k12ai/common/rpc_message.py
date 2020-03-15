@@ -10,6 +10,7 @@
 import os
 import zerorpc
 
+_DEBUG_ = True
 _RPCClient = None
 _RPCEnable = -1
 K12AI_TOKEN, K12AI_OP, K12AI_USER, K12AI_UUID = None, None, None, None
@@ -43,7 +44,8 @@ def k12ai_send_message(msgtype, message, end=False):
         if end:
             _RPCClient.close()
 
-        if msgtype == 'error':
+        if _DEBUG_ or msgtype == 'error':
             print(message)
-    except Exception:
-        pass
+    except Exception as err:
+        if _DEBUG_:
+            print(err)

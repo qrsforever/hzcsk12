@@ -12,6 +12,7 @@ import time
 import zerorpc
 import consul
 import requests
+from k12ai.k12ai_utils import k12ai_utils_lanip
 
 g_consul_addr = "127.0.0.1"
 g_consul_port = 8500
@@ -72,6 +73,7 @@ def k12ai_consul_message(sname, token, op, user, uuid, msgtype, message, clear=F
 
     data = {
         'version': '0.1.0',
+        'ip': k12ai_utils_lanip(),
         'type': msgtype,
         'token': token,
         'user': user,
