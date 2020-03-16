@@ -10,7 +10,7 @@
 import os
 import zerorpc
 
-_DEBUG_ = True
+_DEBUG_ = False
 _RPCClient = None
 _RPCEnable = -1
 K12AI_TOKEN, K12AI_OP, K12AI_USER, K12AI_UUID = None, None, None, None

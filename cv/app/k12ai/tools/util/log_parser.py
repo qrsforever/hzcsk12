@@ -204,6 +204,7 @@ def k12ai_log_parser(level, filename, lineno, message):
 
 
 def k12ai_model_post(phase, runner, model, data):
+    return
     global _myepoch_
     iters, epoch, display_iter = runner.runner_state['iters'], runner.runner_state['epoch'], runner.solver_dict['display_iter']
     metrics = {'epoch': epoch, 'iters': iters}
