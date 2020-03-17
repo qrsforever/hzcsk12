@@ -181,7 +181,7 @@ class ImageClassifier(object):
             # QRS: add
             k12ai_model_post('val', self, self.cls_net, data_dict)
 
-            RunnerHelper.save_net(self, self.cls_net)
+            # RunnerHelper.save_net(self, self.cls_net)
             # Print the log info & reset the states.
             Log.info('Test Time {batch_time.sum:.3f}s'.format(batch_time=self.batch_time))
             Log.info('TestLoss = {}'.format(self.val_losses.info()))

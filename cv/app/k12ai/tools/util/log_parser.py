@@ -11,6 +11,7 @@ import re
 import torch
 import torchvision
 
+from k12ai.common.log_message import MessageMetric
 from k12ai.common.log_message import MessageReport
 from k12ai.common.util_misc import base64_image
 
@@ -211,7 +212,7 @@ def k12ai_model_post(phase, runner, model, data):
     sendflg = False
     if iters == 1:
         # report input image grid
-        img_path = '/cache/grid.png'
+        img_path = '/tmp/_k12cv.png'
         num = data['img'].size(0) if data['img'].size(0) < 16 else 16
         torchvision.utils.save_image(torchvision.utils.make_grid(data['img'].data[:num], nrow=4), img_path)
         imgstr = base64_image(img_path) # noqa

@@ -109,7 +109,98 @@ class MessageReport(object):
             return
 
     @staticmethod
-    def metrics(metrics, memstat=True, end=False):
+    def metrics(metrics, memstat=False, end=False):
         if memstat:
             metrics['memstat'] = k12ai_memstat_message()
         k12ai_send_message('metrics', metrics, end)
+
+
+class MessageMetric(object):
+    def __init__(self):
+        self._metrics = []
+
+    @property
+    def data(self):
+        return self._metrics
+
+    def send(self):
+        k12ai_send_message('metrics', self._metrics)
+
+    def _mmjson(self, ty, tag, title, value, width, height):
+        obj = {
+            'type': ty,
+            'name': tag,
+            'data': {
+                'title': title,
+                'value': value
+            }
+        }
+        if width:
+            obj['width'] = width
+        if height:
+            obj['height'] = height
+        return obj
+
+    def add_scalar(self, tag, x, y, width=None, height=None):
+        if isinstance(x, dict) and isinstance(y, dict):
+            obj = {
+                'type': 'scalar',
+                'name': tag,
+                'data': {
+                    'x': x,
+                    'y': y
+                }
+            }
+            if width:
+                obj['width'] = width
+            if height:
+                obj['height'] = height
+            self._metrics.append(obj)
+        return self
+
+    def add_scalars(self, tag, x, y, width=None, height=None):
+        if isinstance(x, dict) and isinstance(y, dict):
+            obj = {
+                'type': 'scalars',
+                'name': tag,
+                'data': {
+                    'x': x,
+                    'y': y
+                }
+            }
+            if width:
+                obj['width'] = width
+            if height:
+                obj['height'] = height
+            self._metrics.append(obj)
+        return self
+
+    def add_image(self, tag, title, value, fmt='base64', width=None, height=None):
+        obj = self._mmjson('image', tag, title, value, width, height)
+        obj['format'] = fmt
+        self._metrics.append(obj)
+        return self
+
+    def add_images(self, tag, data, fmt='base64', width=None, height=None):
+        obj = {
+            'type': 'images',
+            'name': tag,
+            'format': fmt,
+            'data': data
+        }
+        if width:
+            obj['width'] = width
+        if height:
+            obj['height'] = height
+        self._metrics.append(obj)
+        return self
+
+    def add_matrix(self, tag, title, value, width=None, height=None):
+        obj = self._mmjson('matrix', tag, title, value, width, height)
+        self._metrics.append(obj)
+        return self
+
+    def add_text(self, tag, title, value, width=None, height=None):
+        obj = self._mmjson('text', tag, title, value, width, height)
+        self._metrics.append(obj)
+        return self
