@@ -33,8 +33,13 @@ def find_components(package, directory, base_class):
     return components
 
 
-def base64_image(path):
-    with open(path,'rb') as fw:
+def base64_image(image):
+    if isinstance(image, str):
+        path = image
+    elif isinstance(image, (torch.Tensor, np.array)):
+        path = '/tmp/__k12.png'
+        torchvision.utils.save_image(image, path)
+    with open(path, 'rb') as fw:
         img = base64.b64encode(fw.read())
     return img.decode()
 

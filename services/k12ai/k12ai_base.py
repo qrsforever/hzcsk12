@@ -142,6 +142,10 @@ class ServiceRPC(object):
         }
 
     def run_container(self, token, op, user, uuid, params, command):
+        run_by_nb = 0
+        if '_k12.notebook.execute' in params.keys():
+            run_by_nb = params['_k12.notebook.execute']
+
         labels = {
             'k12ai.service.name': f'k12{self._sname}',
             'k12ai.service.op': op,
@@ -151,13 +155,14 @@ class ServiceRPC(object):
         }
 
         volumes = {
-            f'{self._datadir}': {'bind': f'/datasets', 'mode': 'rw'},
-            f'{self._commlib}': {'bind': f'{self._workdir}/app/k12ai/common', 'mode': 'rw'},
+            self._datadir: {'bind': f'/datasets', 'mode': 'rw'},
+            self._commlib: {'bind': f'{self._workdir}/app/k12ai/common', 'mode': 'rw'},
             self.get_cache_dir(user, uuid): {'bind': f'/cache', 'mode': 'rw'},
             **self.make_container_volumes()
         }
 
         environs = {
+            'K12AI_RUN_BYNB': run_by_nb,
             'K12AI_RPC_HOST': self._host,
             'K12AI_RPC_PORT': self._port,
             'K12AI_TOKEN': token,

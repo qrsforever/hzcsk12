@@ -68,16 +68,5 @@ local _Utils = import 'utils/helper.libsonnet';
                 },
             ],
         },
-        {
-            name: { en: 'Debug: ', cn: '调试: ' },
-            type: 'output',
-            objs: [
-                { value: 'print', name: 'Print' },
-                { value: 'kv', name: 'Key-Value(changed)' },
-                { value: 'json', name: 'Json(changed)' },
-                { value: 'kvs', name: 'Key-Value(all)' },
-                { value: 'jsons', name: 'Json(all)' },
-            ],
-        },
     ],
 }

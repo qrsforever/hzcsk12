@@ -35,18 +35,19 @@ local _Utils = import '../utils/helper.libsonnet';
                     (import 'iterator/__init__.jsonnet').get(),
                 ],
             },
-        ] + if _Utils.debug then [
-            {
-                name: { en: 'Debug', cn: self.en },
-                type: '_ignore_',
-                objs: [
-                    _Utils.text('_k12.dev',
-                                'NB',
-                                def=_Utils.notebook_url,
-                                width=800,
-                                readonly=true),
-                ],
-            },
-        ] else [],
+        ],
+        // + if _Utils.debug then [
+        //     {
+        //         name: { en: 'Debug', cn: self.en },
+        //         type: '_ignore_',
+        //         objs: [
+        //             _Utils.text('_k12.dev',
+        //                         'NB',
+        //                         def=_Utils.notebook_url,
+        //                         width=800,
+        //                         readonly=true),
+        //         ],
+        //     },
+        // ] else [],
     },
 ]

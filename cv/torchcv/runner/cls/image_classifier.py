@@ -189,7 +189,6 @@ class ImageClassifier(object):
             Log.info('Top3 ACC = {}'.format(RunnerHelper.dist_avg(self, self.running_score.get_top3_acc())))
             Log.info('Top5 ACC = {}'.format(RunnerHelper.dist_avg(self, self.running_score.get_top5_acc())))
             self.batch_time.reset()
-            self.batch_time.reset()
             self.val_losses.reset()
             self.running_score.reset()
             self.cls_net.train()

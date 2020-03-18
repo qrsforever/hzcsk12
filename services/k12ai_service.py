@@ -29,7 +29,7 @@ g_app_quit = False
 g_redis = None
 
 
-def _delay_do_consul(host, port):
+def _delay_do_loop(host, port):
     time.sleep(3)
     while not g_app_quit:
         try:
@@ -38,6 +38,14 @@ def _delay_do_consul(host, port):
         except Exception as err:
             Logger.error("consul agent service register err: {}".format(err))
             time.sleep(3)
+
+    while not g_app_quit:
+        try:
+            k12ai_platform_stats('query', 'admin', 'admin',
+                {'cpus': True, 'gpus': True}, True)
+        except Exception:
+            pass
+        time.sleep(30)
 
 
 ### Platform
@@ -250,7 +258,7 @@ if __name__ == "__main__":
 
     k12ai_consul_init(args.consul_addr, args.consul_port, _DEBUG_)
 
-    thread = Thread(target=_delay_do_consul, args=(args.host, args.port))
+    thread = Thread(target=_delay_do_loop, args=(args.host, args.port))
     thread.start()
 
     try:

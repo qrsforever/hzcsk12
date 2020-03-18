@@ -75,7 +75,8 @@ class CVServiceRPC(ServiceRPC):
         return 100003
 
     def make_container_volumes(self):
-        volumes = {self._pretrained_dir: {'bind': '/pretrained', 'mode': 'rw'}}
+        volumes = {}
+        volumes[self._pretrained_dir] = {'bind': '/pretrained', 'mode': 'rw'}
         if self._debug:
             volumes[f'{self._projdir}/app'] = {'bind': f'{self._workdir}/app', 'mode': 'rw'}
             volumes[f'{self._projdir}/torchcv/data'] = {'bind': f'{self._workdir}/torchcv/data', 'mode': 'rw'}
@@ -99,12 +100,11 @@ class CVServiceRPC(ServiceRPC):
         return environs
 
     def make_container_kwargs(self, op, params):
-        kwargs = {
-            'auto_remove': not self._debug,
-            'runtime': 'nvidia',
-            'shm_size': '10g',
-            'mem_limit': '10g'
-        }
+        kwargs = {}
+        kwargs['auto_remove'] = not self._debug
+        kwargs['runtime'] = 'nvidia'
+        kwargs['shm_size'] = '10g'
+        kwargs['mem_limit'] = '10g'
         return kwargs
 
     def get_app_memstat(self, params):

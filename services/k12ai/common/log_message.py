@@ -7,18 +7,37 @@
 # @version 1.0
 # @date 2020-03-01 23:56
 
+import os
 import sys
 import time
 import traceback
 import GPUtil
 import psutil
+import numpy
+import torch
 
 from torch.cuda import (max_memory_allocated, memory_allocated, max_memory_cached, memory_cached)
 from resource import (getrusage, RUSAGE_SELF, RUSAGE_CHILDREN)
 from k12ai.common.rpc_message import k12ai_send_message
+from k12ai.common.util_misc import base64_image
+
+import seaborn as sns
+from matplotlib import pyplot as plt
+from torch.utils.tensorboard import SummaryWriter
 
 g_starttime = None
 g_memstat = {}
+
+g_runbynb = True if os.environ.get('K12AI_RUN_BYNB', None) else False
+g_tbwriter = None
+
+
+def _get_writer():
+    global g_tbwriter
+    if g_runbynb:
+        if not g_tbwriter:
+            g_tbwriter = SummaryWriter(log_dir='/cache/tblogs')
+    return g_tbwriter
 
 
 def k12ai_except_message():
@@ -118,13 +137,15 @@ class MessageReport(object):
 class MessageMetric(object):
     def __init__(self):
         self._metrics = []
+        self._writer = _get_writer()
 
     @property
     def data(self):
         return self._metrics
 
     def send(self):
-        k12ai_send_message('metrics', self._metrics)
+        if len(self._metrics) > 0:
+            k12ai_send_message('metrics', self._metrics)
 
     def _mmjson(self, ty, tag, title, value, width, height):
         obj = {
@@ -156,9 +177,13 @@ class MessageMetric(object):
             if height:
                 obj['height'] = height
             self._metrics.append(obj)
+        if self._writer:
+            self._writer.add_scalar(tag, y, x)
         return self
 
     def add_scalars(self, tag, x, y, width=None, height=None):
+        if self._writer:
+            self._writer.add_scalars(tag, y, x)
         if isinstance(x, dict) and isinstance(y, dict):
             obj = {
                 'type': 'scalars',
@@ -175,7 +200,16 @@ class MessageMetric(object):
             self._metrics.append(obj)
         return self
 
-    def add_image(self, tag, title, value, fmt='base64', width=None, height=None):
+    def add_image(self, tag, title, image, fmt='base64', step=None, width=None, height=None):
+        if isinstance(image, str):
+            value = image
+        elif isinstance(image, (torch.Tensor, numpy.array)):
+            if fmt == 'base64':
+                value = base64_image(image)
+            else:
+                raise NotImplementedError
+            if self._writer:
+                self._writer.add_image(f'{tag}/{title}', image, step)
         obj = self._mmjson('image', tag, title, value, width, height)
         obj['format'] = fmt
         self._metrics.append(obj)
@@ -195,12 +229,18 @@ class MessageMetric(object):
         self._metrics.append(obj)
         return self
 
-    def add_matrix(self, tag, title, value, width=None, height=None):
+    def add_matrix(self, tag, title, value, step=None, width=None, height=None):
+        if self._writer:
+            fig, ax = plt.subplots(figsize=(12,8))
+            sns.heatmap(value, annot=True, fmt='d', linewidth=0.5,cmap='Blues', ax=ax, cbar=True)
+            self._writer.add_figure(f'{tag}/{title}', fig, step, close=True)
         obj = self._mmjson('matrix', tag, title, value, width, height)
         self._metrics.append(obj)
         return self
 
-    def add_text(self, tag, title, value, width=None, height=None):
+    def add_text(self, tag, title, value, step=None, width=None, height=None):
+        if self._writer:
+            self._writer.add_text(f'{tag}/{title}', f'{value}', step)
         obj = self._mmjson('text', tag, title, value, width, height)
         self._metrics.append(obj)
         return self

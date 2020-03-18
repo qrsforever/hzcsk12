@@ -23,6 +23,10 @@ g_gpu_count = -1
 g_docker = None
 
 
+def MB(d, n=3):
+    return round(d / 1024**2, n)
+
+
 def _get_docker():
     global g_docker
     if not g_docker:
@@ -52,22 +56,27 @@ def _get_cpu_infos():
     info['ip'] = k12ai_utils_lanip()
     info['cpu_percent'] = psutil.cpu_percent()
     info['cpu_percent_list'] = psutil.cpu_percent(percpu=True)
-    info['cpu_memory_total'] = psutil.virtual_memory().total
-    info['cpu_memory_usage'] = psutil.virtual_memory().used
+    info['cpu_memory_total_MB'] = MB(psutil.virtual_memory().total)
+    info['cpu_memory_usage_MB'] = MB(psutil.virtual_memory().used)
+    info['cpu_memory_free_MB'] = MB(psutil.virtual_memory().available)
     info['cpu_memory_percent'] = psutil.virtual_memory().percent
     return info
 
 
 def _get_gpu_infos():
     infos = []
-    for g in GPUtil.getGPUs():
+    gpus = GPUtil.getGPUs()
+    for g in gpus:
         info = {}
         info['name'] = g.name
         info['gpu_percent'] = round(g.load * 100, 2)
-        info['gpu_memory_total'] = g.memoryTotal
-        info['gpu_memory_usage'] = g.memoryUsed
+        info['gpu_memory_total_MB'] = g.memoryTotal
+        info['gpu_memory_usage_MB'] = g.memoryUsed
+        info['gpu_memory_free_MB'] = g.memoryFree
         info['gpu_memory_percent'] = round(g.memoryUtil * 100, 2)
         infos.append(info)
+    if len(gpus) == 1:
+        return infos[0]
     return infos
 
 
@@ -97,7 +106,7 @@ def _get_process_infos():
                 info['idx'] = result[0]
                 info['pid'] = result[1]
                 info['gpu_percent'] = float(result[4])
-                info['gpu_memory_usage'] = int(result[3])
+                info['gpu_memory_usage_MB'] = int(result[3])
                 info['gpu_memory_percent'] = float(result[5])
             infos.append(info)
     except Exception as err:
@@ -120,18 +129,18 @@ def _get_container_infos(client):
             info['user'] = c.labels.get('k12ai.service.user', '')
             info['service_uuid'] = c.labels.get('k12ai.service.uuid', '')
             info['cpu_percent'] = _get_container_cpu_pct(stats)
-            info['cpu_memory_total'] = stats['memory_stats']['limit']
-            info['cpu_memory_usage'] = stats['memory_stats']['usage']
+            info['cpu_memory_total_MB'] = MB(stats['memory_stats']['limit'])
+            info['cpu_memory_usage_MB'] = MB(stats['memory_stats']['usage'])
             info['cpu_memory_percent'] = _get_container_mem_pct(stats)
             info['gpu_percent'] = 0.00
-            info['gpu_memory_usage'] = 0
+            info['gpu_memory_usage_MB'] = 0
             info['gpu_memory_percent'] = 0.00
 
             pids = sum(c.top(ps_args='eo pid')['Processes'], [])
             for ginfo in gpu_process_infos:
                 if ginfo['pid'] in pids:
                     info['gpu_percent'] += ginfo['gpu_percent']
-                    info['gpu_memory_usage'] += ginfo['gpu_memory_usage']
+                    info['gpu_memory_usage_MB'] += ginfo['gpu_memory_usage_MB']
                     info['gpu_memory_percent'] += ginfo['gpu_memory_percent']
             infos.append(info)
     except Exception as err:
@@ -181,7 +190,7 @@ def _query_stats(docker, op, user, uuid, params):
             message['containers'] = _get_container_infos(docker)
         if params.get('services', False):
             message['services'] = _get_service_infos(docker, user, uuid)
-        k12ai_consul_message('k12ai', uuid, op, user, uuid, 'result', k12ai_error_message(content=message), clear=True)
+        k12ai_consul_message('k12ai', uuid, op, user, uuid, 'resource', k12ai_error_message(content=message), clear=True)
     return 100000, message
 
 
@@ -235,9 +244,9 @@ def k12ai_platform_memory_free(unit='M'):
         raise AssertionError
     sys_gpu_mfree = []
     for i, g in enumerate(GPUtil.getGPUs(), 0):
-        sys_gpu_mfree.append(round(GPUtil.getGPUs()[i].memoryFree, 3))
+        sys_gpu_mfree.append(GPUtil.getGPUs()[i].memoryFree)
     result = {
-        'sys_cpu_memory_free_MB': round(psutil.virtual_memory().available / 1024**2, 3),
+        'sys_cpu_memory_free_MB': MB(psutil.virtual_memory().available),
         'sys_gpu_memory_free_MB': sys_gpu_mfree,
     }
     return result
@@ -253,11 +262,11 @@ def k12ai_platform_memory_stat(container):
     pids = sum(container.top(ps_args='eo pid')['Processes'], [])
     for ginfo in gpu_process_infos:
         if ginfo['pid'] in pids:
-            memused += ginfo['gpu_memory_usage']
+            memused += ginfo['gpu_memory_usage_MB']
     gpus = GPUtil.getGPUs()
     for i, g in enumerate(gpus, 0):
         memfree += g.memoryFree
-    infos['app_gpu_memory_usage_MB'] = round(memused, 3)
-    infos['sys_cpu_memory_free_MB'] = round(psutil.virtual_memory().available / 1024**2, 3)
-    infos['sys_gpu_memory_free_MB'] = round(memfree, 3)
+    infos['app_gpu_memory_usage_MB'] = memused
+    infos['sys_cpu_memory_free_MB'] = MB(psutil.virtual_memory().available)
+    infos['sys_gpu_memory_free_MB'] = memfree
     return infos
