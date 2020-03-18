@@ -16,14 +16,16 @@ from model.cls.model_manager import ModelManager
 from data.cls.data_loader import DataLoader
 
 # QRS: add
-from k12ai.tools.util.log_parser import k12ai_model_post
+from k12ai.runner.base import ClsRunner
 
 
-class ImageClassifier(object):
+class ImageClassifier(ClsRunner):
     """
       The class for the training phase of Image classification.
     """
     def __init__(self, configer):
+        super().__init__()
+
         self.configer = configer
         self.runner_state = dict()
 
@@ -130,9 +132,6 @@ class ImageClassifier(object):
             start_time = time.time()
             self.runner_state['iters'] += 1
 
-            # QRS: add
-            k12ai_model_post('train', self, self.cls_net, data_dict)
-
             # Print the log info & reset the states.
             if self.runner_state['iters'] % self.solver_dict['display_iter'] == 0:
                 Log.info('Train Epoch: {0}\tTrain Iteration: {1}\t'
@@ -144,9 +143,11 @@ class ImageClassifier(object):
                              RunnerHelper.get_lr(self.optimizer), batch_time=self.batch_time,
                              data_time=self.data_time))
 
+                # QRS: add
+                self.handle_train(data_dict)
+
                 self.batch_time.reset()
                 self.data_time.reset()
-                self.train_losses.reset()
 
             if self.solver_dict['lr']['metric'] == 'iters' and self.runner_state['iters'] == self.solver_dict['max_iters']:
                 break
@@ -157,6 +158,7 @@ class ImageClassifier(object):
             # Check to val the current model.
             if self.runner_state['iters'] % self.solver_dict['test_interval'] == 0:
                 self.val()
+                self.train_losses.reset()
 
     def val(self):
         """
@@ -179,9 +181,10 @@ class ImageClassifier(object):
                 start_time = time.time()
 
             # QRS: add
-            k12ai_model_post('val', self, self.cls_net, data_dict)
-
+            self.handle_validation()
+            # TODO
             # RunnerHelper.save_net(self, self.cls_net)
+
             # Print the log info & reset the states.
             Log.info('Test Time {batch_time.sum:.3f}s'.format(batch_time=self.batch_time))
             Log.info('TestLoss = {}'.format(self.val_losses.info()))

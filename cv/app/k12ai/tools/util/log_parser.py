@@ -8,7 +8,7 @@
 # @date 2019-12-02 18:47:50
 
 import re
-# import torch
+import torch
 import torchvision
 
 from k12ai.common.log_message import MessageMetric
@@ -20,10 +20,6 @@ _maxiter_ = -1
 _metrics_ = {}
 _memstat_ = False
 _myepoch_ = -1
-
-
-def _tensor_to_list(x):
-    return x.cpu().numpy().astype(float).reshape(-1).tolist()
 
 
 def _parse_metrics(filename, lineno, message):
@@ -205,38 +201,26 @@ def k12ai_log_parser(level, filename, lineno, message):
 
 
 def k12ai_model_post(phase, runner, model, data):
+    return
     global _myepoch_
     iters, epoch, display_iter = runner.runner_state['iters'], runner.runner_state['epoch'], runner.solver_dict['display_iter']
     metrics = {'epoch': epoch, 'iters': iters}
     mm = MessageMetric()
     if iters == 1:
-        # report input image grid
-        # img_path = '/tmp/_k12cv.png'
-        # num = data['img'].size(0) if data['img'].size(0) < 16 else 16
-        # torchvision.utils.save_image(torchvision.utils.make_grid(data['img'].data[:num], nrow=4), img_path)
-        # imgstr = base64_image(img_path) # noqa
-        # metrics['images'] = {'input_grid': imgstr}
         mm.add_image('test_image', 'grid', torchvision.utils.make_grid(data['img'].data[:8], nrow=4))
 
     if _myepoch_ != epoch and epoch < 20:
         # report model first conv2d
-        # for key, module in model.named_modules():
-        #     if isinstance(module, torch.nn.Conv2d):
-        #         metrics['histograms'] = {}
-        #         if module.weight is not None:
-        #             metrics['histograms'] = {
-        #                 **metrics['histograms'],
-        #                 'conv2d_1_weight': _tensor_to_list(module.weight.data),
-        #                 'conv2d_1_weight_grad': _tensor_to_list(module.weight.grad.data)
-        #             }
-        #         if module.bias is not None:
-        #             metrics['histograms'] = {
-        #                 **metrics['histograms'],
-        #                 'conv2d_1_bias': _tensor_to_list(module.bias.data),
-        #                 'conv2d_1_bias_grad': _tensor_to_list(module.bias.grad.data)
-        #             }
-        #         break
-        _myepoch_ = epoch
+        for key, module in model.named_modules():
+            if not isinstance(module, torch.nn.Conv2d):
+                continue
+            if module.weight is not None:
+                mm.add_histogram('module_histogram', 'conv1_weight', module.weight.data)
+                mm.add_histogram('module_histogram', 'conv1_weight.grad', module.weight.grad.data)
+                mm.add_histogram('module_histogram', 'conv1_bias', module.bias.data)
+                mm.add_histogram('module_histogram', 'conv1_bias.grad', module.bias.grad.data)
+            _myepoch_ = epoch
+            break
 
     if phase == 'train' and iters % display_iter == 0:
         metrics['scalars'] = {}

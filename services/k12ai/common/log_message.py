@@ -40,6 +40,10 @@ def _get_writer():
     return g_tbwriter
 
 
+def _tensor_to_list(x):
+    return x.cpu().numpy().astype(float).reshape(-1).tolist()
+
+
 def k12ai_except_message():
     exc_type, exc_value, exc_tb = sys.exc_info()
     message = {
@@ -146,6 +150,7 @@ class MessageMetric(object):
     def send(self):
         if len(self._metrics) > 0:
             k12ai_send_message('metrics', self._metrics)
+            self._metrics = []
 
     def _mmjson(self, ty, tag, title, value, width, height):
         obj = {
@@ -243,4 +248,9 @@ class MessageMetric(object):
             self._writer.add_text(f'{tag}/{title}', f'{value}', step)
         obj = self._mmjson('text', tag, title, value, width, height)
         self._metrics.append(obj)
+        return self
+
+    def add_histogram(self, tag, title, value, step=None, width=None, height=None):
+        if self._writer:
+            self._writer.add_histogram(f'{tag}/{title}', value, step)
         return self
