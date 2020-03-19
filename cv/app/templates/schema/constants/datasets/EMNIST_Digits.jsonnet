@@ -61,7 +61,7 @@
                 28,
                 28,
             ],
-            align_method: 'only_pad',
+            align_method: 'scale_and_pad',
         },
     },
     val: {
@@ -75,7 +75,7 @@
                 32,
                 32,
             ],
-            align_method: 'only_pad',
+            align_method: 'scale_and_pad',
         },
     },
     test: {

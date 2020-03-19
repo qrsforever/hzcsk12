@@ -18,7 +18,7 @@ from lib.tools.util.logger import Logger as Log
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import precision_recall_fscore_support
 from k12ai.common.log_message import MessageReport
-from k12ai.tools.util.log_parser import k12ai_model_post # noqa
+from k12ai.runner.base import RunnerStat
 
 
 class ImageClassifierTest(object):
@@ -47,6 +47,7 @@ class ImageClassifierTest(object):
         with torch.no_grad():
             targets_list = []
             predicted_list = []
+            path_list = []
             for j, data_dict in enumerate(self.val_loader):
                 data_dict = RunnerHelper.to_device(self, data_dict)
                 out = self.cls_net(data_dict)
@@ -54,10 +55,13 @@ class ImageClassifierTest(object):
                 self.running_score.update(out_dict, label_dict)
                 targets_list.append(label_dict['out'].cpu())
                 predicted_list.append(out_dict['out'].max(1)[1].cpu())
+                path_list.append(data_dict['path'])
 
             targets, predicted = torch.cat(targets_list), torch.cat(predicted_list)
             print(confusion_matrix(targets, predicted))
             print(precision_recall_fscore_support(targets, predicted, average='macro'))
+
+            RunnerStat.evaluate(self, targets, predicted, path_list)
 
             top1 = RunnerHelper.dist_avg(self, self.running_score.get_top1_acc())
             top3 = RunnerHelper.dist_avg(self, self.running_score.get_top3_acc())

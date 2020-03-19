@@ -151,11 +151,13 @@ class MessageMetric(object):
         if len(self._metrics) > 0:
             k12ai_send_message('metrics', self._metrics)
             self._metrics = []
+        if self._writer:
+            self._writer.flush()
 
-    def _mmjson(self, ty, tag, title, value, width, height):
+    def _mmjson(self, ty, category, title, value, width, height):
         obj = {
+            'category': category,
             'type': ty,
-            'name': tag,
             'data': {
                 'title': title,
                 'value': value
@@ -167,90 +169,77 @@ class MessageMetric(object):
             obj['height'] = height
         return obj
 
-    def add_scalar(self, tag, x, y, width=None, height=None):
-        if isinstance(x, dict) and isinstance(y, dict):
-            obj = {
-                'type': 'scalar',
-                'name': tag,
-                'data': {
-                    'x': x,
-                    'y': y
-                }
-            }
-            if width:
-                obj['width'] = width
-            if height:
-                obj['height'] = height
-            self._metrics.append(obj)
-        if self._writer:
-            self._writer.add_scalar(tag, y, x)
+    def add_scalar(self, category, title, x, y, width=None, height=None):
+        value = {}
+        if isinstance(x, dict):
+            value['x'] = x
+            x = list(x.values())[0]
+        elif isinstance(x, int):
+            value['x'] = {'iteration': x}
+        else:
+            raise NotImplementedError
+        if isinstance(y, dict):
+            value['y'] = y
+            if self._writer:
+                self._writer.add_scalars(f'{category}/{title}', y, x)
+        else:
+            value['y'] = {}
+            if isinstance(y, (int, float)):
+                value['y'][title] = y 
+                if self._writer:
+                    self._writer.add_scalar(f'{category}/{title}', y, x)
+            elif isinstance(y, (list, tuple)) and len(y) == 2:
+                if title in ('loss'):
+                    value['y'][f'train_{title}'] = y[0]
+                    value['y'][f'validation_{title}'] = y[1]
+                    if self._writer:
+                        self._writer.add_scalars(f'{category}/{title}', value['y'], x)
+                else:
+                    NotImplementedError
+            else:
+                NotImplementedError
+
+        obj = self._mmjson('scalar', category, title, value, width, height)
+        self._metrics.append(obj)
         return self
 
-    def add_scalars(self, tag, x, y, width=None, height=None):
-        if self._writer:
-            self._writer.add_scalars(tag, y, x)
-        if isinstance(x, dict) and isinstance(y, dict):
-            obj = {
-                'type': 'scalars',
-                'name': tag,
-                'data': {
-                    'x': x,
-                    'y': y
-                }
-            }
-            if width:
-                obj['width'] = width
-            if height:
-                obj['height'] = height
-            self._metrics.append(obj)
-        return self
-
-    def add_image(self, tag, title, image, fmt='base64', step=None, width=None, height=None):
+    def add_image(self, category, title, image, fmt='base64string', step=None, width=None, height=None):
         if isinstance(image, str):
             value = image
         elif isinstance(image, (torch.Tensor, numpy.array)):
-            if fmt == 'base64':
+            if self._writer:
+                self._writer.add_image(f'{category}/{title}', image, step)
+            if fmt == 'base64string':
                 value = base64_image(image)
             else:
                 raise NotImplementedError
-            if self._writer:
-                self._writer.add_image(f'{tag}/{title}', image, step)
-        obj = self._mmjson('image', tag, title, value, width, height)
-        obj['format'] = fmt
+        obj = self._mmjson('image', category, title, value, width, height)
+        obj['data']['format'] = fmt
         self._metrics.append(obj)
         return self
 
-    def add_images(self, tag, data, fmt='base64', width=None, height=None):
-        obj = {
-            'type': 'images',
-            'name': tag,
-            'format': fmt,
-            'data': data
-        }
-        if width:
-            obj['width'] = width
-        if height:
-            obj['height'] = height
-        self._metrics.append(obj)
-        return self
-
-    def add_matrix(self, tag, title, value, step=None, width=None, height=None):
+    def add_matrix(self, category, title, value, step=None, width=None, height=None):
         if self._writer:
-            fig, ax = plt.subplots(figsize=(12,8))
+            fig, ax = plt.subplots(figsize=(8, 6))
             sns.heatmap(value, annot=True, fmt='d', linewidth=0.5,cmap='Blues', ax=ax, cbar=True)
-            self._writer.add_figure(f'{tag}/{title}', fig, step, close=True)
-        obj = self._mmjson('matrix', tag, title, value, width, height)
+            self._writer.add_figure(f'{category}/{title}', fig, step, close=True)
+        obj = self._mmjson('matrix', category, title, value, width, height)
         self._metrics.append(obj)
         return self
 
-    def add_text(self, tag, title, value, step=None, width=None, height=None):
+    def add_text(self, category, title, value, step=None, width=None, height=None):
         if self._writer:
-            self._writer.add_text(f'{tag}/{title}', f'{value}', step)
-        obj = self._mmjson('text', tag, title, value, width, height)
+            self._writer.add_text(f'{category}/{title}', f'{value}', step)
+        obj = self._mmjson('text', category, title, value, width, height)
         self._metrics.append(obj)
         return self
 
-    def add_histogram(self, tag, title, value, step=None, width=None, height=None):
+    def add_histogram(self, category, title, value, step=None, width=None, height=None):
         if self._writer:
-            self._writer.add_histogram(f'{tag}/{title}', value, step)
+            self._writer.add_histogram(f'{category}/{title}', value, step)
+        return self
+
+    def add_graph(self, model, iimg=None):
+        if self._writer:
+            self._writer.add_graph(model, iimg)
         return self

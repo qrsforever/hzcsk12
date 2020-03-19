@@ -34,7 +34,7 @@
                 28,
                 28,
             ],
-            align_method: 'only_pad',
+            align_method: 'scale_and_pad',
         },
     },
     val: {
@@ -48,7 +48,7 @@
                 28,
                 28,
             ],
-            align_method: 'only_pad',
+            align_method: 'scale_and_pad',
         },
     },
     test: {
@@ -58,7 +58,7 @@
                 28,
                 28,
             ],
-            align_method: 'only_pad',
+            align_method: 'scale_and_pad',
         },
     },
     network: {

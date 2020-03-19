@@ -36,6 +36,7 @@ class DefaultDataset(data.Dataset):
         return dict(
             img=DataContainer(img, stack=True),
             label=DataContainer(label, stack=True),
+            path=DataContainer(self.img_list[index], stack=True), # QRS: add
         )
 
     def __len__(self):

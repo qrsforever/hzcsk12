@@ -16,16 +16,14 @@ from model.cls.model_manager import ModelManager
 from data.cls.data_loader import DataLoader
 
 # QRS: add
-from k12ai.runner.base import ClsRunner
+from k12ai.runner.base import RunnerStat
 
 
-class ImageClassifier(ClsRunner):
+class ImageClassifier(object):
     """
       The class for the training phase of Image classification.
     """
     def __init__(self, configer):
-        super().__init__()
-
         self.configer = configer
         self.runner_state = dict()
 
@@ -144,7 +142,7 @@ class ImageClassifier(ClsRunner):
                              data_time=self.data_time))
 
                 # QRS: add
-                self.handle_train(data_dict)
+                RunnerStat.train(self, data_dict)
 
                 self.batch_time.reset()
                 self.data_time.reset()
@@ -181,7 +179,7 @@ class ImageClassifier(ClsRunner):
                 start_time = time.time()
 
             # QRS: add
-            self.handle_validation()
+            RunnerStat.validation(self)
             # TODO
             # RunnerHelper.save_net(self, self.cls_net)
 
