@@ -20,7 +20,7 @@ class Normalize(object):
         Tensor: Normalized tensor.
     """
     def __init__(self, div_value, mean, std):
-        self.div_value = 255 # div_value
+        self.div_value = div_value
         self.mean = mean
         self.std =std
 
