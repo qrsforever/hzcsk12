@@ -12,6 +12,7 @@ import argparse
 from pyhocon import ConfigFactory
 from k12ai.utils.logger import Logger
 from k12ai.common.log_message import MessageReport
+from k12ai.common.log_message import MessageMetric
 
 
 def _do_train(configer):
@@ -23,6 +24,10 @@ def _do_train(configer):
         metrics = runner.train()
         Logger.info(metrics)
         MessageReport.metrics(metrics)
+        mm = MessageMetric()
+        for key, value in metrics.items():
+            mm.add_text('train', key, value)
+        mm.send()
     else:
         raise NotImplementedError
 

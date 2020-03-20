@@ -13,7 +13,7 @@ import time
 import traceback
 import GPUtil
 import psutil
-import shutil
+import shutil # noqa
 import numpy
 import torch
 
@@ -38,9 +38,9 @@ def _get_writer():
     if g_runbynb:
         if not g_tbwriter:
             logdir = '/cache/tblogs'
-            if os.path.exists(logdir):
-                shutil.rmtree(logdir, ignore_errors=True)
-                os.mkdir(logdir)
+            # if os.path.exists(logdir):
+            #     shutil.rmtree(logdir, ignore_errors=True)
+            #     os.mkdir(logdir)
             g_tbwriter = SummaryWriter(log_dir=logdir)
     return g_tbwriter
 
@@ -209,7 +209,7 @@ class MessageMetric(object):
         else:
             value['y'] = {}
             if isinstance(y, (int, float)):
-                value['y'][title] = y 
+                value['y'][title] = y
                 if self._writer:
                     self._writer.add_scalar(f'{category}/{title}', y, x)
             elif isinstance(y, (list, tuple)) and len(y) == 2:
