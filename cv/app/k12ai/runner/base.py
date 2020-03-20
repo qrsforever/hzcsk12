@@ -83,7 +83,7 @@ class RunnerBase(object):
             'top3': runner.running_score.get_top3_acc()['out'],
             'top5': runner.running_score.get_top5_acc()['out']
         }
-        mm.add_scalar('train_val', 'acc', x=iters, y=y)
+        mm.add_scalar('val', 'acc', x=iters, y=y)
         mm.send()
 
         self._epoch = epoch

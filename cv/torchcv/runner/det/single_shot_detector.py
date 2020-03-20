@@ -18,6 +18,9 @@ from metric.det.det_running_score import DetRunningScore
 from lib.tools.vis.det_visualizer import DetVisualizer
 from lib.tools.helper.dc_helper import DCHelper
 
+# QRS: add
+from k12ai.runner.base import RunnerStat
+
 
 class SingleShotDetector(object):
     """
