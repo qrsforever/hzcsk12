@@ -19,7 +19,7 @@ from lib.tools.vis.det_visualizer import DetVisualizer
 from lib.tools.helper.dc_helper import DCHelper
 
 # QRS: add
-from k12ai.runner.base import RunnerStat
+from k12ai.runner.stat import RunnerStat
 
 
 class SingleShotDetector(object):
@@ -112,9 +112,12 @@ class SingleShotDetector(object):
                     self.configer.get('solver', 'display_iter'),
                     RunnerHelper.get_lr(self.optimizer), batch_time=self.batch_time,
                     data_time=self.data_time, loss=self.train_losses))
+
+                # QRS: add
+                RunnerStat.train(self, data_dict)
+
                 self.batch_time.reset()
                 self.data_time.reset()
-                self.train_losses.reset()
 
             if self.configer.get('solver', 'lr')['metric'] == 'iters' \
                     and self.runner_state['iters'] == self.configer.get('solver', 'max_iters'):
@@ -123,6 +126,7 @@ class SingleShotDetector(object):
             # Check to val the current model.
             if self.runner_state['iters'] % self.configer.get('solver', 'test_interval') == 0:
                 self.val()
+                self.train_losses.reset()
 
     def val(self):
         """
@@ -153,6 +157,8 @@ class SingleShotDetector(object):
                 self.batch_time.update(time.time() - start_time)
                 start_time = time.time()
 
+            # QRS:
+            RunnerStat.validation(self)
             RunnerHelper.save_net(self, self.det_net, iters=self.runner_state['iters'])
             # Print the log info & reset the states.
             Log.info(

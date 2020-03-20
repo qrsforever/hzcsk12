@@ -24,6 +24,7 @@ from allennlp.nn import util as nn_util
 
 # QRS: add for report message
 from k12ai.common.log_message import MessageReport
+from k12ai.training.stat import RunnerStat
 
 logger = logging.getLogger(__name__)
 
@@ -464,6 +465,7 @@ def evaluate(
             final_metrics["loss"] = total_loss / total_weight
 
         # QRS: add
+        RunnerStat.evaluate(final_metrics)
         _metrics = {}
         _metrics['evaluate_iters'] = batch_count
         _metrics['evaluate_loss'] = final_metrics['loss']

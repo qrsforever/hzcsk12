@@ -13,6 +13,7 @@ import time
 import traceback
 import GPUtil
 import psutil
+import shutil
 import numpy
 import torch
 
@@ -36,7 +37,11 @@ def _get_writer():
     global g_tbwriter
     if g_runbynb:
         if not g_tbwriter:
-            g_tbwriter = SummaryWriter(log_dir='/cache/tblogs')
+            logdir = '/cache/tblogs'
+            if os.path.exists(logdir):
+                shutil.rmtree(logdir, ignore_errors=True)
+                os.mkdir(logdir)
+            g_tbwriter = SummaryWriter(log_dir=logdir)
     return g_tbwriter
 
 
@@ -96,7 +101,8 @@ class MessageReport(object):
     RUNNING = 1
     ERROR = 2
     EXCEPT = 3
-    FINISH = 4
+    STOP = 4
+    FINISH = 5
 
     @staticmethod
     def status(what, msg=None):
@@ -123,6 +129,21 @@ class MessageReport(object):
             })
             return
 
+        if what == MessageReport.EXCEPT:
+            k12ai_send_message('error', {
+                'status': 'crash',
+                'errinfo': msg or k12ai_except_message()
+            })
+            return
+
+        if what == MessageReport.STOP:
+            k12ai_send_message('error', {
+                'status': 'stop',
+                'errinfo': msg or {'by comamnd way'}
+            })
+            sys.exit(0) # TODO
+            return
+
         if what == MessageReport.FINISH:
             k12ai_send_message('error', {
                 'status': 'finish',
@@ -133,6 +154,7 @@ class MessageReport(object):
 
     @staticmethod
     def metrics(metrics, memstat=False, end=False):
+        return
         if memstat:
             metrics['memstat'] = k12ai_memstat_message()
         k12ai_send_message('metrics', metrics, end)
@@ -179,6 +201,8 @@ class MessageMetric(object):
         else:
             raise NotImplementedError
         if isinstance(y, dict):
+            if len(y) == 0:
+                return self
             value['y'] = y
             if self._writer:
                 self._writer.add_scalars(f'{category}/{title}', y, x)
@@ -189,7 +213,7 @@ class MessageMetric(object):
                 if self._writer:
                     self._writer.add_scalar(f'{category}/{title}', y, x)
             elif isinstance(y, (list, tuple)) and len(y) == 2:
-                if title in ('loss'):
+                if title in ('loss', 'acc'):
                     value['y'][f'train_{title}'] = y[0]
                     value['y'][f'validation_{title}'] = y[1]
                     if self._writer:

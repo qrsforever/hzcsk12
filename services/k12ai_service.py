@@ -123,7 +123,8 @@ def _framework_schema():
     try:
         code, msg = agent.schema(service_task, network_type, dataset_name)
         return json.dumps(_err_msg(code, msg))
-    except Exception:
+    except Exception as err:
+        print(f"{err}")
         return json.dumps(_err_msg(100207, exc=True))
 
 

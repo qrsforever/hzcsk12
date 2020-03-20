@@ -18,7 +18,7 @@ from lib.tools.util.logger import Logger as Log
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import precision_recall_fscore_support
 from k12ai.common.log_message import MessageReport
-from k12ai.runner.base import RunnerStat
+from k12ai.runner.stat import RunnerStat
 
 
 class ImageClassifierTest(object):

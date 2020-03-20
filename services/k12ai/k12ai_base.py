@@ -189,8 +189,7 @@ class ServiceRPC(object):
             return
         except Exception:
             self.send_message(token, op, user, uuid, "error", {
-                'value': 'exiting', 'way': 'docker',
-                'errinfo': gen_exc_info()
+                'status': 'stop', 'errinfo': gen_exc_info()
             })
 
     def schema(self, task, netw, dname):
@@ -226,7 +225,7 @@ class ServiceRPC(object):
             if container is None or container.status != 'running':
                 return 100205, None
             container.kill()
-            self.send_message(token, '%s.start' % phase, user, uuid, "error", {'status': 'stop'})
+            self.send_message(token, '%s.start' % phase, user, uuid, "error", {'status': 'stop', 'errinfo': 'by manual way'})
             return 100000, None
 
         if container:

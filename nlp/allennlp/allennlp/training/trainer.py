@@ -31,6 +31,7 @@ from allennlp.training.trainer_base import TrainerBase
 
 # QRS add
 from k12ai.common.log_message import MessageReport
+from k12ai.training.stat import RunnerStat
 
 logger = logging.getLogger(__name__)
 
@@ -656,18 +657,19 @@ class Trainer(TrainerBase):
             epochs_trained += 1
 
             # QRS: add
+            RunnerStat.train(self, metrics)
             metrics['training_iters'] = self._batch_num_total
             metrics['training_speed'] = 1.0 / epoch_elapsed_time
             metrics['training_progress'] = float(epoch) / self._num_epochs
             metrics["training_epochs"] = epochs_trained + 1
-            MessageReport.metrics(metrics, memstat=True)
+            MessageReport.metrics(metrics, memstat=False)
 
         # make sure pending events are flushed to disk and files are closed properly
         self._tensorboard.close()
 
         # QRS: add
         metrics['training_progress'] = 1
-        MessageReport.metrics(metrics, end=True)
+        MessageReport.metrics(metrics)
 
         # Load the best model state before returning
         best_model_state = self._checkpointer.best_model_state()

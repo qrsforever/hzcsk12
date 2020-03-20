@@ -24,6 +24,7 @@ import lib.data.transforms as trans
 from lib.data.collate import collate
 
 from runner.det.single_shot_detector_test import SingleShotDetectorTest as SSDT
+from k12ai.runner.stat import RunnerStat
 
 
 class SingleShotDetectorTest(object):
@@ -61,6 +62,7 @@ class SingleShotDetectorTest(object):
                         [item['ori_bboxes'] for item in DCHelper.tolist(data_dict['meta'])],
                         [item['ori_labels'] for item in DCHelper.tolist(data_dict['meta'])])
 
+            RunnerStat.evaluate(self)
             mAP = self.det_running_score.get_mAP()
             Log.info('Test mAP: {}'.format(mAP))
 

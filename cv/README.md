@@ -40,4 +40,5 @@ Date:   Mon Jan 6 17:43:51 2020 +0800
 | `torchcv/lib/tools/util/configer.py` | 以配置文件为主, 少用命令行传参 |
 | `torchcv/lib/runner/runner_helper.py` | fix bug: cannot ignore else |
 | `torchcv/runner/cls/image_classifier.py` | metrics |
+| `torchcv/runner/det/single_shot_detector.py` | metrics |
 | `torchcv/data/cls/datasets/default_dataset.py` | add path |

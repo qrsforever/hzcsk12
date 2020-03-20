@@ -13,9 +13,22 @@ import pkgutil
 import sys
 import base64
 import torch
+import signal
 import torchvision # noqa
 import numpy as np
 from collections import OrderedDict
+
+
+def install_signal_handler(signum, handler):
+    old_signal_handler = None
+
+    def _inner_handler(_signum, frame):
+        handler(_signum, frame)
+        signal.signal(signum, signal.SIG_DFL)
+        if old_signal_handler not in (signal.SIG_IGN, signal.SIG_DFL):
+            old_signal_handler(_signum, frame)
+
+    old_signal_handler = signal.signal(signum, _inner_handler)
 
 
 def find_components(package, directory, base_class):
@@ -39,6 +52,8 @@ def base64_image(image):
     elif isinstance(image, (torch.Tensor, np.array)):
         path = '/tmp/__k12.png'
         torchvision.utils.save_image(image, path)
+    else:
+        raise NotImplementedError
     with open(path, 'rb') as fw:
         img = base64.b64encode(fw.read())
     return img.decode()

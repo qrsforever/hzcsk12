@@ -18,6 +18,8 @@ from lib.tools.util.configer import Configer
 from lib.tools.util.logger import Logger as Log
 
 # QRS: add
+import signal
+from k12ai.common.util_misc import install_signal_handler
 from k12ai.k12cv_init import k12ai_cv_init
 from k12ai.common.log_message import MessageReport
 
@@ -36,6 +38,9 @@ def str2bool(v):
 
 
 if __name__ == "__main__":
+    # QRS: not work by running torch.distributed.launch
+    install_signal_handler(signal.SIGTERM, lambda s,f: MessageReport.status(MessageReport.STOP))
+
     parser = argparse.ArgumentParser()
     parser.add_argument('--config_file', default=None, type=str,
                         dest='config_file', help='The file of the hyper parameters.')

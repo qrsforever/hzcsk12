@@ -46,7 +46,7 @@ local _READERS = {
                 type: '_ignore_',
                 objs: [
                     {
-                        _id_: '_k12.' + jid + '.bool',
+                        _id_: '_k12.' + jid,
                         name: { en: 'Enable', cn: self.en },
                         type: 'bool-trigger',
                         objs: [
@@ -70,7 +70,7 @@ local _READERS = {
                                 trigger: {},
                             },
                         ],
-                        default: false,
+                        default: _Utils.get_default_value(self._id_, false),
                     },
                 ],
             },

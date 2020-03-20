@@ -4,6 +4,8 @@
 // @version 1.0
 // @date 2019-12-26 00:35
 
+local _Utils = import '../../utils/helper.libsonnet';
+
 {
     get():: {
         name: { en: 'Phase', cn: self.en },
@@ -40,7 +42,7 @@
                 type: '_ignore_',
                 objs: [
                     {
-                        _id_: '_k12.validation_iterator.bool',
+                        _id_: '_k12.' + jid,
                         name: { en: 'Enable', cn: self.en },
                         type: 'bool-trigger',
                         objs: [
@@ -75,7 +77,7 @@
                                 trigger: {},
                             },
                         ],
-                        default: false,
+                        default: _Utils.get_default_value(self._id_, false),
                     },
                 ],
             },

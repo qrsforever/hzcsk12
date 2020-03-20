@@ -176,8 +176,8 @@ class CVServiceRPC(ServiceRPC):
         with open(config_file, 'w') as fout:
             fout.write(config_str)
 
-        command = 'python -m torch.distributed.launch --nproc_per_node=1 {}'.format(
-                '%s/torchcv/main.py' % self._workdir)
+        command = 'python -m torch.distributed.launch --nproc_per_node={} {}'.format(
+                self._gpu_count, '%s/torchcv/main.py' % self._workdir)
 
         command += ' --config_file /cache/config.json'
 

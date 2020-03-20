@@ -45,7 +45,7 @@
     },
     trainer: {
         num_epochs: 1000,
-        patience: 1,
+        patience: 10,
         grad_norm: 5.0,
         shuffle: true,
         num_serialized_models_to_keep: 1,
@@ -57,5 +57,9 @@
             type: 'adam',
             lr: 0.001,
         },
+    },
+    _k12: {
+        validation_dataset_reader: true,
+        validation_iterator: true,
     },
 }

@@ -16,7 +16,7 @@ from model.cls.model_manager import ModelManager
 from data.cls.data_loader import DataLoader
 
 # QRS: add
-from k12ai.runner.base import RunnerStat
+from k12ai.runner.stat import RunnerStat
 
 
 class ImageClassifier(object):
@@ -178,9 +178,8 @@ class ImageClassifier(object):
                 self.batch_time.update(time.time() - start_time)
                 start_time = time.time()
 
-            # QRS: add
+            # QRS:
             RunnerStat.validation(self)
-            # TODO
             # RunnerHelper.save_net(self, self.cls_net)
 
             # Print the log info & reset the states.

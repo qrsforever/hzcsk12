@@ -13,7 +13,6 @@ local _Utils = import '../../../utils/helper.libsonnet';
             objs: [
                 _Utils.int(jid + '.cuda_device', 'CUDA Device', def=0),
                 _Utils.int(jid + '.num_epochs', 'Epochs Count', def=20, ddd=true),
-                _Utils.int(jid + '.patience', 'Patience', def=10, ddd=true),
             ],
         },
         {
@@ -41,44 +40,15 @@ local _Utils = import '../../../utils/helper.libsonnet';
         {
             type: 'H',
             objs: [
-                {
-                    _id_: '_k12.' + jid + 'grad_norm.bool',
-                    name: { en: 'Grad Norm', cn: self.en },
-                    type: 'bool-trigger',
-                    objs: [
-                        {
-                            value: true,
-                            trigger: {
-                                objs: [
-                                    _Utils.float(jid + '.grad_norm', 'Value', def=1.0),
-                                ],
-                            },
-                        },
-                        {
-                            value: false,
-                            trigger: {},
-                        },
-                    ],
-                },
-                {
-                    _id_: '_k12.' + jid + 'grad_clipping.bool',
-                    name: { en: 'Grad Clipping', cn: self.en },
-                    type: 'bool-trigger',
-                    objs: [
-                        {
-                            value: true,
-                            trigger: {
-                                objs: [
-                                    _Utils.float(jid + '.grad_clipping', 'Value', def=1.0),
-                                ],
-                            },
-                        },
-                        {
-                            value: false,
-                            trigger: {},
-                        },
-                    ],
-                },
+                _Utils.booltrigger('_k12.' + jid + '.grad_norm.bool', 'Grad Norm', trigger=[
+                    _Utils.float(jid + '.grad_norm', 'Value', def=1.0),
+                ]),
+                _Utils.booltrigger('_k12.' + jid + '.grad_clipping.bool', 'Grad Clipping', trigger=[
+                    _Utils.float(jid + '.grad_clipping', 'Value', def=1.0),
+                ]),
+                _Utils.booltrigger('_k12.' + jid + '.patience', 'Patience', trigger=[
+                    _Utils.int(jid + '.patience', 'Patience', def=10, ddd=true),
+                ]),
             ],
         },
     ],
