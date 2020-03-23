@@ -46,6 +46,12 @@ def find_components(package, directory, base_class):
     return components
 
 
+def sw_list(val):
+    if isinstance(val, np.ndarray):
+        return val.tolist()
+    return val
+
+
 def base64_image(image):
     if isinstance(image, str):
         path = image

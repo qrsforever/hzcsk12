@@ -80,6 +80,8 @@ class ServiceRPC(object):
                 else:
                     errcode = 999999
                 message = k12ai_error_message(errcode, expand=message)
+
+        print(message)
         k12ai_consul_message(f'k12{self._sname}', token, op, user, uuid, msgtype, message, clear)
 
     def errtype2errcode(self, errtype):

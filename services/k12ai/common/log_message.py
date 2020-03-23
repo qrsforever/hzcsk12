@@ -16,6 +16,7 @@ import psutil
 import shutil # noqa
 import numpy
 import torch
+import hashlib
 
 from torch.cuda import (max_memory_allocated, memory_allocated, max_memory_cached, memory_cached)
 from resource import (getrusage, RUSAGE_SELF, RUSAGE_CHILDREN)
@@ -164,6 +165,7 @@ class MessageMetric(object):
     def __init__(self):
         self._metrics = []
         self._writer = _get_writer()
+        self._cache_ids = {}
 
     @property
     def data(self):
@@ -177,12 +179,19 @@ class MessageMetric(object):
             self._writer.flush()
 
     def _mmjson(self, ty, category, title, value, width, height):
+        def _get_id():
+            key = f'{ty}{category}{title}'
+            if key not in self._cache_ids.keys():
+                self._cache_ids[key] = hashlib.md5(key.encode()).hexdigest()[0:16]
+            return self._cache_ids[key]
+
         obj = {
+            '_id_': _get_id(),
             'category': category,
             'type': ty,
             'data': {
                 'title': title,
-                'value': value
+                'value': value,
             }
         }
         if width:
@@ -223,21 +232,21 @@ class MessageMetric(object):
             else:
                 NotImplementedError
 
-        obj = self._mmjson('scalar', category, title, value, width, height)
+        obj = self._mmjson('scalar', category, title, [value], width, height)
         self._metrics.append(obj)
         return self
 
     def add_image(self, category, title, image, fmt='base64string', step=None, width=None, height=None):
         if isinstance(image, str):
             value = image
-        elif isinstance(image, (torch.Tensor, numpy.array)):
+        elif isinstance(image, (torch.Tensor, numpy.ndarray)):
             if self._writer:
                 self._writer.add_image(f'{category}/{title}', image, step)
             if fmt == 'base64string':
                 value = base64_image(image)
             else:
                 raise NotImplementedError
-        obj = self._mmjson('image', category, title, value, width, height)
+        obj = self._mmjson('image', category, title, [value], width, height)
         obj['data']['format'] = fmt
         self._metrics.append(obj)
         return self
@@ -247,6 +256,8 @@ class MessageMetric(object):
             fig, ax = plt.subplots(figsize=(8, 6))
             sns.heatmap(value, annot=True, fmt='d', linewidth=0.5,cmap='Blues', ax=ax, cbar=True)
             self._writer.add_figure(f'{category}/{title}', fig, step, close=True)
+        if isinstance(value, numpy.ndarray):
+            value = value.tolist()
         obj = self._mmjson('matrix', category, title, value, width, height)
         self._metrics.append(obj)
         return self
@@ -254,7 +265,7 @@ class MessageMetric(object):
     def add_text(self, category, title, value, step=None, width=None, height=None):
         if self._writer:
             self._writer.add_text(f'{category}/{title}', f'{value}', step)
-        obj = self._mmjson('text', category, title, value, width, height)
+        obj = self._mmjson('text', category, title, [value], width, height)
         self._metrics.append(obj)
         return self
 

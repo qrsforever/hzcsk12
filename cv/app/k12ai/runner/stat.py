@@ -80,6 +80,7 @@ class ClsRunner(RunnerBase):
             grid = torchvision.utils.make_grid(imgs.data[:NUM_MKGRID_IMGS], nrow=8, padding=0)
             attr = 'x'.join(map(lambda x: str(x), list(imgs.size())))
             self._mm.add_image('train', f'Aug-{attr}-{self._report_images_num}', grid)
+            self._test_image = grid
 
             # raw image
             resize = (imgs.size(2), imgs.size(3))
@@ -92,6 +93,9 @@ class ClsRunner(RunnerBase):
 
         # loss.val
         self._mm.add_scalar('train', 'loss', x=self._iters, y=list(runner.train_losses.val.values())[0])
+
+        # test
+        self._mm.add_image('train', f'test_image', self._test_image)
 
         return self
 

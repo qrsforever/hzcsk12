@@ -9,6 +9,7 @@
 
 from sklearn.model_selection import train_test_split
 import sklearn.datasets
+# from sklearn.datasets import load_digits
 
 
 def sk_get_dataset(dataset, kwargs):

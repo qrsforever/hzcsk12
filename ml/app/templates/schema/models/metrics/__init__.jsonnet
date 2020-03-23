@@ -14,5 +14,8 @@ local _Utils = import '../../utils/helper.libsonnet';
         else if 'regressor' == _Utils.task
         then
             import 'regressor.libsonnet'
+        else if 'cluster' == _Utils.task
+        then
+            import 'cluster.libsonnet'
         else [],
 }
