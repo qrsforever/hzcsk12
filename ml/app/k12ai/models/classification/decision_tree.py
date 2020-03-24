@@ -13,7 +13,7 @@ from sklearn.tree import DecisionTreeClassifier as Algo
 
 
 class SKDecisionTree(K12Algorithm):
-    def __init__(self, kwargs):
+    def __init__(self, **kwargs):
         self._kwargs = kwargs
         self._algo = None
 

@@ -29,7 +29,7 @@ class SKRunner(BaseRunner):
         model_name = configer.get('model.name')
         model_args = configer.get(f'model.{model_name}')
 
-        self._model = k12ai_get_model(model_name)(model_args)
+        self._model = k12ai_get_model(model_name)(**model_args)
         self._dataloader = DataLoader(configer)
         self._metrics = lambda y_true, y_pred, \
                 kwargs=configer.get('metrics'): k12ai_get_metrics(y_true, y_pred, kwargs)

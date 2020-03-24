@@ -12,7 +12,7 @@ from sklearn.neighbors import KNeighborsClassifier as Algo
 
 
 class SKKNN(K12Algorithm):
-    def __init__(self, kwargs):
+    def __init__(self, **kwargs):
         self._kwargs = kwargs
         self._algo = None
 

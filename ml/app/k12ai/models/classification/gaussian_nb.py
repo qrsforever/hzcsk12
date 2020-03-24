@@ -12,7 +12,7 @@ from sklearn.naive_bayes import GaussianNB as Algo
 
 
 class SKGaussianNB(K12Algorithm):
-    def __init__(self, kwargs):
+    def __init__(self, **kwargs):
         self._kwargs = kwargs
         self._algo = None
 

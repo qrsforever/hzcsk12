@@ -13,7 +13,7 @@ from sklearn.ensemble import GradientBoostingRegressor as Algo
 
 
 class SKGradientBoosting(K12Algorithm):
-    def __init__(self, kwargs):
+    def __init__(self, **kwargs):
         self._kwargs = kwargs
         self._algo = None
 

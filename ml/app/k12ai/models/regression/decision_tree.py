@@ -13,7 +13,7 @@ from sklearn.tree import DecisionTreeRegressor as Algo
 
 
 class SKRandomForest(K12Algorithm):
-    def __init__(self, kwargs):
+    def __init__(self, **kwargs):
         self._kwargs = kwargs
         self._algo = None
 
