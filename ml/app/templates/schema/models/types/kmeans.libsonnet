@@ -63,7 +63,6 @@ local _Utils = import '../../utils/helper.libsonnet';
                     ],
                     default: 'auto',
                 },
-                _Utils.bool('model.kmeans.pca2', 'PCA-2', def=false),
             ],
         },
         {

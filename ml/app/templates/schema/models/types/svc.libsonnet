@@ -54,6 +54,7 @@ local _Utils = import '../../utils/helper.libsonnet';
                             value: 'scale',
                         },
                     ],
+                    tips: 'Kernel coefficient',
                     default: 'auto',
                 },
                 {
@@ -85,7 +86,7 @@ local _Utils = import '../../utils/helper.libsonnet';
         {
             type: 'H',
             objs: [
-                _Utils.float('model.svc.C', 'C', def=1.0),
+                _Utils.float('model.svc.C', 'C', def=1.0, tips='Penalty parameter C of the error term, larger is better, but maybe over fit'),
                 _Utils.float('model.svc.coef0', 'Coef0', def=0.0),
                 _Utils.bool('model.svc.verbose', 'Verbose', def=false),
             ],

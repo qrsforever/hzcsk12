@@ -24,6 +24,7 @@ def _do_train(configer):
         metrics = runner.train()
         Logger.info(metrics)
         MessageReport.metrics(metrics)
+        # Text
         mm = MessageMetric()
         for key, value in metrics.items():
             mm.add_text('train', key, value)

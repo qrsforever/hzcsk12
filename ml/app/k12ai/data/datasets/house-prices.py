@@ -9,23 +9,23 @@
 
 import os
 import pandas as pd
+import numpy as np
 from k12ai.data.base import K12DataLoader
-from sklearn.model_selection import train_test_split
 
 
 class HousePricesDataLoader(K12DataLoader):
     @staticmethod
-    def get_dataset(path, kwargs):
+    def get_dataset(path):
         train_csv = os.path.join(path, 'train.csv')
         if not os.path.exists(train_csv):
             raise FileNotFoundError(f'dataset: {train_csv}')
 
         train_data_df = pd.read_csv(train_csv)
-        train_data_df.drop('Id', axis=1, inplace=True) 
+        train_data_df.drop('Id', axis=1, inplace=True)
 
         # Missing value
         for col in ('PoolQC', 'MiscFeature', 'Alley', 'Fence', 'FireplaceQu', 'GarageCond',
-                'GarageQual', 'GarageFinish', 'GarageType', 'BsmtCond', 'BsmtExposure', 
+                'GarageQual', 'GarageFinish', 'GarageType', 'BsmtCond', 'BsmtExposure',
                 'BsmtQual', 'BsmtFinType2', 'BsmtFinType1', 'MasVnrArea', 'Utilities'):
             train_data_df[col] = train_data_df[col].fillna('None')
 
@@ -48,7 +48,4 @@ class HousePricesDataLoader(K12DataLoader):
             train_data_df[col] = train_data_df[col].astype(str)
 
         train_data_df = pd.get_dummies(train_data_df)
-
-        return train_test_split(
-                train_data_df.drop('SalePrice', axis=1),
-                train_data_df['SalePrice'], **kwargs)
+        return np.array(train_data_df.drop('SalePrice', axis=1)), np.array(train_data_df['SalePrice'])

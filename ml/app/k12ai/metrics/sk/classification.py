@@ -7,6 +7,8 @@
 # @version 1.0
 # @date 2020-02-27 10:42
 
+import numpy as np
+
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import cohen_kappa_score
 from sklearn.metrics import confusion_matrix
@@ -17,10 +19,23 @@ from sklearn.metrics import matthews_corrcoef
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 
-from k12ai.common.util_misc import sw_list
+from k12ai.common.util_misc import (sw_list, make_meshgrid, plot_decision_boundaries)
+from k12ai.common.log_message import MessageMetric
 
 
-def k12ai_get_metrics(y_true, y_pred, kwargs):
+def k12ai_get_metrics(model, X_all, y_all, y_true, y_pred, kwargs):
+    mm = MessageMetric()
+
+    # decision boundaries
+    if X_all.shape[1] == 2:
+        X0, X1 = X_all[:, 0], X_all[:, 1]
+        xx, yy = make_meshgrid(X0, X1)
+        zz = model.predict(np.c_[xx.ravel(), yy.ravel()])
+        fig = plot_decision_boundaries(xx, yy, zz, X0, X1, y_all)
+        mm.add_image('metrics', f'PCA-2D: {model.name}', fig)
+
+    mm.send()
+
     metrics = {}
     if 'accuracy' in kwargs:
         metrics['accuracy_score'] = sw_list(accuracy_score(y_true, y_pred, **kwargs['accuracy']))

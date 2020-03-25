@@ -81,7 +81,7 @@ class ServiceRPC(object):
                     errcode = 999999
                 message = k12ai_error_message(errcode, expand=message)
 
-        print(message)
+        # print(message)
         k12ai_consul_message(f'k12{self._sname}', token, op, user, uuid, msgtype, message, clear)
 
     def errtype2errcode(self, errtype):
@@ -227,7 +227,7 @@ class ServiceRPC(object):
             if container is None or container.status != 'running':
                 return 100205, None
             container.kill()
-            self.send_message(token, '%s.start' % phase, user, uuid, "error", {'status': 'stop', 'errinfo': 'by manual way'})
+            self.send_message(token, '%s.start' % phase, user, uuid, "error", {'status': 'stop', 'event': 'by manual way'})
             return 100000, None
 
         if container:

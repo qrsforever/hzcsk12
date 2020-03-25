@@ -18,5 +18,6 @@ _datasets = find_components(
 )
 
 
-def k12ai_get_loader(dataset):
-    return _datasets[dataset]
+def k12ai_get_dataset(data_dir):
+    dataset = data_dir.split('/')[-1]
+    return _datasets[dataset].get_dataset(data_dir)

@@ -17,7 +17,7 @@ from sklearn.metrics import r2_score
 from k12ai.common.util_misc import sw_list
 
 
-def k12ai_get_metrics(y_true, y_pred, kwargs):
+def k12ai_get_metrics(model, X_all, y_all, y_true, y_pred, kwargs):
     metrics = {}
     if 'r2' in kwargs:
         metrics['r2_score'] = sw_list(r2_score(y_true, y_pred, **kwargs['r2']))

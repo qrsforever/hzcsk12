@@ -7,11 +7,9 @@
 # @version 1.0
 # @date 2020-02-11 20:41
 
-from sklearn.model_selection import train_test_split
 import sklearn.datasets
-# from sklearn.datasets import load_digits
 
 
-def sk_get_dataset(dataset, kwargs):
+def sk_get_dataset(dataset):
     data = getattr(sklearn.datasets, dataset)()
-    return train_test_split(data.data, data.target, **kwargs)
+    return data.data, data.target

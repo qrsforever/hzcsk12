@@ -25,6 +25,7 @@ from k12ai.common.util_misc import base64_image
 
 import seaborn as sns
 from matplotlib import pyplot as plt
+from matplotlib.figure import Figure
 from torch.utils.tensorboard import SummaryWriter
 
 g_starttime = None
@@ -237,15 +238,19 @@ class MessageMetric(object):
         return self
 
     def add_image(self, category, title, image, fmt='base64string', step=None, width=None, height=None):
-        if isinstance(image, str):
-            value = image
-        elif isinstance(image, (torch.Tensor, numpy.ndarray)):
-            if self._writer:
+        if self._writer:
+            if isinstance(image, Figure):
+                self._writer.add_figure(f'{category}/{title}', image, step, close=True)
+            elif isinstance(image, (torch.Tensor, numpy.ndarray)):
                 self._writer.add_image(f'{category}/{title}', image, step)
-            if fmt == 'base64string':
-                value = base64_image(image)
             else:
                 raise NotImplementedError
+        if fmt == 'base64string':
+            value = base64_image(image)
+        elif fmt == 'path':
+            value = image
+        else:
+            raise NotImplementedError
         obj = self._mmjson('image', category, title, [value], width, height)
         obj['data']['format'] = fmt
         self._metrics.append(obj)

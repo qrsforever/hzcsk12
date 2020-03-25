@@ -9,11 +9,22 @@
 
 
 class K12Algorithm:
+    def __init__(self, Algo, *arg, **kwargs):
+        self._algo = Algo(**kwargs)
+
+    @property
+    def algo(self):
+        return self._algo
+
+    @property
+    def name(self):
+        return self.algo.__class__.__name__
+
     def fit(self, X, Y):
-        raise NotImplementedError
+        return self.algo.fit(X, Y)
 
     def predict(self, X):
-        raise NotImplementedError
+        return self.algo.predict(X)
 
     def train(self, X_train, y_train, X_test):
         self.fit(X_train, y_train)

@@ -10,12 +10,11 @@
 import os
 import pandas as pd
 from k12ai.data.base import K12DataLoader
-from sklearn.model_selection import train_test_split
 
 
 class TitanicDataLoader(K12DataLoader):
     @staticmethod
-    def get_dataset(path, kwargs):
+    def get_dataset(path):
         train_csv = os.path.join(path, 'train.csv')
         if not os.path.exists(train_csv):
             raise FileNotFoundError(f'dataset: {train_csv}')
@@ -54,6 +53,4 @@ class TitanicDataLoader(K12DataLoader):
         train_data_df["Embarked"].replace(emb_dict, inplace=True)
 
         train_data_df.drop(['PassengerId', 'Name', 'Ticket', 'Cabin'], axis=1, inplace=True) 
-        return train_test_split(
-                train_data_df.drop('Survived', axis=1),
-                train_data_df['Survived'], **kwargs)
+        return train_data_df.drop('Survived', axis=1), train_data_df['Survived']
