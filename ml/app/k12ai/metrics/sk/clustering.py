@@ -20,20 +20,21 @@ from k12ai.common.util_misc import (sw_list, make_meshgrid, plot_decision_bounda
 from k12ai.common.log_message import MessageMetric
 
 
-def k12ai_get_metrics(model, X_all, y_all, y_true, y_pred, kwargs):
+def k12ai_get_metrics(model, data, y_true, y_pred, kwargs):
     mm = MessageMetric()
 
     # decision boundaries
-    if X_all.shape[1] == 2:
+    if data['X'].shape[1] == 2:
         C0, C1 = model.centers[:, 0], model.centers[:, 1]
-        X0, X1 = X_all[:, 0], X_all[:, 1]
+        X0, X1 = data['X'][:, 0], data['X'][:, 1]
         xx, yy = make_meshgrid(X0, X1)
         zz = model.predict(np.c_[xx.ravel(), yy.ravel()])
-        fig = plot_decision_boundaries(xx, yy, zz, X0, X1, y_all, C0, C1)
+        fig = plot_decision_boundaries(xx, yy, zz, X0, X1, data['y'], C0, C1)
         mm.add_image('metrics', f'PCA-2D: {model.name}', fig)
 
     mm.send()
 
+    # text metrics
     metrics = {}
     if 'ami' in kwargs:
         metrics['AMI'] = sw_list(adjusted_mutual_info_score(y_true, y_pred, **kwargs['ami']))

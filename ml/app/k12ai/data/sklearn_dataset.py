@@ -12,4 +12,8 @@ import sklearn.datasets
 
 def sk_get_dataset(dataset):
     data = getattr(sklearn.datasets, dataset)()
-    return data.data, data.target
+    if hasattr(data, 'target_names'):
+        target_names = data.target_names
+    else:
+        target_names = None
+    return data.data, data.target, data.feature_names, target_names

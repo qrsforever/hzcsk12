@@ -247,6 +247,14 @@ class MessageMetric(object):
                 self._writer.add_figure(f'{category}/{title}', image, step, close=True)
             elif isinstance(image, (torch.Tensor, numpy.ndarray)):
                 self._writer.add_image(f'{category}/{title}', image, step)
+            elif isinstance(image, bytes):
+                from io import BytesIO
+                from PIL import Image
+                try:
+                    image = Image.open(BytesIO(image))
+                    self._writer.add_image(f'{category}/{title}', numpy.asarray(image), step, dataformats='HWC')
+                except Exception as err:
+                    print('{}'.format(err))
             else:
                 raise NotImplementedError
         if fmt == 'base64string':

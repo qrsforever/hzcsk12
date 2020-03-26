@@ -48,4 +48,7 @@ class HousePricesDataLoader(K12DataLoader):
             train_data_df[col] = train_data_df[col].astype(str)
 
         train_data_df = pd.get_dummies(train_data_df)
-        return np.array(train_data_df.drop('SalePrice', axis=1)), np.array(train_data_df['SalePrice'])
+
+        X = train_data_df.drop('SalePrice', axis=1)
+        y = train_data_df['SalePrice']
+        return np.array(X), np.array(y), X.columns, None

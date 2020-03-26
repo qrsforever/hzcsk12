@@ -10,6 +10,7 @@
 
 import os
 import pandas as pd
+import numpy as np
 from k12ai.data.base import K12DataLoader
 
 
@@ -55,4 +56,7 @@ class SFCrimeDataLoader(K12DataLoader):
         train_data_df["PdDistrict"].replace(district_dict, inplace=True)
 
         train_data_df.drop(['Dates', 'Descript', 'Resolution', 'Address'] , axis=1, inplace=True)
-        return train_data_df.drop('Category', axis=1), train_data_df['Category']
+
+        X = train_data_df.drop('Category', axis=1)
+        y = train_data_df['Category']
+        return np.array(X), np.array(y), X.columns, categories

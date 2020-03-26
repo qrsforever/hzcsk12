@@ -16,6 +16,7 @@ pyhocon
 pynvml
 
 gym[atari]
+pydotplus
 
 # rpc
 zerorpc

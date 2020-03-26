@@ -24,14 +24,20 @@ class DataLoader:
             from k12ai.data.datasets import k12ai_get_dataset as _get_dataset
 
         # numpy array
-        X, y = _get_dataset(data_dir)
-
-        # nomalize
-        X = scale(X, copy=False)
+        X, y, feature_names, target_names = _get_dataset(data_dir)
 
         pca2 = self._configer.get('data.pca2D', default=False)
         if pca2 and X.shape[1] > 2:
+            # nomalize
+            X = scale(X, copy=False)
+
             # pca 2D features
             X = PCA(n_components=2, copy=False).fit_transform(X)
 
-        return X, y, train_test_split(X, y, **self._configer.get('data.sampling'))
+        data = {
+            'X': X,
+            'y': y,
+            'feature_names': feature_names,
+            'target_names': target_names
+        }
+        return data, train_test_split(X, y, **self._configer.get('data.sampling'))

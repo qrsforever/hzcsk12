@@ -59,6 +59,8 @@ def base64_image(image):
     if isinstance(image, str):
         with open(image, 'rb') as fw:
             rawbytes = fw.read()
+    elif isinstance(image, bytes):
+            rawbytes = image
     elif isinstance(image, Figure):
         with io.BytesIO() as fw:
             plt.savefig(fw)

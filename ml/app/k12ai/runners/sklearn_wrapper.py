@@ -31,11 +31,11 @@ class SKRunner(BaseRunner):
 
         self._model = k12ai_get_model(model_name)(**model_args)
         self._dataloader = DataLoader(configer)
-        self._metrics = lambda X_all, y_all, \
+        self._metrics = lambda data, \
                     y_true, y_pred, kwargs=configer.get('metrics'): \
-                    k12ai_get_metrics(self._model, X_all, y_all, y_true, y_pred, kwargs)
+                    k12ai_get_metrics(self._model, data, y_true, y_pred, kwargs)
 
     def train(self):
-        X_all, y_all, (X_train, X_test, y_train, y_test) = self._dataloader.get_dataset()
+        data, (X_train, X_test, y_train, y_test) = self._dataloader.get_dataset()
         y_pred = self._model.train(X_train, y_train, X_test)
-        return self._metrics(X_all, y_all, y_test, y_pred)
+        return self._metrics(data, y_test, y_pred)

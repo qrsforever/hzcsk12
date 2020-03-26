@@ -46,7 +46,12 @@ local _R_Criterion = {
         {
             type: 'H',
             objs: [
-                _Utils.float('model.decision_tree.max_features', 'Max Features', def=0.3, ddd=true, max=1.0),
+                _Utils.float('model.decision_tree.max_features',
+                             'Max Features',
+                             def=0.3,
+                             ddd=true,
+                             max=0.999,
+                             min=0.001),
                 (
                     if 'classifier' == _Utils.task
                     then
@@ -82,9 +87,13 @@ local _R_Criterion = {
         {
             type: 'H',
             objs: [
-                _Utils.float('model.decision_tree.min_weight_fraction_leaf', 'Min WF Leaf', def=0.0, max=0.999999),
+                _Utils.float('model.decision_tree.min_weight_fraction_leaf',
+                             'Min WF Leaf',
+                             def=0.0,
+                             max=0.999,
+                             min=0.001),
                 _Utils.float('model.decision_tree.min_impurity_decrease', 'Min Impurity Dec', def=0.0),
-                _Utils.bool('model.decision_tree.presort', 'Presort', def=false),
+                _Utils.bool('_k12.metrics.tree_dot', 'Display Tree', def=false),  // template put here
             ],
         },
         {

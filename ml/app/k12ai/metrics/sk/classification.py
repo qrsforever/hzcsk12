@@ -20,22 +20,32 @@ from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 
 from k12ai.common.util_misc import (sw_list, make_meshgrid, plot_decision_boundaries)
-from k12ai.common.log_message import MessageMetric
+from k12ai.common.log_message import MessageMetric as mm
 
 
-def k12ai_get_metrics(model, X_all, y_all, y_true, y_pred, kwargs):
-    mm = MessageMetric()
+def k12ai_get_metrics(model, data, y_true, y_pred, kwargs):
 
     # decision boundaries
-    if X_all.shape[1] == 2:
-        X0, X1 = X_all[:, 0], X_all[:, 1]
+    if data['X'].shape[1] == 2:
+        X0, X1 = data['X'][:, 0], data['X'][:, 1]
         xx, yy = make_meshgrid(X0, X1)
         zz = model.predict(np.c_[xx.ravel(), yy.ravel()])
-        fig = plot_decision_boundaries(xx, yy, zz, X0, X1, y_all)
-        mm.add_image('metrics', f'PCA-2D: {model.name}', fig)
+        fig = plot_decision_boundaries(xx, yy, zz, X0, X1, data['y'])
+        mm().add_image('DecisionBoundary', f'{model.name}', fig).send()
 
-    mm.send()
+    # decision tree node
+    if 'tree_dot' in kwargs:
+        from sklearn.tree import export_graphviz
+        import pydotplus
+        try:
+            tree_dot = export_graphviz(model.algo, feature_names=data['feature_names'])
+            graph = pydotplus.graph_from_dot_data(tree_dot)
+            mm().add_image('DecisionTree', f'{model.name}', graph.create_png()).send()
+        except Exception as err:
+            print(str(err))
+            pass
 
+    # text metrics
     metrics = {}
     if 'accuracy' in kwargs:
         metrics['accuracy_score'] = sw_list(accuracy_score(y_true, y_pred, **kwargs['accuracy']))

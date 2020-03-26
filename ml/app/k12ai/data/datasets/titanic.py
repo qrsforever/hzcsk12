@@ -9,6 +9,7 @@
 
 import os
 import pandas as pd
+import numpy as np
 from k12ai.data.base import K12DataLoader
 
 
@@ -53,4 +54,7 @@ class TitanicDataLoader(K12DataLoader):
         train_data_df["Embarked"].replace(emb_dict, inplace=True)
 
         train_data_df.drop(['PassengerId', 'Name', 'Ticket', 'Cabin'], axis=1, inplace=True) 
-        return train_data_df.drop('Survived', axis=1), train_data_df['Survived']
+
+        X = train_data_df.drop('Survived', axis=1)
+        y = train_data_df['Survived']
+        return np.array(X), np.array(y), X.columns, ['UnSurvived', 'Survived']
