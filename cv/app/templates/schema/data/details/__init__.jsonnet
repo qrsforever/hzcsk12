@@ -26,7 +26,7 @@ local _Datasets = {
                     then
                         [_Utils.bool('val.use_07_metric', '07 Metric', def=true, readonly=true)]
                     else
-                        [_Utils.bool('val.use_07_metric', '07 Metric', def=false, readonly=true)]
+                        []
                 else []
             ),
         },

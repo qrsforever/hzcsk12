@@ -26,8 +26,8 @@ class SSDTargetGenerator(object):
         target_labels = list()
         for i in range(len(gt_bboxes)):
             if gt_bboxes[i] is None or len(gt_bboxes[i]) == 0:
-                loc = torch.zeros_like(anchor_boxes)
-                conf = torch.zeros((anchor_boxes.size(0),)).long()
+                loc = torch.zeros_like(anchor_boxes).to(device)
+                conf = torch.zeros((anchor_boxes.size(0),)).long().to(device)
 
             else:
                 iou = DetHelper.bbox_iou(gt_bboxes[i],

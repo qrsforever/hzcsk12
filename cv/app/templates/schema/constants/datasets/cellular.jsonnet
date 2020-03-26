@@ -24,39 +24,40 @@
         },
     },
     train: {
-        batch_size: 32,
+        batch_size: 16,
         aug_trans: {
             trans_seq: [],
         },
         data_transformer: {
             size_mode: 'fix_size',
             input_size: [
-                32,
-                32,
+                128,
+                128,
             ],
             align_method: 'scale_and_pad',
         },
     },
     val: {
-        batch_size: 32,
+        batch_size: 16,
         aug_trans: {
             trans_seq: [],
         },
         data_transformer: {
             size_mode: 'fix_size',
             input_size: [
-                32,
-                32,
+                128,
+                128,
             ],
             align_method: 'scale_and_pad',
         },
     },
     test: {
+        batch_size: 16,
         data_transformer: {
             size_mode: 'fix_size',
             input_size: [
-                32,
-                32,
+                128,
+                128,
             ],
             align_method: 'scale_and_pad',
         },

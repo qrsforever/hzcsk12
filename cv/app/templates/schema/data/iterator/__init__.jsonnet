@@ -19,21 +19,21 @@ local _Utils = import '../../utils/helper.libsonnet';
         {
             type: 'H',
             objs: [
-                _Utils.stringenum('train.batch_size', 'Train Batch Size', def=32, enums=[
+                _Utils.stringenum('train.batch_size', 'Train Batch Size', ddd=true, def=32, enums=[
                     { name: { en: '16', cn: self.en }, value: 16 },
                     { name: { en: '32', cn: self.en }, value: 32 },
                     { name: { en: '64', cn: self.en }, value: 64 },
                     { name: { en: '128', cn: self.en }, value: 128 },
                     { name: { en: '256', cn: self.en }, value: 256 },
                 ]),
-                _Utils.stringenum('val.batch_size', 'Val Batch Size', def=32, enums=[
+                _Utils.stringenum('val.batch_size', 'Val Batch Size', ddd=true, def=32, enums=[
                     { name: { en: '16', cn: self.en }, value: 16 },
                     { name: { en: '32', cn: self.en }, value: 32 },
                     { name: { en: '64', cn: self.en }, value: 64 },
                     { name: { en: '128', cn: self.en }, value: 128 },
                     { name: { en: '256', cn: self.en }, value: 256 },
                 ]),
-                _Utils.stringenum('test.batch_size', 'Test Batch Size', def=32, enums=[
+                _Utils.stringenum('test.batch_size', 'Test Batch Size', ddd=true, def=32, enums=[
                     { name: { en: '16', cn: self.en }, value: 16 },
                     { name: { en: '32', cn: self.en }, value: 32 },
                     { name: { en: '64', cn: self.en }, value: 64 },

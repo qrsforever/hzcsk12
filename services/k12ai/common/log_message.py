@@ -179,7 +179,7 @@ class MessageMetric(object):
         if self._writer:
             self._writer.flush()
 
-    def _mmjson(self, ty, category, title, value, width, height):
+    def _mmjson(self, ty, category, title, value, payload, width, height):
         def _get_id():
             key = f'{ty}{category}{title}'
             if key not in self._cache_ids.keys():
@@ -193,6 +193,7 @@ class MessageMetric(object):
             'data': {
                 'title': title,
                 'value': value,
+                'payload': payload,
             }
         }
         if width:
@@ -203,29 +204,39 @@ class MessageMetric(object):
 
     def add_scalar(self, category, title, x, y, width=None, height=None):
         value = {}
+        payload = {'x':{}, 'y':[]}
         if isinstance(x, dict):
             value['x'] = x
             x = list(x.values())[0]
+            payload['x']['label'] = list(x.keys())[0]
+            payload['x']['value'] = x
         elif isinstance(x, int):
             value['x'] = {'iteration': x}
+            payload['x']['label'] = 'iteration'
+            payload['x']['value'] = x
         else:
             raise NotImplementedError
         if isinstance(y, dict):
             if len(y) == 0:
                 return self
             value['y'] = y
+            for key, val in y.items():
+                payload['y'].append({'label': key, 'value': val})
             if self._writer:
                 self._writer.add_scalars(f'{category}/{title}', y, x)
         else:
             value['y'] = {}
             if isinstance(y, (int, float)):
                 value['y'][title] = y
+                payload['y'].append({'label': title, 'value': y})
                 if self._writer:
                     self._writer.add_scalar(f'{category}/{title}', y, x)
             elif isinstance(y, (list, tuple)) and len(y) == 2:
                 if title in ('loss', 'acc'):
                     value['y'][f'train_{title}'] = y[0]
                     value['y'][f'validation_{title}'] = y[1]
+                    payload['y'].append({'label': f'train_{title}', 'value': y[0]})
+                    payload['y'].append({'label': f'validation_{title}', 'value': y[1]})
                     if self._writer:
                         self._writer.add_scalars(f'{category}/{title}', value['y'], x)
                 else:
@@ -233,7 +244,7 @@ class MessageMetric(object):
             else:
                 NotImplementedError
 
-        obj = self._mmjson('scalar', category, title, [value], width, height)
+        obj = self._mmjson('scalar', category, title, [value], payload, width, height)
         self._metrics.append(obj)
         return self
 
@@ -251,7 +262,7 @@ class MessageMetric(object):
             value = image
         else:
             raise NotImplementedError
-        obj = self._mmjson('image', category, title, [value], width, height)
+        obj = self._mmjson('image', category, title, [value], value, width, height)
         obj['data']['format'] = fmt
         self._metrics.append(obj)
         return self
@@ -263,14 +274,14 @@ class MessageMetric(object):
             self._writer.add_figure(f'{category}/{title}', fig, step, close=True)
         if isinstance(value, numpy.ndarray):
             value = value.tolist()
-        obj = self._mmjson('matrix', category, title, value, width, height)
+        obj = self._mmjson('matrix', category, title, value, value, width, height)
         self._metrics.append(obj)
         return self
 
     def add_text(self, category, title, value, step=None, width=None, height=None):
         if self._writer:
             self._writer.add_text(f'{category}/{title}', f'{value}', step)
-        obj = self._mmjson('text', category, title, [value], width, height)
+        obj = self._mmjson('text', category, title, [value], value, width, height)
         self._metrics.append(obj)
         return self
 
