@@ -33,11 +33,6 @@ local _LossSelect = {
                 value: 'multibox_loss',
                 trigger: (import 'type/multibox_loss.libsonnet').get(),
             },
-            {
-                name: { en: 'ce Loss', cn: self.en },
-                value: 'ce_loss',
-                trigger: (import 'type/ce_loss.libsonnet').get(jid + '.params.ce_loss'),
-            },
         ],
         default: self.objs[0].value,
     },

@@ -100,6 +100,8 @@ k12rl_service_name=k12rl
 k12rl_addr=$hostlanip
 k12rl_port=8159
 
+dataset_port=9090
+
 export HOST_NAME=${hostname}
 export HOST_LANIP=${hostlanip}
 export HOST_NETIP=${hostnetip}
@@ -501,6 +503,18 @@ __start_k12rl_service()
     fi
 }
 
+# 7. setart dataset service
+__start_dataset_service()
+{
+    result=`ps -eo pid,args | grep "http.server $dataset_port" | grep -v grep`
+    if [[ x$result == x ]]
+    then
+        __run_command nohup python3 -m http.server $dataset_port
+    else
+        __script_logout "http.server $dataset_port already run"
+    fi
+}
+
 __main()
 {
     if [[ -f ${log_fil} ]]
@@ -530,6 +544,8 @@ __main()
     [ $2 == all -o $2 == rl ]  && __start_k12rl_service  $3 $4
     [ $2 == all -o $2 == nlp ] && __start_k12nlp_service $3 $4
     cd - > /dev/null
+
+    __start_dataset_service
 }
 
 __main $@

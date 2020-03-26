@@ -164,5 +164,19 @@
         detail: {
             name_seq: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
         },
+        data: {
+            sample: {
+                n0: 'imgs/test/00000.jpg',
+                n1: 'imgs/test/00007.jpg',
+                n2: 'imgs/test/00004.jpg',
+                n3: 'imgs/test/00006.jpg',
+                n4: 'imgs/test/00043.jpg',
+                n5: 'imgs/test/00035.jpg',
+                n6: 'imgs/test/00049.jpg',
+                n7: 'imgs/test/00002.jpg',
+                n8: 'imgs/test/00017.jpg',
+                n9: 'imgs/test/00001.jpg',
+            },
+        },
     },
 }

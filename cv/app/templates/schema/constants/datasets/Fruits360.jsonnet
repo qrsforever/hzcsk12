@@ -266,5 +266,19 @@
                 'Walnut',
             ],
         },
+        data: {
+            sample: {
+                n0: 'imgs/test/Apple_Braeburn#321_100.jpg',
+                n1: 'imgs/test/Apple_Crimson_Snow#119_100.jpg',
+                n2: 'imgs/test/Apple_Golden_1#r_38_100.jpg',
+                n3: 'imgs/test/Apple_Golden_2#r_8_100.jpg',
+                n4: 'imgs/test/Apple_Golden_3#r_48_100.jpg',
+                n5: 'imgs/test/Apple_Granny_Smith#r_44_100.jpg',
+                n6: 'imgs/test/Apple_Red_1#r_92_100.jpg',
+                n7: 'imgs/test/Apple_Red_2#327_100.jpg',
+                n8: 'imgs/test/Apple_Red_3#r_82_100.jpg',
+                n9: 'imgs/test/Apple_Red_Delicious#313_100.jpg',
+            },
+        },
     },
 }

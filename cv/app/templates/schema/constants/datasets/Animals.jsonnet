@@ -184,5 +184,19 @@
                 'zebra',
             ],
         },
+        data: {
+            sample: {
+                n0: 'imgs/test/1_1.jpg',
+                n1: 'imgs/test/4402.jpg',
+                n2: 'imgs/test/2_13.jpg',
+                n3: 'imgs/test/5918.jpg',
+                n4: 'imgs/test/5302.jpg',
+                n5: 'imgs/test/5604.jpg',
+                n6: 'imgs/test/3_14.jpg',
+                n7: 'imgs/test/4604.jpg',
+                n8: 'imgs/test/4_15.jpg',
+                n9: 'imgs/test/6205.jpg',
+            },
+        },
     },
 }

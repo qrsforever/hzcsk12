@@ -175,5 +175,19 @@
                 'Ankle boot',
             ],
         },
+        data: {
+            sample: {
+                n0: 'imgs/test/00027.jpg',
+                n1: 'imgs/test/00002.jpg',
+                n2: 'imgs/test/00001.jpg',
+                n3: 'imgs/test/00013.jpg',
+                n4: 'imgs/test/00006.jpg',
+                n5: 'imgs/test/00011.jpg',
+                n6: 'imgs/test/00004.jpg',
+                n7: 'imgs/test/00012.jpg',
+                n8: 'imgs/test/00018.jpg',
+                n9: 'imgs/test/00000.jpg',
+            },
+        },
     },
 }

@@ -169,5 +169,19 @@
                 'waterweeds',
             ],
         },
+        data: {
+            sample: {
+                n0: 'train/image/000692.jpg',
+                n1: 'train/image/004682.jpg',
+                n2: 'train/image/003302.jpg',
+                n3: 'train/image/003102.jpg',
+                n4: 'train/image/001010.jpg',
+                n5: 'train/image/001669.jpg',
+                n6: 'train/image/001494.jpg',
+                n7: 'train/image/002442.jpg',
+                n8: 'train/image/000232.jpg',
+                n9: 'train/image/004658.jpg',
+            },
+        },
     },
 }

@@ -139,5 +139,19 @@
         detail: {
             name_seq: [],
         },
+        data: {
+            sample: {
+                n0: 'imgs/train/HEPG2-01/Plate1/B04_s2_w2.png',
+                n1: 'imgs/train/HEPG2-01/Plate1/B07_s2_w1.png',
+                n2: 'imgs/train/HEPG2-03/Plate3/C12_s1_w4.png',
+                n3: 'imgs/train/HUVEC-02/Plate4/I03_s1_w2.png',
+                n4: 'imgs/train/HUVEC-08/Plate4/G20_s1_w2.png',
+                n5: 'imgs/train/HUVEC-09/Plate1/B20_s2_w3.png',
+                n6: 'imgs/train/HUVEC-13/Plate1/H02_s1_w1.png',
+                n7: 'imgs/train/RPE-04/Plate3/E20_s2_w2.png',
+                n8: 'imgs/train/U2OS-03/Plate2/D19_s1_w5.png',
+                n9: 'imgs/train/HEPG2-05/Plate1/N21_s2_w5.png',
+            },
+        },
     },
 }

@@ -191,5 +191,19 @@
                 'Z',
             ],
         },
+        data: {
+            sample: {
+                n0: 'imgs/test/07245.jpg',
+                n1: 'imgs/test/00000.jpg',
+                n2: 'imgs/test/00973.jpg',
+                n3: 'imgs/test/02200.jpg',
+                n4: 'imgs/test/02749.jpg',
+                n5: 'imgs/test/03398.jpg',
+                n6: 'imgs/test/04207.jpg',
+                n7: 'imgs/test/05069.jpg',
+                n8: 'imgs/test/06103.jpg',
+                n9: 'imgs/test/06646.jpg',
+            },
+        },
     },
 }

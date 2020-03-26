@@ -138,5 +138,19 @@
         detail: {
             name_seq: ['0', '1'],
         },
+        data: {
+            sample: {
+                n0: 'imgs/test/1d0ece89b2213d2daa90d6806f3d07f7.jpg',
+                n1: 'imgs/test/f6e47ae1cf5dee5aa6eba0750e60ae9d.jpg',
+                n2: 'imgs/test/a15b2ee6da1431a832faa8a68ad1f534.jpg',
+                n3: 'imgs/test/91f038f9eb49364dc33d8361998b0a99.jpg',
+                n4: 'imgs/test/c2b254219f3395a193c6e62e6ac90480.jpg',
+                n5: 'imgs/test/addf4749d3fe82907c39cd441cd59476.jpg',
+                n6: 'imgs/test/503f3a8b5118471f247157924e3f31ec.jpg',
+                n7: 'imgs/test/ac0a71d4bdc6960af1b4739146d62b93.jpg',
+                n8: 'imgs/test/9f9cacf3e65127e007b6223641c0962c.jpg',
+                n9: 'imgs/test/9fd67ed5251bf4a898978cc3ef1a0a33.jpg',
+            },
+        },
     },
 }

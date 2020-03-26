@@ -184,5 +184,19 @@
                 'tvmonitor',
             ],
         },
+        data: {
+            sample: {
+                n0: 'train/image/2009_002675.jpg',
+                n1: 'train/image/005658.jpg',
+                n2: 'train/image/005215.jpg',
+                n3: 'train/image/2008_006345.jpg',
+                n4: 'train/image/2008_003915.jpg',
+                n5: 'train/image/2011_003111.jpg',
+                n6: 'train/image/001643.jpg',
+                n7: 'train/image/000804.jpg',
+                n8: 'train/image/2009_001922.jpg',
+                n9: 'train/image/2010_003609.jpg',
+            },
+        },
     },
 }

@@ -164,5 +164,19 @@
         detail: {
             name_seq: ['dog', 'cat'],
         },
+        data: {
+            sample: {
+                n0: 'imgs/test/cat.11286.jpg',
+                n1: 'imgs/test/dog.216.jpg',
+                n2: 'imgs/test/cat.12256.jpg',
+                n3: 'imgs/test/dog.2186.jpg',
+                n4: 'imgs/test/cat.11646.jpg',
+                n5: 'imgs/test/dog.2566.jpg',
+                n6: 'imgs/test/cat.1286.jpg',
+                n7: 'imgs/test/dog.3196.jpg',
+                n8: 'imgs/test/dog.3386.jpg',
+                n9: 'imgs/test/cat.11486.jpg',
+            },
+        },
     },
 }

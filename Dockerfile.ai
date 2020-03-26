@@ -82,7 +82,7 @@ RUN pip install -U jupyter \
 ARG jupyter_data_dir=/root/.local/share/jupyter
 ARG jupyter_conf_dir=/root/.jupyter
 
-RUN jupyter contrib nbextension install && \
+RUN jupyter contrib nbextension install --sys-prefix && \
     jupyter nbextensions_configurator enable && \
     mkdir -p ${jupyter_data_dir}/nbextensions && \
     jupyter notebook --generate-config -y

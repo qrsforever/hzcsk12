@@ -164,5 +164,19 @@
         detail: {
             name_seq: ['お', 'き', 'す', 'つ', 'な', 'は', 'ま', 'や', 'れ', 'を'],
         },
+        data: {
+            sample: {
+                n0: 'imgs/test/00025.jpg',
+                n1: 'imgs/test/00043.jpg',
+                n2: 'imgs/test/00000.jpg',
+                n3: 'imgs/test/00002.jpg',
+                n4: 'imgs/test/00016.jpg',
+                n5: 'imgs/test/00009.jpg',
+                n6: 'imgs/test/00010.jpg',
+                n7: 'imgs/test/00022.jpg',
+                n8: 'imgs/test/00003.jpg',
+                n9: 'imgs/test/00001.jpg',
+            },
+        },
     },
 }

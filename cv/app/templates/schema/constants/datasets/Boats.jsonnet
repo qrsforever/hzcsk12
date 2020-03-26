@@ -174,5 +174,19 @@
                 'sailboat',
             ],
         },
+        data: {
+            sample: {
+                n0: 'imgs/test/buoy#buoy-seagull-water-nature-birds-3764298.jpg',
+                n1: 'imgs/test/cruise_ship#aida-ship-driving-cruise-ship-sea-51186.jpg',
+                n2: 'imgs/test/ferry_boat#river-ferry-water-ship-boat-1615351.jpg',
+                n3: 'imgs/test/freight_boat#cargo-ship-ocean-sea-inland-1101391.jpg',
+                n4: 'imgs/test/gondola#venice-italy-gondola-outdoor-1602993.jpg',
+                n5: 'imgs/test/inflatable_boat#zachranari-inflatable-boat-ocean-846324.jpg',
+                n6: 'imgs/test/kayak#paddle-kayak-canoeing-explore-3729596.jpg',
+                n7: 'imgs/test/paper_boat#paper-boat-coloured-colored-2770974.jpg',
+                n8: 'imgs/test/sailboat#sail-sailboat-vessel-yacht-charter-863082.jpg',
+                n9: 'imgs/test/sailboat#greece-sea-ocean-mountains-2693408.jpg',
+            },
+        },
     },
 }

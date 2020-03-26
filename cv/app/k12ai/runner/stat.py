@@ -51,10 +51,10 @@ class RunnerBase(object):
             for key, module in self._model.named_modules():
                 if not isinstance(module, torch.nn.Conv2d):
                     continue
-                if module.weight is not None:
+                if module.weight is not None and module.weight.grad.data is not None:
                     self._mm.add_histogram('train', 'conv2d_1_weight', module.weight.data, epoch)
                     self._mm.add_histogram('train', 'conv2d_1_weight.grad', module.weight.grad.data, epoch)
-                if module.bias is not None:
+                if module.bias is not None and module.bias.grad.data is not None:
                     self._mm.add_histogram('train', 'conv2d_1_bias', module.bias.data)
                     self._mm.add_histogram('train', 'conv2d_1_bias.grad', module.bias.grad.data, epoch)
                 break

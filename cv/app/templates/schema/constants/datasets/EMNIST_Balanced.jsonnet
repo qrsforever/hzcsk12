@@ -212,5 +212,19 @@
                 't',
             ],
         },
+        data: {
+            sample: {
+                n0: 'imgs/test/00452.jpg',
+                n1: 'imgs/test/00039.jpg',
+                n2: 'imgs/test/00171.jpg',
+                n3: 'imgs/test/00044.jpg',
+                n4: 'imgs/test/00303.jpg',
+                n5: 'imgs/test/00045.jpg',
+                n6: 'imgs/test/00204.jpg',
+                n7: 'imgs/test/00302.jpg',
+                n8: 'imgs/test/00305.jpg',
+                n9: 'imgs/test/00154.jpg',
+            },
+        },
     },
 }

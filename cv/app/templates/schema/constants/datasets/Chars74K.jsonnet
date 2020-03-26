@@ -227,5 +227,19 @@
                 'z',
             ],
         },
+        data: {
+            sample: {
+                n0: 'imgs/test/img001-00011.png',
+                n1: 'imgs/test/img002-00004.png',
+                n2: 'imgs/test/img003-00012.png',
+                n3: 'imgs/test/img004-00012.png',
+                n4: 'imgs/test/img005-00005.png',
+                n5: 'imgs/test/img006-00008.png',
+                n6: 'imgs/test/img007-00006.png',
+                n7: 'imgs/test/img008-00015.png',
+                n8: 'imgs/test/img009-00013.png',
+                n9: 'imgs/test/img021-00003.png',
+            },
+        },
     },
 }

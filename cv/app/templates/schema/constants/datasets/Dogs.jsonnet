@@ -285,5 +285,19 @@
                 'French_bulldog',
             ],
         },
+        data: {
+            sample: {
+                n0: 'imgs/test/n02085620_10621.jpg',
+                n1: 'imgs/test/n02085782_1521.jpg',
+                n2: 'imgs/test/n02085936_11653.jpg',
+                n3: 'imgs/test/n02086079_13647.jpg',
+                n4: 'imgs/test/n02086240_11139.jpg',
+                n5: 'imgs/test/n02086646_1077.jpg',
+                n6: 'imgs/test/n02086910_1659.jpg',
+                n7: 'imgs/test/n02087046_1792.jpg',
+                n8: 'imgs/test/n02087394_10588.jpg',
+                n9: 'imgs/test/n02088094_1128.jpg',
+            },
+        },
     },
 }

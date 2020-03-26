@@ -6,14 +6,23 @@
 
 local _Utils = import '../../utils/helper.libsonnet';
 
-local _Datasets = {
-    voc: [
-        {},
-    ],
-};
-
 {
     get():: [
+        {
+            type: 'H',
+            objs: [
+                _Utils.image('_k12.data.sample.n0', 'x', def='unkown', ddd=true, width=80, height=80),
+                _Utils.image('_k12.data.sample.n1', 'x', def='unkown', ddd=true, width=80, height=80),
+                _Utils.image('_k12.data.sample.n2', 'x', def='unkown', ddd=true, width=80, height=80),
+                _Utils.image('_k12.data.sample.n3', 'x', def='unkown', ddd=true, width=80, height=80),
+                _Utils.image('_k12.data.sample.n4', 'x', def='unkown', ddd=true, width=80, height=80),
+                _Utils.image('_k12.data.sample.n5', 'x', def='unkown', ddd=true, width=80, height=80),
+                _Utils.image('_k12.data.sample.n6', 'x', def='unkown', ddd=true, width=80, height=80),
+                _Utils.image('_k12.data.sample.n7', 'x', def='unkown', ddd=true, width=80, height=80),
+                _Utils.image('_k12.data.sample.n8', 'x', def='unkown', ddd=true, width=80, height=80),
+                _Utils.image('_k12.data.sample.n9', 'x', def='unkown', ddd=true, width=80, height=80),
+            ],
+        },
         {
             type: 'H',
             objs: [

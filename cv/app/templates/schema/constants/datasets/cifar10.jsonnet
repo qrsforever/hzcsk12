@@ -175,5 +175,19 @@
                 'truck',
             ],
         },
+        data: {
+            sample: {
+                n0: 'imgs/test/00003.jpg',
+                n1: 'imgs/test/00006.jpg',
+                n2: 'imgs/test/00025.jpg',
+                n3: 'imgs/test/00000.jpg',
+                n4: 'imgs/test/00032.jpg',
+                n5: 'imgs/test/00033.jpg',
+                n6: 'imgs/test/00005.jpg',
+                n7: 'imgs/test/00020.jpg',
+                n8: 'imgs/test/00001.jpg',
+                n9: 'imgs/test/00011.jpg',
+            },
+        },
     },
 }
