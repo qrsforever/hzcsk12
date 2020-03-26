@@ -55,5 +55,6 @@ local _Utils = import '../../utils/helper.libsonnet';
             ],
         },
         _Utils.stringarray('_k12.detail.name_seq', 'Name Seq', def=[], ddd=true, width=600, readonly=true),
+        _Utils.image('_k12.detail.data.labelshist', 'Labels Hist', def='labels_hist.png', width=300, height=300),
     ],
 }

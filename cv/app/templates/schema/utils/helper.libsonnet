@@ -111,6 +111,7 @@ local _network_maps = {
         [if $.dataset_name == 'VOC07+12_DET' then 'VOC07+12_DET']: import '../constants/datasets/VOC07+12_DET.jsonnet',
         [if $.dataset_name == 'cellular' then 'cellular']: import '../constants/datasets/cellular.jsonnet',
         [if $.dataset_name == 'underwater' then 'underwater']: import '../constants/datasets/underwater.jsonnet',
+        [if $.dataset_name == 'aliproducts' then 'aliproducts']: import '../constants/datasets/aliproducts.jsonnet',
     },
 
     // basic type node generator function

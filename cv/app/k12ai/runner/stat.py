@@ -95,7 +95,7 @@ class ClsRunner(RunnerBase):
         self._mm.add_scalar('train', 'loss', x=self._iters, y=list(runner.train_losses.val.values())[0])
 
         # test
-        self._mm.add_image('train', f'test_image', self._test_image)
+        # self._mm.add_image('train', f'test_image', self._test_image)
 
         return self
 
