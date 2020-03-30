@@ -14,13 +14,18 @@ class BaseModel(nn.Module):
     def __init__(self, configer, flag=''):
         super(BaseModel, self).__init__()
         self.configer = configer
-        # QRS: fix error.
-        self.flag = flag if len(flag) == 0 else "{}_".format(flag)
-        self.net = ModuleHelper.get_backbone(
-            backbone=configer.get('network.{}backbone'.format(self.flag)),
-            pretrained=configer.get('network.{}pretrained'.format(self.flag)),
-            num_classes=self.configer.get('data.num_classes')
-        )
+        # QRS: fix.
+        num_classes = self.configer.get('data.num_classes')
+        backbone = configer.get('network.backbone')
+        pretrained_file = configer.get('network.pretrained')
+        self.net = ModuleHelper.get_backbone(backbone=backbone, pretrained=pretrained_file)
+        if backbone.startswith('vgg'):
+            self.net.classifier[6] = nn.Linear(4096, num_classes)
+        elif backbone.startswith('resnet'):
+            self.net.fc = nn.Linear(self.net.fc.in_features, num_classes)
+        else:
+            raise NotImplementedError
+
         self.valid_loss_dict = configer.get('loss.loss_weights', configer.get('loss.loss_type'))
 
     def state_dict(self, destination=None, prefix='', keep_vars=False):
