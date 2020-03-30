@@ -36,6 +36,6 @@ class SKRunner(BaseRunner):
                     k12ai_get_metrics(self._model, data, y_true, y_pred, kwargs)
 
     def train(self):
-        data, (X_train, X_test, y_train, y_test) = self._dataloader.get_dataset()
-        y_pred = self._model.train(X_train, y_train, X_test)
-        return self._metrics(data, y_test, y_pred)
+        data = self._dataloader.get_dataset()
+        y_pred = self._model.train(data['X_train'], data['y_train'], data['X_test'])
+        return self._metrics(data, data['y_test'], y_pred)

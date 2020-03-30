@@ -34,10 +34,16 @@ class DataLoader:
             # pca 2D features
             X = PCA(n_components=2, copy=False).fit_transform(X)
 
+        X_train, X_test, y_train, y_test = train_test_split(X, y, **self._configer.get('data.sampling'))
+
         data = {
             'X': X,
             'y': y,
             'feature_names': feature_names,
-            'target_names': target_names
+            'target_names': target_names,
+            'X_train': X_train,
+            'X_test': X_test,
+            'y_train': y_train,
+            'y_test': y_test
         }
-        return data, train_test_split(X, y, **self._configer.get('data.sampling'))
+        return data

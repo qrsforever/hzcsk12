@@ -14,10 +14,29 @@ from sklearn.metrics import mean_squared_log_error
 from sklearn.metrics import median_absolute_error
 from sklearn.metrics import r2_score
 
-from k12ai.common.util_misc import sw_list
+from k12ai.common.util_misc import (sw_list, plot_regression3D)
+from k12ai.common.log_message import MessageMetric as mm
 
 
 def k12ai_get_metrics(model, data, y_true, y_pred, kwargs):
+
+    # 3D
+    if data['X'].shape[1] == 2:
+        X, Y = data['X_test'][:, 0], data['X_test'][:, 1]
+        if len(y_true.shape) > 1:
+            Z0 = y_true[:, 0]
+            Z1 = y_pred[:, 0]
+        else:
+            Z0 = y_true
+            Z1 = y_pred
+        zlabels = data['target_names']
+        if zlabels:
+            zlabel = zlabels[0]
+        else:
+            zlabel = 'Z'
+        fig = plot_regression3D(X, Y, Z0, Z1, zlabel=zlabel)
+        mm().add_image('Regression3D', f'{model.name}', fig).send()
+
     # text metrics
     metrics = {}
     if 'r2' in kwargs:

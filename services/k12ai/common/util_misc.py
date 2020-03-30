@@ -20,6 +20,7 @@ import numpy as np
 from collections import OrderedDict
 from matplotlib import pyplot as plt
 from matplotlib.figure import Figure
+from mpl_toolkits.mplot3d import Axes3D # noqa
 
 
 def install_signal_handler(signum, handler):
@@ -90,7 +91,7 @@ def make_meshgrid(x, y, h=.02):
 
 def plot_decision_boundaries(xx, yy, zz, X0, X1, Y, C0=None, C1=None):
     plt.clf()
-    fig, ax = plt.subplots(dpi=100)
+    fig, ax = plt.subplots(dpi=150)
     ax.contourf(xx, yy, zz.reshape(xx.shape), cmap=plt.cm.coolwarm, alpha=0.8)
     ax.scatter(X0, X1, c=Y, cmap=plt.cm.coolwarm, s=20, edgecolors='k')
     if C0 is not None and C1 is not None:
@@ -101,4 +102,20 @@ def plot_decision_boundaries(xx, yy, zz, X0, X1, Y, C0=None, C1=None):
     ax.set_ylabel('Component 2')
     ax.set_xticks(())
     ax.set_yticks(())
+    return fig
+
+
+def plot_regression3D(X, Y, Z0, Z1, zlabel=None):
+    plt.clf()
+    fig = plt.figure(dpi=150)
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(X, Y, Z0, marker='^', label='true')
+    ax.scatter(X, Y, Z1, marker='o', label='pred')
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    if zlabel:
+        ax.set_zlabel(zlabel)
+    else:
+        ax.set_zlabel('Z')
+    plt.legend()
     return fig

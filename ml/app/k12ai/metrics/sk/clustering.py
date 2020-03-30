@@ -17,11 +17,10 @@ from sklearn.metrics import fowlkes_mallows_score
 from sklearn.metrics import v_measure_score
 
 from k12ai.common.util_misc import (sw_list, make_meshgrid, plot_decision_boundaries)
-from k12ai.common.log_message import MessageMetric
+from k12ai.common.log_message import MessageMetric as mm
 
 
 def k12ai_get_metrics(model, data, y_true, y_pred, kwargs):
-    mm = MessageMetric()
 
     # decision boundaries
     if data['X'].shape[1] == 2:
@@ -30,9 +29,7 @@ def k12ai_get_metrics(model, data, y_true, y_pred, kwargs):
         xx, yy = make_meshgrid(X0, X1)
         zz = model.predict(np.c_[xx.ravel(), yy.ravel()])
         fig = plot_decision_boundaries(xx, yy, zz, X0, X1, data['y'], C0, C1)
-        mm.add_image('metrics', f'PCA-2D: {model.name}', fig)
-
-    mm.send()
+        mm.add_image('metrics', f'PCA-2D: {model.name}', fig).send()
 
     # text metrics
     metrics = {}
