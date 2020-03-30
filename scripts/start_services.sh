@@ -509,7 +509,9 @@ __start_dataset_service()
     result=`ps -eo pid,args | grep "http.server $dataset_port" | grep -v grep`
     if [[ x$result == x ]]
     then
+        cd $1
         __run_command nohup python3 -m http.server $dataset_port
+        cd - > /dev/null
     else
         __script_logout "http.server $dataset_port already run"
     fi
@@ -545,7 +547,7 @@ __main()
     [ $2 == all -o $2 == nlp ] && __start_k12nlp_service $3 $4
     cd - > /dev/null
 
-    __start_dataset_service
+    __start_dataset_service /data/datasets
 }
 
 __main $@

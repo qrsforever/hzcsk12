@@ -31,10 +31,12 @@ class RPCServiceAgent(object):
                 client = zerorpc.Client(timeout=self._timeout)
                 client.connect('tcp://{}:{}'.format(self._addr, self._port))
                 result = client(method, *args, **kwargs)
-                client.close()
                 return result
             except Exception as err:
                 raise err
+            finally: # fixbug: ZMQError Too many open files
+                if client:
+                    client.close()
         return __wrapper
 
 

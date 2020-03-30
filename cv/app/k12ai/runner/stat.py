@@ -16,7 +16,7 @@ from torch.utils.data import DataLoader
 from k12ai.data.datasets.flist import ImageFilelist
 from k12ai.common.log_message import MessageMetric
 
-MAX_REPORT_IMGS = 1
+MAX_REPORT_IMGS = 3
 NUM_MKGRID_IMGS = 4
 
 MAX_CONV2D_HIST = 10
@@ -95,7 +95,7 @@ class ClsRunner(RunnerBase):
         self._mm.add_scalar('train', 'loss', x=self._iters, y=list(runner.train_losses.val.values())[0])
 
         # test
-        # self._mm.add_image('train', f'test_image', self._test_image)
+        self._mm.add_image('train', f'test_image', self._test_image)
 
         return self
 
