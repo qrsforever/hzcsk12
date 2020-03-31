@@ -17,6 +17,7 @@ from k12ai.k12ai_utils import k12ai_utils_lanip
 g_consul_addr = "127.0.0.1"
 g_consul_port = 8500
 g_consul_debug = True
+g_errors_store = True
 
 
 class RPCServiceAgent(object):
@@ -94,6 +95,8 @@ def k12ai_consul_message(sname, token, op, user, uuid, msgtype, message, clear=F
             client.kv.delete('framework/%s/%s' % (user, uuid), recurse=True)
         key = 'framework/%s/%s/%s/%s/%s' % (user, uuid, op.split('.')[0], msgtype, data['datetime'])
         client.kv.put(key, json.dumps(data, indent=2))
+        if g_errors_store and msgtype == 'error' and message['code'] > 100100:
+            client.kv.put('errors/%s' % data['datetime'], json.dumps(data, indent=2))
 
     # service
     api = 'http://{}:{}/k12ai/private/message?type={}'.format(service['Address'], service['Port'], msgtype)

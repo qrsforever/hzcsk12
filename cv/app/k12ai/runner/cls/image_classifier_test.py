@@ -17,7 +17,6 @@ from lib.tools.util.logger import Logger as Log
 
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import precision_recall_fscore_support
-from k12ai.common.log_message import MessageReport
 from k12ai.runner.stat import RunnerStat
 
 
@@ -55,7 +54,7 @@ class ImageClassifierTest(object):
                 self.running_score.update(out_dict, label_dict)
                 targets_list.append(label_dict['out'].cpu())
                 predicted_list.append(out_dict['out'].max(1)[1].cpu())
-                path_list.append(data_dict['path'])
+                path_list.extend(data_dict['path'])
 
             targets, predicted = torch.cat(targets_list), torch.cat(predicted_list)
             print(confusion_matrix(targets, predicted))
@@ -70,12 +69,6 @@ class ImageClassifierTest(object):
                 top1 = top1['out']
                 top3 = top3['out']
                 top5 = top5['out']
-            MessageReport.metrics({
-                'evaluate_iters': 1,
-                'evaluate_progress': 1.0,
-                'evaluate_accuracy': top1,
-                'evaluate_accuracy3': top3,
-                'evaluate_accuracy5': top5})
             Log.info('Top1 ACC = {}'.format(top1))
             Log.info('Top3 ACC = {}'.format(top3))
             Log.info('Top5 ACC = {}'.format(top5))

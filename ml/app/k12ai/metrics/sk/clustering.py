@@ -29,7 +29,7 @@ def k12ai_get_metrics(model, data, y_true, y_pred, kwargs):
         xx, yy = make_meshgrid(X0, X1)
         zz = model.predict(np.c_[xx.ravel(), yy.ravel()])
         fig = plot_decision_boundaries(xx, yy, zz, X0, X1, data['y'], C0, C1)
-        mm.add_image('metrics', f'PCA-2D: {model.name}', fig).send()
+        mm().add_image('metrics', f'PCA-2D:{model.name}', fig).send()
 
     # text metrics
     metrics = {}

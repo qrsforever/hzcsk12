@@ -15,17 +15,20 @@ import GPUtil
 import psutil
 import shutil # noqa
 import numpy
-import torch
+import torch # noqa
 import hashlib
+import base64
+from io import BytesIO
+from PIL import Image
 
 from torch.cuda import (max_memory_allocated, memory_allocated, max_memory_cached, memory_cached)
 from resource import (getrusage, RUSAGE_SELF, RUSAGE_CHILDREN)
 from k12ai.common.rpc_message import k12ai_send_message
-from k12ai.common.util_misc import base64_image
+from k12ai.common.util_misc import image2bytes
 
 import seaborn as sns
 from matplotlib import pyplot as plt
-from matplotlib.figure import Figure
+from matplotlib.figure import Figure # noqa
 from torch.utils.tensorboard import SummaryWriter
 
 g_starttime = None
@@ -33,6 +36,7 @@ g_memstat = {}
 
 g_runbynb = True if os.environ.get('K12AI_RUN_BYNB', None) else False
 g_tbwriter = None
+g_debug = True
 
 
 def _get_writer():
@@ -147,6 +151,7 @@ class MessageReport(object):
             return
 
         if what == MessageReport.FINISH:
+            time.sleep(2) # TODO TDZ: database async, must write metrics message before status message
             k12ai_send_message('error', {
                 'status': 'finish',
                 'uptime': int(time.time() - g_starttime),
@@ -242,37 +247,39 @@ class MessageMetric(object):
         return self
 
     def add_image(self, category, title, image, fmt='base64string', step=None, width=None, height=None):
-        if self._writer:
-            if isinstance(image, Figure):
-                self._writer.add_figure(f'{category}/{title}', image, step, close=True)
-            elif isinstance(image, (torch.Tensor, numpy.ndarray)):
-                self._writer.add_image(f'{category}/{title}', image, step)
-            elif isinstance(image, bytes):
-                from io import BytesIO
-                from PIL import Image
-                try:
-                    image = Image.open(BytesIO(image))
-                    self._writer.add_image(f'{category}/{title}', numpy.asarray(image), step, dataformats='HWC')
-                except Exception as err:
-                    print('{}'.format(err))
-            else:
-                raise NotImplementedError
         if fmt == 'base64string':
-            payload = base64_image(image)
-        elif fmt == 'path':
-            payload = image
+            imgbytes = image2bytes(image, width, height)
+            payload = base64.b64encode(imgbytes).decode()
+        elif fmt == 'url':
+            if image.startswith('/datasets'):
+                payload = '/'.join(image.split('/')[3:])
+            else:
+                payload = image
         else:
-            raise NotImplementedError
-        obj = self._mmjson('image', category, title, payload, width, height)
+            raise NotImplementedError(f'{fmt}')
+
+        obj = self._mmjson('image', category, title, payload, width=100, height=100)
         obj['data']['format'] = fmt
         self._metrics.append(obj)
+        if g_debug and fmt == 'base64string':
+            with open(f'/cache/{obj["_id_"]}.png', 'wb') as fout:
+                fout.write(base64.b64decode(payload))
+
+        if self._writer:
+            try:
+                if fmt == 'url':
+                    imgbytes = image2bytes(image, width, height)
+                self._writer.add_image(f'{category}/{title}',
+                        numpy.asarray(Image.open(BytesIO(imgbytes))), step, dataformats='HWC')
+            except Exception as err:
+                print('{}'.format(err))
         return self
 
     def add_matrix(self, category, title, value, step=None, width=None, height=None):
         if self._writer:
             fig, ax = plt.subplots(figsize=(8, 6))
             sns.heatmap(value, annot=True, fmt='d', linewidth=0.5,cmap='Blues', ax=ax, cbar=True)
-            self._writer.add_figure(f'{category}/{title}', fig, step, close=True)
+            self._writer.add_figure(f'{category}/{title}', fig, step, close=False)
         if isinstance(value, numpy.ndarray):
             value = value.tolist()
         obj = self._mmjson('matrix', category, title, value, width, height)
@@ -280,10 +287,10 @@ class MessageMetric(object):
         return self
 
     def add_text(self, category, title, value, step=None, width=None, height=None):
-        if self._writer:
-            self._writer.add_text(f'{category}/{title}', f'{value}', step)
         obj = self._mmjson('text', category, title, value, width, height)
         self._metrics.append(obj)
+        if self._writer:
+            self._writer.add_text(f'{category}/{title}', f'{value}', step)
         return self
 
     def add_histogram(self, category, title, value, step=None, width=None, height=None):

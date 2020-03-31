@@ -13,8 +13,6 @@ local _Utils = import '../../utils/helper.libsonnet';
             objs: [
                 _Utils.int('model.knn.n_neighbors', 'Num Neighbors', def=5, ddd=true),
                 _Utils.int('model.knn.leaf_size', 'Leaf Size', def=30, ddd=true),
-                _Utils.int('model.knn.p', 'Power', def=2, min=1),
-                _Utils.int('model.knn.n_jobs', 'Num Jobs', def=1, min=1),
                 {
                     _id_: 'model.knn.weights',
                     name: { en: 'Weights', cn: self.en },
@@ -31,6 +29,13 @@ local _Utils = import '../../utils/helper.libsonnet';
                     ],
                     default: 'uniform',
                 },
+            ],
+        },
+        {
+            type: 'H',
+            objs: [
+                _Utils.int('model.knn.p', 'Power', def=2, min=1),
+                _Utils.int('model.knn.n_jobs', 'Num Jobs', def=1, min=1),
                 {
                     _id_: 'model.knn.algorithm',
                     name: { en: 'Algorithm', cn: self.en },

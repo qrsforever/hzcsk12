@@ -28,8 +28,8 @@ def k12ai_get_metrics(model, data, y_true, y_pred, kwargs):
     # decision boundaries
     if data['X'].shape[1] == 2:
         X0, X1 = data['X'][:, 0], data['X'][:, 1]
-        xx, yy = make_meshgrid(X0, X1)
-        zz = model.predict(np.c_[xx.ravel(), yy.ravel()], h=0.05)
+        xx, yy = make_meshgrid(X0, X1, h=0.05)
+        zz = model.predict(np.c_[xx.ravel(), yy.ravel()])
         fig = plot_decision_boundaries(xx, yy, zz, X0, X1, data['y'])
         mm().add_image('DecisionBoundary', f'{model.name}', fig).send()
 

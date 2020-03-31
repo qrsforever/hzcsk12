@@ -16,4 +16,8 @@ def sk_get_dataset(dataset):
         target_names = data.target_names
     else:
         target_names = None
-    return data.data, data.target, data.feature_names, target_names
+    if hasattr(data, 'feature_names'):
+        feature_names = data.feature_names
+    else:
+        feature_names = None
+    return data.data, data.target, feature_names, target_names

@@ -26,6 +26,10 @@ class DataLoader:
         # numpy array
         X, y, feature_names, target_names = _get_dataset(data_dir)
 
+        # TODO
+        if len(y.shape) > 1:
+            y = y[:, 0]
+
         pca2 = self._configer.get('data.pca2D', default=False)
         if pca2 and X.shape[1] > 2:
             # nomalize

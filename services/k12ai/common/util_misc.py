@@ -12,12 +12,13 @@ import inspect
 import pkgutil
 import sys
 import io
-import base64
 import torch
 import signal
 import torchvision # noqa
 import numpy as np
 from collections import OrderedDict
+
+from PIL import Image
 from matplotlib import pyplot as plt
 from matplotlib.figure import Figure
 from mpl_toolkits.mplot3d import Axes3D # noqa
@@ -56,23 +57,31 @@ def sw_list(val):
     return val
 
 
-def base64_image(image):
+def image2bytes(image, width=None, height=None):
     if isinstance(image, str):
-        with open(image, 'rb') as fw:
-            rawbytes = fw.read()
+        # with open(image, 'rb') as fw:
+        #     rawbytes = fw.read()
+        img = Image.open(image).convert("RGB")
+        if width and height:
+            img = img.resize((width, height))
+        # https://stackoverflow.com/questions/31077366/pil-cannot-identify-image-file-for-io-bytesio-object
+        bio = io.BytesIO()
+        img.save(bio, "PNG")
+        bio.seek(0)
+        rawbytes = bio.read()
     elif isinstance(image, bytes):
-            rawbytes = image
+        rawbytes = image
     elif isinstance(image, Figure):
         with io.BytesIO() as fw:
             plt.savefig(fw)
             rawbytes = fw.getvalue()
-    elif isinstance(image, (torch.Tensor, np.array)):
+    elif isinstance(image, (torch.Tensor, np.ndarray)):
         with io.BytesIO() as fw:
-            torchvision.utils.save_image(image, fw, format='png')
+            torchvision.utils.save_image(image, fw, format='png', nrow=1)
             rawbytes = fw.getvalue()
     else:
-        raise NotImplementedError
-    return base64.b64encode(rawbytes).decode()
+        raise NotImplementedError(type(image))
+    return rawbytes
 
 
 def make_histogram(values, bins=10):

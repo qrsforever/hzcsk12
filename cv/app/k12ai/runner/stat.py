@@ -48,16 +48,19 @@ class RunnerBase(object):
 
         # weight, bias, grad
         if self._epoch != epoch and epoch < MAX_CONV2D_HIST:
-            for key, module in self._model.named_modules():
-                if not isinstance(module, torch.nn.Conv2d):
-                    continue
-                if module.weight is not None and module.weight.grad.data is not None:
-                    self._mm.add_histogram('train', 'conv2d_1_weight', module.weight.data, epoch)
-                    self._mm.add_histogram('train', 'conv2d_1_weight.grad', module.weight.grad.data, epoch)
-                if module.bias is not None and module.bias.grad.data is not None:
-                    self._mm.add_histogram('train', 'conv2d_1_bias', module.bias.data)
-                    self._mm.add_histogram('train', 'conv2d_1_bias.grad', module.bias.grad.data, epoch)
-                break
+            try:
+                for key, module in self._model.named_modules():
+                    if not isinstance(module, torch.nn.Conv2d):
+                        continue
+                    if module.weight is not None and module.weight.grad.data is not None:
+                        self._mm.add_histogram('train', 'conv2d_1_weight', module.weight.data, epoch)
+                        self._mm.add_histogram('train', 'conv2d_1_weight.grad', module.weight.grad.data, epoch)
+                    if module.bias is not None and module.bias.grad.data is not None:
+                        self._mm.add_histogram('train', 'conv2d_1_bias', module.bias.data)
+                        self._mm.add_histogram('train', 'conv2d_1_bias.grad', module.bias.grad.data, epoch)
+                    break
+            except Exception as err:
+                print('add histogram error: {}'.format(err))
 
         self._iters = iters
         self._epoch = epoch
@@ -131,6 +134,11 @@ class ClsRunner(RunnerBase):
         self._mm.add_text('evaluate', 'recall', R)
         self._mm.add_text('evaluate', 'fscore', F)
 
+        # images top10
+        for i, (true, pred, path) in enumerate(zip(y_true, y_pred, files)):
+            if i > 10:
+                break
+            self._mm.add_image('evaluate', f'{true}_vs_{pred}', path)
         return self
 
 

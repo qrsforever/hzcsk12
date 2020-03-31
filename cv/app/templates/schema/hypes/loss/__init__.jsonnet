@@ -35,5 +35,6 @@ local _LossSelect = {
             },
         ],
         default: self.objs[0].value,
+        readonly: true,
     },
 }
