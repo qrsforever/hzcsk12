@@ -547,7 +547,7 @@ __main()
     [ $2 == all -o $2 == nlp ] && __start_k12nlp_service $3 $4
     cd - > /dev/null
 
-    __start_dataset_service /data/datasets
+    __start_dataset_service /data
 }
 
 __main $@

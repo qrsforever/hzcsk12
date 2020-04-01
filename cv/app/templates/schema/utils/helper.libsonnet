@@ -64,6 +64,7 @@ local _network_maps = {
     dataset_name:: std.extVar('dataset_name'),
     notebook_url:: 'http://' + $.net_ip + ':8118/notebooks/cv/tasks/' +
                    $.task + '_' + $.network + '_' + $.dataset_name + '.ipynb',
+    dataset_root:: '/datasets/cv/' + $.dataset_name + '/',
 
     get_value(obj, keystr, def)::
         if std.type(obj) == 'object' && std.length(keystr) > 1
@@ -184,6 +185,18 @@ local _network_maps = {
         [if height > 0 then 'height']: height,
         readonly: true,
     },
+
+    sampleimage(id, en, cn='', def='', ddd=false, tips='', width=-1, height=-1):: {
+        _id_: id,
+        name: { en: en, cn: if std.length(cn) == 0 then self.en else cn },
+        type: 'image',
+        default: if ddd then $.dataset_root + $.get_default_value(id, def) else $.dataset_root + def,
+        [if std.length(tips) > 0 then 'tips']: tips,
+        [if width > 0 then 'width']: width,
+        [if height > 0 then 'height']: height,
+        readonly: true,
+    },
+
 
     intarray(id, en, cn='', def=[], ddd=false, tips='', width=-1, height=-1, readonly=false):: {
         _id_: id,
