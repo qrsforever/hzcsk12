@@ -101,3 +101,11 @@ then
 else
     echo "redis ok"
 fi
+
+check=`which xvfb-run`
+if [[ x$check == x ]]
+then
+    sudo apt install xvfb
+else
+    echo "xvfb ok"
+fi

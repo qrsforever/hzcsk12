@@ -16,8 +16,8 @@ from torch.utils.data import DataLoader
 from k12ai.data.datasets.flist import ImageFilelist
 from k12ai.common.log_message import MessageMetric
 
-MAX_REPORT_IMGS = 3
-NUM_MKGRID_IMGS = 4
+MAX_REPORT_IMGS = 2
+NUM_MKGRID_IMGS = 16
 
 MAX_CONV2D_HIST = 10
 
@@ -80,7 +80,7 @@ class ClsRunner(RunnerBase):
             imgs, labels, paths = ddata['img'], ddata['label'], ddata['path']
 
             # aug image
-            grid = torchvision.utils.make_grid(imgs.data[:NUM_MKGRID_IMGS], nrow=8, padding=0)
+            grid = torchvision.utils.make_grid(imgs.data[:NUM_MKGRID_IMGS], nrow=4, padding=0)
             attr = 'x'.join(map(lambda x: str(x), list(imgs.size())))
             self._mm.add_image('train', f'Aug-{attr}-{self._report_images_num}', grid)
             self._test_image = grid
@@ -91,7 +91,7 @@ class ClsRunner(RunnerBase):
             loader = DataLoader(ImageFilelist(list(zip(paths, labels.cpu())), resize=resize, transform=transf),
                        batch_size=NUM_MKGRID_IMGS, shuffle=False, num_workers=1, pin_memory=True)
             imgs, _ = next(iter(loader))
-            grid = torchvision.utils.make_grid(imgs.data[:NUM_MKGRID_IMGS], nrow=8, padding=0)
+            grid = torchvision.utils.make_grid(imgs.data[:NUM_MKGRID_IMGS], nrow=4, padding=0)
             self._mm.add_image('train', f'Raw-{attr}-{self._report_images_num}', grid)
 
         # loss.val
