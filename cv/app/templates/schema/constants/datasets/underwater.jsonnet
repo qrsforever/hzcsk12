@@ -17,8 +17,8 @@
         keep_difficult: false,
         workers: 1,
         normalize: {
-            div_value: 255,
-            mean: [104.0, 117.0, 123.0],
+            div_value: 1,
+            mean: [0.5, 0.5, 0.5],
             std: [1.0, 1.0, 1.0],
         },
     },

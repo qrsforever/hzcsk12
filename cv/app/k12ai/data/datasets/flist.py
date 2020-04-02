@@ -13,14 +13,16 @@ from PIL import Image
 
 
 class ImageFilelist(data.Dataset):
-    def __init__(self, flist, resize=(64, 64), transform=None):
+    def __init__(self, flist, resize=None, transform=None):
         self.imlist = flist
         self.resize = resize
         self.transform = transform
 
     def __getitem__(self, index):
         impath, target = self.imlist[index]
-        img = Image.open(impath).convert('RGB').resize(self.resize)
+        img = Image.open(impath).convert('RGB')
+        if self.resize:
+            img.resize(self.resize)
         if self.transform is not None:
                 img = self.transform(img)
         return img, target

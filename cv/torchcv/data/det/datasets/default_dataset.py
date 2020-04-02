@@ -54,6 +54,7 @@ class DefaultDataset(data.Dataset):
             img=DataContainer(img, stack=True, return_dc=True, samples_per_gpu=True),
             bboxes=DataContainer(bboxes, stack=False, return_dc=True, samples_per_gpu=True),
             labels=DataContainer(labels, stack=False, return_dc=True, samples_per_gpu=True),
+            path=DataContainer(self.img_list[index], stack=True), # QRS: add
             meta=DataContainer(meta, stack=False, cpu_only=True, return_dc=True, samples_per_gpu=True)
         )
 

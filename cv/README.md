@@ -42,6 +42,7 @@ Date:   Mon Jan 6 17:43:51 2020 +0800
 | `torchcv/runner/cls/image_classifier.py` | metrics |
 | `torchcv/runner/det/single_shot_detector.py` | metrics |
 | `torchcv/data/cls/datasets/default_dataset.py` | add path |
+| `torchcv/data/det/datasets/default_dataset.py` | add path |
 | `torchcv/model/det/layers/ssd_target_generator.py` | fig bug: cuda backend instead cpu backend |
 
 # 注意

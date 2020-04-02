@@ -148,6 +148,24 @@ class DetRunner(RunnerBase):
 
     def handle_train(self, runner, ddata):
         super().handle_train(runner, ddata)
+        if self._report_images_num < MAX_REPORT_IMGS:
+            self._report_images_num += 1
+            imgs, paths = ddata['img'], ddata['path']
+
+            # aug image
+            grid = torchvision.utils.make_grid(imgs.data[:NUM_MKGRID_IMGS], nrow=4, padding=0)
+            attr = 'x'.join(map(lambda x: str(x), list(imgs.size())))
+            self._mm.add_image('train', f'Aug-{attr}-{self._report_images_num}', grid)
+            self._test_image = grid
+
+            # raw image
+            resize = (imgs.size(2), imgs.size(3))
+            transf = runner.det_data_loader.img_transform
+            loader = DataLoader(ImageFilelist(list(zip(paths, range(len(paths)))), resize=resize, transform=transf),
+                       batch_size=NUM_MKGRID_IMGS, shuffle=False, num_workers=1, pin_memory=True)
+            imgs, _ = next(iter(loader))
+            grid = torchvision.utils.make_grid(imgs.data[:NUM_MKGRID_IMGS], nrow=4, padding=0)
+            self._mm.add_image('train', f'Raw-{attr}-{self._report_images_num}', grid)
         # loss.val
         self._mm.add_scalar('train', 'loss', x=self._iters, y=runner.train_losses.val)
         return self
