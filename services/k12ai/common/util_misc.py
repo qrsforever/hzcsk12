@@ -16,9 +16,10 @@ import torch
 import signal
 import torchvision # noqa
 import numpy as np
+import PIL
 from collections import OrderedDict
+from torchvision import transforms
 
-from PIL import Image
 from matplotlib import pyplot as plt
 from matplotlib.figure import Figure
 from mpl_toolkits.mplot3d import Axes3D # noqa
@@ -57,31 +58,38 @@ def sw_list(val):
     return val
 
 
+def transform_denormalize(inputs, mean, std, inplace=False, div_value=1.0):
+    demean = [-m / s for m, s in zip(mean, std)]
+    destd = [1 / s for s in std]
+    inputs = transforms.Normalize(demean, destd, inplace)(inputs)
+    return torch.clamp(inputs, 0.0, 1.0)
+
+
 def image2bytes(image, width=None, height=None):
-    if isinstance(image, str):
-        # with open(image, 'rb') as fw:
-        #     rawbytes = fw.read()
-        img = Image.open(image).convert("RGB")
-        if width and height:
-            img = img.resize((width, height))
-        # https://stackoverflow.com/questions/31077366/pil-cannot-identify-image-file-for-io-bytesio-object
-        bio = io.BytesIO()
-        img.save(bio, "PNG")
-        bio.seek(0)
-        rawbytes = bio.read()
-    elif isinstance(image, bytes):
-        rawbytes = image
-    elif isinstance(image, Figure):
+    if isinstance(image, bytes):
+        return image
+
+    if isinstance(image, Figure):
         with io.BytesIO() as fw:
             plt.savefig(fw)
-            rawbytes = fw.getvalue()
-    elif isinstance(image, (torch.Tensor, np.ndarray)):
-        with io.BytesIO() as fw:
-            torchvision.utils.save_image(image, fw, format='png', nrow=1)
-            rawbytes = fw.getvalue()
-    else:
-        raise NotImplementedError(type(image))
-    return rawbytes
+            return fw.getvalue()
+
+    if isinstance(image, str):
+        image = PIL.Image.open(image).convert("RGB")
+    elif isinstance(image, torch.Tensor):
+        image = transforms.ToPILImage()(image)
+    elif isinstance(image, np.ndarray):
+        image = PIL.Image.fromarray(image.astype('uint8')).convert('RGB')
+
+    if isinstance(image, PIL.Image.Image):
+        if width and height:
+            image = image.resize((width, height))
+        bio = io.BytesIO()
+        image.save(bio, "PNG")
+        bio.seek(0)
+        return bio.read()
+
+    raise NotImplementedError(type(image))
 
 
 def make_histogram(values, bins=10):

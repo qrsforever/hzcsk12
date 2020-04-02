@@ -8,24 +8,32 @@
 # @date 2020-03-19 17:59
 
 import torch.utils.data as data
+from torchvision import transforms
 
 from PIL import Image
 
 
-class ImageFilelist(data.Dataset):
-    def __init__(self, flist, resize=None, transform=None):
-        self.imlist = flist
+class ImageListFileDataset(data.Dataset):
+    def __init__(self, flist, labels=None, resize=None, transform=None):
+        self.image_list = flist
+        self.label_list = labels
         self.resize = resize
-        self.transform = transform
+        if transform:
+            self.transform = transform
+        else:
+            self.transform = transforms.Compose([transforms.ToTensor()])
 
     def __getitem__(self, index):
-        impath, target = self.imlist[index]
-        img = Image.open(impath).convert('RGB')
+        img = Image.open(self.image_list[index]).convert('RGB')
         if self.resize:
-            img.resize(self.resize)
+            img = img.resize(self.resize)
         if self.transform is not None:
-                img = self.transform(img)
-        return img, target
+            img = self.transform(img)
+        if self.label_list is not None:
+            target = self.label_list[index]
+        else:
+            target = 0
+        return img, target, self.image_list[index]
 
     def __len__(self):
-        return len(self.imlist)
+        return len(self.image_list)

@@ -44,6 +44,9 @@ Date:   Mon Jan 6 17:43:51 2020 +0800
 | `torchcv/data/cls/datasets/default_dataset.py` | add path |
 | `torchcv/data/det/datasets/default_dataset.py` | add path |
 | `torchcv/model/det/layers/ssd_target_generator.py` | fig bug: cuda backend instead cpu backend |
+| `torchcv/lib/data/transforms.py` | TODO: plan to be instead |
+| `torchcv/data/cls/data_loader.py` | TODO: plan to be instead
+| `torchcv/data/det/data_loader.py` | TODO: plan to be instead
 
 # 注意
 

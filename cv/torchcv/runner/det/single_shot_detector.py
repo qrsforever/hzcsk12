@@ -34,7 +34,7 @@ class SingleShotDetector(object):
         self.val_losses = AverageMeter()
         self.det_visualizer = DetVisualizer(configer)
         self.det_model_manager = ModelManager(configer)
-        self.det_data_loader = DataLoader(configer)
+        self.data_loader = DataLoader(configer)
         self.det_running_score = DetRunningScore(configer)
 
         self.det_net = None
@@ -51,8 +51,8 @@ class SingleShotDetector(object):
         self.det_net = self.det_model_manager.object_detector()
         self.det_net = RunnerHelper.load_net(self, self.det_net)
         self.optimizer, self.scheduler = Trainer.init(self._get_parameters(), self.configer.get('solver'))
-        self.train_loader = self.det_data_loader.get_trainloader()
-        self.val_loader = self.det_data_loader.get_valloader()
+        self.train_loader = self.data_loader.get_trainloader()
+        self.val_loader = self.data_loader.get_valloader()
         self.det_loss = self.det_model_manager.get_det_loss()
 
     def _get_parameters(self):
@@ -81,9 +81,6 @@ class SingleShotDetector(object):
 
         # data_tuple: (inputs, heatmap, maskmap, vecmap)
         for i, data_dict in enumerate(self.train_loader):
-            Trainer.update(self, warm_list=(0,),
-                           warm_lr_list=(self.configer.get('solver', 'lr')['base_lr'],),
-                           solver_dict=self.configer.get('solver'))
             self.data_time.update(time.time() - start_time)
             # Forward pass.
             data_dict = RunnerHelper.to_device(self, data_dict)
@@ -96,6 +93,11 @@ class SingleShotDetector(object):
             loss.backward()
             RunnerHelper.clip_grad(self.det_net, 10.)
             self.optimizer.step()
+
+            # QRS
+            Trainer.update(self, warm_list=(0,),
+                           warm_lr_list=(self.configer.get('solver', 'lr')['base_lr'],),
+                           solver_dict=self.configer.get('solver'))
 
             # Update the vars of the train phase.
             self.batch_time.update(time.time() - start_time)

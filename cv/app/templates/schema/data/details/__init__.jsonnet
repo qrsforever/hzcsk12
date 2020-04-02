@@ -16,11 +16,7 @@ local _Utils = import '../../utils/helper.libsonnet';
             ] + (
                 if _Utils.task == 'det'
                 then
-                    if _Utils.dataset_name == 'VOC07+12_DET'
-                    then
-                        [_Utils.bool('val.use_07_metric', '07 Metric', def=true, readonly=true)]
-                    else
-                        []
+                    [_Utils.bool('val.use_07_metric', '07 Metric', def=true, readonly=true)]
                 else []
             ),
         },
@@ -36,7 +32,7 @@ local _Utils = import '../../utils/helper.libsonnet';
             objs: [
                 _Utils.floatarray('data.normalize.mean', 'Mean', def=[0.5, 0.5, 0.5], ddd=true, readonly=true),
                 _Utils.floatarray('data.normalize.std', 'Std', def=[1, 1, 1], ddd=true, readonly=true),
-                _Utils.int('data.normalize.div_value', 'Div Value', def=255, ddd=true, readonly=true),
+                // _Utils.int('data.normalize.div_value', 'Div Value', def=255, ddd=true, readonly=true),
             ],
         },
         _Utils.stringarray('_k12.detail.name_seq', 'Name Seq', def=[], ddd=true, width=600, readonly=true),

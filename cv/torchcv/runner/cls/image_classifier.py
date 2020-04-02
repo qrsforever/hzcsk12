@@ -32,26 +32,16 @@ class ImageClassifier(object):
         self.train_losses = DictAverageMeter()
         self.val_losses = DictAverageMeter()
         self.cls_model_manager = ModelManager(configer)
-        self.cls_data_loader = DataLoader(configer)
+        self.data_loader = DataLoader(configer)
         self.running_score = ClsRunningScore(configer)
 
         self.cls_net = self.cls_model_manager.get_cls_model()
         self.solver_dict = self.configer.get('solver')
         self.cls_net = RunnerHelper.load_net(self, self.cls_net)
         self.optimizer, self.scheduler = Trainer.init(self._get_parameters(), self.solver_dict)
-        self.train_loader = self.cls_data_loader.get_trainloader()
-        self.val_loader = self.cls_data_loader.get_valloader()
+        self.train_loader = self.data_loader.get_trainloader()
+        self.val_loader = self.data_loader.get_valloader()
         self.loss = self.cls_model_manager.get_cls_loss()
-
-    def _init_model(self):
-        self.cls_net = self.cls_model_manager.get_cls_model()
-        self.cls_net = RunnerHelper.load_net(self, self.cls_net)
-        self.optimizer, self.scheduler = Trainer.init(self._get_parameters(), self.configer.get('solver'))
-
-        self.train_loader = self.cls_data_loader.get_trainloader()
-        self.val_loader = self.cls_data_loader.get_valloader()
-
-        self.ce_loss = self.cls_model_manager.get_cls_loss()
 
     def _get_parameters(self):
         if self.solver_dict.get('optim.wdall', default=True):
@@ -105,10 +95,6 @@ class ImageClassifier(object):
         # Adjust the learning rate after every epoch.
         self.runner_state['epoch'] += 1
         for i, data_dict in enumerate(self.train_loader):
-            Trainer.update(self, warm_list=(0, 1),
-                           warm_lr_list=(self.solver_dict['lr']['base_lr']*self.configer.get('solver.lr.bb_lr_scale'),
-                                         self.solver_dict['lr']['base_lr']),
-                           solver_dict=self.solver_dict)
             self.data_time.update(time.time() - start_time)
             data_dict = RunnerHelper.to_device(self, data_dict)
             # Forward pass.
@@ -124,6 +110,12 @@ class ImageClassifier(object):
                 RunnerHelper.clip_grad(self.cls_net, 10.)
 
             self.optimizer.step()
+
+            # QRS
+            Trainer.update(self, warm_list=(0, 1),
+                           warm_lr_list=(self.solver_dict['lr']['base_lr']*self.configer.get('solver.lr.bb_lr_scale'),
+                                         self.solver_dict['lr']['base_lr']),
+                           solver_dict=self.solver_dict)
 
             # Update the vars of the train phase.
             self.batch_time.update(time.time() - start_time)

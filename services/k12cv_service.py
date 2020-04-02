@@ -114,6 +114,8 @@ class CVServiceRPC(ServiceRPC):
         mm = 1
         if dn == 'dogsVsCats':
             mm = 2
+        elif dn == 'aliproducts':
+            mm = 2.5
         if bs <= 32:
             gmem = 4500 * mm
         elif bs == 64:

@@ -19,10 +19,11 @@ class Normalize(object):
     Returns:
         Tensor: Normalized tensor.
     """
-    def __init__(self, div_value, mean, std):
+    # QRS: TODO plan to delete this method
+    def __init__(self, mean, std, div_value=1):
         self.div_value = div_value
         self.mean = mean
-        self.std =std
+        self.std = std
 
     def __call__(self, inputs):
         inputs = inputs.div(self.div_value)

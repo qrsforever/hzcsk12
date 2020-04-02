@@ -18,8 +18,8 @@
         workers: 1,
         normalize: {
             div_value: 1,
-            mean: [0.5, 0.5, 0.5],
-            std: [1.0, 1.0, 1.0],
+            mean: [0.2508, 0.5752, 0.3309],
+            std: [0.0523, 0.1089, 0.0726],
         },
     },
     train: {
@@ -63,7 +63,7 @@
         data_transformer: {
             size_mode: 'fix_size',
             input_size: [300, 300],
-            align_method: 'only_scale',
+            align_method: 'scale_and_pad',
         },
     },
     val: {
@@ -74,7 +74,7 @@
         data_transformer: {
             size_mode: 'fix_size',
             input_size: [300, 300],
-            align_method: 'only_scale',
+            align_method: 'scale_and_pad',
         },
     },
     test: {
@@ -85,7 +85,7 @@
         data_transformer: {
             size_mode: 'fix_size',
             input_size: [300, 300],
-            align_method: 'only_scale',
+            align_method: 'scale_and_pad',
         },
     },
     res: {

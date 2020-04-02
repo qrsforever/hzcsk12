@@ -8,7 +8,9 @@ from torch.utils import data
 
 import lib.data.pil_aug_transforms as pil_aug_trans
 import lib.data.cv2_aug_transforms as cv2_aug_trans
-import lib.data.transforms as trans
+# QRS: using torchvision instead of lib
+# import lib.data.transforms as trans
+from torchvision import transforms as trans
 from lib.data.collate import collate
 from lib.tools.util.logger import Logger as Log
 from data.cls.datasets.default_dataset import DefaultDataset

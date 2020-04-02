@@ -80,6 +80,7 @@ local _data_transform(jid, label) = {
                         },
                     ],
                     default: _Utils.get_default_value(self._id_, self.objs[1].value),
+                    readonly: true,
                 },
                 {
                     _id_: jid + '.align_method',
@@ -109,6 +110,7 @@ local _data_transform(jid, label) = {
                         },
                     ],
                     default: _Utils.get_default_value(self._id_, self.objs[2].value),
+                    readonly: true,
                 },
             ],
         },
