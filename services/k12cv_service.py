@@ -60,7 +60,7 @@ class CVServiceRPC(ServiceRPC):
         elif errtype == 'TensorSizeError':
             errcode = 100307
         else:
-            errcode = -1
+            errcode = 999999
         return errcode
 
     def container_on_finished(self, op, user, uuid, message):

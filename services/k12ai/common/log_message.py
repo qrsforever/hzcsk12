@@ -24,7 +24,7 @@ from PIL import Image
 from torch.cuda import (max_memory_allocated, memory_allocated, max_memory_cached, memory_cached)
 from resource import (getrusage, RUSAGE_SELF, RUSAGE_CHILDREN)
 from k12ai.common.rpc_message import k12ai_send_message
-from k12ai.common.util_misc import image2bytes
+from k12ai.common.util_misc import (image2bytes, handle_exception)
 
 import seaborn as sns
 from matplotlib import pyplot as plt
@@ -55,15 +55,19 @@ def _tensor_to_list(x):
     return x.cpu().numpy().astype(float).reshape(-1).tolist()
 
 
-def k12ai_except_message():
-    exc_type, exc_value, exc_tb = sys.exc_info()
+def _except_message(exc_type=None, exc_value=None, exc_tb=None):
+    if exc_type is None or exc_value is None or exc_tb is None:
+        exc_type, exc_value, exc_tb = sys.exc_info()
+        exc_type = exc_type.__name__
+        exc_value = str(exc_value)
+
     message = {
-        'err_type': exc_type.__name__,
-        'err_text': str(exc_value)
+        'err_type': exc_type,
+        'err_text': exc_value
     }
     message['trackback'] = []
     tbs = traceback.extract_tb(exc_tb)
-    for tb in tbs:
+    for tb in tbs[1:]:
         err = {
             'filename': tb.filename,
             'linenum': tb.lineno,
@@ -74,7 +78,7 @@ def k12ai_except_message():
     return message
 
 
-def k12ai_memstat_message():
+def _memstat_message():
     global g_memstat
 
     def _peak_update(key, value, flg):
@@ -105,10 +109,15 @@ def k12ai_memstat_message():
 
 class MessageReport(object):
     RUNNING = 1
-    ERROR = 2
-    EXCEPT = 3
-    STOP = 4
-    FINISH = 5
+    WARNING = 2
+    ERROR = 3
+    EXCEPT = 4
+    STOP = 5
+    FINISH = 6
+
+    @staticmethod
+    def logw(*args, **kwargs):
+        return MessageReport.status(MessageReport.WARNING)
 
     @staticmethod
     def status(what, msg=None):
@@ -117,35 +126,35 @@ class MessageReport(object):
             g_starttime = time.time()
             k12ai_send_message('error', {
                 'status': 'running',
-                'memstat': k12ai_memstat_message()
+                'memstat': _memstat_message()
+            })
+            return
+
+        if what == MessageReport.WARNING:
+            k12ai_send_message('error', {
+                'status': 'warning',
+                'errinfo': msg or _except_message()
             })
             return
 
         if what == MessageReport.ERROR:
             k12ai_send_message('error', {
                 'status': 'error',
-                'errinfo': msg or {}
+                'errinfo': msg or _except_message()
             })
             return
 
         if what == MessageReport.EXCEPT:
             k12ai_send_message('error', {
                 'status': 'crash',
-                'errinfo': msg or k12ai_except_message()
-            })
-            return
-
-        if what == MessageReport.EXCEPT:
-            k12ai_send_message('error', {
-                'status': 'crash',
-                'errinfo': msg or k12ai_except_message()
+                'errinfo': msg or _except_message()
             })
             return
 
         if what == MessageReport.STOP:
             k12ai_send_message('error', {
                 'status': 'stop',
-                'errinfo': msg or {'by comamnd way'}
+                'event': msg or {'by comamnd way'}
             })
             sys.exit(0) # TODO
             return
@@ -155,16 +164,13 @@ class MessageReport(object):
             k12ai_send_message('error', {
                 'status': 'finish',
                 'uptime': int(time.time() - g_starttime),
-                'memstat': k12ai_memstat_message()
+                'memstat': _memstat_message()
             })
             return
 
     @staticmethod
     def metrics(metrics, memstat=False, end=False):
         return
-        if memstat:
-            metrics['memstat'] = k12ai_memstat_message()
-        k12ai_send_message('metrics', metrics, end)
 
 
 class MessageMetric(object):
@@ -206,6 +212,7 @@ class MessageMetric(object):
             obj['height'] = height
         return obj
 
+    @handle_exception(MessageReport.logw)
     def add_scalar(self, category, title, x, y, width=None, height=None):
         payload = {'x':{}, 'y':[]}
         if isinstance(x, dict):
@@ -216,7 +223,7 @@ class MessageMetric(object):
             payload['x']['label'] = 'iteration'
             payload['x']['value'] = x
         else:
-            raise NotImplementedError
+            raise NotImplementedError(type(x))
         if isinstance(y, dict):
             if len(y) == 0:
                 return self
@@ -238,14 +245,15 @@ class MessageMetric(object):
                             f'train_{title}': y[0],
                             f'validation_{title}': y[1]}, x)
                 else:
-                    NotImplementedError
+                    NotImplementedError(title)
             else:
-                NotImplementedError
+                NotImplementedError(type(y))
 
         obj = self._mmjson('scalar', category, title, payload, width, height)
         self._metrics.append(obj)
         return self
 
+    @handle_exception(MessageReport.logw)
     def add_image(self, category, title, image, fmt='base64string', step=None, width=None, height=None):
         if fmt == 'base64string':
             imgbytes = image2bytes(image, width, height)
@@ -266,15 +274,13 @@ class MessageMetric(object):
                 fout.write(base64.b64decode(payload))
 
         if self._writer:
-            try:
-                if fmt == 'url':
-                    imgbytes = image2bytes(image, width, height)
-                self._writer.add_image(f'{category}/{title}',
-                        numpy.asarray(Image.open(BytesIO(imgbytes))), step, dataformats='HWC')
-            except Exception as err:
-                print('{}'.format(err))
+            if fmt == 'url':
+                imgbytes = image2bytes(image, width, height)
+            self._writer.add_image(f'{category}/{title}',
+                    numpy.asarray(Image.open(BytesIO(imgbytes))), step, dataformats='HWC')
         return self
 
+    @handle_exception(MessageReport.logw)
     def add_matrix(self, category, title, value, step=None, width=None, height=None):
         if self._writer:
             fig, ax = plt.subplots(figsize=(8, 6))
@@ -286,6 +292,7 @@ class MessageMetric(object):
         self._metrics.append(obj)
         return self
 
+    @handle_exception(MessageReport.logw)
     def add_text(self, category, title, value, step=None, width=None, height=None):
         obj = self._mmjson('text', category, title, value, width, height)
         self._metrics.append(obj)
@@ -293,11 +300,13 @@ class MessageMetric(object):
             self._writer.add_text(f'{category}/{title}', f'{value}', step)
         return self
 
+    @handle_exception(MessageReport.logw)
     def add_histogram(self, category, title, value, step=None, width=None, height=None):
         if self._writer:
             self._writer.add_histogram(f'{category}/{title}', value, step)
         return self
 
+    @handle_exception(MessageReport.logw)
     def add_graph(self, model, iimg=None):
         if self._writer:
             self._writer.add_graph(model, iimg)

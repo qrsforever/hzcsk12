@@ -9,6 +9,7 @@
 
 import importlib
 import inspect
+import traceback
 import pkgutil
 import sys
 import io
@@ -50,6 +51,19 @@ def find_components(package, directory, base_class):
                         obj != base_class:
                     components[module_name] = obj
     return components
+
+
+def handle_exception(handler=None):
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except Exception:
+                if handler:
+                    exc_type, exc_value, exc_tb = sys.exc_info()
+                    handler(exc_type.__name__, str(exc_value), exc_tb)
+        return wrapper
+    return decorator
 
 
 def sw_list(val):

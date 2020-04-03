@@ -7,13 +7,15 @@
 # @version 1.0
 # @date 2020-03-18 22:28
 
+import sys
+import math
 import torch
 import torchvision # noqa
 
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import precision_recall_fscore_support
 from k12ai.data.datasets.flist import ImageListFileDataset
-from k12ai.common.log_message import MessageMetric
+from k12ai.common.log_message import MessageMetric, MessageReport
 from k12ai.common.util_misc import transform_denormalize
 
 MAX_REPORT_IMGS = 2
@@ -34,8 +36,14 @@ class RunnerBase(object):
     def send(self):
         self._mm.send()
 
+    def check_loss(self, loss):
+        if math.isnan(loss) or loss == float('inf') or loss == float('-inf'):
+            MessageReport.status(MessageReport.ERROR, {'err_type': 'LossNanError', 'err_text': 'inf or nan'})
+            sys.exit(0)
+
     def handle_train(self, runner, ddata):
-        iters = runner.runner_state['iters']
+        self._iters = runner.runner_state['iters']
+        self._epoch = runner.runner_state['epoch']
 
         if self._report_images_num < MAX_REPORT_IMGS:
             self._report_images_num += 1
@@ -53,32 +61,17 @@ class RunnerBase(object):
             self._mm.add_image('train', f'Aug-{self._report_images_num}-{attr}', aug_image)
 
         # learning rate
-        self._mm.add_scalar('train', 'learning_rate', x=iters, y=runner.optimizer.param_groups[0]['lr'])
+        self._mm.add_scalar('train', 'learning_rate', x=self._iters, y=runner.optimizer.param_groups[0]['lr'])
 
-        self._iters = iters
+        # batch time: speed
+        self._mm.add_scalar('train', 'speed', x=self._iters, y=1.0 / runner.batch_time.avg)
 
     def handle_validation(self, runner):
-        iters = runner.runner_state['iters']
-        epoch = runner.runner_state['epoch']
+        self._iters = runner.runner_state['iters']
+        self._epoch = runner.runner_state['epoch']
 
-        # weight, bias, grad
-        if self._epoch != epoch and epoch < MAX_CONV2D_HIST:
-            try:
-                for key, module in self._model.named_modules():
-                    if not isinstance(module, torch.nn.Conv2d):
-                        continue
-                    if module.weight is not None and module.weight.grad.data is not None:
-                        self._mm.add_histogram('train', 'conv2d_1_weight', module.weight.data, epoch)
-                        self._mm.add_histogram('train', 'conv2d_1_weight.grad', module.weight.grad.data, epoch)
-                    if module.bias is not None and module.bias.grad.data is not None:
-                        self._mm.add_histogram('train', 'conv2d_1_bias', module.bias.data)
-                        self._mm.add_histogram('train', 'conv2d_1_bias.grad', module.bias.grad.data, epoch)
-                    break
-            except Exception as err:
-                print('add histogram error: {}'.format(err))
-
-        self._iters = iters
-        self._epoch = epoch
+        # batch time: speed
+        self._mm.add_scalar('val', 'speed', x=self._iters, y=1.0 / runner.batch_time.avg)
 
     def handle_evaluate(self, runner):
         pass
@@ -91,8 +84,10 @@ class ClsRunner(RunnerBase):
     def handle_train(self, runner, ddata):
         super().handle_train(runner, ddata)
 
-        # loss.val
-        self._mm.add_scalar('train', 'loss', x=self._iters, y=list(runner.train_losses.val.values())[0])
+        # loss
+        loss = list(runner.train_losses.avg.values())[0]
+        self.check_loss(loss)
+        self._mm.add_scalar('train', 'loss', x=self._iters, y=loss)
 
         return self
 
@@ -112,6 +107,19 @@ class ClsRunner(RunnerBase):
             'top5': runner.running_score.get_top5_acc()['out']
         }
         self._mm.add_scalar('val', 'acc', x=self._iters, y=y)
+
+        # weight, bias, grad
+        if self._epoch != self._epoch and self._epoch < MAX_CONV2D_HIST:
+            for key, module in self._model.named_modules():
+                if not isinstance(module, torch.nn.Conv2d):
+                    continue
+                if module.weight is not None and module.weight.grad.data is not None:
+                    self._mm.add_histogram('train', 'conv2d_1_weight', module.weight.data, self._epoch)
+                    self._mm.add_histogram('train', 'conv2d_1_weight.grad', module.weight.grad.data, self._epoch)
+                if module.bias is not None and module.bias.grad.data is not None:
+                    self._mm.add_histogram('train', 'conv2d_1_bias', module.bias.data)
+                    self._mm.add_histogram('train', 'conv2d_1_bias.grad', module.bias.grad.data, self._epoch)
+                break
 
         return self
 
@@ -145,8 +153,10 @@ class DetRunner(RunnerBase):
     def handle_train(self, runner, ddata):
         super().handle_train(runner, ddata)
 
-        # loss.val
-        self._mm.add_scalar('train', 'loss', x=self._iters, y=runner.train_losses.val)
+        # loss
+        loss = runner.train_losses.val
+        self.check_loss(loss)
+        self._mm.add_scalar('train', 'loss', x=self._iters, y=loss)
 
         return self
 

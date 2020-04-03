@@ -44,29 +44,29 @@ class ServiceRPC(object):
         if not msgtype:
             return
         if msgtype == 'error':
+            errcode = 999999
             if 'errinfo' in message:
-                errtype = message['errinfo']['err_type']
-                errtext = message['errinfo']['err_text']
-                errcode = self.errtype2errcode(errtype)
-                if errcode < 0:
-                    if errtype == 'MemoryError':
-                        errcode = 100901
-                    elif errtype == 'NotImplementedError':
-                        errcode = 100902
-                    elif errtype == 'ConfigurationError':
-                        errcode = 100903
-                    elif errtype == 'FileNotFoundError':
-                        errcode = 100905
-                    elif errtype == 'RuntimeError':
-                        if errtext.startswith('CUDA out of memory'):
-                            errcode = 100906
-                        else:
-                            errcode = 100999
-                    else:
-                        errcode = 999999
-                    message = k12ai_error_message(errcode, expand=message)
-                else:
-                    message = k12ai_error_message(errcode, expand=message)
+                errinfo = message['errinfo']
+                if 'warning' == message['status']:
+                    errcode = 100005
+                elif isinstance(errinfo, dict) and 'err_type' in errinfo and 'err_text' in errinfo:
+                    errtype = message['errinfo']['err_type']
+                    errtext = message['errinfo']['err_text']
+                    errcode = self.errtype2errcode(errtype)
+                    if errcode == 999999:
+                        if errtype == 'MemoryError':
+                            errcode = 100901
+                        elif errtype == 'NotImplementedError':
+                            errcode = 100902
+                        elif errtype == 'ConfigurationError':
+                            errcode = 100903
+                        elif errtype == 'FileNotFoundError':
+                            errcode = 100905
+                        elif errtype == 'LossNanError':
+                            errcode = 100907
+                        elif errtype == 'RuntimeError':
+                            if errtext.startswith('CUDA out of memory'):
+                                errcode = 100906
             else:
                 # Status
                 if 'starting' == message['status']:
@@ -77,15 +77,13 @@ class ServiceRPC(object):
                     errcode = 100004
                 elif 'finish' == message['status']:
                     errcode = self.container_on_finished(op, user, uuid, message)
-                else:
-                    errcode = 999999
-                message = k12ai_error_message(errcode, expand=message)
+            message = k12ai_error_message(errcode, expand=message)
 
         # print(message)
         k12ai_consul_message(f'k12{self._sname}', token, op, user, uuid, msgtype, message, clear)
 
     def errtype2errcode(self, errtype):
-        return {}
+        return 999999
 
     def container_on_finished(self, op, user, uuid, message):
         return 100003

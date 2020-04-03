@@ -16,6 +16,7 @@ ERRORS = {
         100002: {'en': 'program running', 'cn': '程序正在运行'},
         100003: {'en': 'program normal exit', 'cn': '程序正常结束'},
         100004: {'en': 'program stop manually', 'cn': '程序手动停止'},
+        100005: {'en': 'program warning', 'cn': '程序运行警告'},
 
 
         100101: {'en': 'api parameter key is not found', 'cn': 'API参数错误: 非法Key'},
@@ -51,6 +52,7 @@ ERRORS = {
         100904: {'en': 'missing key configuration', 'cn': '常见错误: 配置中缺少参数'},
         100905: {'en': 'file is not found', 'cn': '常见错误: 文件不存在'},
         100906: {'en': 'CUDA out of memory', 'cn': '常见错误: CUDA内存溢出'},
+        100907: {'en': 'Vanishing gradient, Exploding gradient', 'cn': '常见错误: 梯度消失,梯度爆炸'},
         100999: {'en': 'unkown error!', 'cn': '不可知错误'},
 
         999999: {'en': 'unknown error!', 'cn': '常见错误: 不可知错误'},

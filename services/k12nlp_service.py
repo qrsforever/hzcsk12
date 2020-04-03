@@ -45,7 +45,7 @@ class NLPServiceRPC(ServiceRPC):
         self._nltk_data_dir = '%s/nltk_data' % dataroot
 
     def errtype2errcode(self, errtype):
-        return -1
+        return 999999
 
     def make_container_volumes(self):
         volumes = {

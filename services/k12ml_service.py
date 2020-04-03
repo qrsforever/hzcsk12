@@ -45,7 +45,7 @@ class MLServiceRPC(ServiceRPC):
         if errtype == 'ConfigMissingException':
             errcode = 100233
         else:
-            errcode = -1
+            errcode = 999999
         return errcode
 
     def make_container_volumes(self):

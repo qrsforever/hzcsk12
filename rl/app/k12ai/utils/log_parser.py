@@ -10,7 +10,6 @@
 import re
 import numpy as np
 
-from k12ai.common.log_message import MessageReport
 from k12ai.common.log_message import MessageMetric
 
 g_phase = ''
@@ -52,7 +51,6 @@ def _log_tabular(key, val):
             return
         if key == "lossAverage":
             g_metrics['training_loss'] = val
-            MessageReport.metrics(g_metrics)
             mm = MessageMetric()
             if 'training_loss' in g_metrics:
                 mm.add_scalar('train', 'loss', x=g_metrics['training_iters'], y=g_metrics['training_loss']) 
@@ -73,7 +71,6 @@ def _log_tabular(key, val):
             return
         if key == "lossAverage": # end token
             g_metrics['evaluate_progress'] = 1.0
-            MessageReport.metrics(g_metrics)
             mm = MessageMetric()
             if 'evaluate_score' in g_metrics:
                 mm.add_text('evaluate', 'score', g_metrics['evaluate_score'])
