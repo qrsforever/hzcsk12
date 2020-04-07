@@ -117,6 +117,7 @@ class MessageReport(object):
 
     @staticmethod
     def logw(*args, **kwargs):
+        print(*args)
         return MessageReport.status(MessageReport.WARNING)
 
     @staticmethod
@@ -170,7 +171,7 @@ class MessageReport(object):
 
     @staticmethod
     def metrics(metrics, memstat=False, end=False):
-        return
+        pass
 
 
 class MessageMetric(object):
@@ -248,7 +249,9 @@ class MessageMetric(object):
                     NotImplementedError(title)
             else:
                 NotImplementedError(type(y))
-
+        # DEV
+        if title == 'progress' and self._writer is None:
+            return
         obj = self._mmjson('scalar', category, title, payload, width, height)
         self._metrics.append(obj)
         return self

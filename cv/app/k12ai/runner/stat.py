@@ -25,13 +25,13 @@ MAX_CONV2D_HIST = 10
 
 
 class RunnerBase(object):
-    def __init__(self, data_dir, model):
+    def __init__(self, data_dir, runner):
         self._mm = MessageMetric()
         self._data_dir = data_dir
-        self._model = model
         self._report_images_num = 0
         self._epoch = 0
         self._iters = 0
+        self._max_epoch = runner.configer.get('solver.max_epoch')
 
     def send(self):
         self._mm.send()
@@ -49,16 +49,16 @@ class RunnerBase(object):
             self._report_images_num += 1
             imgs, paths = ddata['img'], ddata['path']
 
-            attr = 'x'.join(map(lambda x: str(x), list(imgs.size())))
+            attr = 'x'.join(map(lambda x: str(x), list(imgs.size()[1:])))
             size = (imgs.size(2), imgs.size(3))
 
             # raw image
             raw_image, _, _ = next(iter(ImageListFileDataset(paths, resize=size)))
-            self._mm.add_image('train', f'Raw-{self._report_images_num}-{attr}', raw_image)
+            self._mm.add_image('image_transform', f'RAW-{self._report_images_num}-{attr}', raw_image)
 
             # aug image
             aug_image = transform_denormalize(imgs.data[0].cpu(), **runner.configer.get('data', 'normalize'))
-            self._mm.add_image('train', f'Aug-{self._report_images_num}-{attr}', aug_image)
+            self._mm.add_image('image_transform', f'AUG-{self._report_images_num}-{attr}', aug_image)
 
         # learning rate
         self._mm.add_scalar('train', 'learning_rate', x=self._iters, y=runner.optimizer.param_groups[0]['lr'])
@@ -73,13 +73,17 @@ class RunnerBase(object):
         # batch time: speed
         self._mm.add_scalar('val', 'speed', x=self._iters, y=1.0 / runner.batch_time.avg)
 
+        # progress
+        self._mm.add_scalar('train_val', 'progress', x=self._iters, y=round(100 * self._epoch / self._max_epoch, 2))
+
     def handle_evaluate(self, runner):
         pass
 
 
 class ClsRunner(RunnerBase):
-    def __init__(self, data_dir, model):
-        super().__init__(data_dir, model)
+    def __init__(self, data_dir, runner):
+        super().__init__(data_dir, runner)
+        self._model = runner.cls_net
 
     def handle_train(self, runner, ddata):
         super().handle_train(runner, ddata)
@@ -133,9 +137,9 @@ class ClsRunner(RunnerBase):
 
         # images top10
         for i, (true, pred, path) in enumerate(zip(y_true, y_pred, files)):
-            if i > 10:
+            if i >= 10:
                 break
-            self._mm.add_image('evaluate', f'{true}_vs_{pred}', path).send()
+            self._mm.add_image('evaluate', f'IMG-{i+1}_{true}_vs_{pred}', path).send()
 
         # precision, recall, fscore
         P, R, F, _ = precision_recall_fscore_support(y_true, y_pred, average='macro')
@@ -147,8 +151,9 @@ class ClsRunner(RunnerBase):
 
 
 class DetRunner(RunnerBase):
-    def __init__(self, data_dir, model):
-        super().__init__(data_dir, model)
+    def __init__(self, data_dir, runner):
+        super().__init__(data_dir, runner)
+        self._model = runner.det_net
 
     def handle_train(self, runner, ddata):
         super().handle_train(runner, ddata)
@@ -191,9 +196,9 @@ class RunnerStat(object):
             data_dir = runner.configer.get('data', 'data_dir')
             task = runner.configer.get('task')
             if task == 'cls':
-                RunnerStat.H = ClsRunner(data_dir, runner.cls_net)
+                RunnerStat.H = ClsRunner(data_dir, runner)
             elif task == 'det':
-                RunnerStat.H = DetRunner(data_dir, runner.det_net)
+                RunnerStat.H = DetRunner(data_dir, runner)
             else:
                 raise NotImplementedError
 
