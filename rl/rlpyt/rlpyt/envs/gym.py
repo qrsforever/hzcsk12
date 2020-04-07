@@ -172,7 +172,8 @@ def make(*args, info_example=None, **kwargs):
     ``info_example`` is not ``None``, will include the ``EnvInfoWrapper``.
     """
     if info_example is None:
-        return GymEnvWrapper(gym.make(*args, **kwargs))
+        from gym.wrappers import Monitor
+        return GymEnvWrapper(Monitor(gym.make(*args, **kwargs), '/cache', force=True))
     else:
         return GymEnvWrapper(EnvInfoWrapper(
             gym.make(*args, **kwargs), info_example))

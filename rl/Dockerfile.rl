@@ -41,6 +41,7 @@ COPY rlpyt/README.md README.md
 
 RUN pip install --editable .
 
+ENV PATH=/hzcsk12/rl/app/k12ai:$PATH
 ENV PYTHONPATH=/hzcsk12/rl/app:/hzcsk12/rl/rlpyt:$PYTHONPATH
 
 # ENTRYPOINT ["/bin/bash", "-c", "/usr/bin/xvfb-run -a $@", ""]

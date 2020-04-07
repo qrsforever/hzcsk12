@@ -15,7 +15,8 @@ import torch
 from pyhocon import ConfigFactory
 
 # K12AI
-from k12ai.utils import (k12ai_set_phase, k12ai_kill)
+from k12ai.utils.log_parser import k12ai_set_phase
+from k12ai.utils import k12ai_kill
 from k12ai.common.log_message import MessageReport
 
 # utils
@@ -80,6 +81,7 @@ _run_ID = '0'
 
 def _signal_handler(sig, frame):
     if sig == signal.SIGUSR1:
+        print("#######22##3333##################")
         MessageReport.status(MessageReport.ERROR, {'err_type': 'signal', 'err_text': 'handle quit signal'})
 
 
@@ -257,6 +259,7 @@ if __name__ == "__main__":
             help="config file")
     args = parser.parse_args()
 
+    print('pid: {}'.format(os.getpid()))
     k12ai_set_phase(args.phase)
     MessageReport.status(MessageReport.RUNNING)
     try:

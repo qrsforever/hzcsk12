@@ -21,6 +21,7 @@ class MinibatchRlEvalOnce(MinibatchRlEval):
         # Monitor(self.sampler.eval_collector.envs[0], "/cache", force=True)
         eval_traj_infos, eval_time = self.evaluate_agent(0)
         self.log_diagnostics(0, eval_traj_infos, eval_time)
+        self.sampler.eval_collector.envs[0].close()
 
 
 class AsyncRlEvalOnce(AsyncRlEval):

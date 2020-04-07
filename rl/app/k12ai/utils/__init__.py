@@ -23,6 +23,7 @@ def k12ai_except(func):
 
 
 def k12ai_kill(pid, parent=True):
+    sys.stdout.flush()
     # os.killpg(os.getpgid(os.getpid()), signal.SIGKILL)
     parent = psutil.Process(pid)
     for child in parent.children(recursive=True):

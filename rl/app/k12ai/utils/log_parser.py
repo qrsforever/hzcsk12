@@ -53,11 +53,11 @@ def _log_tabular(key, val):
             g_metrics['training_loss'] = val
             mm = MessageMetric()
             if 'training_loss' in g_metrics:
-                mm.add_scalar('train', 'loss', x=g_metrics['training_iters'], y=g_metrics['training_loss']) 
+                mm.add_scalar('train', 'loss', x=g_metrics['training_iters'], y=g_metrics['training_loss'])
             if 'training_score' in g_metrics:
-                mm.add_scalar('train', 'score', x=g_metrics['training_iters'], y=g_metrics['training_score']) 
+                mm.add_scalar('train', 'score', x=g_metrics['training_iters'], y=g_metrics['training_score'])
             if 'training_return' in g_metrics:
-                mm.add_scalar('train', 'return', x=g_metrics['training_iters'], y=g_metrics['training_return']) 
+                mm.add_scalar('train', 'return', x=g_metrics['training_iters'], y=g_metrics['training_return'])
             mm.send()
     elif g_phase == 'evaluate':
         if key == "Iteration":

@@ -112,8 +112,9 @@ class MinibatchRlBase(BaseRunner):
         # Log at least as often as requested (round down itrs):
         log_interval_itrs = max(self.log_interval_steps //
             self.itr_batch_size, 1)
-        # FIXME: To run at least as many steps as requested, round up log interval?
-        n_itr = math.ceil(self.n_steps / self.log_interval_steps) * log_interval_itrs
+        n_itr = self.n_steps // self.itr_batch_size
+        if n_itr % log_interval_itrs > 0:  # Keep going to next log itr.
+            n_itr += log_interval_itrs - (n_itr % log_interval_itrs)
         self.log_interval_itrs = log_interval_itrs
         self.n_itr = n_itr
         logger.log(f"Running {n_itr} iterations of minibatch RL.")
@@ -164,7 +165,7 @@ class MinibatchRlBase(BaseRunner):
             v.extend(new_v if isinstance(new_v, list) else [new_v])
         self.pbar.update((itr + 1) % self.log_interval_itrs)
 
-    def log_diagnostics(self, itr, traj_infos=None, eval_time=0):
+    def log_diagnostics(self, itr, traj_infos=None, eval_time=0, prefix='Diagnostics/'):
         """
         Write diagnostics (including stored ones) to csv via the logger.
         """
@@ -188,18 +189,19 @@ class MinibatchRlBase(BaseRunner):
             ((itr + 1) * self.sampler.batch_size))  # world_size cancels.
         cum_steps = (itr + 1) * self.sampler.batch_size * self.world_size
 
-        if self._eval:
-            logger.record_tabular('CumTrainTime',
-                self._cum_time - self._cum_eval_time)  # Already added new eval_time.
-        logger.record_tabular('Iteration', itr)
-        logger.record_tabular('CumTime (s)', self._cum_time)
-        logger.record_tabular('CumSteps', cum_steps)
-        logger.record_tabular('CumCompletedTrajs', self._cum_completed_trajs)
-        logger.record_tabular('CumUpdates', self.algo.update_counter)
-        logger.record_tabular('StepsPerSecond', samples_per_second)
-        logger.record_tabular('UpdatesPerSecond', updates_per_second)
-        logger.record_tabular('ReplayRatio', replay_ratio)
-        logger.record_tabular('CumReplayRatio', cum_replay_ratio)
+        with logger.tabular_prefix(prefix):
+            if self._eval:
+                logger.record_tabular('CumTrainTime',
+                    self._cum_time - self._cum_eval_time)  # Already added new eval_time.
+            logger.record_tabular('Iteration', itr)
+            logger.record_tabular('CumTime (s)', self._cum_time)
+            logger.record_tabular('CumSteps', cum_steps)
+            logger.record_tabular('CumCompletedTrajs', self._cum_completed_trajs)
+            logger.record_tabular('CumUpdates', self.algo.update_counter)
+            logger.record_tabular('StepsPerSecond', samples_per_second)
+            logger.record_tabular('UpdatesPerSecond', updates_per_second)
+            logger.record_tabular('ReplayRatio', replay_ratio)
+            logger.record_tabular('CumReplayRatio', cum_replay_ratio)
         self._log_infos(traj_infos)
         logger.dump_tabular(with_prefix=False)
 
@@ -219,8 +221,7 @@ class MinibatchRlBase(BaseRunner):
         if traj_infos:
             for k in traj_infos[0]:
                 if not k.startswith("_"):
-                    logger.record_tabular_misc_stat(k,
-                        [info[k] for info in traj_infos])
+                    logger.record_tabular_misc_stat(k, [info[k] for info in traj_infos])
 
         if self._opt_infos:
             for k, v in self._opt_infos.items():
@@ -250,6 +251,7 @@ class MinibatchRl(MinibatchRlBase):
         """
         n_itr = self.startup()
         for itr in range(n_itr):
+            logger.set_iteration(itr)
             with logger.prefix(f"itr #{itr} "):
                 self.agent.sample_mode(itr)  # Might not be this agent sampling.
                 samples, traj_infos = self.sampler.obtain_samples(itr)
@@ -272,11 +274,12 @@ class MinibatchRl(MinibatchRlBase):
         self._traj_infos.extend(traj_infos)
         super().store_diagnostics(itr, traj_infos, opt_info)
 
-    def log_diagnostics(self, itr):
-        logger.record_tabular('NewCompletedTrajs', self._new_completed_trajs)
-        logger.record_tabular('StepsInTrajWindow',
-            sum(info["Length"] for info in self._traj_infos))
-        super().log_diagnostics(itr)
+    def log_diagnostics(self, itr, prefix='Diagnostics/'):
+        with logger.tabular_prefix(prefix):
+            logger.record_tabular('NewCompletedTrajs', self._new_completed_trajs)
+            logger.record_tabular('StepsInTrajWindow',
+                sum(info["Length"] for info in self._traj_infos))
+        super().log_diagnostics(itr, prefix=prefix)
         self._new_completed_trajs = 0
 
 
@@ -300,6 +303,7 @@ class MinibatchRlEval(MinibatchRlBase):
             eval_traj_infos, eval_time = self.evaluate_agent(0)
             self.log_diagnostics(0, eval_traj_infos, eval_time)
         for itr in range(n_itr):
+            logger.set_iteration(itr)
             with logger.prefix(f"itr #{itr} "):
                 self.agent.sample_mode(itr)
                 samples, traj_infos = self.sampler.obtain_samples(itr)
@@ -334,12 +338,13 @@ class MinibatchRlEval(MinibatchRlBase):
         super().initialize_logging()
         self._cum_eval_time = 0
 
-    def log_diagnostics(self, itr, eval_traj_infos, eval_time):
+    def log_diagnostics(self, itr, eval_traj_infos, eval_time, prefix='Diagnostics/'):
         if not eval_traj_infos:
             logger.log("WARNING: had no complete trajectories in eval.")
         steps_in_eval = sum([info["Length"] for info in eval_traj_infos])
-        logger.record_tabular('StepsInEval', steps_in_eval)
-        logger.record_tabular('TrajsInEval', len(eval_traj_infos))
-        self._cum_eval_time += eval_time
-        logger.record_tabular('CumEvalTime', self._cum_eval_time)
-        super().log_diagnostics(itr, eval_traj_infos, eval_time)
+        with logger.tabular_prefix(prefix):
+            logger.record_tabular('StepsInEval', steps_in_eval)
+            logger.record_tabular('TrajsInEval', len(eval_traj_infos))
+            self._cum_eval_time += eval_time
+            logger.record_tabular('CumEvalTime', self._cum_eval_time)
+        super().log_diagnostics(itr, eval_traj_infos, eval_time, prefix=prefix)
