@@ -10,8 +10,8 @@ from rlpyt.spaces.gym_wrapper import GymSpaceWrapper
 from rlpyt.utils.collections import is_namedtuple_class
 
 # QRS: add
-from gym.spaces.discrete import Discrete
-from k12ai.spaces.discrete_wrapper import DiscreteSpaceWrapper
+# from gym.spaces.discrete import Discrete
+# from k12ai.spaces.discrete_wrapper import DiscreteSpaceWrapper
 
 
 class GymEnvWrapper(Wrapper):
@@ -49,10 +49,11 @@ class GymEnvWrapper(Wrapper):
             info["timeout"] = False  # gym's TimeLimit.truncated invalid name.
         self._time_limit = time_limit
         # QRS: discrete space for classic control game (eg. CartPole)
-        if isinstance(self.env.action_space, Discrete):
-            K12SpaceWrapper = DiscreteSpaceWrapper
-        else:
-            K12SpaceWrapper = GymSpaceWrapper
+        # if isinstance(self.env.action_space, Discrete):
+        #     K12SpaceWrapper = DiscreteSpaceWrapper
+        # else:
+        #     K12SpaceWrapper = GymSpaceWrapper
+        K12SpaceWrapper = GymSpaceWrapper
         self.action_space = K12SpaceWrapper(
             space=self.env.action_space,
             name="act",
@@ -172,8 +173,7 @@ def make(*args, info_example=None, **kwargs):
     ``info_example`` is not ``None``, will include the ``EnvInfoWrapper``.
     """
     if info_example is None:
-        from gym.wrappers import Monitor
-        return GymEnvWrapper(Monitor(gym.make(*args, **kwargs), '/cache', force=True))
+        return GymEnvWrapper(gym.make(*args, **kwargs))
     else:
         return GymEnvWrapper(EnvInfoWrapper(
             gym.make(*args, **kwargs), info_example))

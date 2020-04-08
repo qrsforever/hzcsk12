@@ -16,7 +16,10 @@ pyhocon
 pynvml
 
 gym[atari]
+gym[box2d]
 pydotplus
+
+sk-video
 
 # rpc
 zerorpc

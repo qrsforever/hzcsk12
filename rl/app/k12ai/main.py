@@ -41,11 +41,12 @@ from rlpyt.samplers.async_.collectors import (DbCpuResetCollector, DbCpuWaitRese
 from rlpyt.samplers.async_.collectors import (DbGpuResetCollector, DbGpuWaitResetCollector)
 from rlpyt.samplers.parallel.cpu.collectors import (CpuResetCollector, CpuWaitResetCollector)
 from rlpyt.samplers.parallel.gpu.collectors import (GpuResetCollector, GpuWaitResetCollector)
+from rlpyt.samplers.serial.collectors import SerialEvalCollector # noqa
 
 # runner
 from rlpyt.runners.async_rl import (AsyncRlEval, AsyncRl)
 from rlpyt.runners.minibatch_rl import (MinibatchRlEval, MinibatchRl)
-from k12ai.runners.RLEvaluate import (MinibatchRlEvalOnce, AsyncRlEvalOnce)
+from k12ai.runners.evaluate import (MinibatchRlEvalOnce, AsyncRlEvalOnce) # noqa
 
 # algo & agent
 from rlpyt.algos.dqn.dqn import DQN
@@ -62,6 +63,8 @@ from rlpyt.agents.qpg.ddpg_agent import DdpgAgent # noqa
 from rlpyt.agents.qpg.sac_agent import SacAgent # noqa
 from rlpyt.agents.qpg.td3_agent import Td3Agent # noqa
 
+from k12ai.agents.dqn.classic_agent import ClassicDiscreteDqnAgent
+
 # atari
 from rlpyt.envs.atari.atari_env import AtariEnv, AtariTrajInfo
 from rlpyt.agents.dqn.atari.atari_dqn_agent import AtariDqnAgent
@@ -76,12 +79,9 @@ from rlpyt.envs.gym import make as gym_make
 from rlpyt.agents.pg.mujoco import MujocoFfAgent
 from rlpyt.agents.pg.mujoco import MujocoLstmAgent
 
-_run_ID = '0'
-
 
 def _signal_handler(sig, frame):
     if sig == signal.SIGUSR1:
-        print("#######22##3333##################")
         MessageReport.status(MessageReport.ERROR, {'err_type': 'signal', 'err_text': 'handle quit signal'})
 
 
@@ -89,7 +89,7 @@ def _rl_check(config):
     async_ = config.get('affinity.async_sample', default=False)
 
     task = config.get('_k12.task')
-    if task not in ('atari', 'mujoco'):
+    if task not in ('atari', 'classic_control'):
         raise NotImplementedError(f'task: {task}')
 
     netw = config.get('_k12.model.network')
@@ -111,9 +111,8 @@ def _rl_check(config):
     return async_, task, netw, mode, optim
 
 
-def _rl_runner(config, phase):
+def _rl_runner(config, phase, dataset, model):
     async_, task, netw, mode, optim = _rl_check(config)
-    model = config.get('_k12.model.name')
     reset = config.get('_k12.sampler.mid_batch_reset')
     alter = config.get('affinity.alternating', default=False)
     eval_ = config.get('_k12.runner.eval')
@@ -121,7 +120,7 @@ def _rl_runner(config, phase):
     if task == 'atari':
         Env = AtariEnv
         Traj = AtariTrajInfo
-    elif task == 'mujoco':
+    elif task == 'classic_control':
         Env = gym_make
         Traj = TrajInfo
         config.put('agent', {})
@@ -131,10 +130,19 @@ def _rl_runner(config, phase):
             Algo = DQN
             if task == 'atari':
                 Agent = AtariDqnAgent
+            elif task == 'classic_control':
+                if dataset in ('CartPole-v0', 'CartPole-v1'):
+                    Agent = ClassicDiscreteDqnAgent # TODO
+                else:
+                    raise NotImplementedError(f'{task}-{model}-{dataset}')
+            else:
+                raise NotImplementedError(f'{task}-{model}-{dataset}')
         elif model == 'catdqn':
             Algo = CategoricalDQN
             if task == 'atari':
                 Agent = AtariCatDqnAgent
+            else:
+                raise NotImplementedError(f'{task}-{model}-{dataset}')
         elif model == 'r2d1':
             Algo = R2D1
             if task == 'atari':
@@ -142,6 +150,8 @@ def _rl_runner(config, phase):
                     Agent = AtariR2d1AlternatingAgent
                 else:
                     Agent = AtariR2d1Agent
+            else:
+                raise NotImplementedError(f'{task}-{model}-{dataset}')
     elif netw == 'pg':
         type_ = config.get('_k12.model.algo', default='none')
         if model == 'a2c':
@@ -211,7 +221,7 @@ def _rl_runner(config, phase):
         else:
             Runner = MinibatchRlEval if eval_ else MinibatchRl
     elif phase == 'evaluate':
-        snapshot_pth = os.path.join(context.LOG_DIR, f'run_{_run_ID}', 'params.pkl')
+        snapshot_pth = os.path.join(context.LOG_DIR, f'run_{model}_{dataset}', 'params.pkl')
         if not os.path.exists(snapshot_pth):
             raise FileNotFoundError(f'model file: {snapshot_pth}')
         snapshot = torch.load(snapshot_pth)
@@ -223,7 +233,7 @@ def _rl_runner(config, phase):
                 initial_optim_state_dict=optimizer_state_dict)
         agent = Agent(model_kwargs=config['model'], **config['agent'],
                 initial_model_state_dict=agent_state_dict)
-        Runner = AsyncRlEvalOnce if async_ else MinibatchRlEvalOnce
+        Runner = MinibatchRlEvalOnce # TODO AsyncRlEvalOnce 
 
     return Runner(algo=algo, agent=agent, sampler=sampler, affinity=affinity, **config['runner'])
 
@@ -231,14 +241,16 @@ def _rl_runner(config, phase):
 def _rl_train(config, phase):
 
     context.LOG_DIR = config.get('_k12.out_dir', default='/cache/output')
+    dataset = config.get('_k12.dataset')
+    model = config.get('_k12.model.name')
 
-    runner = _rl_runner(config, phase)
+    runner = _rl_runner(config, phase, dataset, model)
 
     snapshot_mode = 'last'
     if phase == 'evaluate':
         snapshot_mode = 'none'
 
-    with context.logger_context(context.LOG_DIR, _run_ID, 'k12', config, snapshot_mode):
+    with context.logger_context(context.LOG_DIR, f'{model}_{dataset}', 'k12ai', config, snapshot_mode):
         runner.train()
 
 

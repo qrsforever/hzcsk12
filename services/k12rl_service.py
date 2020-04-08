@@ -45,7 +45,7 @@ class RLServiceRPC(ServiceRPC):
             errcode = 100233
         else:
             errcode = 999999
-        return errcode 
+        return errcode
 
     def make_container_volumes(self):
         volumes = {}
@@ -75,7 +75,8 @@ class RLServiceRPC(ServiceRPC):
         with open(config_file, 'w') as fout:
             fout.write(config_str)
 
-        command = 'python {}'.format('%s/app/k12ai/main.py' % self._workdir)
+        # command = 'python {}'.format('%s/app/k12ai/main.py' % self._workdir)
+        command = 'rl.sh'
         if op.startswith('train'):
             command += ' --phase train --config_file /cache/config.json'
         elif op.startswith('evaluate'):

@@ -314,3 +314,12 @@ class MessageMetric(object):
         if self._writer:
             self._writer.add_graph(model, iimg)
         return self
+
+    @handle_exception(MessageReport.logw)
+    def add_video(self, model, iimg=None):
+        if self._writer:
+            import skvideo.io
+            video = skvideo.io.vread('todo')
+            video = torch.Tensor(video).to(torch.uint8).unsqueeze(0).permute((0, 1, 4, 2, 3))
+            self._writer.add_video('episode', video, 1, fps=60)
+        return self

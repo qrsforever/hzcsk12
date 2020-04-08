@@ -18,11 +18,7 @@ import base64
 import torch
 
 # QRS
-try:
-    from k12ai.utils.log_parser import k12ai_log_parser
-except ModuleNotFoundError:
-    def k12ai_log_parser(*args, **kwargs):
-        pass
+from k12ai.utils.log_parser import k12ai_log_parser
 
 
 _prefixes = []
