@@ -316,10 +316,10 @@ class MessageMetric(object):
         return self
 
     @handle_exception(MessageReport.logw)
-    def add_video(self, model, iimg=None):
-        if self._writer:
+    def add_video(self, category, title, value, step=None, width=None, height=None):
+        if self._writer and isinstance(value, str):
             import skvideo.io
-            video = skvideo.io.vread('todo')
+            video = skvideo.io.vread(value)
             video = torch.Tensor(video).to(torch.uint8).unsqueeze(0).permute((0, 1, 4, 2, 3))
-            self._writer.add_video('episode', video, 1, fps=60)
+            self._writer.add_video(f'{category}/{title}', video, step, fps=60)
         return self

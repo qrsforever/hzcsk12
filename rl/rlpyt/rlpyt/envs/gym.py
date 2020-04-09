@@ -9,10 +9,6 @@ from rlpyt.envs.base import EnvSpaces, EnvStep
 from rlpyt.spaces.gym_wrapper import GymSpaceWrapper
 from rlpyt.utils.collections import is_namedtuple_class
 
-# QRS: add
-# from gym.spaces.discrete import Discrete
-# from k12ai.spaces.discrete_wrapper import DiscreteSpaceWrapper
-
 
 class GymEnvWrapper(Wrapper):
     """Gym-style wrapper for converting the Openai Gym interface to the
@@ -48,13 +44,7 @@ class GymEnvWrapper(Wrapper):
         if time_limit:
             info["timeout"] = False  # gym's TimeLimit.truncated invalid name.
         self._time_limit = time_limit
-        # QRS: discrete space for classic control game (eg. CartPole)
-        # if isinstance(self.env.action_space, Discrete):
-        #     K12SpaceWrapper = DiscreteSpaceWrapper
-        # else:
-        #     K12SpaceWrapper = GymSpaceWrapper
-        K12SpaceWrapper = GymSpaceWrapper
-        self.action_space = K12SpaceWrapper(
+        self.action_space = GymSpaceWrapper(
             space=self.env.action_space,
             name="act",
             null_value=act_null_value,

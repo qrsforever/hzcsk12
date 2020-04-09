@@ -18,6 +18,8 @@ from k12ai.k12ai_consul import k12ai_consul_message
 from k12ai.k12ai_logger import Logger
 from k12ai.k12ai_platform import (k12ai_platform_cpu_count, k12ai_platform_gpu_count, k12ai_platform_memory_free)
 
+MAX_TASKS = 10
+
 
 class ServiceRPC(object):
 
@@ -232,6 +234,10 @@ class ServiceRPC(object):
             if container.status == 'running':
                 return 100204, None
             container.remove()
+
+        cons = self._docker.containers.list(filters={'label': 'k12ai.service.name'})
+        if len(cons) > MAX_TASKS:
+            return 100210, f'{len(cons) > MAX_TASKS}'
 
         if not isinstance(params, dict):
             return 100231, 'parameters type is not dict'

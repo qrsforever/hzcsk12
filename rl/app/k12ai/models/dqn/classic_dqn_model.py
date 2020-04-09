@@ -15,14 +15,13 @@ from rlpyt.utils.tensor import infer_leading_dims, restore_leading_dims
 class ClassicDqnModel(torch.nn.Module):
     def __init__(
             self,
-            observation_shape,
-            action_size,
+            image_shape,
+            output_size,
             fc_sizes=64,
             **kwargs):
         super().__init__()
-        self._obs_ndim = len(observation_shape)
-        input_shape = observation_shape[0]
-        output_size = action_size
+        self._obs_ndim = len(image_shape)
+        input_shape = image_shape[0]
 
         self.base_net = torch.nn.Sequential(
             torch.nn.Linear(input_shape, fc_sizes),

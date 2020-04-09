@@ -67,12 +67,16 @@ def _check_custom_model(configer):
                 'custom_ssd512'):
             Log.error('Model: {} not valid!'.format(model_name))
             exit(1)
-        cache_dir = configer.get('network.checkpoints_root')
-        net_def_str = configer.get('network.net_def')
-        net_def_dir = build_custom_model(cache_dir, net_def_str, model_name)
-        net_def_fil = os.path.join(net_def_dir, '%s.txt' % model_name)
-        with open(net_def_fil, 'w') as fout:
-            fout.write(net_def_str)
+        try:
+            cache_dir = configer.get('network.checkpoints_root')
+            net_def_str = configer.get('network.net_def')
+            net_def_dir = build_custom_model(cache_dir, net_def_str, model_name)
+            net_def_fil = os.path.join(net_def_dir, '%s.txt' % model_name)
+            with open(net_def_fil, 'w') as fout:
+                fout.write(net_def_str)
+        except Exception:
+            Log.error('Model: {} not valid!'.format(model_name))
+            exit(1)
         return True
     return False
 

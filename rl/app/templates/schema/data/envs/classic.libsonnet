@@ -1,4 +1,4 @@
-// @file mujoco.libsonnet
+// @file classic.libsonnet
 // @brief
 // @author QRS
 // @version 1.0

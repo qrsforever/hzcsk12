@@ -22,6 +22,7 @@ ERRORS = {
         100101: {'en': 'api parameter key is not found', 'cn': 'API参数错误: 非法Key'},
         100102: {'en': 'api parameter value is invalid', 'cn': 'API参数错误: 非法Value'},
         100103: {'en': 'api parameter json format error', 'cn': 'API参数错误: 非法Json格式'},
+        100104: {'en': 'api parameter custom network is invalid', 'cn': 'API参数错误: 用户自定义网络错误'},
         100199: {'en': 'api parameter unknown exception', 'cn': 'API参数错误: Unknow异常'},
 
         100201: {'en': 'task service is not found', 'cn': '任务启动错误: 请求的服务不存在或者服务未启动'},
@@ -33,6 +34,7 @@ ERRORS = {
         100207: {'en': 'task schema get fail', 'cn': '模板请求错误: 模板获取失败(内部错误)'},
         100208: {'en': 'task evaluate has no model file', 'cn': '任务启动错误: 评估服务需要在完成训练后执行'},
         100209: {'en': 'task evaluate has no config file', 'cn': '任务启动错误: 评估服务缺少配置文件'},
+        100210: {'en': 'task starting too many', 'cn': '任务启动错误: 启动的任务太多'},
 
         100231: {'en': 'task parameter is invalid', 'cn': '任务启动错误: 非法服务参数'},
         100232: {'en': 'task parameter has no key: input file', 'cn': '任务启动错误: 评估服务缺少输入文件'},

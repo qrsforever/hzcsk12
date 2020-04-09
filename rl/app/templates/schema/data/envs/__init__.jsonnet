@@ -17,8 +17,8 @@ local _Utils = import '../../utils/helper.libsonnet';
                     type: '_ignore_',
                     objs: if _Utils.task == 'atari' then
                         (import 'atari.libsonnet').get('env', 'Train')
-                    else if _Utils.task == 'classic_control' then
-                        (import 'classic_control.libsonnet').get('env', 'Train')
+                    else if _Utils.task == 'classic' then
+                        (import 'classic.libsonnet').get('env', 'Train')
                     else [],
                 },
                 {
@@ -26,8 +26,8 @@ local _Utils = import '../../utils/helper.libsonnet';
                     type: '_ignore_',
                     objs: if _Utils.task == 'atari' then
                         (import 'atari.libsonnet').get('eval_env', 'Evaluate')
-                    else if _Utils.task == 'classic_control' then
-                        (import 'classic_control.libsonnet').get('eval_env', 'Evaluate')
+                    else if _Utils.task == 'classic' then
+                        (import 'classic.libsonnet').get('eval_env', 'Evaluate')
                     else [],
                 },
             ],
