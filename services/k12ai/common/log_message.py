@@ -18,7 +18,8 @@ import numpy
 import torch # noqa
 import hashlib
 import base64
-from io import BytesIO
+import io
+
 from PIL import Image
 
 from torch.cuda import (max_memory_allocated, memory_allocated, max_memory_cached, memory_cached)
@@ -280,7 +281,7 @@ class MessageMetric(object):
             if fmt == 'url':
                 imgbytes = image2bytes(image, width, height)
             self._writer.add_image(f'{category}/{title}',
-                    numpy.asarray(Image.open(BytesIO(imgbytes))), step, dataformats='HWC')
+                    numpy.asarray(Image.open(io.BytesIO(imgbytes))), step, dataformats='HWC')
         return self
 
     @handle_exception(MessageReport.logw)
@@ -316,10 +317,20 @@ class MessageMetric(object):
         return self
 
     @handle_exception(MessageReport.logw)
-    def add_video(self, category, title, value, step=None, width=None, height=None):
-        if self._writer and isinstance(value, str):
-            import skvideo.io
-            video = skvideo.io.vread(value)
-            video = torch.Tensor(video).to(torch.uint8).unsqueeze(0).permute((0, 1, 4, 2, 3))
-            self._writer.add_video(f'{category}/{title}', video, step, fps=60)
+    def add_video(self, category, title, value, fmt='base64string', step=None, width=None, height=None):
+        if isinstance(value, str):
+            if os.path.getsize(value) > 2048000:
+                return self
+
+            if self._writer:
+                import skvideo.io
+                video = skvideo.io.vread(value)
+                video = torch.Tensor(video).to(torch.uint8).unsqueeze(0).permute((0, 1, 4, 2, 3))
+                self._writer.add_video(f'{category}/{title}', video, step, fps=60)  
+
+            video = io.open(value, 'r+b').read()
+            payload = base64.b64encode(video).decode()
+            obj = self._mmjson('video', category, title, payload, width=width, height=height)
+            obj['data']['format'] = fmt
+            self._metrics.append(obj)
         return self

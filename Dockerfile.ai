@@ -88,4 +88,9 @@ RUN jupyter contrib nbextension install --sys-prefix && \
     jupyter notebook --generate-config -y
 COPY .jupyter_config/jupyter_notebook_config.json ${jupyter_conf_dir}/jupyter_notebook_config.json
 COPY .jupyter_config/vim_binding ${jupyter_data_dir}/nbextensions/vim_binding
-RUN jupyter nbextension enable vim_binding/vim_binding
+RUN jupyter nbextension enable vim_binding/vim_binding && \
+    jupyter nbextension enable jupyter-js-widgets/extension && \
+    jupyter nbextension enable execute_time/ExecuteTime && \
+    jupyter nbextension enable tree-filter/index && \
+    jupyter nbextension enable snippets_menu/main && \
+    jupyter nbextension enable skip-traceback/main

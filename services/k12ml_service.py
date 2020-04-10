@@ -41,7 +41,7 @@ class MLServiceRPC(ServiceRPC):
     def __init__(self, host, port, image, dataroot):
         super().__init__('ml', host, port, image, dataroot, _DEBUG_)
 
-    def errtype2errcode(self, errtype):
+    def errtype2errcode(self, errtype, errtext):
         if errtype == 'ConfigMissingException':
             errcode = 100233
         else:

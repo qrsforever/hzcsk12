@@ -8,6 +8,7 @@
 # @date 2020-02-03 15:14
 
 import time
+import os
 import numpy as np
 from rlpyt.runners.minibatch_rl import MinibatchRlEval
 from rlpyt.runners.async_rl import AsyncRlEval
@@ -32,7 +33,7 @@ class MinibatchRlEvaluate(MinibatchRlEval):
         self.agent.initialize(env.spaces)
         self.agent.to_device(self.affinity.get("cuda_idx", None))
 
-        reward_sum = 0.
+        trajinfo = self.sampler.TrajInfoCls()
         observation = buffer_from_example(env.reset(), 1)
         action = buffer_from_example(env.action_space.null_value(), 1)
         obs_pyt, act_pyt, rew_pyt = torchify_buffer((observation, action, np.zeros(1, dtype="float32")))
@@ -42,14 +43,20 @@ class MinibatchRlEvaluate(MinibatchRlEval):
             act_pyt, agent_info = self.agent.step(obs_pyt, act_pyt, rew_pyt)
             action = numpify_buffer(act_pyt)
             o, r, d, env_info = env.step(action[0])
-            reward_sum += r
+            trajinfo.step(observation[0], action[0], r, d, agent_info, env_info)
             if d:
                 break
         env.close()
 
         mp4file = '{}/{}.video.{}.video000000.mp4'.format(MONITOR_DIR, env.file_prefix, env.file_infix)
-        MM().add_text('game', 'result', str(reward_sum)).send()
-        MM().add_video('episode', 'video', mp4file).send()
+        if os.path.exists(mp4file):
+            MM().add_video('Episode', 'Game', mp4file).send()
+
+        mm = MM()
+        for key, val in trajinfo.items():
+            if key in ('Return', 'NonzeroRewards', 'DiscountedReturn'):
+                mm.add_text('TrajInfos', key, val)
+        mm.send()
 
 
 class AsyncRlEvaluate(AsyncRlEval):

@@ -54,7 +54,7 @@ class ServiceRPC(object):
                 elif isinstance(errinfo, dict) and 'err_type' in errinfo and 'err_text' in errinfo:
                     errtype = message['errinfo']['err_type']
                     errtext = message['errinfo']['err_text']
-                    errcode = self.errtype2errcode(errtype)
+                    errcode = self.errtype2errcode(errtype, errtext)
                     if errcode == 999999:
                         if errtype == 'MemoryError':
                             errcode = 100901
@@ -84,7 +84,7 @@ class ServiceRPC(object):
         # print(message)
         k12ai_consul_message(f'k12{self._sname}', token, op, user, uuid, msgtype, message, clear)
 
-    def errtype2errcode(self, errtype):
+    def errtype2errcode(self, errtype, errtext):
         return 999999
 
     def container_on_finished(self, op, user, uuid, message):

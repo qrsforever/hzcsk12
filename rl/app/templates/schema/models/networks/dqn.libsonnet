@@ -18,28 +18,34 @@ local _Utils = import '../../utils/helper.libsonnet';
             ],
         },
         {
-            _id_: '_k12.model.name',
-            name: { en: 'Model', cn: self.en },
-            // type: 'string-enum-trigger',
-            type: 'string-enum',
+            type: 'H',
             objs: [
                 {
-                    name: { en: 'DQN', cn: self.en },
-                    value: 'dqn',
-                    // trigger: {},
+                    _id_: '_k12.model.name',
+                    name: { en: 'Model', cn: self.en },
+                    // type: 'string-enum-trigger',
+                    type: 'string-enum',
+                    objs: [
+                        {
+                            name: { en: 'DQN', cn: self.en },
+                            value: 'dqn',
+                            // trigger: {},
+                        },
+                        {
+                            name: { en: 'CatDQN', cn: self.en },
+                            value: 'catdqn',
+                            // trigger: {},
+                        },
+                        {
+                            name: { en: 'R2D1', cn: self.en },
+                            value: 'r2d1',
+                            // trigger: {},
+                        },
+                    ],
+                    default: self.objs[0].value,
                 },
-                {
-                    name: { en: 'CatDQN', cn: self.en },
-                    value: 'catdqn',
-                    // trigger: {},
-                },
-                {
-                    name: { en: 'R2D1', cn: self.en },
-                    value: 'r2d1',
-                    // trigger: {},
-                },
+                _Utils.bool('_k12.model.resume', 'Resume', def=true),
             ],
-            default: self.objs[0].value,
         },
         {
             type: 'H',
@@ -47,6 +53,11 @@ local _Utils = import '../../utils/helper.libsonnet';
                 _Utils.int('model.fc_sizes', 'FC Size', def=512, readonly=true),
                 _Utils.intarray('model.channels', 'Channels', def=[32, 64, 64]),
                 _Utils.intarray('model.kernel_sizes', 'Kernels', def=[8, 4, 3]),
+            ],
+        },
+        {
+            type: 'H',
+            objs: [
                 _Utils.intarray('model.strides', 'Strides', def=[4, 2, 1]),
                 _Utils.intarray('model.paddings', 'Paddings', def=[0, 1, 1]),
                 _Utils.bool('model.use_maxpool', 'Use MaxPool', def=false),

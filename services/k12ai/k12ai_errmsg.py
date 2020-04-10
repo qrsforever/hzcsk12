@@ -34,9 +34,10 @@ ERRORS = {
         100205: {'en': 'task is not found or not running', 'cn': '任务停止错误: 请求的服务不存在或者未启动'},
         100206: {'en': 'task schema file is not found', 'cn': '模板请求错误: 模板文件不存在'},
         100207: {'en': 'task schema get fail', 'cn': '模板请求错误: 模板获取失败(内部错误)'},
-        100208: {'en': 'task evaluate has no model file', 'cn': '任务启动错误: 评估服务需要在完成训练后执行'},
+        100208: {'en': 'task evaluate has no model file', 'cn': '任务启动错误: 评估服务缺少模型文件'},
         100209: {'en': 'task evaluate has no config file', 'cn': '任务启动错误: 评估服务缺少配置文件'},
         100210: {'en': 'task starting too many', 'cn': '任务启动错误: 启动的任务太多'},
+        100211: {'en': 'task model file is broken', 'cn': '任务启动错误: 模型文件已损坏'},
 
         100231: {'en': 'task parameter is invalid', 'cn': '任务启动错误: 非法服务参数'},
         100232: {'en': 'task parameter has no key: input file', 'cn': '任务启动错误: 评估服务缺少输入文件'},

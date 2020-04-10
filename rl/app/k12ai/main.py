@@ -15,7 +15,6 @@ import torch
 from pyhocon import ConfigFactory
 
 # K12AI
-from k12ai.utils.log_parser import k12ai_set_phase
 from k12ai.utils import k12ai_kill
 from k12ai.common.log_message import MessageReport
 
@@ -109,7 +108,8 @@ def _rl_runner(config, phase, task, model, dataset):
     async_, netw, mode, optim = _rl_check(config)
     reset = config.get('_k12.sampler.mid_batch_reset')
     alter = config.get('affinity.alternating', default=False)
-    eval_ = config.get('_k12.runner.eval')
+    eval_ = config.get('_k12.runner.eval', default=False)
+    resume = config.get('_k12.model.resume', default=False)
 
     if task == 'atari':
         from rlpyt.envs.gym_schema import make as gym_make
@@ -124,7 +124,7 @@ def _rl_runner(config, phase, task, model, dataset):
             if task == 'atari':
                 Agent = AtariDqnAgent
             elif task == 'classic':
-                if dataset in ('CartPole-v0', 'CartPole-v1'):
+                if dataset in ('CartPole-v0', 'CartPole-v1', 'MountainCar-v0'):
                     Agent = ClassicDiscreteDqnAgent # TODO
                 else:
                     raise NotImplementedError(f'{task}-{model}-{dataset}')
@@ -149,22 +149,16 @@ def _rl_runner(config, phase, task, model, dataset):
             raise NotImplementedError(f'{task}-{model}-{dataset}')
     elif netw == 'pg':
         type_ = config.get('_k12.model.algo', default='none')
+        if type_ == 'ff':
+            Agent = AtariFfAgent if task == 'atari' else MujocoFfAgent
+        elif type_ == 'lstm':
+            Agent = AtariLstmAgent if task == 'atari' else MujocoLstmAgent
+        else:
+            raise NotImplementedError(f'{task}-{model}-{dataset}')
         if model == 'a2c':
             Algo = A2C
-            if type_ == 'ff':
-                Agent = AtariFfAgent if task == 'atari' else MujocoFfAgent
-            elif type_ == 'lstm':
-                Agent = AtariLstmAgent if task == 'atari' else MujocoLstmAgent
-            else:
-                raise NotImplementedError(f'{task}-{model}-{dataset}')
         elif model == 'ppo':
             Algo = PPO
-            if type_ == 'ff':
-                Agent = AtariFfAgent if task == 'atari' else MujocoFfAgent
-            elif type_ == 'lstm':
-                Agent = AtariLstmAgent if task == 'atari' else MujocoLstmAgent
-            else:
-                raise NotImplementedError(f'{task}-{model}-{dataset}')
         else:
             raise NotImplementedError(f'{task}-{model}-{dataset}')
     elif netw == 'qpg':
@@ -211,39 +205,48 @@ def _rl_runner(config, phase, task, model, dataset):
     if config.get('agent', None) is None:
         config.put('agent', {})
 
+    # Algo and Agent
+    agent_state_dict = None
+    optimizer_state_dict = None
+    if resume:
+        snapshot_pth = os.path.join(context.LOG_DIR, f'run_{task}_{model}_{dataset}', 'params.pkl')
+        if os.path.exists(snapshot_pth):
+            try:
+                snapshot = torch.load(snapshot_pth)
+                agent_state_dict = snapshot['agent_state_dict']
+                if 'model' in agent_state_dict:
+                    agent_state_dict = agent_state_dict['model']
+                optimizer_state_dict = snapshot['optimizer_state_dict']
+            except Exception:
+                raise FileNotFoundError(f'k12ai: snapshot file is broken!')
+
+    algo = Algo(OptimCls=Optim, optim_kwargs=config['optim'], **config['algo'],
+            initial_optim_state_dict=optimizer_state_dict)
+    agent = Agent(model_kwargs=config['model'], **config['agent'],
+            initial_model_state_dict=agent_state_dict)
+
     if phase == 'train':
-        algo = Algo(OptimCls=Optim, optim_kwargs=config['optim'], **config['algo'])
-        agent = Agent(model_kwargs=config['model'], **config['agent'])
         if async_:
             Runner = AsyncRlEval if eval_ else AsyncRl
         else:
             Runner = MinibatchRlEval if eval_ else MinibatchRl
     elif phase == 'evaluate':
-        snapshot_pth = os.path.join(context.LOG_DIR, f'run_{task}_{model}_{dataset}', 'params.pkl')
-        if not os.path.exists(snapshot_pth):
-            raise FileNotFoundError(f'model file: {snapshot_pth}')
-        snapshot = torch.load(snapshot_pth)
-        agent_state_dict = snapshot['agent_state_dict']
-        if 'model' in agent_state_dict:
-            agent_state_dict = agent_state_dict['model']
-        optimizer_state_dict = snapshot['optimizer_state_dict']
-        algo = Algo(OptimCls=Optim, optim_kwargs=config['optim'], **config['algo'],
-                initial_optim_state_dict=optimizer_state_dict)
-        agent = Agent(model_kwargs=config['model'], **config['agent'],
-                initial_model_state_dict=agent_state_dict)
+        if agent_state_dict is None or optimizer_state_dict is None:
+            raise FileNotFoundError(f'k12ai: snapshot file is not found!')
         Runner = MinibatchRlEvaluate
 
     return Runner(algo=algo, agent=agent, sampler=sampler, affinity=affinity, **config['runner'])
 
 
 def _rl_train(config, phase):
-
     context.LOG_DIR = config.get('_k12.out_dir', default='/cache/output')
     task = config.get('_k12.task')
     if task not in ('atari', 'classic'):
         raise NotImplementedError(f'task: {task}')
     model = config.get('_k12.model.name')
     dataset = config.get('_k12.dataset')
+    if phase == 'evaluate':
+        config.put('_k12.model.resume', True)
 
     runner = _rl_runner(config, phase, task, model, dataset)
 
@@ -273,7 +276,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     print('pid: {}'.format(os.getpid()))
-    k12ai_set_phase(args.phase)
     MessageReport.status(MessageReport.RUNNING)
     try:
         if args.phase == 'train' or args.phase == 'evaluate':

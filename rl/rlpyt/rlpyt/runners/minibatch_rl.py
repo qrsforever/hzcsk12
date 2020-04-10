@@ -44,7 +44,6 @@ class MinibatchRlBase(BaseRunner):
         log_interval_steps = int(log_interval_steps)
         affinity = dict() if affinity is None else affinity
         save__init__args(locals())
-        self.min_itr_learn = getattr(self.algo, 'min_itr_learn', 0)
 
     def startup(self):
         """
@@ -94,6 +93,8 @@ class MinibatchRlBase(BaseRunner):
             world_size=world_size,
             rank=rank,
         )
+        # QRS
+        self.min_itr_learn = getattr(self.algo, 'min_itr_learn', 0)
         self.initialize_logging()
         return n_itr
 

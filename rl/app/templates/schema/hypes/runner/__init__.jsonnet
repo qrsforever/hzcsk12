@@ -12,7 +12,7 @@ local _Utils = import '../../utils/helper.libsonnet';
         objs: [
             _Utils.int('runner.n_steps', 'Iters Count', def=20e4),
             _Utils.int('runner.log_interval_steps', 'Iters Interval', def=2e3),
-            _Utils.bool('_k12.runner.eval', 'Evaluate', def=false),
+            // _Utils.bool('_k12.runner.eval', 'Evaluate', def=false),
         ],
     },
 }

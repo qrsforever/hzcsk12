@@ -40,11 +40,15 @@ class RLServiceRPC(ServiceRPC):
     def __init__(self, host, port, image, dataroot):
         super().__init__('rl', host, port, image, dataroot, _DEBUG_)
 
-    def errtype2errcode(self, errtype):
+    def errtype2errcode(self, errtype, errtext):
+        errcode = 999999
         if errtype == 'ConfigMissingException':
             errcode = 100233
-        else:
-            errcode = 999999
+        elif errtype == 'FileNotFoundError':
+            if errtext == 'k12ai: snapshot file is broken!':
+                errcode = 100211
+            elif errtext == 'k12ai: snapshot file is not found!':
+                errcode = 100208
         return errcode
 
     def make_container_volumes(self):

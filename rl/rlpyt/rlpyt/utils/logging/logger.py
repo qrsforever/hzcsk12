@@ -193,6 +193,7 @@ def get_disable_prefix():
 
 
 def log(s, with_prefix=True, with_timestamp=True, color=None):
+    # QRS
     k12ai_log_parser(s)
     if not _disabled:
         out = s
@@ -214,6 +215,8 @@ def log(s, with_prefix=True, with_timestamp=True, color=None):
 
 
 def record_tabular(key, val, *args, **kwargs):
+    # QRS
+    k12ai_log_parser(key, val, _iteration)
     # if not _disabled and not _tabular_disabled:
     key = _tabular_prefix_str + str(key)
     _tabular.append((key, str(val)))

@@ -42,7 +42,7 @@ class CVServiceRPC(ServiceRPC):
 
         self._pretrained_dir = '%s/pretrained/cv' % dataroot
 
-    def errtype2errcode(self, errtype):
+    def errtype2errcode(self, errtype, errtext):
         if errtype == 'ModelFileNotFound':
             errcode = 100208
         if errtype == 'ConfigMissingException':

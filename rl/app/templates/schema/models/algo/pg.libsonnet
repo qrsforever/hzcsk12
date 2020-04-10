@@ -6,14 +6,6 @@
 
 local _Utils = import '../../utils/helper.libsonnet';
 
-// value_loss_coeff=1.,
-// entropy_loss_coeff=0.01,
-// gae_lambda=1,
-// minibatches=4,
-// epochs=4,
-// ratio_clip=0.1,
-// linear_lr_schedule=True,
-// normalize_advantage=False,
 {
     type: '_ignore_',
     objs: [
