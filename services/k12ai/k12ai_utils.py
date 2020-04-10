@@ -7,12 +7,26 @@
 # @version 1.0
 # @date 2019-12-07 09:45:23
 
+import time
 import socket
 import os
 import json
 
 _LANIP = None
 _NETIP = None
+
+
+def k12ai_timeit(handler):
+    def decorator(func):
+        def timed(*args, **kwargs):
+            ts = time.time()
+            result = func(*args, **kwargs)
+            te = time.time()
+            if handler:
+                handler('"{}" took {:.3f} ms to execute'.format(func.__name__, (te - ts) * 1000))
+            return result 
+        return timed
+    return decorator
 
 
 def k12ai_utils_topdir():

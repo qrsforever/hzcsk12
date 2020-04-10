@@ -17,6 +17,8 @@ ERRORS = {
         100003: {'en': 'program normal exit', 'cn': '程序正常结束'},
         100004: {'en': 'program stop manually', 'cn': '程序手动停止'},
         100005: {'en': 'program warning', 'cn': '程序运行警告'},
+        
+        100010: {'en': 'schema version is already lastest', 'cn': 'schema已是最新版本'},
 
 
         100101: {'en': 'api parameter key is not found', 'cn': 'API参数错误: 非法Key'},

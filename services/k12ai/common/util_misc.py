@@ -9,7 +9,7 @@
 
 import importlib
 import inspect
-import traceback
+import traceback # noqa
 import pkgutil
 import sys
 import io

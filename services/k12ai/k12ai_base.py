@@ -40,7 +40,7 @@ class ServiceRPC(object):
         self._datadir = f'{dataroot}/datasets/{self._sname}'
         self._userdir = f'{dataroot}/users'
         self._commlib = os.path.join(k12ai_utils_topdir(), 'services', 'k12ai', 'common')
-        self._jschema = os.path.join(self._projdir, 'app', 'templates', 'schema', f'k12ai_{self._sname}.jsonnet')
+        self._jschema = os.path.join(self._projdir, 'app', 'templates', 'schema')
 
     def send_message(self, token, op, user, uuid, msgtype, message, clear=False):
         if not msgtype:
@@ -194,12 +194,18 @@ class ServiceRPC(object):
                 'status': 'stop', 'errinfo': gen_exc_info()
             })
 
-    def schema(self, task, netw, dname):
+    def schema(self, version, levelid, task, netw, dname):
         Logger.info(f'{task}, {netw}, {dname}')
         if not os.path.exists(self._jschema):
             return 100206, f'{self._jschema}'
+        version_file = os.path.join(self._jschema, 'version.txt')
+        with open(version_file, 'r') as fp:
+            curver = str(fp.readline()).strip()
+            if curver == version:
+                return 100010, None
+        jsonnet_file = os.path.join(self._jschema, 'k12ai.jsonnet')
         ext_vars, ext_codes = self.make_schema_kwargs()
-        schema_json = _jsonnet.evaluate_file(self._jschema,
+        schema_json = _jsonnet.evaluate_file(jsonnet_file,
                 ext_vars={
                     'task': task,
                     'network': netw,
@@ -207,6 +213,7 @@ class ServiceRPC(object):
                     'net_ip': self._netip,
                     **ext_vars},
                 ext_codes={
+                    'levelid': str(levelid),
                     'debug': 'true' if self._debug else 'false',
                     'num_cpu': str(self._cpu_count), 'num_gpu': str(self._gpu_count),
                     **ext_codes})

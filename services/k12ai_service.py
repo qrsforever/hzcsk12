@@ -15,12 +15,17 @@ from flask import Flask, request
 from flask_cors import CORS
 from threading import Thread
 
+from k12ai.k12ai_utils import k12ai_timeit
 from k12ai.k12ai_errmsg import k12ai_error_message as _err_msg
 from k12ai.k12ai_consul import (k12ai_consul_init, k12ai_consul_register, k12ai_consul_service)
 from k12ai.k12ai_platform import (k12ai_platform_stats, k12ai_platform_control)
 from k12ai.k12ai_logger import (k12ai_set_loglevel, k12ai_set_logfile, Logger)
 
 _DEBUG_ = True if os.environ.get("K12AI_DEBUG") else False
+if _DEBUG_:
+    k12ai_set_loglevel('debug')
+k12ai_set_logfile('k12ai.log')
+
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
@@ -49,9 +54,9 @@ def _delay_do_loop(host, port):
 
 
 ### Platform
-@app.route('/k12ai/platform/stats', methods=['POST'])
+@app.route('/k12ai/platform/stats', methods=['POST'], endpoint='platform_stats')
+@k12ai_timeit(handler=Logger.debug)
 def _platform_stats():
-    Logger.info('call _platform_stats')
     try:
         reqjson = json.loads(request.get_data().decode())
         user = reqjson['user']
@@ -73,9 +78,9 @@ def _platform_stats():
         return json.dumps(_err_msg(100202, exc=True))
 
 
-@app.route('/k12ai/platform/control', methods=['POST'])
+@app.route('/k12ai/platform/control', methods=['POST'], endpoint='platform_control')
+@k12ai_timeit(handler=Logger.debug)
 def _platform_control():
-    Logger.info('call _platform_control')
     try:
         reqjson = json.loads(request.get_data().decode())
         user = reqjson['user']
@@ -98,11 +103,13 @@ def _platform_control():
 
 
 ### Framework
-@app.route('/k12ai/framework/schema', methods=['POST'])
+@app.route('/k12ai/framework/schema', methods=['POST'], endpoint='framework_schema')
+@k12ai_timeit(handler=Logger.debug)
 def _framework_schema():
-    Logger.info('call _framework_schema')
     try:
         reqjson = json.loads(request.get_data().decode())
+        version = reqjson.get('version', '0')
+        levelid = reqjson.get('levelid', 0)
         service_name = reqjson['service_name']
         service_task = reqjson['service_task']
         dataset_name = reqjson['dataset_name']
@@ -121,16 +128,16 @@ def _framework_schema():
     if not agent:
         return json.dumps(_err_msg(100201, f'service name:{service_name}'))
     try:
-        code, msg = agent.schema(service_task, network_type, dataset_name)
+        code, msg = agent.schema(version, levelid, service_task, network_type, dataset_name)
         return json.dumps(_err_msg(code, msg))
     except Exception as err:
         print(f"{err}")
         return json.dumps(_err_msg(100207, exc=True))
 
 
-@app.route('/k12ai/framework/memstat', methods=['POST'])
+@app.route('/k12ai/framework/memstat', methods=['POST'], endpoint='framework_memstat')
+@k12ai_timeit(handler=Logger.debug)
 def _framework_memstat():
-    Logger.info('call _framework_memstat')
     try:
         reqjson = json.loads(request.get_data().decode())
         service_name = reqjson['service_name']
@@ -156,9 +163,9 @@ def _framework_memstat():
         return json.dumps(_err_msg(100207, exc=True))
 
 
-@app.route('/k12ai/framework/execute', methods=['POST'])
+@app.route('/k12ai/framework/execute', methods=['POST'], endpoint='framework_execcute')
+@k12ai_timeit(handler=Logger.debug)
 def _framework_execute():
-    Logger.info('call _framework_execute')
     try:
         reqjson = json.loads(request.get_data().decode())
         token = reqjson['token']
@@ -252,10 +259,6 @@ if __name__ == "__main__":
             dest='consul_port',
             help="consul port")
     args = parser.parse_args()
-
-    if _DEBUG_:
-        k12ai_set_loglevel('debug')
-    k12ai_set_logfile('k12ai.log')
 
     k12ai_consul_init(args.consul_addr, args.consul_port, _DEBUG_)
 

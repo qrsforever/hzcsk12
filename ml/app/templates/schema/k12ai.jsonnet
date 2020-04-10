@@ -6,6 +6,7 @@
 
 
 {
+    version:: importstr 'version.txt',
     type: 'page',
     objs: [
         {

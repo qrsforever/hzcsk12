@@ -24,7 +24,7 @@ class BaseModel(nn.Module):
         elif backbone.startswith('resnet'):
             self.net.fc = nn.Linear(self.net.fc.in_features, num_classes)
         else:
-            raise NotImplementedError
+            raise NotImplementedError(f'backbne:{backbone}')
 
         self.valid_loss_dict = configer.get('loss.loss_weights', configer.get('loss.loss_type'))
 

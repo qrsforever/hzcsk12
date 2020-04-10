@@ -8,6 +8,8 @@
 # @date 2020-02-03 11:07
 
 import logging
+import sys
+import os
 from logging import handlers
 
 
@@ -39,7 +41,8 @@ class Logger(object):
     @staticmethod
     def init(
             filename, level='info', when='D', backCount=3,
-            fmt='%(asctime)s - %(filename)s - %(funcName)s:%(lineno)d - %(levelname)s: %(message)s'):  # noqa
+            fmt='%(asctime)s %(levelname)-7s %(message)s'):
+            # fmt='%(asctime)s - %(filename)s - %(funcName)s:%(lineno)d - %(levelname)s: %(message)s'):  # noqa
         # pathname, filename
         Logger.logger = logging.getLogger(filename)
         Logger.logger.setLevel(_LEVELS_.get(level))
@@ -58,31 +61,36 @@ class Logger(object):
         Logger.logger.addHandler(logfile)
 
     @staticmethod
-    def check_logger():
+    def prefix():
         if Logger.logger is None:
             Logger.init(_LOG_FILENAME_, _LOG_LEVEL_)
+        frame = sys._getframe().f_back.f_back
+        filename = os.path.basename(frame.f_code.co_filename)
+        funcname = frame.f_code.co_name
+        lineno = frame.f_lineno
+        return '{} {}:{}'.format(filename, funcname, lineno)
 
     @staticmethod
     def debug(message):
-        Logger.check_logger()
-        Logger.logger.debug(message)
+        prefix = Logger.prefix()
+        Logger.logger.debug(f'{prefix} {message}')
 
     @staticmethod
     def info(message):
-        Logger.check_logger()
-        Logger.logger.info(message)
+        prefix = Logger.prefix()
+        Logger.logger.debug(f'{prefix} {message}')
 
     @staticmethod
     def warning(message):
-        Logger.check_logger()
-        Logger.logger.waring(message)
+        prefix = Logger.prefix()
+        Logger.logger.waring(f'{prefix} {message}')
 
     @staticmethod
     def error(message):
-        Logger.check_logger()
-        Logger.logger.error(message)
+        prefix = Logger.prefix()
+        Logger.logger.error(f'{prefix} {message}')
 
     @staticmethod
     def critical(message):
-        Logger.check_logger()
-        Logger.logger.critical(message)
+        prefix = Logger.prefix()
+        Logger.logger.critical(f'{prefix} {message}')

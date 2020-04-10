@@ -52,7 +52,7 @@ local _network_maps = {
 };
 
 {
-    version:: '0.0.1b',
+    levelid:: std.extVar('levelid'),
     debug:: std.extVar('debug'),
     net_ip:: std.extVar('net_ip'),
     task:: std.extVar('task'),
@@ -62,8 +62,7 @@ local _network_maps = {
     method:: if std.objectHas(_network_maps, $.network) then _network_maps[$.network].method else 'unkown',
     network_name:: if std.objectHas(_network_maps, $.network) then _network_maps[$.network].name else 'unkown',
     dataset_name:: std.extVar('dataset_name'),
-    notebook_url:: 'http://' + $.net_ip + ':8118/notebooks/cv/tasks/' +
-                   $.task + '_' + $.network + '_' + $.dataset_name + '.ipynb',
+    notebook_url:: 'http://' + $.net_ip + ':8118/notebooks/cv/tasks/',
     dataset_root:: '/datasets/cv/' + $.dataset_name + '/',
 
     get_value(obj, keystr, def)::
