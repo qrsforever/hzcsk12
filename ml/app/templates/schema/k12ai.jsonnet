@@ -4,9 +4,8 @@
 // @version 1.0
 // @date 2020-02-11 23:20
 
-
 {
-    version:: importstr 'version.txt',
+    version: importstr 'version.txt',
     type: 'page',
     objs: [
         {

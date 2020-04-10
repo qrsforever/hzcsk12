@@ -7,7 +7,7 @@
 local _Utils = import 'utils/helper.libsonnet';
 
 {
-    version:: importstr 'version.txt',
+    version: importstr 'version.txt',
     type: 'page',
     objs: [
         {

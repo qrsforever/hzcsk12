@@ -5,7 +5,7 @@
 // @date 2019-12-25 20:06
 
 {
-    version:: importstr 'version.txt',
+    version: importstr 'version.txt',
     type: 'page',
     objs: [
         {
