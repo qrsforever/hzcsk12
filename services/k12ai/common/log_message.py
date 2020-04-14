@@ -270,7 +270,7 @@ class MessageMetric(object):
         else:
             raise NotImplementedError(f'{fmt}')
 
-        obj = self._mmjson('image', category, title, payload, width=100, height=100)
+        obj = self._mmjson('image', category, title, payload, width, height)
         obj['data']['format'] = fmt
         self._metrics.append(obj)
         if g_debug and fmt == 'base64string':
@@ -326,11 +326,17 @@ class MessageMetric(object):
                 import skvideo.io
                 video = skvideo.io.vread(value)
                 video = torch.Tensor(video).to(torch.uint8).unsqueeze(0).permute((0, 1, 4, 2, 3))
-                self._writer.add_video(f'{category}/{title}', video, step, fps=60)  
+                self._writer.add_video(f'{category}/{title}', video, step, fps=60)
 
             video = io.open(value, 'r+b').read()
             payload = base64.b64encode(video).decode()
             obj = self._mmjson('video', category, title, payload, width=width, height=height)
             obj['data']['format'] = fmt
             self._metrics.append(obj)
+        return self
+
+    @handle_exception(MessageReport.logw)
+    def add_embedding(self, category, title, value, metadata=None, step=None, width=None, height=None):
+        if self._writer:
+            self._writer.add_embedding(tag=f'{category}_{title}', mat=value, metadata=metadata, global_step=step)
         return self

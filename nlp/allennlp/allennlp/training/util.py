@@ -23,7 +23,6 @@ from allennlp.models.archival import CONFIG_NAME
 from allennlp.nn import util as nn_util
 
 # QRS: add for report message
-from k12ai.common.log_message import MessageReport
 from k12ai.training.stat import RunnerStat
 
 logger = logging.getLogger(__name__)
@@ -446,15 +445,6 @@ def evaluate(
             )
             generator_tqdm.set_description(description, refresh=False)
 
-            # QRS: add
-            if batch_count % 10 == 0:
-                _metrics = {}
-                _metrics['evaluate_iters'] = batch_count
-                _metrics['evaluate_loss'] = metrics['loss']
-                _metrics['evaluate_accuracy'] = metrics['accuracy']
-                _metrics['evaluate_progress'] = float(batch_count) / generator_tqdm.total
-                MessageReport.metrics(_metrics)
-
         final_metrics = model.get_metrics(reset=True)
         if loss_count > 0:
             # Sanity check
@@ -466,12 +456,6 @@ def evaluate(
 
         # QRS: add
         RunnerStat.evaluate(final_metrics)
-        _metrics = {}
-        _metrics['evaluate_iters'] = batch_count
-        _metrics['evaluate_loss'] = final_metrics['loss']
-        _metrics['evaluate_accuracy'] = final_metrics['accuracy']
-        _metrics['evaluate_progress'] = 1.0
-        MessageReport.metrics(_metrics)
         return final_metrics
 
 
