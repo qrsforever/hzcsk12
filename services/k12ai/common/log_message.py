@@ -25,7 +25,7 @@ from PIL import Image
 from torch.cuda import (max_memory_allocated, memory_allocated, max_memory_cached, memory_cached)
 from resource import (getrusage, RUSAGE_SELF, RUSAGE_CHILDREN)
 from k12ai.common.rpc_message import k12ai_send_message
-from k12ai.common.util_misc import (image2bytes, handle_exception)
+from k12ai.common.util_misc import (image2bytes, handle_exception, dr_scatter3D, dr_scatter2D) # noqa
 
 import seaborn as sns
 from matplotlib import pyplot as plt
@@ -339,4 +339,5 @@ class MessageMetric(object):
     def add_embedding(self, category, title, value, metadata=None, step=None, width=None, height=None):
         if self._writer:
             self._writer.add_embedding(tag=f'{category}_{title}', mat=value, metadata=metadata, global_step=step)
-        return self
+        fig = dr_scatter2D(value, metadata)
+        return self.add_image(category, title, fig, 'base64string', step, width, height)

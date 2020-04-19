@@ -46,8 +46,8 @@ class RunnerStat(object):
             if isinstance(word_embedder, BasicTextFieldEmbedder):
                 if 'tokens' in word_embedder._token_embedders.keys():
                     token_embedder = word_embedder._token_embedders['tokens']
-                    labels = [runner.model.vocab.get_token_from_index(x, namespace="tokens") for x in range(500)]
-                    mm.add_embedding('words', 'token_embedder', token_embedder.weight[:500], metadata=labels)
+                    labels = [runner.model.vocab.get_token_from_index(x, namespace="tokens") for x in range(2, 500)]
+                    mm.add_embedding('words', 'token_embedder', token_embedder.weight[2:500].cpu(), metadata=labels)
                     mm.send()
 
     @staticmethod

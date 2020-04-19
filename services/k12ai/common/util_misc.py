@@ -21,9 +21,12 @@ import PIL
 from collections import OrderedDict
 from torchvision import transforms
 
+import matplotlib.cm as cm
 from matplotlib import pyplot as plt
 from matplotlib.figure import Figure
 from mpl_toolkits.mplot3d import Axes3D # noqa
+from sklearn.manifold import TSNE
+from sklearn.decomposition import PCA
 
 
 def install_signal_handler(signum, handler):
@@ -149,4 +152,35 @@ def plot_regression3D(X, Y, Z0, Z1, zlabel=None):
     else:
         ax.set_zlabel('Z')
     plt.legend()
+    return fig
+
+
+def dr_scatter2D(data, labels):
+    if data.shape[1] > 50:
+        pca_50 = PCA(n_components=50)
+        data = pca_50.fit_transform(data)
+
+    tsne = TSNE(n_components=2, random_state=21).fit_transform(data)
+    fig = plt.figure(dpi=150)
+    ax = fig.add_subplot(111)
+
+    colors = cm.rainbow(np.linspace(0, 1, 1))
+
+    for i, (x, y) in enumerate(tsne):
+        ax.scatter(x, y, lw=0, s=40, alpha=0.5, c=colors, edgecolor='none')
+        ax.text(x, y, labels[i], fontsize=2)
+    return fig
+
+
+def dr_scatter3D(data, labels):
+    if data.shape[1] > 50:
+        pca_50 = PCA(n_components=50)
+        data = pca_50.fit_transform(data)
+
+    tsne = TSNE(n_components=3, random_state=21).fit_transform(data)
+    fig = plt.figure(dpi=150)
+    ax = Axes3D(fig)
+
+    colors = cm.rainbow(np.linspace(0, 1, 1))
+    ax.scatter(tsne[:, 0], tsne[:, 1], tsne[:, 2], c=colors, alpha=0.5)
     return fig
