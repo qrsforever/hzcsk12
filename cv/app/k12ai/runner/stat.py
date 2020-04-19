@@ -11,6 +11,10 @@ import sys
 import math
 import torch
 import torchvision # noqa
+from torchvision import transforms
+from PIL import Image
+
+from lib.runner.runner_helper import RunnerHelper
 
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import precision_recall_fscore_support
@@ -146,7 +150,42 @@ class ClsRunner(RunnerBase):
         self._mm.add_text('evaluate', 'precision', P)
         self._mm.add_text('evaluate', 'recall', R)
         self._mm.add_text('evaluate', 'fscore', F)
+        self._mm.send()
 
+        # Gradient
+        # mean = [0.485, 0.456, 0.406]
+        # std = [0.229, 0.224, 0.225]
+
+        image = Image.open(files[0]).convert('RGB')
+        transform = transforms.Compose([
+            transforms.ToTensor(),
+            # transforms.Normalize(mean, std),
+        ])
+        image_input = transform(image).unsqueeze(0)
+
+        def input_gradient_hook(grad):
+            self.gradient = grad
+
+        runner.cls_net.eval()
+        image_input.requires_grad = True
+        image_input.register_hook(input_gradient_hook)
+
+        data_dict = RunnerHelper.to_device(runner, {'img': image_input, 'label': torch.Tensor([y_true[0]])})
+        output = runner.cls_net(data_dict)[0]['out']
+        print(output)
+        runner.cls_net.zero_grad()
+        onehot = torch.FloatTensor(1, output.size()[-1]).zero_()
+        onehot[0][y_true[0]] = 1
+        onehot = RunnerHelper.to_device(runner, onehot)
+        output.backward(gradient=onehot)
+
+        gradient = self.gradient
+        gradient -= gradient.min()
+        gradient /= gradient.max()
+
+        grid = torchvision.utils.make_grid(torch.cat((image_input, gradient)), padding=0)
+
+        self._mm.add_image('gradient', f'input_layer', grid)
         return self
 
 

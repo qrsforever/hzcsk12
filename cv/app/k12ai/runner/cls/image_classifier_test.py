@@ -43,10 +43,10 @@ class ImageClassifierTest(object):
 
     def test(self, test_dir, out_dir):
         # don't need 'test_dir' and 'out_dir', only need test.json
+        targets_list = []
+        predicted_list = []
+        path_list = []
         with torch.no_grad():
-            targets_list = []
-            predicted_list = []
-            path_list = []
             for j, data_dict in enumerate(self.val_loader):
                 data_dict = RunnerHelper.to_device(self, data_dict)
                 out = self.cls_net(data_dict)
@@ -55,12 +55,6 @@ class ImageClassifierTest(object):
                 targets_list.append(label_dict['out'].cpu())
                 predicted_list.append(out_dict['out'].max(1)[1].cpu())
                 path_list.extend(data_dict['path'])
-
-            targets, predicted = torch.cat(targets_list), torch.cat(predicted_list)
-            print(confusion_matrix(targets, predicted))
-            print(precision_recall_fscore_support(targets, predicted, average='macro'))
-
-            RunnerStat.evaluate(self, targets, predicted, path_list)
 
             top1 = RunnerHelper.dist_avg(self, self.running_score.get_top1_acc())
             top3 = RunnerHelper.dist_avg(self, self.running_score.get_top3_acc())
@@ -72,3 +66,8 @@ class ImageClassifierTest(object):
             Log.info('Top1 ACC = {}'.format(top1))
             Log.info('Top3 ACC = {}'.format(top3))
             Log.info('Top5 ACC = {}'.format(top5))
+
+        targets, predicted = torch.cat(targets_list), torch.cat(predicted_list)
+        print(confusion_matrix(targets, predicted))
+        print(precision_recall_fscore_support(targets, predicted, average='macro'))
+        RunnerStat.evaluate(self, targets, predicted, path_list)
