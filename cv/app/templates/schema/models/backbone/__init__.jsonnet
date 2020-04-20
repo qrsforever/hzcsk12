@@ -15,6 +15,7 @@ local _IsCustom = std.startsWith(_Utils.network, 'custom_');
             type: 'string-enum',
             objs: (import 'vgg.libsonnet').get() +
                   (import 'resnet.libsonnet').get() +
+                  (import 'alexnet.libsonnet').get() +
                   (if _IsCustom then [
                        { name: { en: 'custom', cn: self.en }, value: 'custom' },
                    ] else []),

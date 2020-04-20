@@ -208,8 +208,8 @@ def _rl_runner(config, phase, task, model, dataset):
     # Algo and Agent
     agent_state_dict = None
     optimizer_state_dict = None
+    snapshot_pth = os.path.join(context.LOG_DIR, f'run_{task}_{model}_{dataset}', 'params.pkl')
     if resume:
-        snapshot_pth = os.path.join(context.LOG_DIR, f'run_{task}_{model}_{dataset}', 'params.pkl')
         if os.path.exists(snapshot_pth):
             try:
                 snapshot = torch.load(snapshot_pth)
@@ -218,7 +218,8 @@ def _rl_runner(config, phase, task, model, dataset):
                     agent_state_dict = agent_state_dict['model']
                 optimizer_state_dict = snapshot['optimizer_state_dict']
             except Exception:
-                raise FileNotFoundError(f'k12ai: snapshot file is broken!')
+                agent_state_dict = None
+                optimizer_state_dict = None
 
     algo = Algo(OptimCls=Optim, optim_kwargs=config['optim'], **config['algo'],
             initial_optim_state_dict=optimizer_state_dict)
@@ -232,7 +233,7 @@ def _rl_runner(config, phase, task, model, dataset):
             Runner = MinibatchRlEval if eval_ else MinibatchRl
     elif phase == 'evaluate':
         if agent_state_dict is None or optimizer_state_dict is None:
-            raise FileNotFoundError(f'k12ai: snapshot file is not found!')
+            raise FileNotFoundError(f'k12ai:snapshot file [{snapshot_pth}] is not found!')
         Runner = MinibatchRlEvaluate
 
     return Runner(algo=algo, agent=agent, sampler=sampler, affinity=affinity, **config['runner'])

@@ -251,8 +251,8 @@ class MessageMetric(object):
             else:
                 NotImplementedError(type(y))
         # DEV
-        if title == 'progress' and self._writer is None:
-            return
+        if title == 'progress' and self._writer:
+            return self
         obj = self._mmjson('scalar', category, title, payload, width, height)
         self._metrics.append(obj)
         return self

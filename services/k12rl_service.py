@@ -79,7 +79,6 @@ class RLServiceRPC(ServiceRPC):
         with open(config_file, 'w') as fout:
             fout.write(config_str)
 
-        # command = 'python {}'.format('%s/app/k12ai/main.py' % self._workdir)
         command = 'rl.sh'
         if op.startswith('train'):
             command += ' --phase train --config_file /cache/config.json'

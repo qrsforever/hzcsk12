@@ -36,6 +36,7 @@ PRETRAINED_MODELS = {
     'resnet50': 'resnet50-19c8e357.pth',
     'resnet101': 'resnet101-5d3b4d8f.pth',
     'resnet152': 'resnet152-b121ed2d.pth',
+    'alexnet': 'alexnet-owt-4df8aa71.pth',
 }
 
 
