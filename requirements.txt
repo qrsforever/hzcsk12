@@ -19,6 +19,8 @@ gym[atari]
 gym[box2d]
 pydotplus
 
+pydot
+onnx
 moviepy
 graphviz
 sk-video

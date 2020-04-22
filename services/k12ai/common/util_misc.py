@@ -14,6 +14,9 @@ import pkgutil
 import sys
 import io
 import torch
+import math
+import numbers
+import random
 import signal
 import torchvision # noqa
 import numpy as np
@@ -73,6 +76,27 @@ def sw_list(val):
     if isinstance(val, np.ndarray):
         return val.tolist()
     return val
+
+
+def set_rng_seed(rng_seed):
+    torch.manual_seed(rng_seed)
+    random.seed(rng_seed)
+    try:
+        np.random.seed(rng_seed)
+    except ImportError:
+        pass
+
+
+def torch_isnan(x):
+    if isinstance(x, numbers.Number):
+        return x != x
+    return torch.isnan(x).any()
+
+
+def torch_isinf(x):
+    if isinstance(x, numbers.Number):
+        return x == math.inf or x == -math.inf
+    return (x == math.inf).any() or (x == -math.inf).any()
 
 
 def transform_denormalize(inputs, mean, std, inplace=False, div_value=1.0):

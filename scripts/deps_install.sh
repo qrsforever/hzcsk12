@@ -41,6 +41,7 @@ fi
 check=`python3 -c "import zerorpc" 2>&1`
 if [[ x$check != x ]]
 then
+    sudo apt install -y libffi-dev
     sudo pip3 install zerorpc
 else
     echo "zerorpc ok!"
@@ -105,7 +106,7 @@ fi
 check=`which xvfb-run`
 if [[ x$check == x ]]
 then
-    sudo apt install xvfb
+    sudo apt install -y xvfb
 else
     echo "xvfb ok"
 fi
