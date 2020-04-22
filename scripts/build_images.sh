@@ -143,7 +143,12 @@ __main()
         __build_image "k12nlp" $MAJOR_K12AI $MINOR_K12AI nlp/Dockerfile.nlp $force
         __build_image "k12rl"  $MAJOR_K12AI $MINOR_K12AI rl/Dockerfile.rl $force
     else
-        __build_image "k12$image" $MAJOR_K12AI $MINOR_K12AI $image/Dockerfile.$image $force
+        if [[ x$image == xai ]]
+        then
+            __build_image "k12ai"  $MAJOR_K12AI $MINOR_K12AI Dockerfile.ai $force
+        else
+            __build_image "k12$image" $MAJOR_K12AI $MINOR_K12AI $image/Dockerfile.$image $force
+        fi
     fi
 }
 

@@ -25,7 +25,12 @@ from PIL import Image
 from torch.cuda import (max_memory_allocated, memory_allocated, max_memory_cached, memory_cached)
 from resource import (getrusage, RUSAGE_SELF, RUSAGE_CHILDREN)
 from k12ai.common.rpc_message import k12ai_send_message
-from k12ai.common.util_misc import (image2bytes, handle_exception, dr_scatter3D, dr_scatter2D) # noqa
+from k12ai.common.util_misc import ( # noqa
+    image2bytes,
+    handle_exception,
+    dr_scatter3D,
+    dr_scatter2D,
+)
 
 import seaborn as sns
 from matplotlib import pyplot as plt
@@ -280,8 +285,11 @@ class MessageMetric(object):
         if self._writer:
             if fmt == 'url':
                 imgbytes = image2bytes(image, width, height)
+            tsave = Image.MAX_IMAGE_PIXELS
+            Image.MAX_IMAGE_PIXELS = None
             self._writer.add_image(f'{category}/{title}',
                     numpy.asarray(Image.open(io.BytesIO(imgbytes))), step, dataformats='HWC')
+            Image.MAX_IMAGE_PIXELS = tsave
         return self
 
     @handle_exception(MessageReport.logw)
@@ -311,9 +319,9 @@ class MessageMetric(object):
         return self
 
     @handle_exception(MessageReport.logw)
-    def add_graph(self, model, iimg=None):
+    def add_graph(self, category, title, model, inputs, width=None, height=None):
         if self._writer:
-            self._writer.add_graph(model, iimg)
+            self._writer.add_graph(model, inputs)
         return self
 
     @handle_exception(MessageReport.logw)

@@ -17,6 +17,7 @@ from data.cls.data_loader import DataLoader
 
 # QRS: add
 from k12ai.runner.stat import RunnerStat
+from model.cls.loss.loss import BASE_LOSS_DICT
 
 
 class ImageClassifier(object):
@@ -42,6 +43,8 @@ class ImageClassifier(object):
         self.train_loader = self.data_loader.get_trainloader()
         self.val_loader = self.data_loader.get_valloader()
         self.loss = self.cls_model_manager.get_cls_loss()
+        # QRS: add
+        self.valid_loss_dict = configer.get('loss.loss_weights', configer.get('loss.loss_type'))
 
     def _get_parameters(self):
         if self.solver_dict.get('optim.wdall', default=True):
@@ -86,6 +89,17 @@ class ImageClassifier(object):
 
         return params
 
+    # QRS: add
+    def get_loss_params(self, out, targets):
+        loss_dict = {}
+        if 'ce_loss' in self.valid_loss_dict:
+            loss_dict['ce_loss'] = dict(
+                params=[out, targets],
+                type=torch.cuda.LongTensor([BASE_LOSS_DICT['ce_loss']]),
+                weight=torch.cuda.FloatTensor([self.valid_loss_dict['ce_loss']])
+            )
+        return loss_dict
+
     def train(self):
         """
           Train function of every epoch during train phase.
@@ -98,8 +112,11 @@ class ImageClassifier(object):
             self.data_time.update(time.time() - start_time)
             data_dict = RunnerHelper.to_device(self, data_dict)
             # Forward pass.
-            out = self.cls_net(data_dict)
-            loss_dict = self.loss(out)
+
+            # QRS: fuck
+            out = self.cls_net(data_dict['img'])
+            loss_dict = self.loss(self.get_loss_params(out, data_dict['label']))
+
             # Compute the loss of the train batch & backward.
 
             loss = loss_dict['loss']
@@ -160,10 +177,11 @@ class ImageClassifier(object):
             for j, data_dict in enumerate(self.val_loader):
                 # Forward pass.
                 data_dict = RunnerHelper.to_device(self, data_dict)
-                out = self.cls_net(data_dict)
-                loss_dict = self.loss(out)
-                out_dict, label_dict, _ = RunnerHelper.gather(self, out)
-                self.running_score.update(out_dict, label_dict)
+                # QRS: mod
+                out = self.cls_net(data_dict['img'])
+                loss_dict = self.loss(self.get_loss_params(out, data_dict['label']))
+                # out_dict, label_dict, _ = RunnerHelper.gather(self, out)
+                self.running_score.update({'out': out}, {'out': data_dict['label']})
                 self.val_losses.update({key: loss.item() for key, loss in loss_dict.items()}, data_dict['img'].size(0))
 
                 # Update the vars of the val phase.

@@ -23,6 +23,8 @@ class BaseModel(nn.Module):
             self.net.classifier[6] = nn.Linear(4096, num_classes)
         elif backbone.startswith('resnet'):
             self.net.fc = nn.Linear(self.net.fc.in_features, num_classes)
+        elif backbone.startswith('alexnet'):
+            self.net.classifier[6] = nn.Linear(4096, num_classes)
         else:
             raise NotImplementedError(f'backbne:{backbone}')
 
@@ -34,24 +36,28 @@ class BaseModel(nn.Module):
     def load_state_dict(self, state_dict, strict=True):
         return self.net.load_state_dict(state_dict, strict)
 
-    def forward(self, data_dict):
-        out_dict = dict()
-        label_dict = dict()
-        loss_dict = dict()
-        # QRS: fix error
-        # in_img = ModuleHelper.preprocess(data_dict['img'], self.configer.get('data.normalize'))
-        # out = self.net(in_img)
-        # out_dict['out'] = out
-        # label_dict['out'] = data_dict['label'][:, 0]
-        out = self.net(data_dict['img'])
-        out_dict['out'] = out
-        label_dict['out'] = data_dict['label']
-        if 'ce_loss' in self.valid_loss_dict:
-            loss_dict['ce_loss'] = dict(
-                # params=[out, data_dict['label'][:, 0]],
-                params=[out, data_dict['label']],
-                type=torch.cuda.LongTensor([BASE_LOSS_DICT['ce_loss']]),
-                weight=torch.cuda.FloatTensor([self.valid_loss_dict['ce_loss']])
-            )
+    # QRS: mod
+    def forward(self, inputs):
+        return self.net(inputs)
 
-        return out_dict, label_dict, loss_dict
+    # def forward(self, data_dict):
+    #     out_dict = dict()
+    #     label_dict = dict()
+    #     loss_dict = dict()
+    #     # QRS: fix error
+    #     # in_img = ModuleHelper.preprocess(data_dict['img'], self.configer.get('data.normalize'))
+    #     # out = self.net(in_img)
+    #     # out_dict['out'] = out
+    #     # label_dict['out'] = data_dict['label'][:, 0]
+    #     out = self.net(data_dict['img'])
+    #     out_dict['out'] = out
+    #     label_dict['out'] = data_dict['label']
+    #     if 'ce_loss' in self.valid_loss_dict:
+    #         loss_dict['ce_loss'] = dict(
+    #             # params=[out, data_dict['label'][:, 0]],
+    #             params=[out, data_dict['label']],
+    #             type=torch.cuda.LongTensor([BASE_LOSS_DICT['ce_loss']]),
+    #             weight=torch.cuda.FloatTensor([self.valid_loss_dict['ce_loss']])
+    #         )
+
+    #     return out_dict, label_dict, loss_dict

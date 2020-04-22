@@ -72,6 +72,8 @@ def handle_exception(handler=None):
     return decorator
 
 
+## Tools
+
 def sw_list(val):
     if isinstance(val, np.ndarray):
         return val.tolist()
@@ -147,6 +149,8 @@ def make_meshgrid(x, y, h=.02):
     return xx, yy
 
 
+## Draw
+
 def plot_decision_boundaries(xx, yy, zz, X0, X1, Y, C0=None, C1=None):
     plt.clf()
     fig, ax = plt.subplots(dpi=150)
@@ -208,3 +212,32 @@ def dr_scatter3D(data, labels):
     colors = cm.rainbow(np.linspace(0, 1, 1))
     ax.scatter(tsne[:, 0], tsne[:, 1], tsne[:, 2], c=colors, alpha=0.5)
     return fig
+
+
+def generate_model_graph(module, inputs):
+    from onnx import ModelProto
+    from onnx.tools.net_drawer import GetPydotGraph
+    onnx_fp = io.BytesIO()
+    torch.onnx.export(
+        module,
+        inputs,
+        onnx_fp,
+        export_params=True,
+        verbose=False)
+    onnx_fp.seek(0)
+    model_proto = ModelProto()
+    model_proto.ParseFromString(onnx_fp.read())
+    pydot_graph = GetPydotGraph(
+        model_proto.graph,
+        name=model_proto.graph.name,
+        rankdir='TB'
+    )
+    # output: bytes
+    return io.BytesIO(pydot_graph.create_png()).getvalue()
+
+
+def generate_model_autograd(module, inputs):
+    from torchviz import make_dot
+    dot = make_dot(module(inputs), params=dict(module.named_parameters()))
+    # output: bytes
+    return dot.pipe(format='png')

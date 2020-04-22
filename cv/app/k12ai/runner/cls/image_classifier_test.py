@@ -46,15 +46,18 @@ class ImageClassifierTest(object):
         targets_list = []
         predicted_list = []
         path_list = []
+        self.cls_net.eval() # keep BN and Dropout
         with torch.no_grad():
             for j, data_dict in enumerate(self.val_loader):
                 data_dict = RunnerHelper.to_device(self, data_dict)
-                out = self.cls_net(data_dict)
-                out_dict, label_dict, loss_dict = RunnerHelper.gather(self, out)
-                self.running_score.update(out_dict, label_dict)
-                targets_list.append(label_dict['out'].cpu())
-                predicted_list.append(out_dict['out'].max(1)[1].cpu())
+                out = self.cls_net(data_dict['img'])
+                self.running_score.update({'out': out}, {'out': data_dict['label']})
+                targets_list.append(data_dict['label'].cpu())
+                predicted_list.append(out.max(1)[1].cpu())
                 path_list.extend(data_dict['path'])
+
+                if j == 0:
+                    self.first_image = data_dict['img'].detach()[0:1]
 
             top1 = RunnerHelper.dist_avg(self, self.running_score.get_top1_acc())
             top3 = RunnerHelper.dist_avg(self, self.running_score.get_top3_acc())

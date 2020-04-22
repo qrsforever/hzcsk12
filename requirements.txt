@@ -19,6 +19,7 @@ gym[atari]
 gym[box2d]
 pydotplus
 
+torchviz
 pydot
 onnx
 moviepy

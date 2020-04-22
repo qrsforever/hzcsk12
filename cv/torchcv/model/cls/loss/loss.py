@@ -29,8 +29,9 @@ class Loss(nn.Module):
                           SoftCELoss(self.configer), MixupCELoss(self.configer),
                           MixupSoftCELoss(self.configer)]
 
-    def forward(self, out_list):
-        loss_dict = out_list[-1]
+    # QRS: mod
+    def forward(self, loss_dict):
+        # loss_dict = out_list[-1]
         out_dict = dict()
         weight_dict = dict()
         for key, item in loss_dict.items():
