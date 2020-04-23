@@ -164,10 +164,10 @@ class ImageClassifier(object):
 
             # Check to val the current model.
             if self.runner_state['iters'] % self.solver_dict['test_interval'] == 0:
-                self.val()
+                self.val(False)
                 self.train_losses.reset()
 
-    def val(self):
+    def val(self, save=True):
         """
           Validation function during the train phase.
         """
@@ -189,8 +189,9 @@ class ImageClassifier(object):
                 start_time = time.time()
 
             # QRS:
+            if save:
+                RunnerHelper.save_net(self, self.cls_net)
             RunnerStat.validation(self)
-            # RunnerHelper.save_net(self, self.cls_net)
 
             # Print the log info & reset the states.
             Log.info('Test Time {batch_time.sum:.3f}s'.format(batch_time=self.batch_time))

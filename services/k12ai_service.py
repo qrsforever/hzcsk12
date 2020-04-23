@@ -209,6 +209,7 @@ def _framework_message():
             msgtype = request.args.get("type", default='unknown')
             g_redis.lpush('k12ai.{}'.format(msgtype), request.get_data().decode())
     except Exception as err:
+        print(err)
         Logger.info(err)
         return "-1"
     return "0"

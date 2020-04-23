@@ -156,10 +156,13 @@ class ClsRunner(RunnerBase):
         self._mm.send()
 
         # model graph
-        value = generate_model_graph(self._model.module, runner.first_image)
-        self._mm.add_image('model', 'forword', value).send()
-        value = generate_model_autograd(self._model.module, runner.first_image)
-        self._mm.add_image('model', 'autograd', value).send()
+        value = generate_model_autograd(self._model.module, runner.first_image, fmt='svg')
+        self._mm.add_image('model_graph', 'autograd', value, fmt='svg', width=400)
+        self._mm.send()
+
+        value = generate_model_graph(self._model.module, runner.first_image, fmt='svg')
+        self._mm.add_image('model_graph', 'forword', value, fmt='svg', width=400)
+        self._mm.send()
 
         # Gradient
         # mean = [0.485, 0.456, 0.406]

@@ -24,7 +24,7 @@ local _Utils = import '../../utils/helper.libsonnet';
                     default: self.objs[0].value,
                     readonly: true,
                 },
-                _Utils.bool('network.distributed', 'Distributed', def=true),
+                _Utils.bool('network.distributed', 'Distributed', def=false),
                 _Utils.bool('network.resume_continue', 'Resume Continue', def=false),
             ],
         },

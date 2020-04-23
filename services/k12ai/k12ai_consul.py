@@ -90,6 +90,10 @@ def k12ai_consul_message(sname, token, op, user, uuid, msgtype, message, clear=F
     data['datetime'] = time.strftime('%Y%m%d%H%M%S', time.localtime(now_time))
     data['data'] = message
 
+    # service
+    api = 'http://{}:{}/k12ai/private/message?type={}'.format(service['Address'], service['Port'], msgtype)
+    requests.post(api, json=data)
+
     if g_consul_debug:
         if clear:
             client.kv.delete('framework/%s/%s' % (user, uuid), recurse=True)
@@ -97,7 +101,3 @@ def k12ai_consul_message(sname, token, op, user, uuid, msgtype, message, clear=F
         client.kv.put(key, json.dumps(data, indent=2))
         if g_errors_store and msgtype == 'error' and message['code'] > 100100:
             client.kv.put('errors/%s' % data['datetime'], json.dumps(data, indent=2))
-
-    # service
-    api = 'http://{}:{}/k12ai/private/message?type={}'.format(service['Address'], service['Port'], msgtype)
-    requests.post(api, json=data)

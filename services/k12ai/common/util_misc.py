@@ -7,6 +7,7 @@
 # @version 1.0
 # @date 2020-03-04 17:28
 
+import os
 import importlib
 import inspect
 import traceback # noqa
@@ -59,7 +60,7 @@ def find_components(package, directory, base_class):
     return components
 
 
-def handle_exception(handler=None):
+def handle_exception(handler):
     def decorator(func):
         def wrapper(*args, **kwargs):
             try:
@@ -68,6 +69,7 @@ def handle_exception(handler=None):
                 if handler:
                     exc_type, exc_value, exc_tb = sys.exc_info()
                     handler(exc_type.__name__, str(exc_value), exc_tb)
+                return None
         return wrapper
     return decorator
 
@@ -118,7 +120,16 @@ def image2bytes(image, width=None, height=None):
             return fw.getvalue()
 
     if isinstance(image, str):
-        image = PIL.Image.open(image).convert("RGB")
+        if os.path.isfile(image):
+            image = PIL.Image.open(image).convert("RGB")
+        else:
+            # TODO: SVG
+            import cairosvg
+            with io.BytesIO() as fw:
+                cairosvg.svg2png(bytestring=image, write_to=fw,
+                        output_width=width, output_height=height)
+                return fw.getvalue()
+            
     elif isinstance(image, torch.Tensor):
         image = transforms.ToPILImage()(image)
     elif isinstance(image, np.ndarray):
@@ -214,7 +225,8 @@ def dr_scatter3D(data, labels):
     return fig
 
 
-def generate_model_graph(module, inputs):
+@handle_exception(handler=print)
+def generate_model_graph(module, inputs, fmt='svg'):
     from onnx import ModelProto
     from onnx.tools.net_drawer import GetPydotGraph
     onnx_fp = io.BytesIO()
@@ -223,6 +235,7 @@ def generate_model_graph(module, inputs):
         inputs,
         onnx_fp,
         export_params=True,
+        operator_export_type=torch.onnx.OperatorExportTypes.ONNX_ATEN_FALLBACK,
         verbose=False)
     onnx_fp.seek(0)
     model_proto = ModelProto()
@@ -230,14 +243,21 @@ def generate_model_graph(module, inputs):
     pydot_graph = GetPydotGraph(
         model_proto.graph,
         name=model_proto.graph.name,
-        rankdir='TB'
+        rankdir='TB' # 'LR'
     )
     # output: bytes
+    if fmt == 'svg':
+        svg = pydot_graph.create_svg().decode()
+        return ''.join(svg.split('\n')[6:])
     return io.BytesIO(pydot_graph.create_png()).getvalue()
 
 
-def generate_model_autograd(module, inputs):
+@handle_exception(handler=print)
+def generate_model_autograd(module, inputs, fmt='svg'):
     from torchviz import make_dot
     dot = make_dot(module(inputs), params=dict(module.named_parameters()))
     # output: bytes
+    if fmt == 'svg':
+        svg = dot.pipe(format='svg').decode()
+        return ''.join(svg.split('\n')[6:])
     return dot.pipe(format='png')

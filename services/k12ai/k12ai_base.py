@@ -81,7 +81,10 @@ class ServiceRPC(object):
                     errcode = self.container_on_finished(op, user, uuid, message)
             message = k12ai_error_message(errcode, expand=message)
 
-        # print(message)
+        if isinstance(message, dict):
+            if len(json.dumps(message)) > 500000: # max 512kb
+                errcode = 100011
+                message = k12ai_error_message(errcode)
         k12ai_consul_message(f'k12{self._sname}', token, op, user, uuid, msgtype, message, clear)
 
     def errtype2errcode(self, errtype, errtext):

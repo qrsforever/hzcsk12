@@ -170,12 +170,13 @@ if __name__ == "__main__":
              distributed_rank=configer.get('local_rank'))
 
     Log.info('BN Type is {}.'.format(configer.get('network', 'norm_type')))
-    Log.info('Config Dict: {}'.format(json.dumps(configer.to_dict(), indent=2)))
 
     try:
         # QRS: add
         k12ai_cv_init(configer)
         MessageReport.status(MessageReport.RUNNING)
+
+        Log.info('Config Dict: {}'.format(json.dumps(configer.to_dict(), indent=2)))
 
         runner_selector = RunnerSelector(configer)
         runner = None

@@ -19,6 +19,7 @@ ERRORS = {
         100005: {'en': 'program warning', 'cn': '程序运行警告'},
         
         100010: {'en': 'schema version is already lastest', 'cn': 'schema已是最新版本'},
+        100011: {'en': 'payload is too large', 'cn': '警告: 负载数据太大'},
 
 
         100101: {'en': 'api parameter key is not found', 'cn': 'API参数错误: 非法Key'},

@@ -28,7 +28,7 @@ from k12ai.common.rpc_message import k12ai_send_message
 from k12ai.common.util_misc import ( # noqa
     image2bytes,
     handle_exception,
-    dr_scatter3D,
+    dr_scatter3D, 
     dr_scatter2D,
 )
 
@@ -256,17 +256,25 @@ class MessageMetric(object):
             else:
                 NotImplementedError(type(y))
         # DEV
-        if title == 'progress' and self._writer:
-            return self
+        if title == 'progress' and self._writer is None:
+            return
         obj = self._mmjson('scalar', category, title, payload, width, height)
         self._metrics.append(obj)
         return self
 
     @handle_exception(MessageReport.logw)
     def add_image(self, category, title, image, fmt='base64string', step=None, width=None, height=None):
+        if image is None:
+            print('add_image value is None')
+            return
         if fmt == 'base64string':
             imgbytes = image2bytes(image, width, height)
             payload = base64.b64encode(imgbytes).decode()
+        elif fmt == 'svg':
+            payload = image
+            chklen = len(payload)
+            if chklen > 200000:
+                print("image length is too large: %d" % chklen)
         elif fmt == 'url':
             if image.startswith('/datasets'):
                 payload = '/'.join(image.split('/')[3:])
@@ -283,7 +291,7 @@ class MessageMetric(object):
                 fout.write(base64.b64decode(payload))
 
         if self._writer:
-            if fmt == 'url':
+            if fmt in ('url', 'svg'):
                 imgbytes = image2bytes(image, width, height)
             tsave = Image.MAX_IMAGE_PIXELS
             Image.MAX_IMAGE_PIXELS = None
@@ -294,9 +302,12 @@ class MessageMetric(object):
 
     @handle_exception(MessageReport.logw)
     def add_matrix(self, category, title, value, step=None, width=None, height=None):
+        if value is None:
+            print('add_maxtrix value is None')
+            return
         if self._writer:
             fig, ax = plt.subplots(figsize=(8, 6))
-            sns.heatmap(value, annot=True, fmt='d', linewidth=0.5,cmap='Blues', ax=ax, cbar=True)
+            sns.heatmap(value, annot=True, fmt='d', linewidth=0.5, cmap='Blues', ax=ax, cbar=True)
             self._writer.add_figure(f'{category}/{title}', fig, step, close=False)
         if isinstance(value, numpy.ndarray):
             value = value.tolist()
@@ -306,6 +317,9 @@ class MessageMetric(object):
 
     @handle_exception(MessageReport.logw)
     def add_text(self, category, title, value, step=None, width=None, height=None):
+        if value is None:
+            print('add_text value is None')
+            return
         obj = self._mmjson('text', category, title, value, width, height)
         self._metrics.append(obj)
         if self._writer:
@@ -314,18 +328,27 @@ class MessageMetric(object):
 
     @handle_exception(MessageReport.logw)
     def add_histogram(self, category, title, value, step=None, width=None, height=None):
+        if value is None:
+            print('add_histogram value is None')
+            return
         if self._writer:
             self._writer.add_histogram(f'{category}/{title}', value, step)
         return self
 
     @handle_exception(MessageReport.logw)
     def add_graph(self, category, title, model, inputs, width=None, height=None):
+        if model is None:
+            print('add_graph value is None')
+            return
         if self._writer:
             self._writer.add_graph(model, inputs)
         return self
 
     @handle_exception(MessageReport.logw)
     def add_video(self, category, title, value, fmt='base64string', step=None, width=None, height=None):
+        if value is None:
+            print('add_video value is None')
+            return
         if isinstance(value, str):
             if os.path.getsize(value) > 2048000:
                 return self

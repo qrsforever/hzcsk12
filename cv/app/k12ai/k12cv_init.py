@@ -82,6 +82,14 @@ def _check_custom_model(configer):
     return False
 
 
+def _verify_config(backbone, configer):
+    if 'alexnet' == backbone:
+        for phase in ('train', 'val', 'test'):
+            inputsize = configer.get(f'{phase}.data_transformer.input_size')
+            if inputsize[0] < 64 or inputsize[1] < 64:
+                configer.update(f'{phase}.data_transformer.input_size', [64, 64])
+
+
 def k12ai_cv_init(configer):
     Log.debug('k12ai_cv_init')
 
@@ -93,23 +101,29 @@ def k12ai_cv_init(configer):
     #     ck_dir = configer.get('network.checkpoints_dir')
     #     ck_name = configer.get('network.checkpoints_name')
     #     configer.update('network.resume', f'{ck_root}/{ck_dir}/{ck_name}_latest.pth')
+
+    # metric = configer.get('solver.lr.metric')
+    # if metric == 'epoch':
+    #     max_epoch = configer.get('solver.max_epoch')
+    #     Log.info('_k12ai.solver.lr.metric: epoch, max: %d' % max_epoch)
+    # else:
+    #     max_iters = configer.get('solver.max_iters')
+    #     Log.info('_k12ai.solver.lr.metric: iters, max: %d' % max_iters)
+
+    backbone = configer.get('network.backbone', default='unknow')
+
+    # Verify Backbone
+    _verify_config(backbone, configer)
+
     # Pretrained
     pretrained = configer.get('network.pretrained')
     configer.update('network.pretrained', None)
     if pretrained:
-        backbone = configer.get('network.backbone', default='unknow')
         pretrained_file = PRETRAINED_MODELS.get(backbone, 'nofile')
         if os.path.exists(f'/pretrained/{pretrained_file}'):
             configer.update('network.pretrained', f'/pretrained/{pretrained_file}')
 
+    # Custom
     custom = _check_custom_model(configer)
 
     _hook_runner_selector(configer, custom)
-
-    metric = configer.get('solver.lr.metric')
-    if metric == 'epoch':
-        max_epoch = configer.get('solver.max_epoch')
-        Log.info('_k12ai.solver.lr.metric: epoch, max: %d' % max_epoch)
-    else:
-        max_iters = configer.get('solver.max_iters')
-        Log.info('_k12ai.solver.lr.metric: iters, max: %d' % max_iters)
