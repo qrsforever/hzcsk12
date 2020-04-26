@@ -48,8 +48,8 @@
             random_crop: {
                 ratio: 1,
                 crop_size: [
-                    32,
-                    32,
+                    96,
+                    96,
                 ],
                 method: 'random',
                 allow_outside_center: false,
@@ -79,6 +79,18 @@
         },
     },
     test: {
+        batch_size: 32,
+        aug_trans: {
+            trans_seq: [],
+        },
+        data_transformer: {
+            size_mode: 'fix_size',
+            input_size: [
+                96,
+                96,
+            ],
+            align_method: 'scale_and_pad',
+        },
     },
     network: {
         model_name: 'base_model',

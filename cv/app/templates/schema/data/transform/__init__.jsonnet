@@ -230,7 +230,7 @@ local _augment_transform(jid, label) = {
                     ],
                 },
                 {
-                    name: { en: 'Test', cn: self.en },
+                    name: { en: 'Evaluate', cn: self.en },
                     type: '_ignore_',
                     objs: [
                         _data_transform('test.data_transformer', 'Test'),

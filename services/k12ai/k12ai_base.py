@@ -203,7 +203,7 @@ class ServiceRPC(object):
             return 100206, f'{self._jschema}'
         version_file = os.path.join(self._jschema, 'version.txt')
         with open(version_file, 'r') as fp:
-            curver = str(fp.readline()).strip()
+            curver = str(fp.readlines()[0]).strip()
             if curver == version:
                 return 100010, None
         jsonnet_file = os.path.join(self._jschema, 'k12ai.jsonnet')

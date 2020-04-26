@@ -57,7 +57,7 @@ class ImageClassifierTest(object):
                 path_list.extend(data_dict['path'])
 
                 if j == 0:
-                    self.first_image = data_dict['img'].detach()[0:1]
+                    self.images = data_dict['img'].detach()
 
             top1 = RunnerHelper.dist_avg(self, self.running_score.get_top1_acc())
             top3 = RunnerHelper.dist_avg(self, self.running_score.get_top3_acc())

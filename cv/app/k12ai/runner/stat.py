@@ -11,10 +11,11 @@ import sys
 import math
 import torch
 import torchvision # noqa
+import numpy as np
 
-# from torchvision import transforms
-# from PIL import Image
-# from lib.runner.runner_helper import RunnerHelper
+from torchvision import transforms
+from PIL import Image
+from lib.runner.runner_helper import RunnerHelper # noqa
 
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import precision_recall_fscore_support
@@ -25,10 +26,25 @@ from k12ai.common.util_misc import (
     generate_model_graph,
     generate_model_autograd)
 
+from k12ai.common.vis_helper import GradCAM
+
 MAX_REPORT_IMGS = 2
 NUM_MKGRID_IMGS = 16
 
 MAX_CONV2D_HIST = 10
+
+
+def _load_images(imglist, resize, mean, std):
+    raw_images = []
+    images = []
+    for path in imglist:
+        image = Image.open(path).convert('RGB')
+        image = np.array(image.resize(resize)).astype(np.uint8)
+        raw_images.append(image)
+        image = transforms.ToTensor()(image)
+        image = transforms.Normalize(mean=mean, std=std)(image)
+        images.append(image)
+    return images, raw_images
 
 
 class RunnerBase(object):
@@ -39,6 +55,7 @@ class RunnerBase(object):
         self._epoch = 0
         self._iters = 0
         self._max_epoch = runner.configer.get('solver.max_epoch')
+        self._backbone = runner.configer.get('network.backbone')
 
     def send(self):
         self._mm.send()
@@ -138,15 +155,17 @@ class ClsRunner(RunnerBase):
         super().handle_evaluate(runner)
 
         # confusion matrix
-        if runner.configer.get('data.num_classes') < 100:
-            cm = confusion_matrix(y_true, y_pred)
-            self._mm.add_matrix('evaluate', 'confusion_matrix', cm).send()
+        if runner.configer.get('metrics.confusion_matrix', default=False):
+            if runner.configer.get('data.num_classes') < 100:
+                cm = confusion_matrix(y_true, y_pred)
+                self._mm.add_matrix('confusion_matrix', 'matrix', cm).send()
 
         # images top10
-        for i, (true, pred, path) in enumerate(zip(y_true, y_pred, files)):
-            if i >= 10:
-                break
-            self._mm.add_image('evaluate', f'IMG-{i+1}_{true}_vs_{pred}', path).send()
+        if runner.configer.get('metrics.true_pred_images', default=False):
+            for i, (true, pred, path) in enumerate(zip(y_true, y_pred, files)):
+                if i >= 10:
+                    break
+                self._mm.add_image('predict_top10', f'IMG-{i+1}_{true}_vs_{pred}', path).send()
 
         # precision, recall, fscore
         P, R, F, _ = precision_recall_fscore_support(y_true, y_pred, average='macro')
@@ -156,13 +175,33 @@ class ClsRunner(RunnerBase):
         self._mm.send()
 
         # model graph
-        value = generate_model_autograd(self._model.module, runner.first_image, fmt='svg')
-        self._mm.add_image('model_graph', 'autograd', value, fmt='svg', width=400)
-        self._mm.send()
+        if runner.configer.get('metrics.model_autograd', default=False):
+            value = generate_model_autograd(self._model.module, runner.images[0:1], fmt='svg')
+            self._mm.add_image('model_graph', 'autograd', value, fmt='svg')
+            self._mm.send()
 
-        value = generate_model_graph(self._model.module, runner.first_image, fmt='svg')
-        self._mm.add_image('model_graph', 'forword', value, fmt='svg', width=400)
-        self._mm.send()
+        if runner.configer.get('metrics.model_graph', default=False):
+            value = generate_model_graph(self._model.module, runner.images[0:1], fmt='svg')
+            self._mm.add_image('model_graph', 'forword', value, fmt='svg')
+            self._mm.send()
+
+        # G-CAM
+        if runner.configer.get('metrics.gcam', default=False):
+            if self._backbone.startswith('resnet'):
+                target_layer = 'net.layer4'
+            elif self._backbone.startswith('vgg'):
+                target_layer = 'net.features'
+            else:
+                target_layer = None
+            if target_layer:
+                images, raw_images = _load_images(files[0:1], runner.images.shape[2:], **runner.configer.get('data', 'normalize'))
+                gcam = GradCAM(self._model.module, [target_layer])
+                probs, ids_sorted = gcam.forward(images)
+                gcam.backward(ids=ids_sorted[:, [0]])
+                regions = gcam.generate(target_layer)
+                image_numpy = gcam.mkimage(regions[0, 0], raw_images[0])
+                self._mm.add_image('gcam', 'gcam0', image_numpy, fmt='svg')
+                self._mm.send()
 
         # Gradient
         # mean = [0.485, 0.456, 0.406]
@@ -178,13 +217,11 @@ class ClsRunner(RunnerBase):
         # def input_gradient_hook(grad):
         #     self.gradient = grad
 
-        # runner.cls_net.eval()
         # image_input.requires_grad = True
         # image_input.register_hook(input_gradient_hook)
 
         # data_dict = RunnerHelper.to_device(runner, {'img': image_input, 'label': torch.Tensor([y_true[0]])})
-        # output = runner.cls_net(data_dict)[0]['out']
-        # print(output)
+        # output = runner.cls_net(data_dict['img'])
         # runner.cls_net.zero_grad()
         # onehot = torch.FloatTensor(1, output.size()[-1]).zero_()
         # onehot[0][y_true[0]] = 1

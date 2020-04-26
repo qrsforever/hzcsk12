@@ -64,6 +64,45 @@ local _Utils = import '../utils/helper.libsonnet';
                       },
                   ] else []
               )
+              + [
+                  {
+                      name: { en: 'HeavyMetrics', cn: self.en },
+                      type: '_ignore_',
+                      objs: [
+                          {
+                              name: { en: 'Phase', cn: self.en },
+                              type: 'navigation',
+                              objs: [
+                                  {
+                                      name: { en: 'Train', cn: self.en },
+                                      type: '_ignore_',
+                                      objs: [
+                                      ],
+                                  },
+                                  {
+                                      name: { en: 'Evaluate', cn: self.en },
+                                      type: '_ignore_',
+                                      objs: [
+                                          {
+                                              type: 'H',
+                                              objs: [
+                                                  _Utils.bool('metrics.confusion_matrix', 'Confusion Matrix', def=true),
+                                                  _Utils.bool('metrics.true_pred_images', 'True vs Pred', def=true),
+                                                  _Utils.bool('metrics.model_autograd', 'Model AutoGrad', def=false),
+                                                  _Utils.bool('metrics.model_graph', 'Model Graph', def=false),
+                                                  _Utils.bool('metrics.gcam',
+                                                              'G-CAM',
+                                                              def=false,
+                                                              tips='only for resnet and vgg now'),
+                                              ],
+                                          },
+                                      ],
+                                  },
+                              ],
+                          },
+                      ],
+                  },
+              ]
               // + (
               //     if std.startsWith(_Utils.network, 'custom_') then [
               //         {
