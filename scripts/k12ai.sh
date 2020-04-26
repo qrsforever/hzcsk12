@@ -9,6 +9,13 @@
 cur_fil=${BASH_SOURCE[0]}
 top_dir=`cd $(dirname $cur_fil)/..; pwd`
 
+export PYTHONPATH=/home/lidong/.local/lib/python3.6/site-packages:$PYTHONPATH
+
+# /etc/crontab
+# 01 *  * * *   root  cd / && /home/lidong/workspace/codes/hzcsai_com/hzcsk12/scripts/k12ai.sh
+# @reboot  root  cd / && /home/lidong/workspace/codes/hzcsai_com/hzcsk12/scripts/k12ai.sh
+
+
 __main()
 {
     result=$(mountpoint /data2 2>&1 | grep "is a mountpoint")
