@@ -11,9 +11,9 @@ local _Utils = import '../../utils/helper.libsonnet';
         {
             type: 'H',
             objs: [
-                _Utils.int('solver.display_iter', 'Display Iters', def=20, ddd=true),
-                _Utils.int('solver.save_iters', 'Save Iters', def=200, ddd=true),
-                _Utils.int('solver.test_interval', 'Test Iters', def=2000, ddd=true),
+                _Utils.int('solver.display_iter', 'Display Iters', def=60),
+                _Utils.int('solver.test_interval', 'Test Iters', def=300),
+                _Utils.int('solver.save_iters', 'Save Iters', def=600),
             ],
         },
         {

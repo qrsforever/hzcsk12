@@ -40,14 +40,14 @@ from torch.utils.tensorboard import SummaryWriter
 g_starttime = None
 g_memstat = {}
 
-g_runbynb = True if os.environ.get('K12AI_RUN_BYNB', None) else False
+g_devmode = True if int(os.environ.get('K12AI_DEV_MODE', '0')) else False
 g_tbwriter = None
 g_debug = True
 
 
 def _get_writer():
     global g_tbwriter
-    if g_runbynb:
+    if g_devmode:
         if not g_tbwriter:
             logdir = '/cache/tblogs'
             # if os.path.exists(logdir):
@@ -209,7 +209,7 @@ class MessageMetric(object):
             'category': category,
             'type': ty,
             'data': {
-                'title': title,
+                'title': f'{category}_{title}',
                 'payload': payload,
             }
         }

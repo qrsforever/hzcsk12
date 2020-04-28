@@ -129,7 +129,7 @@ def image2bytes(image, width=None, height=None):
                 cairosvg.svg2png(bytestring=image, write_to=fw,
                         output_width=width, output_height=height)
                 return fw.getvalue()
-            
+
     elif isinstance(image, torch.Tensor):
         image = transforms.ToPILImage()(image)
     elif isinstance(image, np.ndarray):

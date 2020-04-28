@@ -56,8 +56,6 @@ class MLServiceRPC(ServiceRPC):
 
     def make_container_kwargs(self, op, params):
         kwargs = {
-            'auto_remove': not self._debug,
-            'runtime': 'nvidia',
             'shm_size': '2g',
             'mem_limit': '4g'
         }

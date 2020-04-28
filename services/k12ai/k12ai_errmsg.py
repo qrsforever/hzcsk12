@@ -59,6 +59,7 @@ ERRORS = {
         100905: {'en': 'file is not found', 'cn': '常见错误: 文件不存在'},
         100906: {'en': 'CUDA out of memory', 'cn': '常见错误: CUDA内存溢出'},
         100907: {'en': 'Vanishing gradient, Exploding gradient', 'cn': '常见错误: 梯度消失,梯度爆炸'},
+        100908: {'en': 'docker image not found', 'cn': '常见错误: 任务镜像不存在'},
         100999: {'en': 'unkown error!', 'cn': '不可知错误'},
 
         999999: {'en': 'unknown error!', 'cn': '常见错误: 不可知错误'},

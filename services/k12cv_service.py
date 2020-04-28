@@ -101,7 +101,6 @@ class CVServiceRPC(ServiceRPC):
 
     def make_container_kwargs(self, op, params):
         kwargs = {}
-        kwargs['auto_remove'] = not self._debug
         kwargs['runtime'] = 'nvidia'
         kwargs['shm_size'] = '10g'
         kwargs['mem_limit'] = '10g'

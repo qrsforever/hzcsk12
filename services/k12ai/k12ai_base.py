@@ -68,7 +68,9 @@ class ServiceRPC(object):
                             errcode = 100907
                         elif errtype == 'RuntimeError':
                             if errtext.startswith('CUDA out of memory'):
-                                errcode = 100906
+                                errcode = 100908
+                        elif errtype == 'ImageNotFound':
+                            errtype = 10000
             else:
                 # Status
                 if 'starting' == message['status']:
@@ -147,9 +149,9 @@ class ServiceRPC(object):
         }
 
     def run_container(self, token, op, user, uuid, params, command):
-        run_by_nb = 0
-        if '_k12.notebook.execute' in params.keys():
-            run_by_nb = params['_k12.notebook.execute']
+        devmode = False
+        if '_k12.dev_mode' in params.keys():
+            devmode = params['_k12.dev_mode']
 
         labels = {
             'k12ai.service.name': f'k12{self._sname}',
@@ -167,7 +169,7 @@ class ServiceRPC(object):
         }
 
         environs = {
-            'K12AI_RUN_BYNB': run_by_nb,
+            'K12AI_DEV_MODE': 1 if devmode else 0,
             'K12AI_RPC_HOST': self._host,
             'K12AI_RPC_PORT': self._port,
             'K12AI_TOKEN': token,
@@ -180,6 +182,7 @@ class ServiceRPC(object):
         # W: don't set hostname
         kwargs = {
             'name': '%s-%s-%s' % (op, user, uuid),
+            'auto_remove': not devmode,
             'detach': True,
             'runtime': 'nvidia',
             'labels': labels,

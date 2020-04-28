@@ -59,8 +59,6 @@ class NLPServiceRPC(ServiceRPC):
 
     def make_container_kwargs(self, op, params):
         kwargs = {
-            'auto_remove': not self._debug,
-            'runtime': 'nvidia',
             'shm_size': '4g',
             'mem_limit': '8g'
         }

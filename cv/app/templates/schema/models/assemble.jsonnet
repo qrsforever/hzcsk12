@@ -66,7 +66,7 @@ local _Utils = import '../utils/helper.libsonnet';
               )
               + [
                   {
-                      name: { en: 'HeavyMetrics', cn: self.en },
+                      name: { en: 'Metrics', cn: self.en },
                       type: '_ignore_',
                       objs: [
                           {
@@ -77,6 +77,26 @@ local _Utils = import '../utils/helper.libsonnet';
                                       name: { en: 'Train', cn: self.en },
                                       type: '_ignore_',
                                       objs: [
+                                          {
+                                              type: 'H',
+                                              objs: [
+                                                  _Utils.bool('metrics.raw_vs_aug', 'Raw & Aug', def=false),
+                                                  _Utils.bool('metrics.train_speed', 'Speed', def=false),
+                                                  _Utils.bool('metrics.train_lr', 'Learn Rate', def=false),
+                                              ],
+                                          },
+                                      ],
+                                  },
+                                  {
+                                      name: { en: 'Val', cn: self.en },
+                                      type: '_ignore_',
+                                      objs: [
+                                          {
+                                              type: 'H',
+                                              objs: [
+                                                  _Utils.bool('metrics.val_speed', 'Speed', def=false),
+                                              ],
+                                          },
                                       ],
                                   },
                                   {
@@ -87,11 +107,30 @@ local _Utils = import '../utils/helper.libsonnet';
                                               type: 'H',
                                               objs: [
                                                   _Utils.bool('metrics.confusion_matrix', 'Confusion Matrix', def=true),
-                                                  _Utils.bool('metrics.true_pred_images', 'True vs Pred', def=true),
+                                                  _Utils.bool('metrics.true_pred_images', 'Top 10 Images', def=true),
+                                                  _Utils.bool('metrics.precision',
+                                                              'Precision',
+                                                              def=true,
+                                                              tips='tp / (tp + fp)'),
+                                                  _Utils.bool('metrics.recall',
+                                                              'Recall',
+                                                              def=true,
+                                                              tips='tp / (tp + fn)'),
+                                                  _Utils.bool('metrics.fscore',
+                                                              'Fscore',
+                                                              def=false,
+                                                              tips='harmonic mean of precision and recall'),
                                                   _Utils.bool('metrics.model_autograd', 'Model AutoGrad', def=false),
                                                   _Utils.bool('metrics.model_graph', 'Model Graph', def=false),
+                                                  _Utils.bool('metrics.vbp', 'Saliency Map', def=false),
+                                                  _Utils.bool('metrics.gbp', 'Guided BP', def=false),
+                                                  _Utils.bool('metrics.deconv', 'Deconvnet', def=false),
                                                   _Utils.bool('metrics.gcam',
                                                               'G-CAM',
+                                                              def=false,
+                                                              tips='only for resnet and vgg now'),
+                                                  _Utils.bool('metrics.ggcam',
+                                                              'Guided G-CAM',
                                                               def=false,
                                                               tips='only for resnet and vgg now'),
                                               ],

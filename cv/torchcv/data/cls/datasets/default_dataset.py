@@ -71,7 +71,7 @@ class DefaultDataset(data.Dataset):
 
                     img_list.append(img_path)
                     label_list.append(item['label'])
-
+        print(f'Dataset for {dataset} Count: {len(label_list)}')
         return img_list, label_list
 
 

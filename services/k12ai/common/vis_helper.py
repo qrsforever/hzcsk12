@@ -11,6 +11,7 @@
 import numpy as np
 import torch
 import matplotlib.cm as cm
+import torch.nn as nn
 
 from torch.nn import functional as F
 
@@ -48,6 +49,51 @@ class VisBase(object): # noqa
     def remove_hook(self):
         for handle in self.handlers:
             handle.remove()
+
+
+class VanillaBackpropagation(VisBase):
+    def forward(self, images):
+        if isinstance(images, (tuple, list)):
+            images = torch.stack(images).to(self.device)
+        self.images = images.requires_grad_()
+        return super(VanillaBackpropagation, self).forward(self.images)
+
+    def generate(self):
+        gradient = self.images.grad.clone()
+        self.images.grad.zero_()
+        return gradient
+
+    @staticmethod
+    def mkimage(gradient):
+        gradient = gradient.cpu().numpy().transpose(1, 2, 0)
+        gradient -= gradient.min()
+        gradient /= gradient.max()
+        gradient *= 255.0
+        return np.uint8(gradient)
+
+
+class GuidedBackpropagation(VanillaBackpropagation):
+    def __init__(self, model):
+        super(GuidedBackpropagation, self).__init__(model)
+
+        def backward_hook(module, grad_in, grad_out):
+            if isinstance(module, nn.ReLU):
+                return (F.relu(grad_in[0]),)
+
+        for name, module in self.model.named_modules():
+            self.handlers.append(module.register_backward_hook(backward_hook))
+
+
+class Deconvnet(VanillaBackpropagation):
+    def __init__(self, model):
+        super(Deconvnet, self).__init__(model)
+
+        def backward_hook(module, grad_in, grad_out):
+            if isinstance(module, nn.ReLU):
+                return (F.relu(grad_out[0]),)
+
+        for name, module in self.model.named_modules():
+            self.handlers.append(module.register_backward_hook(backward_hook))
 
 
 class GradCAM(VisBase):
@@ -95,11 +141,11 @@ class GradCAM(VisBase):
         gcam /= gcam.max(dim=1, keepdim=True)[0]
         gcam = gcam.view(B, C, H, W)
 
-        return gcam # regions
+        return gcam
 
     @staticmethod
     def mkimage(gcam_image, raw_image):
         gcam = gcam_image.cpu().numpy()
         cmap = cm.jet_r(gcam)[..., :3] * 255.0
         gcam = (cmap.astype(np.float) + raw_image.astype(np.float)) / 2
-        return gcam.astype(np.uint8) # Image.fromarray(gcam.astype(np.uint8))
+        return gcam.astype(np.uint8)
