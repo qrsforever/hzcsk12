@@ -21,15 +21,15 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import precision_recall_fscore_support
 from k12ai.data.datasets.flist import ImageListFileDataset
 from k12ai.common.log_message import MessageMetric, MessageReport
-from k12ai.common.util_misc import (
-    transform_denormalize,
-    generate_model_graph,
-    generate_model_autograd)
+from k12ai.common.util_misc import transform_denormalize
 
 from k12ai.common.vis_helper import (
     VanillaBackpropagation,
     GuidedBackpropagation,
-    Deconvnet, GradCAM)
+    Deconvnet, GradCAM,
+    FeatureMaps,
+    generate_model_graph,
+    generate_model_autograd)
 
 MAX_REPORT_IMGS = 2
 NUM_MKGRID_IMGS = 16
@@ -287,6 +287,19 @@ class ClsRunner(RunnerBase):
                 self._mm.add_image('cnn_heat_maps', 'guided_g-cam', image_numpy)
                 self._mm.send()
                 gcam.remove_hook()
+
+        # Feature Maps
+        if runner.configer.get('metrics.fm', default=False):
+            target_layers = []
+            for name, module in self._model.module.named_modules():
+                if isinstance(module, torch.nn.Conv2d):
+                    target_layers.append(name)
+            fm = FeatureMaps(self._model.module, target_layers[:5])
+            fm.forward(images)
+            image_bytes = fm.mkimage(fm.generate(rank='TB'), figsize=(12, 12))
+            self._mm.add_image('cnn_heat_maps', 'feature_maps', image_bytes)
+            self._mm.send()
+            fm.remove_hook()
 
         return self
 

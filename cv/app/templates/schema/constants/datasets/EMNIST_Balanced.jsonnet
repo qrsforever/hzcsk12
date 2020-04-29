@@ -82,7 +82,6 @@
     },
     network: {
         model_name: 'base_model',
-        backbone: 'vgg19',
         distributed: true,
         gather: true,
     },

@@ -19,7 +19,7 @@ local _IsCustom = std.startsWith(_Utils.network, 'custom_');
                   (if _IsCustom then [
                        { name: { en: 'custom', cn: self.en }, value: 'custom' },
                    ] else []),
-            default: if _IsCustom then 'custom' else _Utils.get_default_value(self._id_, 'vgg16'),
+            default: if _IsCustom then 'custom' else _Utils.get_default_value(self._id_, 'resnet50'),
             readonly: _IsCustom,
         } else if _Utils.method == 'single_shot_detector' then {
             _id_: 'network.backbone',

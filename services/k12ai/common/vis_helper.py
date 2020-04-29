@@ -8,15 +8,17 @@
 # @date 2020-04-26 16:13
 
 
+import io
 import numpy as np
 import torch
+import torchvision
 import matplotlib.cm as cm
 import torch.nn as nn
+import matplotlib.pyplot as plt # noqa
 
+from torchvision.utils import make_grid
 from torch.nn import functional as F
-
-AA = 100
-
+from .util_misc import handle_exception
 
 ### CNN Visualization
 
@@ -127,8 +129,11 @@ class GradCAM(VisBase):
             raise ValueError("Invalid layer name: {}".format(target_layer))
 
     def generate(self, target_layer):
-        fmaps = self._find(self.fmap_pool, target_layer)
-        grads = self._find(self.grad_pool, target_layer)
+        if target_layer in self.fmap_pool.keys():
+            fmaps = self.fmap_pool[target_layer]
+            grads = self.grad_pool[target_layer]
+        else:
+            raise ValueError("Invalid layer name: {}".format(target_layer))
         weights = F.adaptive_avg_pool2d(grads, 1)
 
         gcam = torch.mul(fmaps, weights).sum(dim=1, keepdim=True)
@@ -149,3 +154,94 @@ class GradCAM(VisBase):
         cmap = cm.jet_r(gcam)[..., :3] * 255.0
         gcam = (cmap.astype(np.float) + raw_image.astype(np.float)) / 2
         return gcam.astype(np.uint8)
+
+
+class FeatureMaps(VisBase):
+    def __init__(self, model, target_layers=None):
+        super(FeatureMaps, self).__init__(model)
+        self.fmap_pool = {}
+        self.target_layers = target_layers
+
+        def save_fmaps(key):
+            def forward_hook(module, input, output):
+                self.fmap_pool[key] = output.detach()
+
+            return forward_hook
+
+        for name, module in self.model.named_modules():
+            if self.target_layers is None or name in self.target_layers:
+                self.handlers.append(module.register_forward_hook(save_fmaps(name)))
+
+    def generate(self, nrow=10, resize=(64, 64), rank='TB'):
+        features = []
+        for name, activation in self.fmap_pool.items():
+            if activation.size(1) < nrow:
+                nrow = activation.size(1)
+            features.append(activation.squeeze().cpu())
+
+        transforms = torchvision.transforms.Compose([
+            torchvision.transforms.ToPILImage(),
+            torchvision.transforms.Resize(resize),
+            torchvision.transforms.ToTensor()
+        ])
+        
+        image_list = []
+        if rank == 'LR':
+            for idx in range(nrow):
+                for img in features:
+                    image_list.append(transforms(img[idx]))
+            nrow = len(features)
+        else:
+            for img in features:
+                for idx in range(nrow):
+                    image_list.append(transforms(img[idx]))
+        return make_grid(image_list, nrow=nrow, padding=4, normalize=True)
+
+    @staticmethod
+    def mkimage(tensor, figsize=(12, 12)):
+        plt.figure(figsize=figsize)
+        plt.xticks([])
+        plt.yticks([])
+        plt.imshow(tensor.permute(1, 2, 0))
+        with io.BytesIO() as fw:
+            plt.savefig(fw)
+            return fw.getvalue()
+        return None
+        
+
+@handle_exception(handler=print)
+def generate_model_graph(module, inputs, fmt='svg'):
+    from onnx import ModelProto
+    from onnx.tools.net_drawer import GetPydotGraph
+    onnx_fp = io.BytesIO()
+    torch.onnx.export(
+        module,
+        inputs,
+        onnx_fp,
+        export_params=True,
+        operator_export_type=torch.onnx.OperatorExportTypes.ONNX_ATEN_FALLBACK,
+        verbose=False)
+    onnx_fp.seek(0)
+    model_proto = ModelProto()
+    model_proto.ParseFromString(onnx_fp.read())
+    pydot_graph = GetPydotGraph(
+        model_proto.graph,
+        name=model_proto.graph.name,
+        rankdir='TB' # 'LR'
+    )
+    # output: bytes
+    if fmt == 'svg':
+        svg = pydot_graph.create_svg().decode()
+        return ''.join(svg.split('\n')[6:])
+    return io.BytesIO(pydot_graph.create_png()).getvalue()
+
+
+@handle_exception(handler=print)
+def generate_model_autograd(module, inputs, fmt='svg'):
+    from torchviz import make_dot
+    dot = make_dot(module(inputs), params=dict(module.named_parameters()))
+    # output: bytes
+    if fmt == 'svg':
+        svg = dot.pipe(format='svg').decode()
+        return ''.join(svg.split('\n')[6:])
+    return dot.pipe(format='png')
