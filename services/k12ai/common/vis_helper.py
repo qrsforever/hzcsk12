@@ -233,7 +233,7 @@ class FilterFeatureMaps(VisBase):
         plt.yticks([])
         plt.imshow(tensor.permute(1, 2, 0))
         with io.BytesIO() as fw:
-            plt.savefig(fw)
+            plt.savefig(fw, transparent=True)
             return fw.getvalue()
         return None
 
