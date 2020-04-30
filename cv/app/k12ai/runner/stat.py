@@ -27,7 +27,7 @@ from k12ai.common.vis_helper import (
     VanillaBackpropagation,
     GuidedBackpropagation,
     Deconvnet, GradCAM,
-    FeatureMaps,
+    FilterFeatureMaps,
     generate_model_graph,
     generate_model_autograd)
 
@@ -37,15 +37,18 @@ NUM_MKGRID_IMGS = 16
 MAX_CONV2D_HIST = 10
 
 
-def _load_images(imglist, resize, mean, std):
+def _load_images(imglist, resize=None, mean=None, std=None):
     raw_images = []
     images = []
     for path in imglist:
         image = Image.open(path).convert('RGB')
-        image = np.array(image.resize(resize)).astype(np.uint8)
-        raw_images.append(image)
+        if resize:
+            image = image.resize(resize)
+        raw_images.append(np.array(image).astype(np.uint8))
+
         image = transforms.ToTensor()(image)
-        image = transforms.Normalize(mean=mean, std=std)(image)
+        if mean and std:
+            image = transforms.Normalize(mean=mean, std=std)(image)
         images.append(image)
     return images, raw_images
 
@@ -206,7 +209,7 @@ class ClsRunner(RunnerBase):
             self._mm.add_image('model', 'forword', value, fmt='svg')
             self._mm.send()
 
-        images, raw_images = _load_images(files[0:1], runner.images.shape[2:], **runner.configer.get('data', 'normalize'))
+        images, raw_images = _load_images(files[0:1], runner.images.shape[2:])
 
         # Vanilla Backpropagation Saliency Map
         if runner.configer.get('metrics.vbp', default=False):
@@ -288,17 +291,24 @@ class ClsRunner(RunnerBase):
                 self._mm.send()
                 gcam.remove_hook()
 
-        # Feature Maps
-        if runner.configer.get('metrics.fm', default=False):
+        # Feature Maps, Filters
+        feature_maps = runner.configer.get('metrics.feature_maps', default=False)
+        filters_maps = runner.configer.get('metrics.filters_maps', default=False)
+        if feature_maps or filters_maps:
             target_layers = []
             for name, module in self._model.module.named_modules():
                 if isinstance(module, torch.nn.Conv2d):
                     target_layers.append(name)
-            fm = FeatureMaps(self._model.module, target_layers[:5])
+            fm = FilterFeatureMaps(self._model.module, target_layers[:5], with_filter=filters_maps)
             fm.forward(images)
-            image_bytes = fm.mkimage(fm.generate(rank='TB'), figsize=(12, 12))
+            image_grid, filter_grids = fm.generate(rank='TB')
+            image_bytes = fm.mkimage(image_grid)
             self._mm.add_image('cnn_heat_maps', 'feature_maps', image_bytes)
             self._mm.send()
+            for i, (image_bytes, layer_name, shape) in enumerate(filter_grids):
+                attr = 'x'.join(map(lambda x: str(x), list(shape)))
+                self._mm.add_image('cnn_heat_maps', f'filter_{layer_name}_{attr}', image_bytes)
+                self._mm.send()
             fm.remove_hook()
 
         return self

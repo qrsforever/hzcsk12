@@ -7,7 +7,7 @@
 # @version 1.0
 # @date 2020-04-26 16:13
 
-
+import os # noqa
 import io
 import numpy as np
 import torch
@@ -19,6 +19,7 @@ import matplotlib.pyplot as plt # noqa
 from torchvision.utils import make_grid
 from torch.nn import functional as F
 from .util_misc import handle_exception
+
 
 ### CNN Visualization
 
@@ -156,15 +157,19 @@ class GradCAM(VisBase):
         return gcam.astype(np.uint8)
 
 
-class FeatureMaps(VisBase):
-    def __init__(self, model, target_layers=None):
-        super(FeatureMaps, self).__init__(model)
+class FilterFeatureMaps(VisBase):
+    def __init__(self, model, target_layers=None, with_filter=False):
+        super(FilterFeatureMaps, self).__init__(model)
         self.fmap_pool = {}
+        self.kmap_pool = {}
         self.target_layers = target_layers
+        self.with_filter = with_filter
 
         def save_fmaps(key):
             def forward_hook(module, input, output):
                 self.fmap_pool[key] = output.detach()
+                if self.with_filter:
+                    self.kmap_pool[key] = module.weight.detach().clone()
 
             return forward_hook
 
@@ -172,33 +177,57 @@ class FeatureMaps(VisBase):
             if self.target_layers is None or name in self.target_layers:
                 self.handlers.append(module.register_forward_hook(save_fmaps(name)))
 
-    def generate(self, nrow=10, resize=(64, 64), rank='TB'):
-        features = []
-        for name, activation in self.fmap_pool.items():
-            if activation.size(1) < nrow:
-                nrow = activation.size(1)
-            features.append(activation.squeeze().cpu())
+    def generate(self, max_in_channels=10, max_out_channels=10, resize=(64, 64), rank='TB'):
+        features_of_layers = []
+        for name, fmap in self.fmap_pool.items():
+            if fmap.size(1) < max_out_channels: # B, C, H, W
+                max_out_channels = fmap.size(1) # out channels of the current layer
+            features_of_layers.append(fmap.squeeze().cpu())
 
         transforms = torchvision.transforms.Compose([
             torchvision.transforms.ToPILImage(),
             torchvision.transforms.Resize(resize),
             torchvision.transforms.ToTensor()
         ])
-        
+
         image_list = []
         if rank == 'LR':
-            for idx in range(nrow):
-                for img in features:
-                    image_list.append(transforms(img[idx]))
-            nrow = len(features)
+            for idx in range(max_out_channels):
+                for fmap in features_of_layers:
+                    image_list.append(transforms(fmap[idx]))
+            f_num = len(features_of_layers)
         else:
-            for img in features:
-                for idx in range(nrow):
-                    image_list.append(transforms(img[idx]))
-        return make_grid(image_list, nrow=nrow, padding=4, normalize=True)
+            for fmap in features_of_layers:
+                for idx in range(max_out_channels):
+                    image_list.append(transforms(fmap[idx]))
+            f_num = max_out_channels
+
+        grid_image = make_grid(image_list, nrow=f_num, padding=4, normalize=True, scale_each=True, pad_value=1)
+
+        if self.with_filter:
+            all_filters = []
+            for name, fmap in self.kmap_pool.items():
+                fmap = fmap.cpu()
+                filters_list = []
+                out_channels = min(fmap.size(0), max_out_channels)
+                in_channels = min(fmap.size(1), max_in_channels)
+                if rank == 'LR':
+                    for oc in range(out_channels):
+                        for ic in range(in_channels):
+                            filters_list.append(fmap[oc, ic, ...].unsqueeze(0))
+                    k_num = in_channels
+                else:
+                    for ic in range(in_channels):
+                        for oc in range(out_channels):
+                            filters_list.append(fmap[oc, ic, ...].unsqueeze(0))
+                    k_num = out_channels
+                all_filters.append((make_grid(filters_list, nrow=k_num, padding=1, normalize=True,
+                    scale_each=True, pad_value=0.7), name, fmap.shape))
+            return grid_image, all_filters
+        return grid_image, []
 
     @staticmethod
-    def mkimage(tensor, figsize=(12, 12)):
+    def mkimage(tensor, figsize=(16, 16)):
         plt.figure(figsize=figsize)
         plt.xticks([])
         plt.yticks([])
@@ -207,7 +236,7 @@ class FeatureMaps(VisBase):
             plt.savefig(fw)
             return fw.getvalue()
         return None
-        
+
 
 @handle_exception(handler=print)
 def generate_model_graph(module, inputs, fmt='svg'):
