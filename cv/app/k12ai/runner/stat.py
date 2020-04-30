@@ -305,9 +305,9 @@ class ClsRunner(RunnerBase):
             image_bytes = fm.mkimage(image_grid)
             self._mm.add_image('cnn_heat_maps', 'feature_maps', image_bytes)
             self._mm.send()
-            for i, (image_bytes, layer_name, shape) in enumerate(filter_grids):
+            for i, (image_grid, layer_name, shape) in enumerate(filter_grids):
                 attr = 'x'.join(map(lambda x: str(x), list(shape)))
-                self._mm.add_image('cnn_heat_maps', f'filter_{layer_name}_{attr}', image_bytes)
+                self._mm.add_image('cnn_heat_maps', f'filter_{layer_name}_{attr}', fm.mkimage(image_grid))
                 self._mm.send()
             fm.remove_hook()
 
