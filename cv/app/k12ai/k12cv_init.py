@@ -116,6 +116,9 @@ def k12ai_cv_init(configer):
     _verify_config(backbone, configer)
 
     # Pretrained
+    resume_continue = configer.get('network.resume_continue')
+    if resume_continue:
+        configer.update('network.pretrained', None)
     pretrained = configer.get('network.pretrained')
     configer.update('network.pretrained', None)
     if pretrained:

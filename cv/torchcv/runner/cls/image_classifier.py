@@ -45,6 +45,10 @@ class ImageClassifier(object):
         self.loss = self.cls_model_manager.get_cls_loss()
         # QRS: add
         self.valid_loss_dict = configer.get('loss.loss_weights', configer.get('loss.loss_type'))
+        if self.configer.get('network', 'resume_continue'):
+            if 'epoch' in self.runner_state and self.runner_state['epoch'] > 0:
+                self.runner_state['epoch'] -= 1
+                self.runner_state['iters'] = self.runner_state['epoch'] * len(self.train_loader)
 
     def _get_parameters(self):
         if self.solver_dict.get('optim.wdall', default=True):
@@ -105,10 +109,10 @@ class ImageClassifier(object):
           Train function of every epoch during train phase.
         """
         self.cls_net.train()
-        start_time = time.time()
         # Adjust the learning rate after every epoch.
         self.runner_state['epoch'] += 1
         for i, data_dict in enumerate(self.train_loader):
+            start_time = time.time()
             self.data_time.update(time.time() - start_time)
             data_dict = RunnerHelper.to_device(self, data_dict)
             # Forward pass.
@@ -136,7 +140,6 @@ class ImageClassifier(object):
 
             # Update the vars of the train phase.
             self.batch_time.update(time.time() - start_time)
-            start_time = time.time()
             self.runner_state['iters'] += 1
 
             # Print the log info & reset the states.
@@ -172,9 +175,9 @@ class ImageClassifier(object):
           Validation function during the train phase.
         """
         self.cls_net.eval()
-        start_time = time.time()
         with torch.no_grad():
             for j, data_dict in enumerate(self.val_loader):
+                start_time = time.time()
                 # Forward pass.
                 data_dict = RunnerHelper.to_device(self, data_dict)
                 # QRS: mod
@@ -186,7 +189,6 @@ class ImageClassifier(object):
 
                 # Update the vars of the val phase.
                 self.batch_time.update(time.time() - start_time)
-                start_time = time.time()
 
             # QRS:
             if save:

@@ -58,11 +58,13 @@ class RunnerBase(object):
         self._mm = MessageMetric()
         self._data_dir = data_dir
         self._report_images_num = 0
-        self._epoch = 0
-        self._iters = 0
+        self._cur_epoch = 0
+        self._cur_iters = 0
+        self._val_batch_time = 0
+        self._val_interval = runner.configer.get('solver.test_interval')
         self._max_epoch = runner.configer.get('solver.max_epoch')
+        self._max_iters = self._max_epoch * len(runner.train_loader) # ignore the last epoch
         self._backbone = runner.configer.get('network.backbone')
-
         self._m_raw_aug = runner.configer.get('metrics.raw_vs_aug', default=False)
         self._m_train_lr = runner.configer.get('metrics.train_lr', default=False)
         self._m_train_speed = runner.configer.get('metrics.train_speed', default=False)
@@ -77,8 +79,23 @@ class RunnerBase(object):
             sys.exit(0)
 
     def handle_train(self, runner, ddata):
-        self._iters = runner.runner_state['iters']
-        self._epoch = runner.runner_state['epoch']
+        self._cur_iters = runner.runner_state['iters']
+        self._cur_epoch = runner.runner_state['epoch']
+
+        batch_time = runner.batch_time.avg
+        if self._val_batch_time > 0:
+            left_iters = self._max_iters - self._cur_iters
+            left_time = batch_time * left_iters + self._val_batch_time * (left_iters // self._val_interval + 1)
+            days, hours, minutes = 0, 0, 1
+            if left_time > 86400:
+                days = int(left_time // 86400)
+                left_time = left_time % 86400
+            if left_time > 3600:
+                hours = int(left_time // 3600)
+                left_time = left_time % 3600
+            if left_time > 60:
+                minutes = int(left_time // 60)
+            self._mm.add_text('train', 'remain_time', f'{days} days {hours} hours {minutes} minutes').send()
 
         if self._m_raw_aug and self._report_images_num < MAX_REPORT_IMGS:
             self._report_images_num += 1
@@ -98,22 +115,25 @@ class RunnerBase(object):
 
         # learning rate
         if self._m_train_lr:
-            self._mm.add_scalar('train', 'learning_rate', x=self._iters, y=runner.optimizer.param_groups[0]['lr'])
+            self._mm.add_scalar('train', 'learning_rate', x=self._cur_iters, y=runner.optimizer.param_groups[0]['lr'])
 
         # batch time: speed
         if self._m_train_speed:
-            self._mm.add_scalar('train', 'speed', x=self._iters, y=1.0 / runner.batch_time.avg)
+            self._mm.add_scalar('train', 'speed', x=self._cur_iters, y=1.0 / batch_time)
 
     def handle_validation(self, runner):
-        self._iters = runner.runner_state['iters']
-        self._epoch = runner.runner_state['epoch']
+        self._cur_iters = runner.runner_state['iters']
+        self._cur_epoch = runner.runner_state['epoch']
+
+        batch_time = runner.batch_time.avg
+        self._val_batch_time = runner.batch_time.sum
 
         # batch time: speed
         if self._m_val_speed:
-            self._mm.add_scalar('val', 'speed', x=self._iters, y=1.0 / runner.batch_time.avg)
+            self._mm.add_scalar('val', 'speed', x=self._cur_iters, y=1.0 / batch_time)
 
         # progress
-        self._mm.add_scalar('train_val', 'progress', x=self._iters, y=round(100 * self._epoch / self._max_epoch, 2))
+        self._mm.add_scalar('train_val', 'progress', x=self._cur_iters, y=round(100 * self._cur_epoch / self._max_epoch, 2))
 
     def handle_evaluate(self, runner):
         pass
@@ -130,7 +150,7 @@ class ClsRunner(RunnerBase):
         # loss
         loss = list(runner.train_losses.avg.values())[0]
         self.check_loss(loss)
-        self._mm.add_scalar('train', 'loss', x=self._iters, y=loss)
+        self._mm.add_scalar('train', 'loss', x=self._cur_iters, y=loss)
 
         return self
 
@@ -141,7 +161,7 @@ class ClsRunner(RunnerBase):
             'train': list(runner.train_losses.avg.values())[0],
             'val': list(runner.val_losses.avg.values())[0]
         }
-        self._mm.add_scalar('train_val', 'loss', x=self._iters, y=y)
+        self._mm.add_scalar('train_val', 'loss', x=self._cur_iters, y=y)
 
         # acc
         y = {
@@ -149,20 +169,7 @@ class ClsRunner(RunnerBase):
             'top3': runner.running_score.get_top3_acc()['out'],
             'top5': runner.running_score.get_top5_acc()['out']
         }
-        self._mm.add_scalar('val', 'acc', x=self._iters, y=y)
-
-        # weight, bias, grad
-        if self._epoch != self._epoch and self._epoch < MAX_CONV2D_HIST:
-            for key, module in self._model.named_modules():
-                if not isinstance(module, torch.nn.Conv2d):
-                    continue
-                if module.weight is not None and module.weight.grad.data is not None:
-                    self._mm.add_histogram('train', 'conv2d_1_weight', module.weight.data, self._epoch)
-                    self._mm.add_histogram('train', 'conv2d_1_weight.grad', module.weight.grad.data, self._epoch)
-                if module.bias is not None and module.bias.grad.data is not None:
-                    self._mm.add_histogram('train', 'conv2d_1_bias', module.bias.data)
-                    self._mm.add_histogram('train', 'conv2d_1_bias.grad', module.bias.grad.data, self._epoch)
-                break
+        self._mm.add_scalar('val', 'acc', x=self._cur_iters, y=y)
 
         return self
 
@@ -325,7 +332,7 @@ class DetRunner(RunnerBase):
         # loss
         loss = runner.train_losses.val
         self.check_loss(loss)
-        self._mm.add_scalar('train', 'loss', x=self._iters, y=loss)
+        self._mm.add_scalar('train', 'loss', x=self._cur_iters, y=loss)
 
         return self
 
@@ -336,10 +343,10 @@ class DetRunner(RunnerBase):
             'train': runner.train_losses.avg,
             'val': runner.val_losses.avg
         }
-        self._mm.add_scalar('train_val', 'loss', x=self._iters, y=y)
+        self._mm.add_scalar('train_val', 'loss', x=self._cur_iters, y=y)
 
         # mAP
-        self._mm.add_scalar('val', 'mAP', x=self._iters, y=runner.det_running_score.get_mAP())
+        self._mm.add_scalar('val', 'mAP', x=self._cur_iters, y=runner.det_running_score.get_mAP())
 
         return self
 
