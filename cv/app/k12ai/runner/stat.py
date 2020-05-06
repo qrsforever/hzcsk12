@@ -63,7 +63,7 @@ class RunnerBase(object):
         self._val_batch_time = 0
         self._val_interval = runner.configer.get('solver.test_interval')
         self._max_epoch = runner.configer.get('solver.max_epoch')
-        self._max_iters = self._max_epoch * len(runner.train_loader) # ignore the last epoch
+        self._max_iters = None
         self._backbone = runner.configer.get('network.backbone')
         self._m_raw_aug = runner.configer.get('metrics.raw_vs_aug', default=False)
         self._m_train_lr = runner.configer.get('metrics.train_lr', default=False)
@@ -83,6 +83,8 @@ class RunnerBase(object):
         self._cur_epoch = runner.runner_state['epoch']
 
         batch_time = runner.batch_time.avg
+        if self._max_iters is None:
+            self._max_epoch * len(runner.train_loader) # ignore the last epoch
         if self._val_batch_time > 0:
             left_iters = self._max_iters - self._cur_iters
             left_time = batch_time * left_iters + self._val_batch_time * (left_iters // self._val_interval + 1)
