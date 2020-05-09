@@ -5,7 +5,7 @@
 // @date 2020-02-11 23:20
 
 {
-    version: importstr 'version.txt',
+    version: std.stripChars(importstr 'version.txt', '\n'),
     type: 'page',
     objs: [
         {
