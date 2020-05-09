@@ -110,3 +110,11 @@ then
 else
     echo "xvfb ok"
 fi
+
+check=`python3 -c "import minio" 2>&1`
+if [[ x$check != x ]]
+then
+    sudo pip3 install minio
+else
+    echo "redis ok"
+fi

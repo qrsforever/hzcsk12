@@ -9,6 +9,8 @@
 cur_fil=${BASH_SOURCE[0]}
 top_dir=`cd $(dirname $cur_fil)/..; pwd`
 
+
+export LC_ALL=C.UTF-8
 export PYTHONPATH=/home/lidong/.local/lib/python3.6/site-packages:$PYTHONPATH
 
 # /etc/crontab

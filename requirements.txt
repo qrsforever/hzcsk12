@@ -12,6 +12,7 @@ tensorboard
 onnx
 
 # tool
+minio
 GPUtil
 psutil
 pyhocon
