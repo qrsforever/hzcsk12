@@ -5,49 +5,37 @@
 // @date 2020-01-06 13:31
 
 local _network_maps = {
-    base_model: {
-        method: 'image_classifier',
-        name: { en: 'base', cn: self.en },
-    },
-    cls_model: {
-        method: 'image_classifier',
-        name: { en: 'cls', cn: self.en },
-    },
-    distill: {
-        method: 'image_classifier',
-        name: { en: 'distill', cn: self.en },
-    },
     custom_base: {
         method: 'image_classifier',
-        name: { en: 'base', cn: self.en },
+        backbone: 'custom',
     },
     vgg16_ssd300: {
         method: 'single_shot_detector',
-        name: { en: 'ssd300', cn: self.en },
+        backbone: 'vgg16',
     },
     vgg16_ssd512: {
         method: 'single_shot_detector',
-        name: { en: 'ssd512', cn: self.en },
+        backbone: 'vgg16',
     },
     custom_ssd300: {
         method: 'single_shot_detector',
-        name: { en: 'ssd300', cn: self.en },
+        backbone: 'custom',
     },
     custom_ssd512: {
         method: 'single_shot_detector',
-        name: { en: 'ssd512', cn: self.en },
+        backbone: 'custom',
     },
     lffdv2: {
         method: 'single_shot_detector',
-        name: { en: 'lffdv2', cn: self.en },
+        backbone: 'lffdv2',
     },
     faster_rcnn: {
         method: 'faster_rcnn',
-        name: { en: 'faster rcnn', cn: self.en },
+        backbone: 'faster rcnn',
     },
     darknet_yolov3: {
         method: 'yolov3',
-        name: { en: 'yolov3', cn: self.en },
+        backbone: 'yolov3',
     },
 };
 
@@ -58,11 +46,12 @@ local _network_maps = {
     task:: std.extVar('task'),
     num_cpu:: std.extVar('num_cpu'),
     num_gpu:: std.extVar('num_gpu'),
-    network:: std.extVar('network'),
-    method:: if std.objectHas(_network_maps, $.network) then _network_maps[$.network].method else 'unkown',
-    network_name:: if std.objectHas(_network_maps, $.network) then _network_maps[$.network].name else 'unkown',
+    network_:: std.extVar('network'),
+    network:: if std.objectHas(_network_maps, $.network_) then $.network_ else 'base_model',
+    method:: if std.objectHas(_network_maps, $.network_) then _network_maps[$.network_].method else 'image_classifier',
+    backbone:: if std.objectHas(_network_maps, $.network_) then _network_maps[$.network_].backbone else $.network_,
     dataset_name:: std.extVar('dataset_name'),
-    notebook_url:: 'http://' + $.net_ip + ':8118/notebooks/cv/tasks/',
+    // notebook_url:: 'http://' + $.net_ip + ':8118/notebooks/cv/tasks/',
     dataset_root:: '/datasets/cv/' + $.dataset_name + '/',
 
     get_value(obj, keystr, def)::

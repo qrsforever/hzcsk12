@@ -11,19 +11,7 @@ local _Utils = import '../../utils/helper.libsonnet';
         {
             type: 'H',
             objs: [
-                {
-                    _id_: 'network.model_name',
-                    name: { en: 'Network', cn: self.en },
-                    type: 'string-enum',
-                    objs: [
-                        {
-                            name: _Utils.network_name,
-                            value: _Utils.network,
-                        },
-                    ],
-                    default: self.objs[0].value,
-                    readonly: true,
-                },
+                _Utils.string('network.model_name', 'Network', def=_Utils.network, readonly=true),
                 _Utils.bool('network.distributed', 'Distributed', def=false),
                 _Utils.bool('network.resume_continue', 'Resume Continue', def=false),
             ],
@@ -31,7 +19,7 @@ local _Utils = import '../../utils/helper.libsonnet';
         {
             type: 'H',
             objs: [
-                (import '../backbone/__init__.jsonnet').get(),
+                _Utils.string('network.backbone', 'Backbone', def=_Utils.backbone, readonly=true),
                 _Utils.bool('network.pretrained', 'Pretrained', def=false),
                 _Utils.bool('network.resume_strict', 'Resume Strict', def=false),
             ],
