@@ -12,7 +12,7 @@ local _Utils = import '../../utils/helper.libsonnet';
             type: 'H',
             objs: [
                 _Utils.string('network.model_name', 'Network', def=_Utils.network, readonly=true),
-                _Utils.bool('network.distributed', 'Distributed', def=false),
+                _Utils.bool('network.distributed', 'Distributed', def=false, readonly=true),
                 _Utils.bool('network.resume_continue', 'Resume Continue', def=false),
             ],
         },

@@ -44,7 +44,7 @@ class NLPServiceRPC(ServiceRPC):
         self._pretrained_dir = '%s/pretrained/nlp' % dataroot
         self._nltk_data_dir = '%s/nltk_data' % dataroot
 
-    def errtype2errcode(self, errtype, errtext):
+    def on_crash(self, op, user, uuid, errtype, errtext):
         return 999999
 
     def make_container_volumes(self):
@@ -64,7 +64,8 @@ class NLPServiceRPC(ServiceRPC):
         }
         return kwargs
 
-    def make_container_command(self, op, cachedir, params):
+    def make_container_command(self, op, user, uuid, params):
+        cachedir = self.get_cache_dir(user, uuid)
         config_file = f'{cachedir}/config.json'
 
         if '_k12.data.dataset_name' in params.keys():

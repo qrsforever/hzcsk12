@@ -8,6 +8,7 @@
 # @date 2020-03-02 00:31
 
 import os
+import shutil
 import json, _jsonnet
 import docker
 from threading import Thread
@@ -52,33 +53,15 @@ class ServiceRPC(object):
                 if 'warning' == message['status']:
                     errcode = 100005
                 elif isinstance(errinfo, dict) and 'err_type' in errinfo and 'err_text' in errinfo:
-                    errtype = message['errinfo']['err_type']
-                    errtext = message['errinfo']['err_text']
-                    errcode = self.errtype2errcode(errtype, errtext)
-                    if errcode == 999999:
-                        if errtype == 'MemoryError':
-                            errcode = 100901
-                        elif errtype == 'NotImplementedError':
-                            errcode = 100902
-                        elif errtype == 'ConfigurationError':
-                            errcode = 100903
-                        elif errtype == 'FileNotFoundError':
-                            errcode = 100905
-                        elif errtype == 'LossNanError':
-                            errcode = 100907
-                        elif errtype == 'RuntimeError':
-                            if errtext.startswith('CUDA out of memory'):
-                                errcode = 100908
-                        elif errtype == 'ImageNotFound':
-                            errtype = 10000
+                    errcode = self.container_on_crash(op, user, uuid, message)
             else:
                 # Status
                 if 'starting' == message['status']:
-                    errcode = 100001
+                    errcode = self.container_on_start(op, user, uuid, message)
                 elif 'running' == message['status']:
                     errcode = 100002
                 elif 'stop' == message['status']:
-                    errcode = 100004
+                    errcode = self.container_on_stop(op, user, uuid, message)
                 elif 'finish' == message['status']:
                     errcode = self.container_on_finished(op, user, uuid, message)
             message = k12ai_error_message(errcode, expand=message)
@@ -89,11 +72,51 @@ class ServiceRPC(object):
                 message = k12ai_error_message(errcode)
         k12ai_consul_message(f'k12{self._sname}', token, op, user, uuid, msgtype, message, clear)
 
-    def errtype2errcode(self, errtype, errtext):
-        return 999999
+    def container_on_crash(self, op, user, uuid, message):
+        errtype = message['errinfo']['err_type']
+        errtext = message['errinfo']['err_text']
+        errcode = self.on_crash(op, user, uuid, errtype, errtext)
+        if errcode == 999999:
+            if errtype == 'MemoryError':
+                errcode = 100901
+            elif errtype == 'NotImplementedError':
+                errcode = 100902
+            elif errtype == 'ConfigurationError':
+                errcode = 100903
+            elif errtype == 'FileNotFoundError':
+                errcode = 100905
+            elif errtype == 'LossNanError':
+                errcode = 100907
+            elif errtype == 'RuntimeError':
+                if errtext.startswith('CUDA out of memory'):
+                    errcode = 100908
+            elif errtype == 'ImageNotFound':
+                errcode = 100905
+        return errcode
+
+    def container_on_start(self, op, user, uuid, message):
+        self.on_start(op, user, uuid, message)
+        return 100001
+
+    def container_on_stop(self, op, user, uuid, message):
+        self.on_stop(op, user, uuid, message)
+        return 100004
 
     def container_on_finished(self, op, user, uuid, message):
+        self.on_finished(op, user, uuid, message)
         return 100003
+
+    def on_crash(self, op, user, uuid, message):
+        raise NotImplementedError
+
+    def on_start(self, op, user, uuid, message):
+        pass
+
+    def on_stop(self, op, user, uuid, message):
+        pass
+
+    def on_finished(self, op, user, uuid, message):
+        pass
 
     def make_container_command(self, op, cachedir, params):
         raise NotImplementedError
@@ -136,10 +159,14 @@ class ServiceRPC(object):
             environs[key] = val
         return environs
 
-    def get_cache_dir(self, user, uuid):
+    def get_cache_dir(self, user, uuid, clean=False):
         usercache = f'{self._userdir}/{user}/{uuid}'
         if not os.path.exists(usercache):
             os.makedirs(usercache)
+        else:
+            if clean:
+                shutil.rmtree(usercache)
+                os.makedirs(usercache)
         return usercache
 
     def get_app_memstat(self, params):
@@ -200,6 +227,10 @@ class ServiceRPC(object):
                 'status': 'stop', 'errinfo': gen_exc_info()
             })
 
+    def stop_container(self, token, phase, user, uuid, container):
+        self.send_message(token, '%s.start' % phase, user, uuid, "error", {'status': 'stop', 'event': 'by manual way'})
+        container.kill()
+
     def schema(self, version, levelid, task, netw, dname):
         Logger.info(f'{task}, {netw}, {dname}')
         if not os.path.exists(self._jschema):
@@ -239,8 +270,13 @@ class ServiceRPC(object):
         if action == 'stop':
             if container is None or container.status != 'running':
                 return 100205, None
-            container.kill()
-            self.send_message(token, '%s.start' % phase, user, uuid, "error", {'status': 'stop', 'event': 'by manual way'})
+
+            Thread(target=lambda: self.stop_container(
+                token=token,
+                phase=phase,
+                user=user,
+                uuid=uuid,
+                container=container), daemon=True).start()
             return 100000, None
 
         if container:
@@ -255,11 +291,16 @@ class ServiceRPC(object):
         if not isinstance(params, dict):
             return 100231, 'parameters type is not dict'
 
-        code, command = self.make_container_command(op, self.get_cache_dir(user, uuid), params)
+        code, command = self.make_container_command(op, user, uuid, params)
         if code != 100000:
             return code, command
 
-        Thread(target=lambda: self.run_container(token=token, op=op, user=user, uuid=uuid, params=params, command=command),
-            daemon=True).start()
+        Thread(target=lambda: self.run_container(
+            token=token,
+            op=op,
+            user=user,
+            uuid=uuid,
+            params=params,
+            command=command), daemon=True).start()
 
         return 100000, None

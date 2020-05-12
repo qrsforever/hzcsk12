@@ -42,7 +42,7 @@ g_memstat = {}
 
 g_devmode = True if int(os.environ.get('K12AI_DEV_MODE', '0')) else False
 g_tbwriter = None
-g_debug = True
+g_debug = False
 
 
 def _get_writer():

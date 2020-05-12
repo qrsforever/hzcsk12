@@ -40,7 +40,7 @@ class RLServiceRPC(ServiceRPC):
     def __init__(self, host, port, image, dataroot):
         super().__init__('rl', host, port, image, dataroot, _DEBUG_)
 
-    def errtype2errcode(self, errtype, errtext):
+    def on_crash(self, op, user, uuid, errtype, errtext):
         errcode = 999999
         if errtype == 'ConfigMissingException':
             errcode = 100233
@@ -65,7 +65,8 @@ class RLServiceRPC(ServiceRPC):
         }
         return kwargs
 
-    def make_container_command(self, op, cachedir, params):
+    def make_container_command(self, op, user, uuid, params):
+        cachedir = self.get_cache_dir(user, uuid)
         config_file = f'{cachedir}/config.json'
 
         if '_k12.task' in params.keys():

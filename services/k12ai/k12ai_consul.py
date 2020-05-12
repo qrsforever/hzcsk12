@@ -98,6 +98,8 @@ def k12ai_consul_message(sname, token, op, user, uuid, msgtype, message, clear=F
         if clear:
             client.kv.delete('framework/%s/%s' % (user, uuid), recurse=True)
         key = 'framework/%s/%s/%s/%s/%s' % (user, uuid, op.split('.')[0], msgtype, data['datetime'])
-        client.kv.put(key, json.dumps(data, indent=2))
+        jsondata = json.dumps(data, indent=2)
+        if len(jsondata) < 512000:
+            client.kv.put(key, jsondata)
         if g_errors_store and msgtype == 'error' and message['code'] > 100100:
             client.kv.put('errors/%s' % data['datetime'], json.dumps(data, indent=2))

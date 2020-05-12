@@ -76,6 +76,10 @@ redis_addr=${REDIS_ADDR:-'116.85.56.62'}
 redis_port=10090
 redis_pswd='qY3Zh4xLPZNMkaz3'
 
+minio_server_url='s3-internal.didiyunapi.com'
+minio_access_key='AKDD002E38WR1J7RMPTGRIGNVCVINY'
+minio_secret_key='ASDDXYWs45ov7MNJbj5Wc2PM9gC0FSqCIkiyQkVC'
+
 consul_name=consul-dev
 consul_addr=$hostlanip
 consul_port=8500
@@ -106,6 +110,10 @@ export HOST_NAME=${hostname}
 export HOST_LANIP=${hostlanip}
 export HOST_NETIP=${hostnetip}
 export PYTHONPATH=${top_dir}/common:$PYTHONPATH
+
+export MINIO_SERVER_URL=$minio_server_url
+export MINIO_ACCESS_KEY=$minio_access_key
+export MINIO_SECRET_KEY=$minio_secret_key
 
 # global function
 __script_logout()

@@ -269,6 +269,9 @@ class Trainer(TrainerBase):
             should_log_learning_rate=should_log_learning_rate,
         )
 
+        # QRS disable tensorboard
+        self._tensorboard._train_log = self._tensorboard._validation_log = None
+
         self._log_batch_size_period = log_batch_size_period
 
         self._last_log = 0.0  # time of last logging
@@ -619,10 +622,11 @@ class Trainer(TrainerBase):
 
                 self._metric_tracker.best_epoch_metrics = val_metrics
 
-            if self._serialization_dir and self._master:
-                dump_metrics(
-                    os.path.join(self._serialization_dir, f"metrics_epoch_{epoch}.json"), metrics
-                )
+            # QRS too more files
+            # if self._serialization_dir and self._master:
+            #     dump_metrics(
+            #         os.path.join(self._serialization_dir, f"metrics_epoch_{epoch}.json"), metrics
+            #     )
 
             # The Scheduler API is agnostic to whether your schedule requires a validation metric -
             # if it doesn't, the validation metric passed here is ignored.

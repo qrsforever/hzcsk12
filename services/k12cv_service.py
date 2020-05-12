@@ -11,6 +11,7 @@ import os, time
 import argparse
 import json
 import zerorpc
+import shutil
 from threading import Thread
 from pyhocon import ConfigFactory
 from pyhocon import HOCONConverter
@@ -18,6 +19,9 @@ from pyhocon import HOCONConverter
 from k12ai.k12ai_base import ServiceRPC
 from k12ai.k12ai_consul import (k12ai_consul_init, k12ai_consul_register)
 from k12ai.k12ai_logger import (k12ai_set_loglevel, k12ai_set_logfile, Logger)
+from k12ai.k12ai_utils import ( # noqa
+        k12ai_oss_client, k12ai_object_remove,
+        k12ai_object_get, k12ai_object_put)
 
 _DEBUG_ = True if os.environ.get("K12AI_DEBUG") else False
 
@@ -42,9 +46,13 @@ class CVServiceRPC(ServiceRPC):
 
         self._pretrained_dir = '%s/pretrained/cv' % dataroot
 
-    def errtype2errcode(self, errtype, errtext):
-        if errtype == 'ModelFileNotFound':
-            errcode = 100208
+    def on_crash(self, op, user, uuid, errtype, errtext):
+        self.save_objects(user, uuid)
+
+        errcode = 999999
+        if errtype == 'FileNotFoundError':
+            if 'ckpts' in errtext:
+                errcode = 100208
         if errtype == 'ConfigMissingException':
             errcode = 100233
         elif errtype == 'InvalidModel':
@@ -59,11 +67,16 @@ class CVServiceRPC(ServiceRPC):
             errcode = 100306
         elif errtype == 'TensorSizeError':
             errcode = 100307
-        else:
-            errcode = 999999
         return errcode
 
-    def container_on_finished(self, op, user, uuid, message):
+    def on_stop(self, op, user, uuid, message):
+        self.save_objects(user, uuid)
+
+    def on_start(self, op, user, uuid, message):
+        self.load_objects(user, uuid)
+
+    def on_finished(self, op, user, uuid, message):
+        self.save_objects(user, uuid)
         if op.startswith('train') and isinstance(message, dict):
             environs = self.get_container_environs(user, uuid)
             if environs:
@@ -72,7 +85,30 @@ class CVServiceRPC(ServiceRPC):
                 message['environ']['model_name'] = environs['K12AI_MODEL_NAME']
                 message['environ']['batch_size'] = environs['K12AI_BATCH_SIZE']
                 message['environ']['input_size'] = environs['K12AI_INPUT_SIZE']
-        return 100003
+
+    def save_objects(self, user, uuid):
+        cachedir = self.get_cache_dir(user, uuid)
+        try:
+            mc = k12ai_oss_client()
+            k12ai_object_remove(mc, remote_path=cachedir)
+            result = k12ai_object_put(mc, local_path=f'{cachedir}/ckpts')
+            Logger.info(result)
+        except Exception as err:
+            Logger.info(str(err))
+
+        try:
+            shutil.rmtree(cachedir)
+            os.removedirs(os.path.dirname(cachedir))
+        except Exception:
+            pass
+
+    def load_objects(self, user, uuid):
+        cachedir = self.get_cache_dir(user, uuid)
+        try:
+            mc = k12ai_oss_client()
+            k12ai_object_get(mc, remote_path=cachedir)
+        except Exception as err:
+            Logger.info(str(err))
 
     def make_container_volumes(self):
         volumes = {}
@@ -128,7 +164,8 @@ class CVServiceRPC(ServiceRPC):
             'app_gpu_memory_usage_MB': gmem,
         }
 
-    def make_container_command(self, op, cachedir, params):
+    def make_container_command(self, op, user, uuid, params):
+        cachedir = self.get_cache_dir(user, uuid, clean=True)
         config_file = f'{cachedir}/config.json'
         if '_k12.data.dataset_name' in params.keys():
             config_tree = ConfigFactory.from_dict(params)
@@ -156,6 +193,7 @@ class CVServiceRPC(ServiceRPC):
                 if v == 'shuffle_trans_seq':
                     config_tree.put('test.aug_trans.shuffle_trans_seq', [k], append=True)
             # CheckPoints
+            # ckpts_name = uuid
             model_name = config_tree.get('network.model_name', default='unknow')
             backbone = config_tree.get('network.backbone', default='unknow')
             ckpts_name = '%s_%s_%s' % (model_name, backbone, _k12ai_tree.get('data.dataset_name'))
@@ -165,11 +203,7 @@ class CVServiceRPC(ServiceRPC):
             if op.startswith('evaluate'):
                 config_tree.put('network.resume_continue', True)
             if config_tree.get('network.resume_continue'):
-                resume_path = '%s/ckpts/%s_latest.pth' % (cachedir, ckpts_name)
-                if os.path.exists(resume_path):
-                    config_tree.put('network.resume', f'/cache/ckpts/{ckpts_name}_latest.pth')
-                else:
-                    return 100208, f'{ckpts_name}_latest.pth'
+                config_tree.put('network.resume', f'/cache/ckpts/{ckpts_name}_latest.pth')
             config_str = HOCONConverter.convert(config_tree, 'json')
         else:
             config_str = json.dumps(params)
@@ -177,10 +211,7 @@ class CVServiceRPC(ServiceRPC):
         with open(config_file, 'w') as fout:
             fout.write(config_str)
 
-        command = 'python -m torch.distributed.launch --nproc_per_node={} {}'.format(
-                self._gpu_count, '%s/torchcv/main.py' % self._workdir)
-
-        command += ' --config_file /cache/config.json'
+        command = 'python %s/torchcv/main.py --config_file /cache/config.json' % self._workdir
 
         if op.startswith('train'):
             command += ' --phase train'
