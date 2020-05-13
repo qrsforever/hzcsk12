@@ -282,7 +282,8 @@ def train_model(
             cache_prefix=cache_prefix,
             include_package=include_package,
         )
-        archive_model(serialization_dir, files_to_archive=params.files_to_archive)
+        # QRS remove
+        # archive_model(serialization_dir, files_to_archive=params.files_to_archive)
         return model
 
     # Otherwise, we are running multiple processes for training.
@@ -343,7 +344,8 @@ def train_model(
             ),
             nprocs=num_procs,
         )
-        archive_model(serialization_dir, files_to_archive=params.files_to_archive)
+        # QRS remove
+        # archive_model(serialization_dir, files_to_archive=params.files_to_archive)
         model = Model.load(params, serialization_dir)
         return model
 
@@ -497,6 +499,7 @@ def _train_worker(
                 "Training interrupted by the user. Attempting to create "
                 "a model archive using the current best epoch weights."
             )
+            # QRS remove
             archive_model(serialization_dir, files_to_archive=params.files_to_archive)
         raise
 

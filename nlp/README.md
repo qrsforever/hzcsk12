@@ -23,6 +23,7 @@ QRS
 | `allennlp/allennlp/commands/__init__.py` | 捕获异常 |
 | `allennlp/allennlp/training/util.py` | 收集metrics |
 | `allennlp/allennlp/training/trainer.py` | 收集metrics |
+| `allennlp/allennlp/commands/train.py` | 删除对权重打包的功能 |
 
 
 # TODO

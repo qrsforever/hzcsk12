@@ -10,8 +10,10 @@
 import time
 import socket
 import os
+import errno
 import json
 from minio import Minio
+import tarfile
 
 _LANIP = None
 _NETIP = None
@@ -108,6 +110,16 @@ def k12ai_utils_diff(conf1, conf2):
     return diff
 
 
+def mkdir_p(path):
+    try:
+        os.makedirs(path)
+    except OSError as exc:
+        if exc.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else:
+            raise
+
+
 def k12ai_oss_client(server_url=None, access_key=None, secret_key=None,
         region='gz', bucket='k12ai'):
     if server_url is None:
@@ -172,12 +184,26 @@ def k12ai_object_get(client, remote_path,
 
     remote_path = remote_path.lstrip(os.path.sep)
 
+    result = []
     for obj in client.list_objects(bucket_name, prefix=remote_path, recursive=True):
         if prefix_map:
             local_file = obj.object_name.replace(prefix_map[0], prefix_map[1], 1)
         else:
             local_file = '/' + obj.object_name
-        client.fget_object(obj.bucket_name, obj.object_name, local_file)
+        dfile = os.path.dirname(local_file)
+        if dfile:
+            mkdir_p(dfile)
+        btime = time.time()
+        data = client.get_object(bucket_name, obj.object_name)
+        with open(local_file, 'wb') as file_data: 
+            for d in data.stream():
+                file_data.write(d)
+        etime = time.time()
+        result.append({'etag': obj.etag,
+            'file': local_file,
+            'size': obj.size,
+            'time': [btime, etime]})
+    return result
 
 
 def k12ai_object_remove(client, remote_path, bucket_name='k12ai'):

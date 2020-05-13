@@ -83,7 +83,6 @@
     network: {
         model_name: 'base_model',
         backbone: 'vgg16',
-        distributed: true,
         gather: true,
     },
     solver: {

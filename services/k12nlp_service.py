@@ -44,8 +44,25 @@ class NLPServiceRPC(ServiceRPC):
         self._pretrained_dir = '%s/pretrained/nlp' % dataroot
         self._nltk_data_dir = '%s/nltk_data' % dataroot
 
-    def on_crash(self, op, user, uuid, errtype, errtext):
+    def errtype2errcode(self, op, user, uuid, errtype, errtext):
+        if errtype == 'FileNotFoundError':
+            if 'model file is not found' in errtext:
+                return 100208
+            elif 'test file is not found' in errtext:
+                return 100232
         return 999999
+
+    def post_processing(self, op, user, uuid, message):
+        # save objects to oss
+        output_data_dir = os.path.join(self.get_cache_dir(user, uuid), 'output')
+        train_data_dir = os.path.join(output_data_dir, 'ckpts')
+        evaluate_data_dir = os.path.join(output_data_dir, 'result')
+        if op.startswith('train') and os.path.exists(train_data_dir):
+            self.oss_upload(train_data_dir, clear=True)
+        elif op.startswith('evaluate') and os.path.exists(evaluate_data_dir):
+            self.oss_upload(evaluate_data_dir, clear=True)
+        else:
+            Logger.warning('not impl')
 
     def make_container_volumes(self):
         volumes = {
@@ -86,21 +103,21 @@ class NLPServiceRPC(ServiceRPC):
             flag = '--force'
             if resume:
                 config_conf = os.path.join(cachedir, 'config.json')
-                serial_conf = os.path.join(cachedir, 'output', 'config.json')
+                serial_conf = os.path.join(cachedir, 'output/ckpts', 'config.json')
                 if os.path.exists(serial_conf):
                     if not k12ai_utils_diff(config_conf, serial_conf):
                         flag = '--recover'
-            command = 'allennlp train /cache/config.json %s --serialization-dir /cache/output' % flag
+            command = 'allennlp train /cache/config.json %s --serialization-dir /cache/output/ckpts' % flag
         elif op.startswith('evaluate'):
-            model_file_outer = os.path.join(cachedir, 'output', 'best.th')
+            model_file_outer = os.path.join(cachedir, 'output/ckpts', 'best.th')
             if not os.path.exists(model_file_outer):
-                return 100208, 'not found model files'
+                raise FileNotFoundError('model file is not found!')
             if not test_file:
-                return 100232, f'{op}'
-            command = f'allennlp evaluate /cache/output {test_file}'
+                raise FileNotFoundError('test file is not found!')
+            command = f'allennlp evaluate /cache/output/ckpts {test_file}'
         else:
             raise NotImplementedError
-        return 100000, command
+        return command
 
 
 if __name__ == "__main__":

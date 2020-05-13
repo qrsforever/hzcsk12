@@ -20,7 +20,7 @@ from allennlp.data.iterators.data_iterator import DataIterator, TensorDict
 from allennlp.models.model import Model
 from allennlp.nn import util as nn_util
 from allennlp.training import util as training_util
-from allennlp.training.checkpointer import Checkpointer
+# from allennlp.training.checkpointer import Checkpointer  # QRS remove
 from allennlp.training.learning_rate_schedulers import LearningRateScheduler
 from allennlp.training.metric_tracker import MetricTracker
 from allennlp.training.momentum_schedulers import MomentumScheduler
@@ -31,6 +31,7 @@ from allennlp.training.trainer_base import TrainerBase
 
 # QRS add
 from k12ai.training.stat import RunnerStat
+from k12ai.training.checkpointer import Checkpointer
 
 logger = logging.getLogger(__name__)
 
@@ -262,15 +263,12 @@ class Trainer(TrainerBase):
 
         self._tensorboard = TensorboardWriter(
             get_batch_num_total=lambda: self._batch_num_total,
-            serialization_dir=serialization_dir,
+            serialization_dir=None,  # QRS disable tensorboard
             summary_interval=summary_interval,
             histogram_interval=histogram_interval,
             should_log_parameter_statistics=should_log_parameter_statistics,
             should_log_learning_rate=should_log_learning_rate,
         )
-
-        # QRS disable tensorboard
-        self._tensorboard._train_log = self._tensorboard._validation_log = None
 
         self._log_batch_size_period = log_batch_size_period
 

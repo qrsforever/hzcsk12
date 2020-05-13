@@ -40,7 +40,7 @@ class RLServiceRPC(ServiceRPC):
     def __init__(self, host, port, image, dataroot):
         super().__init__('rl', host, port, image, dataroot, _DEBUG_)
 
-    def on_crash(self, op, user, uuid, errtype, errtext):
+    def errtype2errcode(self, op, user, uuid, errtype, errtext):
         errcode = 999999
         if errtype == 'ConfigMissingException':
             errcode = 100233
@@ -78,14 +78,14 @@ class RLServiceRPC(ServiceRPC):
         with open(config_file, 'w') as fout:
             fout.write(config_str)
 
-        command = 'rl.sh'
+        command = 'main.sh'
         if op.startswith('train'):
             command += ' --phase train --config_file /cache/config.json'
         elif op.startswith('evaluate'):
             command += ' --phase evaluate --config_file /cache/config.json'
         else:
             raise NotImplementedError
-        return 100000, command
+        return command
 
 
 if __name__ == "__main__":

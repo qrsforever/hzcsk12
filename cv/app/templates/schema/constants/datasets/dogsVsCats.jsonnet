@@ -94,7 +94,6 @@
     },
     network: {
         model_name: 'base_model',
-        distributed: true,
         gather: true,
     },
     solver: {

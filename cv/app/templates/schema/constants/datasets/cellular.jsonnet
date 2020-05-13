@@ -65,7 +65,6 @@
     network: {
         model_name: 'base_model',
         backbone: 'resnet18',
-        distributed: true,
         gather: true,
     },
     solver: {

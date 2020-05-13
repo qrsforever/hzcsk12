@@ -118,9 +118,6 @@
         resume_strict: false,
         resume_val: false,
         custom_model: false,
-        checkpoints_root: '/cache',
-        checkpoints_name: 'base_model_vgg16_ssd300',
-        checkpoints_dir: 'ckpts',
     },
     solver: {
         lr: {

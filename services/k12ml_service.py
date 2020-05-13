@@ -41,7 +41,7 @@ class MLServiceRPC(ServiceRPC):
     def __init__(self, host, port, image, dataroot):
         super().__init__('ml', host, port, image, dataroot, _DEBUG_)
 
-    def on_crash(self, op, user, uuid, errtype, errtext):
+    def errtype2errcode(self, op, user, uuid, errtype, errtext):
         errcode = 999999
         if errtype == 'ConfigMissingException':
             errcode = 100233
@@ -84,7 +84,7 @@ class MLServiceRPC(ServiceRPC):
             command += ' --phase evaluate --config_file /cache/config.json'
         else:
             raise NotImplementedError
-        return 100000, command
+        return command
 
 
 if __name__ == "__main__":

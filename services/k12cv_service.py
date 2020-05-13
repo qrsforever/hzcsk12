@@ -11,7 +11,6 @@ import os, time
 import argparse
 import json
 import zerorpc
-import shutil
 from threading import Thread
 from pyhocon import ConfigFactory
 from pyhocon import HOCONConverter
@@ -19,9 +18,7 @@ from pyhocon import HOCONConverter
 from k12ai.k12ai_base import ServiceRPC
 from k12ai.k12ai_consul import (k12ai_consul_init, k12ai_consul_register)
 from k12ai.k12ai_logger import (k12ai_set_loglevel, k12ai_set_logfile, Logger)
-from k12ai.k12ai_utils import ( # noqa
-        k12ai_oss_client, k12ai_object_remove,
-        k12ai_object_get, k12ai_object_put)
+from k12ai.k12ai_utils import k12ai_timeit
 
 _DEBUG_ = True if os.environ.get("K12AI_DEBUG") else False
 
@@ -46,12 +43,10 @@ class CVServiceRPC(ServiceRPC):
 
         self._pretrained_dir = '%s/pretrained/cv' % dataroot
 
-    def on_crash(self, op, user, uuid, errtype, errtext):
-        self.save_objects(user, uuid)
-
+    def errtype2errcode(self, op, user, uuid, errtype, errtext):
         errcode = 999999
         if errtype == 'FileNotFoundError':
-            if 'ckpts' in errtext:
+            if 'model file is not found' in errtext:
                 errcode = 100208
         if errtype == 'ConfigMissingException':
             errcode = 100233
@@ -69,14 +64,21 @@ class CVServiceRPC(ServiceRPC):
             errcode = 100307
         return errcode
 
-    def on_stop(self, op, user, uuid, message):
-        self.save_objects(user, uuid)
+    @k12ai_timeit(handler=Logger.info)
+    def pre_processing(self, op, user, uuid, params):
+        pass
+        # params['data.data_dir']
+        # self.oss_download('/data/datasets/cv/custom_mnist.tar.gz',
+        #         prefix_map=['data/datasets/cv/', f'/data/users/{user}/{uuid}/'])
 
-    def on_start(self, op, user, uuid, message):
-        self.load_objects(user, uuid)
+        # Logger.info('11111')
+        # result = os.system(f'tar zxf /data/users/{user}/{uuid}/custom_mnist.tar.gz -C /data/users/{user}/{uuid}/')
+        # if result != 0:
+        #     Logger.error('xxx')
+        # Logger.info('22222')
 
-    def on_finished(self, op, user, uuid, message):
-        self.save_objects(user, uuid)
+    @k12ai_timeit(handler=Logger.info)
+    def post_processing(self, op, user, uuid, message):
         if op.startswith('train') and isinstance(message, dict):
             environs = self.get_container_environs(user, uuid)
             if environs:
@@ -86,29 +88,14 @@ class CVServiceRPC(ServiceRPC):
                 message['environ']['batch_size'] = environs['K12AI_BATCH_SIZE']
                 message['environ']['input_size'] = environs['K12AI_INPUT_SIZE']
 
-    def save_objects(self, user, uuid):
-        cachedir = self.get_cache_dir(user, uuid)
-        try:
-            mc = k12ai_oss_client()
-            k12ai_object_remove(mc, remote_path=cachedir)
-            result = k12ai_object_put(mc, local_path=f'{cachedir}/ckpts')
-            Logger.info(result)
-        except Exception as err:
-            Logger.info(str(err))
-
-        try:
-            shutil.rmtree(cachedir)
-            os.removedirs(os.path.dirname(cachedir))
-        except Exception:
-            pass
-
-    def load_objects(self, user, uuid):
-        cachedir = self.get_cache_dir(user, uuid)
-        try:
-            mc = k12ai_oss_client()
-            k12ai_object_get(mc, remote_path=cachedir)
-        except Exception as err:
-            Logger.info(str(err))
+        # save objects to oss
+        output_data_dir = os.path.join(self.get_cache_dir(user, uuid), 'output')
+        train_data_dir = os.path.join(output_data_dir, 'ckpts')
+        evaluate_data_dir = os.path.join(output_data_dir, 'result')
+        if op.startswith('train') and os.path.exists(train_data_dir) :
+            self.oss_upload(train_data_dir, clear=True)
+        elif op.startswith('evaluate') and os.path.exists(evaluate_data_dir):
+            self.oss_upload(evaluate_data_dir, clear=True)
 
     def make_container_volumes(self):
         volumes = {}
@@ -165,7 +152,7 @@ class CVServiceRPC(ServiceRPC):
         }
 
     def make_container_command(self, op, user, uuid, params):
-        cachedir = self.get_cache_dir(user, uuid, clean=True)
+        cachedir = self.get_cache_dir(user, uuid)
         config_file = f'{cachedir}/config.json'
         if '_k12.data.dataset_name' in params.keys():
             config_tree = ConfigFactory.from_dict(params)
@@ -193,17 +180,22 @@ class CVServiceRPC(ServiceRPC):
                 if v == 'shuffle_trans_seq':
                     config_tree.put('test.aug_trans.shuffle_trans_seq', [k], append=True)
             # CheckPoints
-            # ckpts_name = uuid
             model_name = config_tree.get('network.model_name', default='unknow')
             backbone = config_tree.get('network.backbone', default='unknow')
             ckpts_name = '%s_%s_%s' % (model_name, backbone, _k12ai_tree.get('data.dataset_name'))
-            config_tree.put('network.checkpoints_root', '/cache')
+            config_tree.put('network.checkpoints_root', '/cache/output')
             config_tree.put('network.checkpoints_name', ckpts_name)
             config_tree.put('network.checkpoints_dir', 'ckpts')
+            ckpts_file_exist = os.path.exists(f'{cachedir}/output/ckpts/{ckpts_name}_latest.pth')
             if op.startswith('evaluate'):
+                if not ckpts_file_exist:
+                    raise FileNotFoundError('model file is not found!')
                 config_tree.put('network.resume_continue', True)
+            else: # train
+                if not ckpts_file_exist:
+                    config_tree.put('network.resume_continue', False)
             if config_tree.get('network.resume_continue'):
-                config_tree.put('network.resume', f'/cache/ckpts/{ckpts_name}_latest.pth')
+                config_tree.put('network.resume', f'/cache/output/ckpts/{ckpts_name}_latest.pth')
             config_str = HOCONConverter.convert(config_tree, 'json')
         else:
             config_str = json.dumps(params)
@@ -216,10 +208,10 @@ class CVServiceRPC(ServiceRPC):
         if op.startswith('train'):
             command += ' --phase train'
         elif op.startswith('evaluate'):
-            command += ' --phase test --test_dir todo --out_dir /cache/output'
+            command += ' --phase test --test_dir todo --out_dir /cache/output/result'
         else:
             raise NotImplementedError
-        return 100000, command
+        return command
 
 
 if __name__ == "__main__":

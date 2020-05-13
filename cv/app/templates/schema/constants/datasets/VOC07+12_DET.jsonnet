@@ -112,15 +112,11 @@
         num_feature_list: [512, 1024, 512, 256, 256, 256],
         stride_list: [8, 16, 30, 60, 100, 300],
         head_index_list: [0, 1, 2, 3, 4, 5],
-        distributed: true,
         gather: true,
         resume_continue: false,
         resume_strict: false,
         resume_val: false,
         custom_model: false,
-        checkpoints_root: '/cache',
-        checkpoints_name: 'base_model_vgg16_ssd300',
-        checkpoints_dir: 'ckpts',
     },
     solver: {
         lr: {

@@ -11,7 +11,7 @@ local _Utils = import '../../utils/helper.libsonnet';
         {
             type: 'H',
             objs: [
-                _Utils.string('network.checkpoints_root', 'Checkpoint Root', def='/cache', ddd=true, readonly=true),
+                _Utils.string('network.checkpoints_root', 'Checkpoint Root', def='/cache/output', ddd=true, readonly=true),
                 _Utils.string('network.checkpoints_dir', 'Checkpoint Path', def='ckpts', ddd=true, readonly=true),
                 _Utils.string('_k12.network.pretrained_path', 'Pretrained Root', def='/pretrained', readonly=true),
             ] + if std.endsWith(_Utils.network, '_ssd300') then

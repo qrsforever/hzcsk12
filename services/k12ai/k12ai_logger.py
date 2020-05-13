@@ -83,7 +83,7 @@ class Logger(object):
     @staticmethod
     def warning(message):
         prefix = Logger.prefix()
-        Logger.logger.waring(f'{prefix} {message}')
+        Logger.logger.warning(f'{prefix} {message}')
 
     @staticmethod
     def error(message):
