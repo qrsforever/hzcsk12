@@ -13,7 +13,6 @@ import os
 import errno
 import json
 from minio import Minio
-import tarfile
 
 _LANIP = None
 _NETIP = None
@@ -121,7 +120,7 @@ def mkdir_p(path):
 
 
 def k12ai_oss_client(server_url=None, access_key=None, secret_key=None,
-        region='gz', bucket='k12ai'):
+        region='gz', bucket_name='k12ai'):
     if server_url is None:
         server_url = os.environ.get('MINIO_SERVER_URL')
     if access_key is None:
@@ -135,15 +134,18 @@ def k12ai_oss_client(server_url=None, access_key=None, secret_key=None,
         secret_key=secret_key,
         secure=True)
 
-    if not mc.bucket_exists(bucket):
-        mc.make_bucket(bucket, location=region)
+    if not mc.bucket_exists(bucket_name):
+        mc.make_bucket(bucket_name, location=region)
 
     return mc
 
 
 def k12ai_object_put(client, local_path,
-        bucket_name='k12ai', prefix_map=None,
+        bucket_name=None, prefix_map=None,
         content_type='application/octet-stream', metadata=None):
+
+    if bucket_name is None:
+        bucket_name = 'k12ai'
 
     result = []
 
@@ -165,6 +167,7 @@ def k12ai_object_put(client, local_path,
                     content_type=content_type, metadata=metadata)
             etime = time.time()
             result.append({'etag': etag,
+                'bucket': bucket_name,
                 'file': remote_file,
                 'size': file_size,
                 'time': [btime, etime]})
@@ -179,8 +182,10 @@ def k12ai_object_put(client, local_path,
     return result
 
 
-def k12ai_object_get(client, remote_path,
-        bucket_name='k12ai', prefix_map=None):
+def k12ai_object_get(client, remote_path, bucket_name=None, prefix_map=None):
+
+    if bucket_name is None:
+        bucket_name = 'k12ai'
 
     remote_path = remote_path.lstrip(os.path.sep)
 
@@ -206,6 +211,8 @@ def k12ai_object_get(client, remote_path,
     return result
 
 
-def k12ai_object_remove(client, remote_path, bucket_name='k12ai'):
+def k12ai_object_remove(client, remote_path, bucket_name=None):
+    if bucket_name is None:
+        bucket_name = 'k12ai'
     for obj in client.list_objects(bucket_name, prefix=remote_path, recursive=True):
         client.remove_object(obj.bucket_name, obj.object_name)

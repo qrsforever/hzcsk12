@@ -10,7 +10,6 @@
         input_mode: 'BGR',
         workers: 4,
         normalize: {
-            div_value: 255,
             mean: [
                 0.485,
                 0.456,

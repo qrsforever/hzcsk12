@@ -20,16 +20,16 @@ export PYTHONPATH=/home/lidong/.local/lib/python3.6/site-packages:$PYTHONPATH
 
 __main()
 {
-    result=$(mountpoint /data2 2>&1 | grep "is a mountpoint")
-    if [[ x$result == x ]]
-    then
-        if [[ `id -u` == 0 ]]
-        then
-            mount -t nfs dataserver:/data /data2
-        else
-            sudo mount -t nfs dataserver:/data /data2
-        fi
-    fi
+    # result=$(mountpoint /data2 2>&1 | grep "is a mountpoint")
+    # if [[ x$result == x ]]
+    # then
+    #     if [[ `id -u` == 0 ]]
+    #     then
+    #         mount -t nfs dataserver:/data /data2
+    #     else
+    #         sudo mount -t nfs dataserver:/data /data2
+    #     fi
+    # fi
     $top_dir/scripts/start_services.sh dev all start "bg"
 }
 

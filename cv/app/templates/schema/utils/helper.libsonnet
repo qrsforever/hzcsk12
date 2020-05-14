@@ -51,7 +51,7 @@ local _network_maps = {
     method:: if std.objectHas(_network_maps, $.network_) then _network_maps[$.network_].method else 'image_classifier',
     backbone:: if std.objectHas(_network_maps, $.network_) then _network_maps[$.network_].backbone else $.network_,
     dataset_name:: std.extVar('dataset_name'),
-    // notebook_url:: 'http://' + $.net_ip + ':8118/notebooks/cv/tasks/',
+    dataset_info:: std.extVar('dataset_info'),
     dataset_root:: '/datasets/cv/' + $.dataset_name + '/',
 
     get_value(obj, keystr, def)::
@@ -72,36 +72,36 @@ local _network_maps = {
 
     // get default from constants dataset configs
     get_default_value(keystr, def)::
-        if std.objectHas($.datasets, $.dataset_name)
+        if std.length($.dataset_constants) > 0
         then
-            $.get_value($.datasets[$.dataset_name], keystr, def)
+            $.get_value($.dataset_constants, keystr, def)
         else
             def,
 
     // default dataset, can set default value
-    datasets:: {
-        [if $.dataset_name == 'mnist' then 'mnist']: import '../constants/datasets/mnist.jsonnet',
-        [if $.dataset_name == 'cifar10' then 'cifar10']: import '../constants/datasets/cifar10.jsonnet',
-        [if $.dataset_name == 'Animals' then 'Animals']: import '../constants/datasets/Animals.jsonnet',
-        [if $.dataset_name == 'Boats' then 'Boats']: import '../constants/datasets/Boats.jsonnet',
-        [if $.dataset_name == 'Chars74K' then 'Chars74K']: import '../constants/datasets/Chars74K.jsonnet',
-        [if $.dataset_name == 'dogsVsCats' then 'dogsVsCats']: import '../constants/datasets/dogsVsCats.jsonnet',
-        [if $.dataset_name == 'Dogs' then 'Dogs']: import '../constants/datasets/Dogs.jsonnet',
-        [if $.dataset_name == 'EMNIST_Balanced' then 'EMNIST_Balanced']: import '../constants/datasets/EMNIST_Balanced.jsonnet',
-        [if $.dataset_name == 'EMNIST_Digits' then 'EMNIST_Digits']: import '../constants/datasets/EMNIST_Digits.jsonnet',
-        [if $.dataset_name == 'EMNIST_Letters' then 'EMNIST_Letters']: import '../constants/datasets/EMNIST_Letters.jsonnet',
-        [if $.dataset_name == 'EMNIST_MNIST' then 'EMNIST_MNIST']: import '../constants/datasets/EMNIST_MNIST.jsonnet',
-        [if $.dataset_name == 'FashionMNIST' then 'FashionMNIST']: import '../constants/datasets/FashionMNIST.jsonnet',
-        [if $.dataset_name == 'Fruits360' then 'Fruits360']: import '../constants/datasets/Fruits360.jsonnet',
-        [if $.dataset_name == 'KMNIST' then 'KMNIST']: import '../constants/datasets/KMNIST.jsonnet',
-        [if $.dataset_name == 'cactus' then 'cactus']: import '../constants/datasets/cactus.jsonnet',
-        [if $.dataset_name == 'kannada' then 'kannada']: import '../constants/datasets/kannada.jsonnet',
-        [if $.dataset_name == 'kannada_dig' then 'kannada_dig']: import '../constants/datasets/kannada_dig.jsonnet',
-        [if $.dataset_name == 'VOC07+12_DET' then 'VOC07+12_DET']: import '../constants/datasets/VOC07+12_DET.jsonnet',
-        [if $.dataset_name == 'cellular' then 'cellular']: import '../constants/datasets/cellular.jsonnet',
-        [if $.dataset_name == 'underwater' then 'underwater']: import '../constants/datasets/underwater.jsonnet',
-        [if $.dataset_name == 'aliproducts' then 'aliproducts']: import '../constants/datasets/aliproducts.jsonnet',
-    },
+    dataset_constants:: if std.length($.dataset_info) > 3 then std.parseJson($.dataset_info)
+    else if $.dataset_name == 'mnist' then import '../constants/datasets/mnist.jsonnet'
+    else if $.dataset_name == 'cifar10' then import '../constants/datasets/cifar10.jsonnet'
+    else if $.dataset_name == 'Animals' then import '../constants/datasets/Animals.jsonnet'
+    else if $.dataset_name == 'Boats' then import '../constants/datasets/Boats.jsonnet'
+    else if $.dataset_name == 'Chars74K' then import '../constants/datasets/Chars74K.jsonnet'
+    else if $.dataset_name == 'dogsVsCats' then import '../constants/datasets/dogsVsCats.jsonnet'
+    else if $.dataset_name == 'Dogs' then import '../constants/datasets/Dogs.jsonnet'
+    else if $.dataset_name == 'EMNIST_Balanced' then import '../constants/datasets/EMNIST_Balanced.jsonnet'
+    else if $.dataset_name == 'EMNIST_Digits' then import '../constants/datasets/EMNIST_Digits.jsonnet'
+    else if $.dataset_name == 'EMNIST_Letters' then import '../constants/datasets/EMNIST_Letters.jsonnet'
+    else if $.dataset_name == 'EMNIST_MNIST' then import '../constants/datasets/EMNIST_MNIST.jsonnet'
+    else if $.dataset_name == 'FashionMNIST' then import '../constants/datasets/FashionMNIST.jsonnet'
+    else if $.dataset_name == 'Fruits360' then import '../constants/datasets/Fruits360.jsonnet'
+    else if $.dataset_name == 'KMNIST' then import '../constants/datasets/KMNIST.jsonnet'
+    else if $.dataset_name == 'cactus' then import '../constants/datasets/cactus.jsonnet'
+    else if $.dataset_name == 'kannada' then import '../constants/datasets/kannada.jsonnet'
+    else if $.dataset_name == 'kannada_dig' then import '../constants/datasets/kannada_dig.jsonnet'
+    else if $.dataset_name == 'VOC07+12_DET' then import '../constants/datasets/VOC07+12_DET.jsonnet'
+    else if $.dataset_name == 'cellular' then import '../constants/datasets/cellular.jsonnet'
+    else if $.dataset_name == 'underwater' then import '../constants/datasets/underwater.jsonnet'
+    else if $.dataset_name == 'aliproducts' then import '../constants/datasets/aliproducts.jsonnet'
+    else {},
 
     // basic type node generator function
     bool(id, en, cn='', def=false, ddd=false, tips='', width=-1, height=-1, readonly=false):: {

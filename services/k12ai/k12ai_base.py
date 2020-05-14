@@ -92,8 +92,10 @@ class ServiceRPC(object):
             elif errtype == 'LossNanError':
                 errcode = 100907
             elif errtype == 'RuntimeError':
-                if errtext.startswith('CUDA out of memory'):
+                if 'CUDA out of memory' in errtext:
                     errcode = 100908
+                elif 'systemcall error' in errtext:
+                    errcode = 100909
             elif errtype == 'ImageNotFound':
                 errcode = 100905
         self.on_finished(op, user, uuid, message)
@@ -121,18 +123,22 @@ class ServiceRPC(object):
         self.post_processing(op, user, uuid, message)
         self.clearn_cache(user, uuid)
 
-    def oss_upload(self, filepath, prefix_map=None, clear=False):
+    def oss_upload(self, filepath, bucket_name=None, prefix_map=None, clear=False):
+        if not os.path.exists(filepath):
+            return
         try:
             if clear:
                 k12ai_object_remove(self._ossmc, remote_path=filepath)
-            result = k12ai_object_put(self._ossmc, local_path=filepath, prefix_map=prefix_map)
+            result = k12ai_object_put(self._ossmc, local_path=filepath,
+                    bucket_name=bucket_name, prefix_map=prefix_map)
             Logger.info(result)
         except Exception as err:
             Logger.error(str(err))
 
-    def oss_download(self, filepath, prefix_map=None):
+    def oss_download(self, filepath, bucket_name=None, prefix_map=None):
         try:
-            result = k12ai_object_get(self._ossmc, remote_path=filepath, prefix_map=prefix_map)
+            result = k12ai_object_get(self._ossmc, remote_path=filepath,
+                    bucket_name=bucket_name, prefix_map=prefix_map)
             Logger.info(result)
         except Exception as err:
             Logger.error(str(err))
@@ -199,67 +205,67 @@ class ServiceRPC(object):
         }
 
     def run_container(self, token, op, user, uuid, params):
-        self.on_starting(op, user, uuid, params)
-
-        devmode = False
-        if '_k12.dev_mode' in params.keys():
-            devmode = params['_k12.dev_mode']
-
-        labels = {
-            'k12ai.service.name': f'k12{self._sname}',
-            'k12ai.service.op': op,
-            'k12ai.service.user': user,
-            'k12ai.service.uuid': uuid,
-            **self.make_container_labels()
-        }
-
-        volumes = {
-            self._datadir: {'bind': f'/datasets', 'mode': 'rw'},
-            self._commlib: {'bind': f'{self._workdir}/app/k12ai/common', 'mode': 'rw'},
-            self.get_cache_dir(user, uuid): {'bind': f'/cache', 'mode': 'rw'},
-            **self.make_container_volumes()
-        }
-
-        environs = {
-            'K12AI_DEV_MODE': 1 if devmode else 0,
-            'K12AI_RPC_HOST': self._host,
-            'K12AI_RPC_PORT': self._port,
-            'K12AI_TOKEN': token,
-            'K12AI_OP': op,
-            'K12AI_USER': user,
-            'K12AI_UUID': uuid,
-            **self.make_container_environs(op, params)
-        }
-
-        # W: don't set hostname
-        kwargs = {
-            'name': '%s-%s-%s' % (op, user, uuid),
-            'auto_remove': not devmode,
-            'detach': True,
-            'runtime': 'nvidia',
-            'labels': labels,
-            'volumes': volumes,
-            'environment': environs,
-            **self.make_container_kwargs(op, params)
-        }
-
-        self.send_message(token, op, user, uuid, "error", {'status': 'starting'}, clear=True)
         try:
+            self.on_starting(op, user, uuid, params)
+
+            devmode = False
+            if '_k12.dev_mode' in params.keys():
+                devmode = params['_k12.dev_mode']
+
+            labels = {
+                'k12ai.service.name': f'k12{self._sname}',
+                'k12ai.service.op': op,
+                'k12ai.service.user': user,
+                'k12ai.service.uuid': uuid,
+                **self.make_container_labels()
+            }
+
+            volumes = {
+                self._datadir: {'bind': f'/datasets', 'mode': 'rw'},
+                self._commlib: {'bind': f'{self._workdir}/app/k12ai/common', 'mode': 'rw'},
+                self.get_cache_dir(user, uuid): {'bind': f'/cache', 'mode': 'rw'},
+                **self.make_container_volumes()
+            }
+
+            environs = {
+                'K12AI_DEV_MODE': 1 if devmode else 0,
+                'K12AI_RPC_HOST': self._host,
+                'K12AI_RPC_PORT': self._port,
+                'K12AI_TOKEN': token,
+                'K12AI_OP': op,
+                'K12AI_USER': user,
+                'K12AI_UUID': uuid,
+                **self.make_container_environs(op, params)
+            }
+
+            # W: don't set hostname
+            kwargs = {
+                'name': '%s-%s-%s' % (op, user, uuid),
+                'auto_remove': not devmode,
+                'detach': True,
+                'runtime': 'nvidia',
+                'labels': labels,
+                'volumes': volumes,
+                'environment': environs,
+                **self.make_container_kwargs(op, params)
+            }
+
+            self.send_message(token, op, user, uuid, "error", {'status': 'starting'}, clear=True)
             command = self.make_container_command(op, user, uuid, params)
             self._docker.containers.run(f'{self._image}', command, **kwargs)
             return
         except Exception as err:
             Logger.error(str(err))
             self.send_message(token, op, user, uuid, "error", {
-                'status': 'stop', 'errinfo': gen_exc_info()
+                'status': 'crash', 'errinfo': gen_exc_info()
             })
 
     def stop_container(self, token, phase, user, uuid, container):
         container.kill()
         self.send_message(token, '%s.start' % phase, user, uuid, "error", {'status': 'stop', 'event': 'by manual way'})
 
-    def schema(self, version, levelid, task, netw, dname):
-        Logger.info(f'{task}, {netw}, {dname}')
+    def schema(self, version, levelid, task, netw, dname, dinfo=None):
+        Logger.info(f'{task}, {netw}, {dname}, {dinfo}')
         if not os.path.exists(self._jschema):
             return 100206, f'{self._jschema}'
         version_file = os.path.join(self._jschema, 'version.txt')
@@ -271,10 +277,11 @@ class ServiceRPC(object):
         ext_vars, ext_codes = self.make_schema_kwargs()
         schema_json = _jsonnet.evaluate_file(jsonnet_file,
                 ext_vars={
+                    'net_ip': self._netip,
                     'task': task,
                     'network': netw,
                     'dataset_name': dname,
-                    'net_ip': self._netip,
+                    'dataset_info': json.dumps(dinfo) if dinfo else '{}',
                     **ext_vars},
                 ext_codes={
                     'levelid': str(levelid),

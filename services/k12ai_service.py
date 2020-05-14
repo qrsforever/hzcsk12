@@ -113,6 +113,7 @@ def _framework_schema():
         service_name = reqjson['service_name']
         service_task = reqjson['service_task']
         dataset_name = reqjson['dataset_name']
+        dataset_info = reqjson.get('dataset_info', "{}")
         network_type = reqjson['network_type']
         assert network_type != '', 'network_type'
     except json.decoder.JSONDecodeError:
@@ -128,7 +129,8 @@ def _framework_schema():
     if not agent:
         return json.dumps(_err_msg(100201, f'service name:{service_name}'))
     try:
-        code, msg = agent.schema(version, levelid, service_task, network_type, dataset_name)
+        code, msg = agent.schema(version, levelid, service_task, network_type,
+                dataset_name, json.loads(dataset_info))
         return json.dumps(_err_msg(code, msg))
     except Exception as err:
         print(f"{err}")

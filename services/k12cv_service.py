@@ -48,6 +48,8 @@ class CVServiceRPC(ServiceRPC):
         if errtype == 'FileNotFoundError':
             if 'model file is not found' in errtext:
                 errcode = 100208
+            elif 'dataset file is not found' in errtext:
+                errcode = 100212
         if errtype == 'ConfigMissingException':
             errcode = 100233
         elif errtype == 'InvalidModel':
@@ -66,19 +68,30 @@ class CVServiceRPC(ServiceRPC):
 
     @k12ai_timeit(handler=Logger.info)
     def pre_processing(self, op, user, uuid, params):
-        pass
-        # params['data.data_dir']
-        # self.oss_download('/data/datasets/cv/custom_mnist.tar.gz',
-        #         prefix_map=['data/datasets/cv/', f'/data/users/{user}/{uuid}/'])
+        cache_path = self.get_cache_dir(user, uuid)
+        # download custom dataset
+        bucket_name = 'data-platform'
+        dataset_path = params['data.data_dir']
+        if dataset_path.startswith(bucket_name):
+            dataset_path = dataset_path[len(bucket_name) + 1:]
+            self.oss_download(dataset_path,
+                    bucket_name=bucket_name,
+                    prefix_map=[os.path.dirname(dataset_path), cache_path])
+            dataset_zipfile = os.path.join(cache_path, os.path.basename(dataset_path))
+            if not os.path.exists(dataset_zipfile):
+                raise FileNotFoundError('dataset file is not found!')
+            result = os.system(f'unzip -qo {dataset_zipfile} -d {cache_path}')
+            if result != 0:
+                raise RuntimeError('systemcall error for unzip')
+            params['data.data_dir'] = os.path.join('/cache', params['_k12.data.dataset_name'])
 
-        # Logger.info('11111')
-        # result = os.system(f'tar zxf /data/users/{user}/{uuid}/custom_mnist.tar.gz -C /data/users/{user}/{uuid}/')
-        # if result != 0:
-        #     Logger.error('xxx')
-        # Logger.info('22222')
+        # download train data (weights)
+        self.oss_download(os.path.join(cache_path, 'output', 'ckpts'))
 
     @k12ai_timeit(handler=Logger.info)
     def post_processing(self, op, user, uuid, message):
+        cache_path = self.get_cache_dir(user, uuid)
+        # modify message: add task environ info
         if op.startswith('train') and isinstance(message, dict):
             environs = self.get_container_environs(user, uuid)
             if environs:
@@ -88,14 +101,11 @@ class CVServiceRPC(ServiceRPC):
                 message['environ']['batch_size'] = environs['K12AI_BATCH_SIZE']
                 message['environ']['input_size'] = environs['K12AI_INPUT_SIZE']
 
-        # save objects to oss
-        output_data_dir = os.path.join(self.get_cache_dir(user, uuid), 'output')
-        train_data_dir = os.path.join(output_data_dir, 'ckpts')
-        evaluate_data_dir = os.path.join(output_data_dir, 'result')
-        if op.startswith('train') and os.path.exists(train_data_dir) :
-            self.oss_upload(train_data_dir, clear=True)
-        elif op.startswith('evaluate') and os.path.exists(evaluate_data_dir):
-            self.oss_upload(evaluate_data_dir, clear=True)
+        # upload train or evaluate data 
+        if op.startswith('train'):
+            self.oss_upload(os.path.join(cache_path, 'output', 'ckpts'), clear=True)
+        elif op.startswith('evaluate'):
+            self.oss_upload(os.path.join(cache_path, 'output', 'result'), clear=True)
 
     def make_container_volumes(self):
         volumes = {}

@@ -31,8 +31,7 @@ local _Utils = import '../../utils/helper.libsonnet';
             type: 'H',
             objs: [
                 _Utils.floatarray('data.normalize.mean', 'Mean', def=[0.5, 0.5, 0.5], ddd=true, readonly=true),
-                _Utils.floatarray('data.normalize.std', 'Std', def=[1, 1, 1], ddd=true, readonly=true),
-                // _Utils.int('data.normalize.div_value', 'Div Value', def=255, ddd=true, readonly=true),
+                _Utils.floatarray('data.normalize.std', 'Std', def=[0.5, 0.5, 0.5], ddd=true, readonly=true),
             ],
         },
         _Utils.stringarray('_k12.detail.name_seq', 'Name Seq', def=[], ddd=true, width=600, readonly=true),

@@ -39,6 +39,7 @@ ERRORS = {
         100209: {'en': 'task evaluate has no config file', 'cn': '任务启动错误: 评估服务缺少配置文件'},
         100210: {'en': 'task starting too many', 'cn': '任务启动错误: 启动的任务太多'},
         100211: {'en': 'task model file is broken', 'cn': '任务启动错误: 模型文件已损坏'},
+        100212: {'en': 'dataset file is missing', 'cn': '任务启动错误: 缺少数据集文件'},
 
         100231: {'en': 'task parameter is invalid', 'cn': '任务启动错误: 非法服务参数'},
         100232: {'en': 'task parameter has no key: input file', 'cn': '任务启动错误: 评估服务缺少输入文件'},
@@ -60,6 +61,7 @@ ERRORS = {
         100906: {'en': 'CUDA out of memory', 'cn': '常见错误: CUDA内存溢出'},
         100907: {'en': 'Vanishing gradient, Exploding gradient', 'cn': '常见错误: 梯度消失,梯度爆炸'},
         100908: {'en': 'docker image not found', 'cn': '常见错误: 任务镜像不存在'},
+        100909: {'en': 'system command execute fail', 'cn': '常见错误: 系统命令执行错误'},
         100999: {'en': 'unkown error!', 'cn': '不可知错误'},
 
         999999: {'en': 'unknown error!', 'cn': '常见错误: 不可知错误'},
