@@ -204,7 +204,7 @@ class ServiceRPC(object):
             'app_gpu_memory_usage_MB': 6000,
         }
 
-    def run_container(self, token, op, user, uuid, params):
+    def start_container_worker(self, token, op, user, uuid, params):
         try:
             self.on_starting(op, user, uuid, params)
 
@@ -260,9 +260,16 @@ class ServiceRPC(object):
                 'status': 'crash', 'errinfo': gen_exc_info()
             })
 
-    def stop_container(self, token, phase, user, uuid, container):
-        container.kill()
-        self.send_message(token, '%s.start' % phase, user, uuid, "error", {'status': 'stop', 'event': 'by manual way'})
+    def stop_container_worker(self, token, op, user, uuid, container):
+        op = op.replace('stop', 'start')
+        try:
+            container.kill()
+            self.send_message(token, op, user, uuid, "error", {'status': 'stop', 'event': 'by manual way'})
+        except Exception as err:
+            Logger.error(str(err))
+            self.send_message(token, op, user, uuid, "error", {
+                'status': 'crash', 'errinfo': gen_exc_info()
+            })
 
     def schema(self, version, levelid, task, netw, dname, dinfo=None):
         Logger.info(f'{task}, {netw}, {dname}, {dinfo}')
@@ -305,9 +312,9 @@ class ServiceRPC(object):
             if container is None or container.status != 'running':
                 return 100205, None
 
-            Thread(target=lambda: self.stop_container(
+            Thread(target=lambda: self.stop_container_worker(
                 token=token,
-                phase=phase,
+                op=op,
                 user=user,
                 uuid=uuid,
                 container=container), daemon=True).start()
@@ -325,7 +332,7 @@ class ServiceRPC(object):
         if not isinstance(params, dict):
             return 100231, 'parameters type is not dict'
 
-        Thread(target=lambda: self.run_container(
+        Thread(target=lambda: self.start_container_worker(
             token=token,
             op=op,
             user=user,

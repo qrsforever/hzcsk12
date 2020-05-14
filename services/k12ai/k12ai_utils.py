@@ -168,7 +168,7 @@ def k12ai_object_put(client, local_path,
             etime = time.time()
             result.append({'etag': etag,
                 'bucket': bucket_name,
-                'file': remote_file,
+                'object': remote_file,
                 'size': file_size,
                 'time': [btime, etime]})
 
@@ -205,7 +205,8 @@ def k12ai_object_get(client, remote_path, bucket_name=None, prefix_map=None):
                 file_data.write(d)
         etime = time.time()
         result.append({'etag': obj.etag,
-            'file': local_file,
+            'bucket': obj.bucket_name,
+            'object': obj.object_name,
             'size': obj.size,
             'time': [btime, etime]})
     return result
@@ -214,5 +215,11 @@ def k12ai_object_get(client, remote_path, bucket_name=None, prefix_map=None):
 def k12ai_object_remove(client, remote_path, bucket_name=None):
     if bucket_name is None:
         bucket_name = 'k12ai'
+    result = []
     for obj in client.list_objects(bucket_name, prefix=remote_path, recursive=True):
         client.remove_object(obj.bucket_name, obj.object_name)
+        result.append({'etag': obj.etag,
+            'bucket': obj.bucket_name,
+            'object': obj.object_name,
+            'size': obj.size})
+    return result
