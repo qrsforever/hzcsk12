@@ -40,20 +40,19 @@ from torch.utils.tensorboard import SummaryWriter
 g_starttime = None
 g_memstat = {}
 
-g_devmode = True if int(os.environ.get('K12AI_DEV_MODE', '0')) else False
+g_tblogdir = os.environ.get('K12AI_TBLOG_DIR', None)
 g_tbwriter = None
 g_debug = False
 
 
 def _get_writer():
     global g_tbwriter
-    if g_devmode:
+    if g_tblogdir:
         if not g_tbwriter:
-            logdir = '/cache/tblogs'
             # if os.path.exists(logdir):
             #     shutil.rmtree(logdir, ignore_errors=True)
             #     os.mkdir(logdir)
-            g_tbwriter = SummaryWriter(log_dir=logdir)
+            g_tbwriter = SummaryWriter(log_dir=g_tblogdir)
     return g_tbwriter
 
 

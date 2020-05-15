@@ -14,6 +14,7 @@ from rlpyt.runners.minibatch_rl import MinibatchRlEval
 from rlpyt.runners.async_rl import AsyncRlEval
 from rlpyt.utils.synchronize import drain_queue
 from rlpyt.utils.buffer import buffer_from_example, torchify_buffer, numpify_buffer
+from rlpyt.utils.logging import context
 
 from gym.wrappers.time_limit import TimeLimit
 from gym.wrappers import Monitor
@@ -21,14 +22,14 @@ from gym.wrappers import Monitor
 from k12ai.common.log_message import MessageMetric as MM
 
 
-MONITOR_DIR = '/cache/monitor'
-
-
 class MinibatchRlEvaluate(MinibatchRlEval):
     def train(self):
         env = self.sampler.EnvCls(**self.sampler.env_kwargs)
         env = TimeLimit(env, max_episode_steps=10000)
-        env = Monitor(env, MONITOR_DIR, video_callable=lambda episode_id: True, force=True)
+
+        monitor_dir = os.path.abspath(
+                os.path.join(context.LOG_DIR, 'result'))
+        env = Monitor(env, monitor_dir, video_callable=lambda episode_id: True, force=True)
 
         self.agent.initialize(env.spaces)
         self.agent.to_device(self.affinity.get("cuda_idx", None))
@@ -48,7 +49,7 @@ class MinibatchRlEvaluate(MinibatchRlEval):
                 break
         env.close()
 
-        mp4file = '{}/{}.video.{}.video000000.mp4'.format(MONITOR_DIR, env.file_prefix, env.file_infix)
+        mp4file = '{}/{}.video.{}.video000000.mp4'.format(monitor_dir, env.file_prefix, env.file_infix)
         if os.path.exists(mp4file):
             MM().add_video('Episode', 'Game', mp4file).send()
 

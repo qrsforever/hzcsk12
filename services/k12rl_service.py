@@ -18,6 +18,7 @@ from pyhocon import HOCONConverter
 from k12ai.k12ai_base import ServiceRPC
 from k12ai.k12ai_consul import (k12ai_consul_init, k12ai_consul_register)
 from k12ai.k12ai_logger import (k12ai_set_loglevel, k12ai_set_logfile, Logger)
+from k12ai.k12ai_utils import k12ai_timeit
 
 _DEBUG_ = True if os.environ.get("K12AI_DEBUG") else False
 
@@ -50,6 +51,22 @@ class RLServiceRPC(ServiceRPC):
             elif errtext == 'k12ai: snapshot file is not found!':
                 errcode = 100208
         return errcode
+
+    @k12ai_timeit(handler=Logger.info)
+    def pre_processing(self, op, user, uuid, params):
+        cache_path = self.get_cache_dir(user, uuid)
+        # download train data (weights)
+        if params['_k12.model.resume'] or not op.startswith('train'):
+            self.oss_download(os.path.join(cache_path, 'output', 'run_snap'))
+
+    @k12ai_timeit(handler=Logger.info)
+    def post_processing(self, op, user, uuid, message):
+        cache_path = self.get_cache_dir(user, uuid)
+        # upload train or evaluate data
+        if op.startswith('train'):
+            self.oss_upload(os.path.join(cache_path, 'output', 'run_snap'), clear=True)
+        elif op.startswith('evaluate'):
+            self.oss_upload(os.path.join(cache_path, 'output', 'result'), clear=True)
 
     def make_container_volumes(self):
         volumes = {}

@@ -24,7 +24,7 @@ local _Utils = import '../../utils/helper.libsonnet';
                     default: self.objs[0].value,
                     readonly: true,
                 },
-                _Utils.int('trainer.num_serialized_models_to_keep', 'Keep Count', def=1, readonly=true),
+                // _Utils.int('trainer.num_serialized_models_to_keep', 'Keep Count', def=1, readonly=true),
                 _Utils.bool('_k12.model.resume', 'Resume', def=false),
             ],
         },

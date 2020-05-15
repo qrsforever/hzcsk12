@@ -208,7 +208,7 @@ def _rl_runner(config, phase, task, model, dataset):
     # Algo and Agent
     agent_state_dict = None
     optimizer_state_dict = None
-    snapshot_pth = os.path.join(context.LOG_DIR, f'run_{task}_{model}_{dataset}', 'params.pkl')
+    snapshot_pth = os.path.join(context.LOG_DIR, 'run_snap', 'params.pkl')
     if resume:
         if os.path.exists(snapshot_pth):
             try:
@@ -255,7 +255,7 @@ def _rl_train(config, phase):
     if phase == 'evaluate':
         snapshot_mode = 'none'
 
-    with context.logger_context(context.LOG_DIR, f'{task}_{model}_{dataset}', 'k12ai', config, snapshot_mode):
+    with context.logger_context(context.LOG_DIR, f'snap', 'k12ai', config, snapshot_mode):
         runner.train()
 
 

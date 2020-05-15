@@ -86,7 +86,8 @@ class CVServiceRPC(ServiceRPC):
             params['data.data_dir'] = os.path.join('/cache', params['_k12.data.dataset_name'])
 
         # download train data (weights)
-        self.oss_download(os.path.join(cache_path, 'output', 'ckpts'))
+        if params['network.resume_continue'] or not op.startswith('train'):
+            self.oss_download(os.path.join(cache_path, 'output', 'ckpts'))
 
     @k12ai_timeit(handler=Logger.info)
     def post_processing(self, op, user, uuid, message):
@@ -101,7 +102,7 @@ class CVServiceRPC(ServiceRPC):
                 message['environ']['batch_size'] = environs['K12AI_BATCH_SIZE']
                 message['environ']['input_size'] = environs['K12AI_INPUT_SIZE']
 
-        # upload train or evaluate data 
+        # upload train or evaluate data
         if op.startswith('train'):
             self.oss_upload(os.path.join(cache_path, 'output', 'ckpts'), clear=True)
         elif op.startswith('evaluate'):

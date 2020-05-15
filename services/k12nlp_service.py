@@ -9,7 +9,6 @@
 
 import os, time
 import argparse
-import json
 import zerorpc
 from threading import Thread
 from pyhocon import ConfigFactory
@@ -19,6 +18,7 @@ from k12ai.k12ai_base import ServiceRPC
 from k12ai.k12ai_consul import (k12ai_consul_init, k12ai_consul_register)
 from k12ai.k12ai_utils import k12ai_utils_diff
 from k12ai.k12ai_logger import (k12ai_set_loglevel, k12ai_set_logfile, Logger)
+from k12ai.k12ai_utils import k12ai_timeit
 
 _DEBUG_ = True if os.environ.get("K12AI_DEBUG") else False
 
@@ -52,17 +52,21 @@ class NLPServiceRPC(ServiceRPC):
                 return 100232
         return 999999
 
+    @k12ai_timeit(handler=Logger.info)
+    def pre_processing(self, op, user, uuid, params):
+        cache_path = self.get_cache_dir(user, uuid)
+        # download train data (weights)
+        if params['_k12.model.resume'] or not op.startswith('train'):
+            self.oss_download(os.path.join(cache_path, 'output', 'traindata'))
+
+    @k12ai_timeit(handler=Logger.info)
     def post_processing(self, op, user, uuid, message):
-        # save objects to oss
-        output_data_dir = os.path.join(self.get_cache_dir(user, uuid), 'output')
-        train_data_dir = os.path.join(output_data_dir, 'ckpts')
-        evaluate_data_dir = os.path.join(output_data_dir, 'result')
-        if op.startswith('train') and os.path.exists(train_data_dir):
-            self.oss_upload(train_data_dir, clear=True)
-        elif op.startswith('evaluate') and os.path.exists(evaluate_data_dir):
-            self.oss_upload(evaluate_data_dir, clear=True)
-        else:
-            Logger.warning('not impl')
+        cache_path = self.get_cache_dir(user, uuid)
+        # upload train or evaluate data
+        if op.startswith('train'):
+            self.oss_upload(os.path.join(cache_path, 'output', 'traindata'), clear=True)
+        elif op.startswith('evaluate'):
+            self.oss_upload(os.path.join(cache_path, 'output', 'result'), clear=True)
 
     def make_container_volumes(self):
         volumes = {
@@ -85,16 +89,11 @@ class NLPServiceRPC(ServiceRPC):
         cachedir = self.get_cache_dir(user, uuid)
         config_file = f'{cachedir}/config.json'
 
-        if '_k12.data.dataset_name' in params.keys():
-            config_tree = ConfigFactory.from_dict(params)
-            _k12ai_tree = config_tree.pop('_k12')
-            resume = _k12ai_tree.get('model.resume', True)
-            test_file = config_tree.get('test_data_path', '')
-            config_str = HOCONConverter.convert(config_tree, 'json')
-        else:
-            resume = True
-            test_file = params.get('test_data_path', '')
-            config_str = json.dumps(params)
+        config_tree = ConfigFactory.from_dict(params)
+        _k12ai_tree = config_tree.pop('_k12')
+        resume = _k12ai_tree.get('model.resume', True)
+        test_file = config_tree.get('test_data_path', '')
+        config_str = HOCONConverter.convert(config_tree, 'json')
 
         with open(config_file, 'w') as fout:
             fout.write(config_str)
@@ -103,18 +102,18 @@ class NLPServiceRPC(ServiceRPC):
             flag = '--force'
             if resume:
                 config_conf = os.path.join(cachedir, 'config.json')
-                serial_conf = os.path.join(cachedir, 'output/ckpts', 'config.json')
+                serial_conf = os.path.join(cachedir, 'output/traindata', 'config.json')
                 if os.path.exists(serial_conf):
                     if not k12ai_utils_diff(config_conf, serial_conf):
                         flag = '--recover'
-            command = 'allennlp train /cache/config.json %s --serialization-dir /cache/output/ckpts' % flag
+            command = 'allennlp train /cache/config.json %s --serialization-dir /cache/output/traindata' % flag
         elif op.startswith('evaluate'):
-            model_file_outer = os.path.join(cachedir, 'output/ckpts', 'best.th')
+            model_file_outer = os.path.join(cachedir, 'output/traindata', 'best.th')
             if not os.path.exists(model_file_outer):
                 raise FileNotFoundError('model file is not found!')
             if not test_file:
                 raise FileNotFoundError('test file is not found!')
-            command = f'allennlp evaluate /cache/output/ckpts {test_file}'
+            command = f'allennlp evaluate /cache/output/traindata {test_file}'
         else:
             raise NotImplementedError
         return command

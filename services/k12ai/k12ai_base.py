@@ -208,9 +208,9 @@ class ServiceRPC(object):
         try:
             self.on_starting(op, user, uuid, params)
 
-            devmode = False
-            if '_k12.dev_mode' in params.keys():
-                devmode = params['_k12.dev_mode']
+            tb_logdir = None
+            if '_k12.tb_logdir' in params.keys():
+                tb_logdir = params['_k12.tb_logdir']
 
             labels = {
                 'k12ai.service.name': f'k12{self._sname}',
@@ -221,14 +221,16 @@ class ServiceRPC(object):
             }
 
             volumes = {
-                self._datadir: {'bind': f'/datasets', 'mode': 'rw'},
+                self._datadir: {'bind': '/datasets', 'mode': 'rw'},
                 self._commlib: {'bind': f'{self._workdir}/app/k12ai/common', 'mode': 'rw'},
                 self.get_cache_dir(user, uuid): {'bind': f'/cache', 'mode': 'rw'},
                 **self.make_container_volumes()
             }
 
+            if tb_logdir:
+                volumes['/data/tblogs'] = {'bind': '/data/tblogs', 'mode':'rw'}
+
             environs = {
-                'K12AI_DEV_MODE': 1 if devmode else 0,
                 'K12AI_RPC_HOST': self._host,
                 'K12AI_RPC_PORT': self._port,
                 'K12AI_TOKEN': token,
@@ -238,10 +240,13 @@ class ServiceRPC(object):
                 **self.make_container_environs(op, params)
             }
 
+            if tb_logdir:
+                environs['K12AI_TBLOG_DIR'] = tb_logdir
+
             # W: don't set hostname
             kwargs = {
                 'name': '%s-%s-%s' % (op, user, uuid),
-                'auto_remove': not devmode,
+                'auto_remove': False if tb_logdir else True,
                 'detach': True,
                 'runtime': 'nvidia',
                 'labels': labels,
