@@ -34,10 +34,10 @@ local _Utils = import '../utils/helper.libsonnet';
             },
         ],
     },
-    {
-        type: 'H',
-        objs: [
-            _Utils.bool('_k12.dev_mode', 'Develop Mode', def=false),
-        ],
-    },
+    // {
+    //     type: 'H',
+    //     objs: [
+    //         _Utils.bool('_k12.dev_mode', 'Develop Mode', def=false),
+    //     ],
+    // },
 ]

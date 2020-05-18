@@ -74,6 +74,8 @@ local _Utils = import '../../utils/helper.libsonnet';
                     trigger: {},
                 },
             ],
+            default: false,
+            // readonly: true,
         },
     ],
 }

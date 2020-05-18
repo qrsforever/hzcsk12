@@ -21,6 +21,7 @@ from k12ai.common.log_message import MessageReport
 # utils
 from rlpyt.utils.logging import context
 from rlpyt.utils.launching.affinity import make_affinity
+from k12ai.utils.log_parser import set_n_steps
 
 # sync
 from rlpyt.samplers.serial.sampler import SerialSampler
@@ -244,6 +245,9 @@ def _rl_train(config, phase):
     task = config.get('_k12.task')
     if task not in ('atari', 'classic'):
         raise NotImplementedError(f'task: {task}')
+
+    set_n_steps(config.get('runner.n_steps'))
+
     model = config.get('_k12.model.name')
     dataset = config.get('_k12.dataset')
     if phase == 'evaluate':

@@ -12,6 +12,7 @@ import math
 import torch
 import torchvision # noqa
 import numpy as np
+import datetime
 
 from torchvision import transforms
 from PIL import Image
@@ -82,22 +83,15 @@ class RunnerBase(object):
         self._cur_iters = runner.runner_state['iters']
         self._cur_epoch = runner.runner_state['epoch']
 
+        # remain time
         batch_time = runner.batch_time.avg
         if self._max_iters is None:
-           self._max_iters = self._max_epoch * len(runner.train_loader) # ignore the last epoch
+            self._max_iters = self._max_epoch * len(runner.train_loader) # ignore the last epoch
         if self._val_batch_time > 0:
             left_iters = self._max_iters - self._cur_iters
             left_time = batch_time * left_iters + self._val_batch_time * (left_iters // self._val_interval + 1)
-            days, hours, minutes = 0, 0, 1
-            if left_time > 86400:
-                days = int(left_time // 86400)
-                left_time = left_time % 86400
-            if left_time > 3600:
-                hours = int(left_time // 3600)
-                left_time = left_time % 3600
-            if left_time > 60:
-                minutes = int(left_time // 60)
-            self._mm.add_text('train', 'remain_time', f'{days} days {hours} hours {minutes} minutes').send()
+            formatted_time = str(datetime.timedelta(seconds=int(left_time)))
+            self._mm.add_text('train', 'remain_time', f'{formatted_time}')
 
         if self._m_raw_aug and self._report_images_num < MAX_REPORT_IMGS:
             self._report_images_num += 1

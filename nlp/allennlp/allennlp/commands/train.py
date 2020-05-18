@@ -500,7 +500,7 @@ def _train_worker(
                 "a model archive using the current best epoch weights."
             )
             # QRS remove
-            archive_model(serialization_dir, files_to_archive=params.files_to_archive)
+            # archive_model(serialization_dir, files_to_archive=params.files_to_archive)
         raise
 
     if master:

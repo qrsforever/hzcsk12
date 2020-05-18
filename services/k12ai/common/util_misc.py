@@ -103,6 +103,20 @@ def torch_isinf(x):
     return (x == math.inf).any() or (x == -math.inf).any()
 
 
+def time_to_DHMS(time_sec):
+    days, hours, minutes, seconds = 0, 0, 0, 0
+    if time_sec > 86400:
+        days = int(time_sec // 86400)
+        time_sec = time_sec % 86400
+    if time_sec > 3600:
+        hours = int(time_sec // 3600)
+        time_sec = time_sec % 3600
+    if time_sec > 60:
+        minutes = int(time_sec // 60)
+        seconds = time_sec % 60
+    return days, hours, minutes, seconds
+
+
 def transform_denormalize(inputs, mean, std, inplace=False, div_value=1.0):
     demean = [-m / s for m, s in zip(mean, std)]
     destd = [1 / s for s in std]

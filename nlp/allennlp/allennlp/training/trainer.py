@@ -654,7 +654,7 @@ class Trainer(TrainerBase):
             epochs_trained += 1
 
             # QRS: add
-            RunnerStat.train(self, metrics)
+            RunnerStat.train(self, metrics, remain_time=estimated_time_remaining)
 
         # make sure pending events are flushed to disk and files are closed properly
         self._tensorboard.close()
