@@ -142,6 +142,7 @@ local _aug_trans_group_item(jid, method, display) = {
                             },
                         ],
                         default: self.objs[0].value,
+                        // tips: 'Normal: all random transforms executing in order, Shuffle: all random transforms shutffling before executing',
                     },
                 ] + (
                     if method == 'random_border'
