@@ -23,12 +23,12 @@ local _Utils = import '../../utils/helper.libsonnet';
                 tips: 'set policy of decays the learning rate',
                 objs: [
                     {
-                        name: { en: 'step', cn: self.en },
+                        name: { en: 'StepLR', cn: self.en },
                         value: 'step',
                         trigger: (import 'policy/step.libsonnet').get(jid + '.step'),
                     },
                     {
-                        name: { en: 'multi step', cn: self.en },
+                        name: { en: 'MultiStepLR', cn: self.en },
                         value: 'multistep',
                         trigger: (import 'policy/multistep.libsonnet').get(jid + '.multistep'),
                     },

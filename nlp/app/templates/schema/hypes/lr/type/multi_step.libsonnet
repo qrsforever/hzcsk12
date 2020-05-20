@@ -10,14 +10,18 @@ local _Utils = import '../../../utils/helper.libsonnet';
     get(jid):: {
         type: 'H',
         objs: [
-            _Utils.intarray(jid + '.milestones',
-                            'Milestones',
-                            def=[30, 80],
-                            tips='List of epoch indices'),
+            _Utils.intarray(
+                jid + '.milestones',
+                'Milestones',
+                def=[90, 120],
+                tips='value like [int, int, ...], the element is one of of epoch indices and all elements is increasing in turn'
+            ),
             _Utils.float(jid + '.gamma',
                          'Gamma',
-                         def=0.1,
-                         tips='Multiplicative factor of learning rate decay'),
+                         min=0.001,
+                         max=0.999,
+                         def=0.10,
+                         tips='multiplicative factor of learning rate decay'),
         ],
     },
 }

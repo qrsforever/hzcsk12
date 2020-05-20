@@ -43,6 +43,7 @@ local _Utils = import '../../utils/helper.libsonnet';
                                 _id_: jid + '.pretrained_file',
                                 name: { en: 'Glove', cn: self.en },
                                 type: 'string-enum',
+                                tips: 'pretrained file',
                                 objs: [
                                     {
                                         name: { en: '6B.50d', cn: self.en },
@@ -66,7 +67,6 @@ local _Utils = import '../../utils/helper.libsonnet';
                                     },
                                 ],
                                 default: self.objs[2].value,
-                                tips: 'pretrained file',
                             },
                         ],
                     },

@@ -15,7 +15,11 @@ local _Utils = import '../utils/helper.libsonnet';
                           def=_Utils.dataset_name,
                           readonly=true,
                           tips='dataset name'),
-            _Utils.bool('trainer.shuffle', 'Shuffle', def=true, ddd=true),
+            _Utils.bool('trainer.shuffle',
+                        'Shuffle',
+                        def=true,
+                        ddd=true,
+                        tips='whether or not to shuffle the instances in the iterator'),
         ],
     },
     {

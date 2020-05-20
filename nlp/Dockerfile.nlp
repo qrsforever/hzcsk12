@@ -32,6 +32,7 @@ COPY allennlp/setup.py setup.py
 COPY allennlp/README.md README.md
 COPY allennlp-reading-comprehension/allennlp_rc allennlp_rc/
 
+# pip uninstall -y enum34
 RUN pip install --editable .
 
 # Compile EVALB - required for parsing evaluation.

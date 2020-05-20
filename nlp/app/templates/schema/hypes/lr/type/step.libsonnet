@@ -12,12 +12,15 @@ local _Utils = import '../../../utils/helper.libsonnet';
         objs: [
             _Utils.int(jid + '.step_size',
                        'Step Size',
+                       min=1,
                        def=30,
-                       tips='Period of learning rate decay'),
+                       tips='period of learning rate decay'),
             _Utils.float(jid + '.gamma',
                          'Gamma',
-                         def=0.1,
-                         tips='Multiplicative factor of learning rate decay'),
+                         min=0.001,
+                         max=0.999,
+                         def=0.10,
+                         tips='multiplicative factor of learning rate decay'),
         ],
     },
 }

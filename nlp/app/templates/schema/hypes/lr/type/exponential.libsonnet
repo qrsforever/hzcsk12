@@ -12,8 +12,10 @@ local _Utils = import '../../../utils/helper.libsonnet';
         objs: [
             _Utils.float(jid + '.gamma',
                          'Gamma',
-                         def=0.1,
-                         tips='Multiplicative factor of learning rate decay'),
+                         min=0.001,
+                         max=0.999,
+                         def=0.10,
+                         tips='multiplicative factor of learning rate decay'),
         ],
     },
 }

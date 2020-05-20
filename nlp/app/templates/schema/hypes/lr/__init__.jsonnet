@@ -18,6 +18,7 @@
                             _id_: jid + '.type',
                             name: { en: 'LR Scheduler Type', cn: self.en },
                             type: 'string-enum-trigger',
+                            tips: 'learning rate schedulers options for decay the learning rate',
                             objs: [
                                 {
                                     name: { en: 'StepLR', cn: self.en },

@@ -24,8 +24,7 @@ local _Utils = import '../../../utils/helper.libsonnet';
             _Utils.float(jid + '.eps',
                          'EPS',
                          def=1e-8,
-                         tips='term added to the denominator to improve numerical stability',
-                         readonly=true),
+                         tips='term added to the denominator to improve numerical stability'),
         ],
     },
 }

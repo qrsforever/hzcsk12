@@ -12,7 +12,10 @@ local _Utils = import '../../../utils/helper.libsonnet';
             type: 'H',
             objs: [
                 _Utils.string(jid + '.type', 'type', def='single_id', readonly=true),
-                _Utils.bool(jid + '.lowercase_tokens', 'lowercase', def=false),
+                _Utils.bool(jid + '.lowercase_tokens',
+                            'lowercase',
+                            def=false,
+                            tips='token convert to lowercase before getting an index for the token from the vocabulary'),
                 _Utils.int(jid + '.token_min_padding_length', 'min padding length', def=0),
             ],
         },

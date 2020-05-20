@@ -8,9 +8,23 @@ local _Utils = import '../../utils/helper.libsonnet';
 
 {
     get(jid, navi):: [
-        _Utils.string(jid + '.granularity', 'granularity', def='5-class', tips='2-class, 3-class, 5-class'),
-        _Utils.bool(jid + '.lazy', 'lazy', def=false),
-        _Utils.bool(jid + '.use_subtrees', 'use subtrees', def=false),
+        _Utils.stringenum(jid + '.granularity',
+                          'granularity',
+                          def='5-class',
+                          enums=[
+                              { name: { en: '2-class', cn: self.en }, value: '2-class' },
+                              { name: { en: '3-class', cn: self.en }, value: '3-class' },
+                              { name: { en: '5-class', cn: self.en }, value: '5-class' },
+                          ],
+                          tips='indicate the number of sentiment labels to use'),
+        _Utils.bool(jid + '.lazy',
+                    'lazy',
+                    def=false,
+                    tips='whether or not instances can be read lazily'),
+        _Utils.bool(jid + '.use_subtrees',
+                    'use subtrees',
+                    def=false,
+                    tips='whether or not to use sentiment-tagged subtrees'),
         {
             _id_: '_k12.token_indexers.single_id',
             name: { en: 'single_id', cn: self.en },
