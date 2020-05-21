@@ -9,27 +9,27 @@ import random
 import math
 import cv2
 import numpy as np
-import imgaug.augmenters as iaa
+# import imgaug.augmenters as iaa
 
 
-class RandomBlur(object):
-    def __init__(self, ratio=0.5):
-        self.ratio = ratio
-        self.blur_list = [
-            iaa.GaussianBlur(sigma=(0.0, 3.0)),
-            iaa.AverageBlur(k=(2, 11)),
-            iaa.AverageBlur(k=((5, 11), (1, 3))),
-            iaa.MedianBlur(k=(3, 11)),
-        ]
-
-    def __call__(self, img, labelmap=None, maskmap=None, kpts=None, bboxes=None, labels=None, polygons=None):
-        assert isinstance(img, (np.ndarray, list))
-        if random.random() > self.ratio:
-            return img, labelmap, maskmap, kpts, bboxes, labels, polygons
-
-        method = random.randint(0, len(self.blur_list)-1)
-        img = self.blur_list[method].augment_image(img)
-        return img, labelmap, maskmap, kpts, bboxes, labels, polygons
+# class RandomBlur(object):
+#     def __init__(self, ratio=0.5):
+#         self.ratio = ratio
+#         self.blur_list = [
+#             iaa.GaussianBlur(sigma=(0.0, 3.0)),
+#             iaa.AverageBlur(k=(2, 11)),
+#             iaa.AverageBlur(k=((5, 11), (1, 3))),
+#             iaa.MedianBlur(k=(3, 11)),
+#         ]
+# 
+#     def __call__(self, img, labelmap=None, maskmap=None, kpts=None, bboxes=None, labels=None, polygons=None):
+#         assert isinstance(img, (np.ndarray, list))
+#         if random.random() > self.ratio:
+#             return img, labelmap, maskmap, kpts, bboxes, labels, polygons
+# 
+#         method = random.randint(0, len(self.blur_list)-1)
+#         img = self.blur_list[method].augment_image(img)
+#         return img, labelmap, maskmap, kpts, bboxes, labels, polygons
 
 
 class RandomErase(object):
@@ -1139,7 +1139,7 @@ class Resize(object):
 
 
 CV2_AUGMENTATIONS_DICT = {
-    'random_blur': RandomBlur,
+    # 'random_blur': RandomBlur,
     'random_saturation': RandomSaturation,
     'random_hue': RandomHue,
     'random_perm': RandomPerm,

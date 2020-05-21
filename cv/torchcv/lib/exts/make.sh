@@ -7,6 +7,9 @@ export PATH=/opt/rh/devtoolset-3/root/usr/bin:$PATH
 
 PYTHON=${PYTHON:-"python"}
 
+# QRS
+export MAX_JOBS=4
+
 echo "Building cocoapi..."
 cd apis/cocoapi/PythonAPI
 ${PYTHON} setup.py install
@@ -33,16 +36,17 @@ if [ -d "build" ]; then
 fi
 $PYTHON setup.py build_ext --inplace
 
-echo "Building dcn..."
-cd ../dcn
-if [ -d "build" ]; then
-    rm -r build
-fi
-$PYTHON setup.py build_ext --inplace
-
-echo "Building GPU SyncBN..."
-cd ../sync_bn/src/gpu
-if [ -d "build" ]; then
-    rm -r build
-fi
-$PYTHON setup.py build_ext --inplace
+# QRS
+# echo "Building dcn..."
+# cd ../dcn
+# if [ -d "build" ]; then
+#     rm -r build
+# fi
+# $PYTHON setup.py build_ext --inplace
+# 
+# echo "Building GPU SyncBN..."
+# cd ../sync_bn/src/gpu
+# if [ -d "build" ]; then
+#     rm -r build
+# fi
+# $PYTHON setup.py build_ext --inplace
