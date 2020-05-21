@@ -1,8 +1,7 @@
-from typing import List
+from typing import List, Optional
 import logging
 
-from allennlp.common import Registrable, Params
-from allennlp.common.checks import ConfigurationError
+from allennlp.common import Registrable
 from allennlp.data.tokenizers.token import Token
 
 
@@ -11,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 class Tokenizer(Registrable):
     """
-    A ``Tokenizer`` splits strings of text into tokens.  Typically, this either splits text into
+    A `Tokenizer` splits strings of text into tokens.  Typically, this either splits text into
     word tokens or character tokens, and those are the two tokenizer subclasses we have implemented
     here, though you could imagine wanting to do other kinds of tokenization for structured or
     other inputs.
@@ -43,42 +42,40 @@ class Tokenizer(Registrable):
 
         # Returns
 
-        tokens : ``List[Token]``
+        tokens : `List[Token]`
         """
         raise NotImplementedError
 
-    @classmethod
-    def from_params(cls, params: Params, **extras) -> "Tokenizer":  # type: ignore
+    def add_special_tokens(
+        self, tokens1: List[Token], tokens2: Optional[List[Token]] = None
+    ) -> List[Token]:
+        """
+        Adds special tokens to tokenized text. These are tokens like [CLS] or [SEP].
 
-        # Backwards compatibility for legacy "word" Tokenizer
-        # which provided arguments to intitalize current tokenizers
-        # inside "word_splitter" key.
-        tokenizer_type = params.get("type")
-        splitter_params = params.get("word_splitter")
-        if tokenizer_type == "word" or (tokenizer_type is None and splitter_params):
-            if not splitter_params:
-                splitter_params = Params({"type": "spacy"})
-            elif isinstance(splitter_params, str):
-                splitter_params = Params({"type": splitter_params})
+        Not all tokenizers do this. The default is to just return the tokens unchanged.
 
-            if params.get("word_filter") or params.get("word_stemmer"):
-                raise ConfigurationError(
-                    "Support for word_filter, word_stemmer is dropped in the current default tokenizer."
-                )
+        # Parameters
 
-            start_tokens = params.get("start_tokens")
-            end_tokens = params.get("end_tokens")
-            if start_tokens:
-                splitter_params["start_tokens"] = start_tokens
-            if end_tokens:
-                splitter_params["end_tokens"] = end_tokens
+        tokens1 : `List[Token]`
+            The list of tokens to add special tokens to.
+        tokens2 : `Optional[List[Token]]`
+            An optional second list of tokens. This will be concatenated with `tokens1`. Special tokens will be
+            added as appropriate.
 
-            logger.warning(
-                "Converting old WordTokenizer params - %s \n" "to new params %s.",
-                str(params),
-                str(splitter_params),
-            )
+        # Returns
+        tokens : `List[Token]`
+            The combined list of tokens, with special tokens added.
+        """
+        return tokens1 + (tokens2 or [])
 
-            params = splitter_params
+    def num_special_tokens_for_sequence(self) -> int:
+        """
+        Returns the number of special tokens added for a single sequence.
+        """
+        return 0
 
-        return super().from_params(params, **extras)
+    def num_special_tokens_for_pair(self) -> int:
+        """
+        Returns the number of special tokens added for a pair of sequences.
+        """
+        return 0

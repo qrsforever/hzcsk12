@@ -26,20 +26,34 @@ LABEL org.label-schema.schema-version="1.0" \
 
 WORKDIR /hzcsk12/nlp
 
-COPY app app/
-COPY allennlp/allennlp/ allennlp/
-COPY allennlp/setup.py setup.py
-COPY allennlp/README.md README.md
-COPY allennlp-reading-comprehension/allennlp_rc allennlp_rc/
+RUN PIP_INSTALL="pip install -U --no-cache-dir --retries 20 --timeout 120 \
+                 --trusted-host mirrors.intra.didiyun.com \
+        --index-url http://mirrors.intra.didiyun.com/pip/simple" && \
+    $PIP_INSTALL \
+        "nltk" \
+        "overrides==2.8.0" \
+        "spacy>=2.1.0,<2.3" \
+        "tensorboardX>=1.2" \
+        "boto3" \
+        "requests>=2.18" \
+        "tqdm>=4.19" \
+        "h5py" \
+        "flaky" \
+        "responses>=0.7" \
+        "conllu==2.3.2" \
+        "transformers>=2.9,<2.10" \
+        "jsonpickle" \
+        "semantic_version" \
+        "dataclasses"
 
-# pip uninstall -y enum34
-RUN pip install --editable .
 
-# Compile EVALB - required for parsing evaluation.
-# EVALB produces scary looking c-level output which we don't
-# care about, so we redirect the output to /dev/null.
-RUN cd allennlp/tools/EVALB && make &> /dev/null && cd ../../../
+COPY app app
+COPY allennlp allennlp
+COPY allennlp-models allennlp-models
 
-ENV PYTHONPATH=/hzcsk12/nlp/app:/hzcsk12/nlp/allennlp:/hzcsk12/nlp/allennlp_rc:$PYTHONPATH
+RUN cd /hzcsk12/nlp/allennlp && pip install --editable . && \
+        cd /hzcsk12/nlp/allennlp-models && pip install --editable .
+
+ENV PYTHONPATH=/hzcsk12/nlp/app:/hzcsk12/nlp/allennlp:/hzcsk12/nlp/allennlp-models:$PYTHONPATH
 
 CMD ["/bin/bash"]

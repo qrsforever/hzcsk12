@@ -15,5 +15,5 @@ local _Utils = import '../../../utils/helper.libsonnet';
                         tips='value like [int, int, int, int] meaning [left, top, right, bottom] of padding board, every element >= 0'),
         _Utils.intarray(jid + '.mean', 'mean', def=[104, 117, 124], tips='padding fill value, like [r, g, b], every element between 0 and 255'),
     ] + if _Utils.task == 'det'
-    then _Utils.bool(jid + '.allow_outsize_center', 'outsize center', def=true) else [],
+    then [_Utils.bool(jid + '.allow_outsize_center', 'outsize center', def=true)] else [],
 }

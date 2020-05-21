@@ -44,14 +44,12 @@ def main(
     tokens = [tokens[0]] + ["<S>", "</S>"] + tokens[1:]
 
     indexer = ELMoTokenCharactersIndexer()
-    indices = indexer.tokens_to_indices(
-        [Token(token) for token in tokens], Vocabulary(), "indices"
-    )["indices"]
+    indices = indexer.tokens_to_indices([Token(token) for token in tokens], Vocabulary())["tokens"]
     sentences = []
     for k in range((len(indices) // 50) + 1):
         sentences.append(
-            indexer.as_padded_tensor(
-                indices[(k * 50) : ((k + 1) * 50)], desired_num_tokens=50, padding_lengths={}
+            indexer.as_padded_tensor_dict(
+                indices[(k * 50) : ((k + 1) * 50)], padding_lengths={"tokens": 50}
             )
         )
 
@@ -88,7 +86,7 @@ def main(
     os.makedirs(output_dir, exist_ok=True)
     with gzip.open(os.path.join(output_dir, "elmo_embeddings.txt.gz"), "wb") as embeddings_file:
         for i, word in enumerate(tokens):
-            string_array = " ".join([str(x) for x in list(embedding_weight[i, :])])
+            string_array = " ".join(str(x) for x in list(embedding_weight[i, :]))
             embeddings_file.write(f"{word} {string_array}\n".encode("utf-8"))
 
     # Write out the new vocab with the <S> and </S> tokens.

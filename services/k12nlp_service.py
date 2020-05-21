@@ -75,7 +75,8 @@ class NLPServiceRPC(ServiceRPC):
         }
         if self._debug:
             volumes[f'{self._projdir}/app'] = {'bind': f'{self._workdir}/app', 'mode':'rw'}
-            volumes[f'{self._projdir}/allennlp/allennlp'] = {'bind': f'{self._workdir}/allennlp', 'mode':'rw'}
+            volumes[f'{self._projdir}/allennlp/allennlp'] = {'bind': f'{self._workdir}/allennlp/allennlp', 'mode':'rw'}
+            volumes[f'{self._projdir}/allennlp-models/allennlp_models'] = {'bind': f'{self._workdir}/allennlp-models/allennlp_models', 'mode':'rw'}
         return volumes
 
     def make_container_kwargs(self, op, params):

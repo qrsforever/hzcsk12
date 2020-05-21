@@ -26,23 +26,21 @@ LABEL org.label-schema.schema-version="1.0" \
 
 WORKDIR /hzcsk12/rl
 
-ARG FORCE_CUDA="1"
-ENV FORCE_CUDA=${FORCE_CUDA}
-ENV CUDA_HOME=/usr/local/cuda
-
-ADD requirements.txt requirements.txt
-RUN pip3 install --no-cache-dir --timeout 120 -r requirements.txt
-RUN rm requirements.txt
-
 COPY app app
 COPY rlpyt/rlpyt rlpyt
 COPY rlpyt/setup.py setup.py
 COPY rlpyt/README.md README.md
 
-RUN pip install --editable .
-
 ENV PATH=/hzcsk12/rl/app/k12ai:$PATH
 ENV PYTHONPATH=/hzcsk12/rl/app:/hzcsk12/rl/rlpyt:$PYTHONPATH
 
-# ENTRYPOINT ["/bin/bash", "-c", "/usr/bin/xvfb-run -a $@", ""]
+RUN PIP_INSTALL="pip install -U --no-cache-dir --retries 20 --timeout 120 \
+        --trusted-host mirrors.intra.didiyun.com \
+        --index-url http://mirrors.intra.didiyun.com/pip/simple" && \
+    $PIP_INSTALL \
+        pyprind \
+        atari-py gym[atari] gym[box2d] \
+        && \
+    pip install --editable .
+
 CMD ["/bin/bash"]

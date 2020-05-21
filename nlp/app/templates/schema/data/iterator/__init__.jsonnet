@@ -33,6 +33,7 @@ local _Utils = import '../../utils/helper.libsonnet';
                             },
                         ],
                         default: self.objs[0].value,
+                        readonly: true,
                     },
                 ],
             },

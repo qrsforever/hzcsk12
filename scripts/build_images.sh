@@ -89,10 +89,6 @@ __build_image()
             cd $TOP_DIR/$DESTDIR
         fi
 
-        if [[ $PROJECT == "k12ai" ]] && [[ ! -d .jupyter_config ]]
-        then
-            git clone https://gitee.com/lidongai/jupyter_config.git .jupyter_config
-        fi
         docker build --tag $REPOSITORY:$TAG \
             --build-arg VENDOR=$VENDOR \
             --build-arg PROJECT=$PROJECT \
@@ -116,6 +112,15 @@ __build_image()
             exit $?
         fi
         docker tag $REPOSITORY:$TAG $REPOSITORY
+
+        if [[ $PROJECT == "k12ai" ]]
+        then
+            if [[ ! -d .jupyter_config ]]
+            then
+                git clone https://gitee.com/lidongai/jupyter_config.git .jupyter_config
+            fi
+            docker build --tag $REPOSITORY:notebook --file ${DOCKERFILE%.*}.nb .
+        fi
         cd - >/dev/null
     else
         echo "No need build new image $REPOSITORY!"

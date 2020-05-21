@@ -1,20 +1,38 @@
-<p align="center"><img width="40%" src="docs/img/allennlp-logo-dark.png" /></p>
-
-[![Build Status](http://build.allennlp.org/app/rest/builds/buildType:(id:AllenNLP_AllenNLPCommits)/statusIcon)](http://build.allennlp.org/viewType.html?buildTypeId=AllenNLP_AllenNLPCommits&guest=1)
-[![codecov](https://codecov.io/gh/allenai/allennlp/branch/master/graph/badge.svg)](https://codecov.io/gh/allenai/allennlp)
-
-An [Apache 2.0](https://github.com/allenai/allennlp/blob/master/LICENSE) NLP research library, built on PyTorch,
-for developing state-of-the-art deep learning models on a wide variety of linguistic tasks.
+<div align="center">
+    <br>
+    <img src="https://raw.githubusercontent.com/allenai/allennlp/master/docs/img/allennlp-logo-dark.png" width="400"/>
+    <p>
+    An Apache 2.0 NLP research library, built on PyTorch, for developing state-of-the-art deep learning models on a wide variety of linguistic tasks.
+    </p>
+    <hr/>
+</div>
+<p align="center">
+    <a href="https://github.com/allenai/allennlp/actions">
+        <img alt="Build" src="https://github.com/allenai/allennlp/workflows/Master/badge.svg?event=push&branch=master">
+    </a>
+    <a href="https://pypi.org/project/allennlp/">
+        <img alt="PyPI" src="https://img.shields.io/pypi/v/allennlp">
+    </a>
+    <a href="https://github.com/allenai/allennlp/blob/master/LICENSE">
+        <img alt="License" src="https://img.shields.io/github/license/allenai/allennlp.svg?color=blue&cachedrop">
+    </a>
+    <a href="https://codecov.io/gh/allenai/allennlp">
+        <img alt="Codecov" src="https://codecov.io/gh/allenai/allennlp/branch/master/graph/badge.svg">
+    </a>
+</p>
+<br/>
 
 ## Quick Links
 
-* [Website](https://allennlp.org/)
-* [Tutorial](https://allennlp.org/tutorials)
-* [Forum](https://discourse.allennlp.org)
-* [Documentation](https://allenai.github.io/allennlp-docs/)
-* [Contributing Guidelines](CONTRIBUTING.md)
-* [Pretrained Models](https://github.com/allenai/allennlp-hub/blob/master/allennlp_hub/pretrained/allennlp_pretrained.py)
-* [Continuous Build](http://build.allennlp.org/)
+- [Website](https://allennlp.org/)
+- [Tutorial](https://allennlp.org/tutorials)
+- [Forum](https://discourse.allennlp.org)
+- Documentation ( [latest](https://docs.allennlp.org/latest/) | [stable](https://docs.allennlp.org/stable/) | [master](https://docs.allennlp.org/master/) )
+- [Contributing Guidelines](CONTRIBUTING.md)
+- [Pretrained Models](https://github.com/allenai/allennlp-hub/blob/master/allennlp_hub/pretrained/allennlp_pretrained.py)
+- [Continuous Build](https://github.com/allenai/allennlp/actions)
+- [Nightly Releases](https://pypi.org/project/allennlp/#history)
+- [Officially Supported Models](https://github.com/allenai/allennlp-models)
 
 ## Package Overview
 
@@ -86,7 +104,7 @@ Installing the library and dependencies is simple using `pip`.
    ```bash
    pip install allennlp
    ```
-
+*Looking for bleeding edge features? You can install nightly releases directly from [pypi](https://pypi.org/project/allennlp/#history)*
 That's it! You're now ready to build and train AllenNLP models.
 AllenNLP installs a script when you install the python package, meaning you can run allennlp commands just by typing `allennlp` into a terminal.
 
@@ -104,10 +122,10 @@ just run the following command to get an environment that will run on either the
 
    ```bash
    mkdir -p $HOME/.allennlp/
-   docker run --rm -v $HOME/.allennlp:/root/.allennlp allennlp/allennlp:v0.9.0
+   docker run --rm -v $HOME/.allennlp:/root/.allennlp allennlp/allennlp:latest
    ```
 
-You can test the Docker environment with `docker run --rm -v $HOME/.allennlp:/root/.allennlp allennlp/allennlp:v0.9.0 test-install`.
+You can test the Docker environment with `docker run --rm -v $HOME/.allennlp:/root/.allennlp allennlp/allennlp:latest test-install`.
 
 ### Installing from source
 
@@ -128,7 +146,6 @@ This will make `allennlp` available on your system but it will use the sources f
 you made of the source repository.
 
 You can test your installation with `allennlp test-install`.
-`./scripts/verify.py` will run the full suite of tests used by our continuous build environment.
 
 ## Running AllenNLP
 
@@ -145,21 +162,16 @@ optional arguments:
 
 Commands:
   
-    train        Train a model.
-    evaluate     Evaluate the specified model + dataset.
-    predict      Use a trained model to make predictions.
     elmo         Create word vectors using a pretrained ELMo model.
-    fine-tune    Continue training a model on a new dataset.
-    dry-run      Create a vocabulary, compute dataset statistics and other
-                 training utilities.
-    make-vocab   Create a vocabulary, compute dataset statistics and other
-                 training utilities.
-    test-install
-                 Run the unit tests.
+    evaluate     Evaluate the specified model + dataset.
     find-lr      Find a learning rate range.
+    predict      Use a trained model to make predictions.
     print-results
                  Print results from allennlp serialization directories to the
                  console.
+    test-install
+                 Run the unit tests.
+    train        Train a model.
 ```
 
 ## Docker images
@@ -172,17 +184,29 @@ For various reasons you may need to create your own AllenNLP Docker image.
 The same image can be used either with a CPU or a GPU.
 
 First, you need to [install Docker](https://www.docker.com/get-started).
-Then run the following command (it will take some time, as it completely builds the environment needed to run AllenNLP.)
+Then you will need a wheel of allennlp in the `dist/` directory.
+You can either obtain a pre-built wheel from a PyPI release or build a new wheel from
+source.
 
-```bash
-docker build -f Dockerfile.pip --tag allennlp/allennlp:latest .
-```
+PyPI release wheels can be downloaded by going to https://pypi.org/project/allennlp/#history,
+clicking on the desired release, and then clicking "Download files" in the left sidebar.
+After downloading, make you sure you put the wheel in the `dist/` directory
+(which may not exist if you haven't built a wheel from source yet).
+
+To build a wheel from source, just run `python setup.py wheel`.
+
+*Before building the image, make sure you only have one wheel in the `dist/` directory.*
+
+Once you have your wheel, run `make docker-image`. By default this builds an image
+with the tag `allennlp/allennlp`. You can change this to anything you want
+by setting the `DOCKER_TAG` flag when you call `make`. For example,
+`make docker-image DOCKER_TAG=my-allennlp`.
 
 You should now be able to see this image listed by running `docker images allennlp`.
 
 ```
 REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
-allennlp/allennlp            latest              b66aee6cb593        5 minutes ago       2.38GB
+allennlp/allennlp   latest              b66aee6cb593        5 minutes ago       2.38GB
 ```
 
 ### Running the Docker image
@@ -193,7 +217,7 @@ You can test your installation by running  `allennlp test-install`.
 
 ## Issues
 
-Everyone is welcome to file issues with either feature requests, bug reports, or general questions.  As a small team with our own internal goals, we may ask for contributions if a prompt fix doesn't fit into our roadmap.  We allow users a two week window to follow up on questions, after which we will close issues.  They can be re-opened if there is further discussion.
+Everyone is welcome to file issues with either feature requests, bug reports, or general questions.  As a small team with our own internal goals, we may ask for contributions if a prompt fix doesn't fit into our roadmap.  To keep things tidy we will often close issues we think are answered, but don't hesitate to follow up if further discussion is needed.
 
 ## Contributions
 

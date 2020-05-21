@@ -9,18 +9,18 @@ from allennlp.training.metrics.metric import Metric
 @Metric.register("covariance")
 class Covariance(Metric):
     """
-    This ``Metric`` calculates the unbiased sample covariance between two tensors.
+    This `Metric` calculates the unbiased sample covariance between two tensors.
     Each element in the two tensors is assumed to be a different observation of the
     variable (i.e., the input tensors are implicitly flattened into vectors and the
     covariance is calculated between the vectors).
 
     This implementation is mostly modeled after the streaming_covariance function in Tensorflow. See:
-    https://github.com/tensorflow/tensorflow/blob/v1.10.1/tensorflow/contrib/metrics/python/ops/metric_ops.py#L3127
+    <https://github.com/tensorflow/tensorflow/blob/v1.10.1/tensorflow/contrib/metrics/python/ops/metric_ops.py#L3127>
 
     The following is copied from the Tensorflow documentation:
 
     The algorithm used for this online computation is described in
-    https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Online .
+    <https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Online>.
     Specifically, the formula used to combine two sample comoments is
     `C_AB = C_A + C_B + (E[x_A] - E[x_B]) * (E[y_A] - E[y_B]) * n_A * n_B / n_AB`
     The comoment for a single batch of data is simply `sum((x - E[x]) * (y - E[y]))`, optionally masked.
@@ -36,19 +36,19 @@ class Covariance(Metric):
         self,
         predictions: torch.Tensor,
         gold_labels: torch.Tensor,
-        mask: Optional[torch.Tensor] = None,
+        mask: Optional[torch.BoolTensor] = None,
     ):
         """
         # Parameters
 
-        predictions : ``torch.Tensor``, required.
+        predictions : `torch.Tensor`, required.
             A tensor of predictions of shape (batch_size, ...).
-        gold_labels : ``torch.Tensor``, required.
-            A tensor of the same shape as ``predictions``.
-        mask : ``torch.Tensor``, optional (default = None).
-            A tensor of the same shape as ``predictions``.
+        gold_labels : `torch.Tensor`, required.
+            A tensor of the same shape as `predictions`.
+        mask : `torch.BoolTensor`, optional (default = `None`).
+            A tensor of the same shape as `predictions`.
         """
-        predictions, gold_labels, mask = self.unwrap_to_tensors(predictions, gold_labels, mask)
+        predictions, gold_labels, mask = self.detach_tensors(predictions, gold_labels, mask)
         # Flatten predictions, gold_labels, and mask. We calculate the covariance between
         # the vectors, since each element in the predictions and gold_labels tensor is assumed
         # to be a separate observation.

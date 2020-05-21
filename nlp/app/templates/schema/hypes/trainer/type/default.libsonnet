@@ -13,12 +13,6 @@ local _Utils = import '../../../utils/helper.libsonnet';
             objs: [
                 _Utils.int(jid + '.cuda_device', 'CUDA Device', def=0),
                 _Utils.int(jid + '.num_epochs', 'Epochs Count', def=20, ddd=true),
-            ],
-        },
-        {
-            type: 'H',
-            objs: [
-                _Utils.int(jid + '.summary_interval', 'Summary Interval', def=100, ddd=true),
                 {
                     _id_: jid + '.validation_metric',
                     name: { en: 'Validation Metric', cn: self.en },

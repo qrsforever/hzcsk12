@@ -33,12 +33,19 @@ local _Utils = import '../utils/helper.libsonnet';
                 ],
             },
             {
-                name: { en: 'Iterator', cn: self.en },
+                name: { en: 'Sampler', cn: self.en },
                 type: '_ignore_',
                 objs: [
-                    (import 'iterator/__init__.jsonnet').get(),
+                    (import 'samplers/__init__.jsonnet').get('data_loader.batch_sampler'),
                 ],
             },
+            // {
+            //     name: { en: 'Iterator', cn: self.en },
+            //     type: '_ignore_',
+            //     objs: [
+            //         (import 'iterator/__init__.jsonnet').get(),
+            //     ],
+            // },
         ],
         // + if _Utils.debug then [
         //     {

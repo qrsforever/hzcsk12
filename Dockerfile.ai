@@ -25,73 +25,35 @@ LABEL org.label-schema.schema-version="1.0" \
 
 LABEL com.nvidia.volumes.needed="nvidia_driver"
 
-ARG CUDA_HOME="/usr/local/cuda"
 ENV TZ=Asia/Shanghai \
     LC_ALL=C.UTF-8 \
-    LANG=C.UTF-8 \
-    PYTHONIOENCODING=utf-8 \
-    DEBIAN_FRONTEND=noninteractive \
-    CUDA_HOME=${CUDA_HOME} \
-    PATH=${CUDA_HOME}/bin/:$PATH \
-    LD_LIBRARY_PATH=${CUDA_HOME}/lib:${CUDA_HOME}/lib64:$LD_LIBRARY_PATH \
-    NVIDIA_VISIBLE_DEVICES=all \
-    NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    PYTHONIOENCODING=utf-8
 
 WORKDIR /hzcsk12
 
-# apt install
-RUN sed -i 's/http:\/\/archive\.ubuntu\.com\/ubuntu\//http:\/\/mirrors\.intra\.didiyun\.com\/ubuntu\//g' /etc/apt/sources.list
-RUN apt-get update --fix-missing
-RUN apt-get install -y tzdata bzip2 unzip ca-certificates gcc git curl wget nfs-common htop psmisc \
-    libc-dev libevent-dev libglib2.0-0 libsm6 libxext6 libxrender1 libfontconfig1 build-essential \
-    graphviz net-tools iputils-ping xvfb python3-opengl ffmpeg && \
-    rm -rf /var/lib/apt/lists/*  && \
-    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
-# RUN apt-get install -y openssh-server openssh-client
-
-# pip install
-COPY external/docker/pip/pip.conf /root/.pip/pip.conf
-COPY requirements.txt .
-RUN pip install --no-cache-dir --timeout 120 -r requirements.txt && rm requirements.txt
-RUN mkdir -p external
-
-# install apex
-COPY external/apex/apex-master-20200107.zip external/apex-master.zip
-RUN pip install --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" external/apex-master.zip
-
-# spacy2.1 with en_core_web_sm-2.1.0
-COPY external/en_core_web_sm/en_core_web_sm-2.1.0.tar.gz external/en_core_web_sm.tar.gz
-RUN pip install --no-cache-dir external/en_core_web_sm.tar.gz
-
-# install imgaug
-COPY external/imgaug/imgaug-master-20190828.zip external/imgaug-master.zip
-RUN pip install --no-cache-dir external/imgaug-master.zip
-
-# check install scripts
-COPY external/docker/scripts/check_install.sh external/check_install.sh
-RUN chmod +x ./external/check_install.sh && ./external/check_install.sh
-
-RUN rm -rf external
-
-# install jupyter
-RUN pip install -U jupyter \
-        jupyter_contrib_nbextensions \
-        jupyter_nbextensions_configurator \
-        -i https://pypi.tuna.tsinghua.edu.cn/simple
-
-ARG jupyter_data_dir=/root/.local/share/jupyter
-ARG jupyter_conf_dir=/root/.jupyter
-
-RUN jupyter contrib nbextension install --sys-prefix && \
-    jupyter nbextensions_configurator enable && \
-    mkdir -p ${jupyter_data_dir}/nbextensions && \
-    jupyter notebook --generate-config -y
-COPY .jupyter_config/jupyter_notebook_config.json ${jupyter_conf_dir}/jupyter_notebook_config.json
-COPY .jupyter_config/vim_binding ${jupyter_data_dir}/nbextensions/vim_binding
-RUN jupyter nbextension enable vim_binding/vim_binding && \
-    jupyter nbextension enable jupyter-js-widgets/extension && \
-    jupyter nbextension enable execute_time/ExecuteTime && \
-    jupyter nbextension enable tree-filter/index && \
-    jupyter nbextension enable snippets_menu/main && \
-    jupyter nbextension enable table_beautifier/main && \
-    jupyter nbextension enable skip-traceback/main
+RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
+    PIP_INSTALL="pip install -U --no-cache-dir --retries 20 --timeout 120 \
+        --trusted-host mirrors.intra.didiyun.com \
+        --index-url http://mirrors.intra.didiyun.com/pip/simple" && \
+    sed -i 's/http:\/\/archive\.ubuntu\.com\/ubuntu\//http:\/\/mirrors\.intra\.didiyun\.com\/ubuntu\//g' /etc/apt/sources.list && \
+    apt-get update --fix-missing && \
+    DEBIAN_FRONTEND=noninteractive $APT_INSTALL \
+        tzdata \
+        graphviz xvfb \
+        ffmpeg \
+        python3-opengl \
+        && \
+    pip uninstall enum34 -y && \
+    $PIP_INSTALL \
+        GPUtil psutil \
+        torchsummary tensorboard seaborn \
+        onnx pydotplus torchviz pydot graphviz cairosvg \
+        pyhocon protobuf "jsonnet>=0.10.0" \
+        zerorpc python-consul \
+        moviepy sk-video \
+        && \
+    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && \
+    ldconfig && \
+    apt-get clean && \
+    apt-get autoremove && \
+    rm -rf /var/lib/apt/lists/* /tmp/* ~/*

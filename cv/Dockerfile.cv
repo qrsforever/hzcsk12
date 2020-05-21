@@ -26,27 +26,29 @@ LABEL org.label-schema.schema-version="1.0" \
 
 WORKDIR /hzcsk12/cv
 
-ARG FORCE_CUDA="1"
-ENV FORCE_CUDA=${FORCE_CUDA}
-ENV CUDA_HOME=/usr/local/cuda
-
-ADD requirements.txt requirements.txt
-RUN pip3 install --no-cache-dir --timeout 120 -r requirements.txt
-RUN rm requirements.txt
-
 COPY app app
-COPY torchcv/data torchcv/data 
-COPY torchcv/lib torchcv/lib
-COPY torchcv/metric torchcv/metric
-COPY torchcv/model torchcv/model
-COPY torchcv/runner torchcv/runner
-COPY torchcv/main.py torchcv/main.py
-
-# install torchcv extensions
-RUN cd torchcv/lib/exts && \
-        chmod +x make.sh && \
-        sh make.sh
+COPY torchcv torchcv
 
 ENV PYTHONPATH=/hzcsk12/cv/app:/hzcsk12/cv/torchcv:$PYTHONPATH
+
+RUN PIP_INSTALL="pip install -U --no-cache-dir --retries 20 --timeout 120 \
+        --trusted-host mirrors.intra.didiyun.com \
+        --index-url http://mirrors.intra.didiyun.com/pip/simple" && \
+    $PIP_INSTALL \
+        cython \
+        cffi \
+        opencv-python \
+        easydict \
+        Pillow \
+        pyyaml \
+        bs4 \
+        html5lib \
+        ninja \
+        six \
+        scikit-image \
+        imageio \
+        Shapely \
+        && \
+        cd torchcv/lib/exts && chmod +x make.sh && sh make.sh
 
 CMD ["/bin/bash"]

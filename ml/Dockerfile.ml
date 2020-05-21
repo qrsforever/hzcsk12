@@ -24,15 +24,9 @@ LABEL org.label-schema.schema-version="1.0" \
       org.label-schema.version=$VERSION \
       org.label-schema.docker.cmd="TODO"
 
-COPY mla /hzcsk12/ml
-
 WORKDIR /hzcsk12/ml
 
 COPY app app
-RUN rm -rf examples
-RUN rm -rf mla/datasets
-RUN rm -rf mla/tests
-RUN pip install --editable .
 
 ENV PYTHONPATH=/hzcsk12/ml/app:/hzcsk12/ml/mla:$PYTHONPATH
 

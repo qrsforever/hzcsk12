@@ -48,6 +48,11 @@ Date:   Mon Jan 6 17:43:51 2020 +0800
 | `torchcv/data/cls/data_loader.py` | TODO: plan to be instead |
 | `torchcv/data/det/data_loader.py` | TODO: plan to be instead |
 | `torchcv/model/cls/loss/loss.py` | TODO: shit raw code |
+| `torchcv/lib/data/cv2_aug_transforms.py` | remove aug |
+| `torchcv/lib/exts/make.sh` | torch1.5 |
+| `torchcv/lib/exts/ops/nms/src/nms_cuda.cpp` | torch1.5 |
+| `torchcv/lib/exts/ops/roi_align/src/roi_align_cuda.cpp` | torch1.5 |
+| `torchcv/lib/exts/ops/roi_pool/src/roi_pool_cuda.cpp` | torch1.5 |
 
 # 注意
 

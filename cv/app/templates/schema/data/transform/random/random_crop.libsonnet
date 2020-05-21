@@ -32,5 +32,5 @@ local _Utils = import '../../../utils/helper.libsonnet';
             default: self.objs[0].value,
         },
     ] + if _Utils.task == 'det'
-    then _Utils.bool(jid + '.allow_outsize_center', 'outsize center', def=true) else [],
+    then [_Utils.bool(jid + '.allow_outsize_center', 'outsize center', def=true)] else [],
 }

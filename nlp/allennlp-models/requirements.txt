@@ -1,0 +1,7 @@
+# git+https://github.com/allenai/allennlp.git@master
+allennlp
+
+# For RC models
+word2number>=1.1
+py-rouge==1.1
+nltk

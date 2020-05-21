@@ -21,7 +21,7 @@ local _Utils = import '../../utils/helper.libsonnet';
             type: 'H',
             objs: [
                 _Utils.bool(jid + '.bias', 'bias', def=true),
-                _Utils.bool(jid + '.batch_first', 'batch first', def=true, ddd=true),
+                // _Utils.bool(jid + '.batch_first', 'batch first', def=true, ddd=true),
                 _Utils.bool(jid + '.bidirectional', 'bidirectional', def=false),
             ],
         },
