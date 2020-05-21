@@ -1,3 +1,0 @@
-import allennlp_rc.dataset_readers
-import allennlp_rc.models
-import allennlp_rc.predictors
