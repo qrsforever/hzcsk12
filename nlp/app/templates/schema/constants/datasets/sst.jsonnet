@@ -38,17 +38,13 @@
             batch_first: true,
         },
     },
-    iterator: {
-        type: 'bucket',
-        sorting_keys: [['tokens', 'num_tokens']],
+    data_loader: {
         batch_size: 32,
     },
     trainer: {
         num_epochs: 1000,
         patience: 10,
         grad_norm: 5.0,
-        shuffle: true,
-        num_serialized_models_to_keep: 1,
         summary_interval: 100,
         validation_metric: '+accuracy',
         distributed: false,
