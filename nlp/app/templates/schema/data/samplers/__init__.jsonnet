@@ -8,14 +8,24 @@ local _Utils = import '../../utils/helper.libsonnet';
 
 {
     get(jid):: {
-        _id_: jid + '.type',
+        _id_: '_k12.' + jid + '.type',
         name: { en: 'Type', cn: self.en },
         type: 'string-enum-trigger',
         objs: [
             {
-                name: { en: 'bucket', cn: self.en },
+                name: { en: 'Bucket Sampler', cn: self.en },
                 value: 'bucket',
-                trigger: (import 'type/bucket.libsonnet').get(jid),
+                trigger: (import 'type/bucket.libsonnet').get(jid + '.batch_sampler'),
+            },
+            {
+                name: { en: 'Basic Sampler', cn: self.en },
+                value: 'basic',
+                trigger: (import 'type/basic.libsonnet').get(jid, true),
+            },
+            {
+                name: { en: 'None', cn: self.en },
+                value: 'none',
+                trigger: (import 'type/basic.libsonnet').get(jid, false),
             },
         ],
         default: 'bucket',
