@@ -59,7 +59,15 @@
         },
     },
     _k12: {
-        validation_dataset_reader: true,
-        validation_iterator: true,
+        validation_dataset_reader: { bool: true },
+        model: {
+            text_field_embedder: {
+                token_embedders: {
+                    tokens: {
+                        pretrained_file: { bool: true },
+                    },
+                },
+            },
+        },
     },
 }

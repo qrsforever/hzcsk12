@@ -14,7 +14,7 @@ local _Utils = import '../../../utils/helper.libsonnet';
     get(jid):: {
         type: 'H',
         objs: [
-            _Utils.float(jid + '.momentum', 'Momentum', def=0),
+            _Utils.float(jid + '.momentum', 'momentum', def=0),
         ] + (import 'common.libsonnet').get(jid),
     },
 }

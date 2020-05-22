@@ -8,17 +8,11 @@ local _Utils = import '../../utils/helper.libsonnet';
 
 local _READERS = {
     sst: {
-        get(jid, navi):: [
-            {
-                name: { en: 'SST Tokens', cn: self.en },
-                value: 'sst_tokens',
-                trigger: {
-                    type: '_ignore_',
-                    objs: (import 'sst.libsonnet').get(jid, navi),
-                },
-            },
-        ],
+        get(jid):: (import 'sst.libsonnet').get(jid),
     },  // dataset_name: sst
+    conll2003: {
+        get(jid):: (import 'conll2003.libsonnet').get(jid),
+    },
 };
 
 {
@@ -30,15 +24,27 @@ local _READERS = {
                 local jid = 'dataset_reader',
                 name: { en: 'Train', cn: self.en },
                 type: '_ignore_',
-                objs: [
-                    {
-                        _id_: jid + '.type',
-                        name: { en: 'Type', cn: self.en },
-                        type: 'string-enum-trigger',
-                        objs: _READERS[_Utils.dataset_name].get(jid, 'train'),
-                        default: self.objs[0].value,
-                    },
-                ],
+                objs: _READERS[_Utils.dataset_name].get(jid) +
+                      [
+                          _Utils.booltrigger(
+                              '_k12.' + jid + '.single_id.bool',
+                              'single id',
+                              def=false,
+                              tips='represents tokens as single integers',
+                              trigger=(import 'indexers/single_id.libsonnet').get(jid + '.token_indexers.tokens'),
+                          ),
+                          _Utils.booltrigger(
+                              '_k12.' + jid + '.token_characters.bool',
+                              'characters',
+                              def=false,
+                              tips='represents tokens as lists of character indices',
+                              trigger=(import 'indexers/characters.libsonnet').get(jid + '.token_indexers.token_characters'),
+                          ),
+                          _Utils.string('train_data_path',
+                                        'Dataset Path',
+                                        width=500,
+                                        readonly=true),
+                      ],
             },
             {
                 local jid = 'validation_dataset_reader',
@@ -46,7 +52,7 @@ local _READERS = {
                 type: '_ignore_',
                 objs: [
                     {
-                        _id_: '_k12.' + jid,
+                        _id_: '_k12.' + jid + '.bool',
                         name: { en: 'Enable', cn: self.en },
                         type: 'bool-trigger',
                         objs: [
@@ -54,15 +60,27 @@ local _READERS = {
                                 value: true,
                                 trigger: {
                                     type: '_ignore_',
-                                    objs: [
-                                        {
-                                            _id_: jid + '.type',
-                                            name: { en: 'Type', cn: self.en },
-                                            type: 'string-enum-trigger',
-                                            objs: _READERS[_Utils.dataset_name].get(jid, 'validation'),
-                                            default: self.objs[0].value,
-                                        },
-                                    ],
+                                    objs: _READERS[_Utils.dataset_name].get(jid) +
+                                          [
+                                              _Utils.string('validation_data_path',
+                                                            'Dataset Path',
+                                                            width=500,
+                                                            readonly=true),
+                                              _Utils.booltrigger(
+                                                  '_k12.' + jid + '.single_id.bool',
+                                                  'single id',
+                                                  def=false,
+                                                  tips='represents tokens as single integers',
+                                                  trigger=(import 'indexers/single_id.libsonnet').get(jid + '.token_indexers.tokens'),
+                                              ),
+                                              _Utils.booltrigger(
+                                                  '_k12.' + jid + '.token_characters.bool',
+                                                  'characters',
+                                                  def=false,
+                                                  tips='represents tokens as lists of character indices',
+                                                  trigger=(import 'indexers/characters.libsonnet').get(jid + '.token_indexers.token_characters'),
+                                              ),
+                                          ],
                                 },
                             },
                             {

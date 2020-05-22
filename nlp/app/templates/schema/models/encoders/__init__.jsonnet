@@ -9,7 +9,7 @@ local _Utils = import '../../utils/helper.libsonnet';
 {
     get(jid):: {
         _id_: jid + '.type',
-        name: { en: 'Type', cn: self.en },
+        name: { en: 'type', cn: self.en },
         type: 'string-enum-trigger',
         objs: [
             {
@@ -26,6 +26,11 @@ local _Utils = import '../../utils/helper.libsonnet';
                 name: { en: 'rnn', cn: self.en },
                 value: 'rnn',
                 trigger: (import 'rnn.libsonnet').get(jid),
+            },
+            {
+                name: { en: 'cnn', cn: self.en },
+                value: 'cnn',
+                trigger: (import 'cnn.libsonnet').get(jid),
             },
         ],
         default: _Utils.get_default_value(self._id_, self.objs[0].value),

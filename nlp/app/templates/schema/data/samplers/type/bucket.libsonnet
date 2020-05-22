@@ -13,6 +13,7 @@ local _Utils = import '../../../utils/helper.libsonnet';
             {
                 type: 'H',
                 objs: [
+                    _Utils.string(jid + '.type', 'batch sampler', def='bucket', readonly=true),
                     (import 'basic.libsonnet').batch_size(jid + '.batch_size', 64),
                     _Utils.float(jid + '.padding_noise',
                                  'padding noise',
@@ -25,15 +26,15 @@ local _Utils = import '../../../utils/helper.libsonnet';
                                 def=false,
                                 tips='whether or not drop the last batch if its size would be less the batch_size'),
                     _Utils.booltrigger('_k12.' + jid + '.sorting_keys',
-                                       'sorting keys enable',
+                                       'sorting keys',
                                        def=false,
                                        ddd=true,
+                                       tips='value like [str, ...] or [[str, str], ...], to bucket inputs into batches, we want to group the instances by padding length, so that we minimize the amount of padding necessary per batch',
                                        trigger=[
                                            _Utils.stringarray(
                                                jid + '.sorting_keys',
-                                               'sorting keys value',
-                                               def='["tokens"]',
-                                               tips='value like [str, ...] or [[str, str], ...], to bucket inputs into batches, we want to group the instances by padding length, so that we minimize the amount of padding necessary per batch',
+                                               'value',
+                                               def=['tokens'],
                                            ),
                                        ]),
                 ],

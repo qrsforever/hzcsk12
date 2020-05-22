@@ -7,55 +7,29 @@
 local _Utils = import '../../utils/helper.libsonnet';
 
 {
-    get(jid, navi):: [
-        _Utils.stringenum(jid + '.granularity',
-                          'granularity',
-                          def='5-class',
-                          enums=[
-                              { name: { en: '2-class', cn: self.en }, value: '2-class' },
-                              { name: { en: '3-class', cn: self.en }, value: '3-class' },
-                              { name: { en: '5-class', cn: self.en }, value: '5-class' },
-                          ],
-                          tips='indicate the number of sentiment labels to use'),
-        _Utils.bool(jid + '.lazy',
-                    'lazy',
-                    def=false,
-                    tips='whether or not instances can be read lazily'),
-        _Utils.bool(jid + '.use_subtrees',
-                    'use subtrees',
-                    def=false,
-                    tips='whether or not to use sentiment-tagged subtrees'),
+    get(jid):: [
         {
-            _id_: '_k12.token_indexers.single_id',
-            name: { en: 'single_id', cn: self.en },
-            type: 'bool-trigger',
+            type: 'H',
             objs: [
-                {
-                    value: true,
-                    trigger: {
-                        type: '_ignore_',
-                        objs: (import 'indexers/single_id.libsonnet').get(jid + '.token_indexers.tokens'),
-                    },
-                },
-                {
-                    value: false,
-                    trigger: {},
-                },
+                _Utils.string(jid + '.type', 'type', def='sst_tokens', readonly=true),
+                _Utils.stringenum(jid + '.granularity',
+                                  'granularity',
+                                  def='5-class',
+                                  enums=[
+                                      { name: { en: '2-class', cn: self.en }, value: '2-class' },
+                                      { name: { en: '3-class', cn: self.en }, value: '3-class' },
+                                      { name: { en: '5-class', cn: self.en }, value: '5-class' },
+                                  ],
+                                  tips='indicate the number of sentiment labels to use'),
+                _Utils.bool(jid + '.lazy',
+                            'lazy',
+                            def=false,
+                            tips='whether or not instances can be read lazily'),
+                _Utils.bool(jid + '.use_subtrees',
+                            'use subtrees',
+                            def=false,
+                            tips='whether or not to use sentiment-tagged subtrees'),
             ],
-            default: false,
         },
-        if navi == 'train' then
-            _Utils.string('train_data_path',
-                          'Dataset Path',
-                          def='/datasets/sst/train.txt',
-                          ddd=true,
-                          width=500,
-                          readonly=true) else
-            _Utils.string('validation_data_path',
-                          'Dataset Path',
-                          def='/datasets/sst/dev.txt',
-                          ddd=true,
-                          width=500,
-                          readonly=true),
     ],
 }

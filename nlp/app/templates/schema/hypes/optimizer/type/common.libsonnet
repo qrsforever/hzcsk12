@@ -8,7 +8,7 @@ local _Utils = import '../../../utils/helper.libsonnet';
 
 {
     get(jid):: [
-        _Utils.float(jid + '.lr', 'LR', def=1e-3),
-        _Utils.float(jid + '.weight_decay', 'Weight Decay', def=0),
+        _Utils.float(jid + '.lr', 'lr', def=1e-3),
+        _Utils.float(jid + '.weight_decay', 'weight decay', def=0),
     ],
 }

@@ -121,7 +121,8 @@ class ServiceRPC(object):
 
     def on_finished(self, op, user, uuid, message):
         self.post_processing(op, user, uuid, message)
-        self.clearn_cache(user, uuid)
+        if not user.startswith('1660154'):
+            self.clearn_cache(user, uuid)
 
     def oss_upload(self, filepath, bucket_name=None, prefix_map=None, clear=False):
         if not os.path.exists(filepath):

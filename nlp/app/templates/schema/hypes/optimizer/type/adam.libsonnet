@@ -11,10 +11,10 @@ local _Utils = import '../../../utils/helper.libsonnet';
         type: 'H',
         objs: [
             _Utils.floatarray(jid + '.betas',
-                              'Betas',
+                              'betas',
                               def=[0.9, 0.999]),
             _Utils.float(jid + '.eps',
-                         'Eps',
+                         'eps',
                          def=1e-8),
         ] + (import 'common.libsonnet').get(jid),
     },

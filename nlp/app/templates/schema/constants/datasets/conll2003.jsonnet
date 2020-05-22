@@ -21,7 +21,7 @@
         },
     },
     train_data_path: '/datasets/conll2003/train.txt',
-    validation_data_path: '/datasets/conll2003/sst/dev.txt',
+    validation_data_path: '/datasets/conll2003/dev.txt',
     test_data_path: '/datasets/conll2003/test.txt',
     model: {
         type: 'crf_tagger',
@@ -35,7 +35,7 @@
                 tokens: {
                     type: 'embedding',
                     embedding_dim: 50,
-                    pretrained_file: '/data/pretrained/nlp/glove/glove.6B.50d.txt.gz',
+                    pretrained_file: '/pretrained/glove/glove.6B.50d.txt.gz',
                     trainable: true,
                 },
                 token_characters: {
@@ -78,5 +78,27 @@
         grad_norm: 5.0,
         patience: 25,
         cuda_device: 0,
+    },
+    _k12: {
+        data_loader: { type: 'none' },
+        dataset_reader: {
+            single_id: { bool: true },
+            token_characters: { bool: true },
+        },
+        validation_dataset_reader: {
+            bool: true,
+            single_id: { bool: true },
+            token_characters: { bool: true },
+        },
+        model: {
+            dropout: { bool: true },
+            text_field_embedder: {
+                token_embedders: {
+                    tokens: {
+                        pretrained_file: { bool: true },
+                    },
+                },
+            },
+        },
     },
 }

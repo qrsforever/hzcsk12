@@ -16,7 +16,13 @@ local _Utils = import '../../../utils/helper.libsonnet';
                             'lowercase',
                             def=false,
                             tips='token convert to lowercase before getting an index for the token from the vocabulary'),
-                _Utils.int(jid + '.token_min_padding_length', 'min padding length', def=0),
+                _Utils.booltrigger(
+                    '_k12.' + jid + '.token_min_padding_length.bool',
+                    'token min padding',
+                    def=false,
+                    tips='minimum padding length required for the TokenIndexer',
+                    trigger=[_Utils.int(jid + '.token_min_padding_length', 'value', min=0, def=0)]
+                ),
             ],
         },
     ],

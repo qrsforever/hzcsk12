@@ -7,7 +7,7 @@
 {
     get(jid):: {
         _id_: jid + '.type',
-        name: { en: 'Optimizer Type', cn: self.en },
+        name: { en: 'type', cn: self.en },
         type: 'string-enum-trigger',
         objs: [
             {
