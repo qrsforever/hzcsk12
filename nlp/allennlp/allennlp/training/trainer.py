@@ -26,13 +26,17 @@ from allennlp.data.dataloader import TensorDict
 from allennlp.models.model import Model
 from allennlp.nn import util as nn_util
 from allennlp.training import util as training_util
-from allennlp.training.checkpointer import Checkpointer
+# from allennlp.training.checkpointer import Checkpointer # QRS remove
 from allennlp.training.learning_rate_schedulers import LearningRateScheduler
 from allennlp.training.metric_tracker import MetricTracker
 from allennlp.training.momentum_schedulers import MomentumScheduler
 from allennlp.training.moving_average import MovingAverage
 from allennlp.training.optimizers import Optimizer
 from allennlp.training.tensorboard_writer import TensorboardWriter
+
+# QRS add
+from k12ai.training.stat import RunnerStat
+from k12ai.training.checkpointer import Checkpointer
 
 logger = logging.getLogger(__name__)
 
@@ -830,6 +834,9 @@ class GradientDescentTrainer(Trainer):
                 logger.info("Estimated training time remaining: %s", formatted_time)
 
             epochs_trained += 1
+
+            # QRS: add
+            RunnerStat.train(self, metrics, remain_time=estimated_time_remaining)
 
         # make sure pending events are flushed to disk and files are closed properly
         self._tensorboard.close()

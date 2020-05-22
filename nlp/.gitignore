@@ -1,4 +1,5 @@
 .allennlp
 .allennlp-models
 .allennlp-reading-comprehension
+allennlp_bak
 app/k12ai/common

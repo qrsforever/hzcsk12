@@ -22,6 +22,9 @@ from allennlp.models.archival import CONFIG_NAME
 from allennlp.models.model import Model
 from allennlp.nn import util as nn_util
 
+# QRS: add for report message
+from k12ai.training.stat import RunnerStat
+
 logger = logging.getLogger(__name__)
 
 
@@ -395,6 +398,8 @@ def evaluate(
                 )
             final_metrics["loss"] = total_loss / total_weight
 
+        # QRS: add
+        RunnerStat.evaluate(final_metrics)
         return final_metrics
 
 

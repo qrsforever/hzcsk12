@@ -89,6 +89,16 @@ def main(prog: Optional[str] = None) -> None:
         # Import any additional modules needed (to register custom classes).
         for package_name in args.include_package:
             import_module_and_submodules(package_name)
-        args.func(args)
+
+        # QRS: add for catch execpt info
+        from k12ai.common.log_message import MessageReport
+        MessageReport.status(MessageReport.RUNNING)
+        try:
+            args.func(args)
+            logger.info("+++success+++")
+            MessageReport.status(MessageReport.FINISH)
+        except Exception:
+            logger.info("+++fail+++")
+            MessageReport.status(MessageReport.EXCEPT)
     else:
         parser.print_help()

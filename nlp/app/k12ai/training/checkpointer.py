@@ -18,10 +18,11 @@ class Checkpointer(AllennlpCheckpointer):
         self,
         serialization_dir: str = None,
         keep_serialized_model_every_num_seconds: int = None,
-        num_serialized_models_to_keep: int = 20,
+        num_serialized_models_to_keep: int = 2,
+        model_save_interval: float = None,
     ) -> None:
         super().__init__(serialization_dir,
-                keep_serialized_model_every_num_seconds, num_serialized_models_to_keep)
+                keep_serialized_model_every_num_seconds, num_serialized_models_to_keep, model_save_interval)
         if serialization_dir is not None:
             self._model_state_path = os.path.join(
                 self._serialization_dir, "model_state_latest.th"
@@ -36,15 +37,16 @@ class Checkpointer(AllennlpCheckpointer):
     def save_checkpoint(
         self,
         epoch: Union[int, str],
-        model_state: Dict[str, Any],
-        training_states: Dict[str, Any],
-        is_best_so_far: bool,
+        trainer: "allennlp.training.trainer.Trainer",
+        is_best_so_far: bool = False,
     ) -> None:
         if self._serialization_dir is not None:
-            torch.save(model_state, self._model_state_path)
-            torch.save({**training_states, "epoch": epoch}, self._training_state_path)
-            if is_best_so_far:
-                shutil.copyfile(self._model_state_path, self._model_best_path)
+            with trainer.get_checkpoint_state() as state:
+                model_state, training_states = state
+                torch.save(model_state, self._model_state_path)
+                torch.save({**training_states, "epoch": epoch}, self._training_state_path)
+                if is_best_so_far:
+                    shutil.copyfile(self._model_state_path, self._model_best_path)
 
     def find_latest_checkpoint(self) -> Tuple[str, str]:
         if os.path.exists(self._model_state_path) and \

@@ -233,8 +233,9 @@ def train_model(
             batch_weight_key=batch_weight_key,
             dry_run=dry_run,
         )
-        if not dry_run:
-            archive_model(serialization_dir)
+        # QRS remove
+        # if not dry_run:
+        #     archive_model(serialization_dir)
         return model
 
     # Otherwise, we are running multiple processes for training.
@@ -302,7 +303,8 @@ def train_model(
         if dry_run:
             return None
         else:
-            archive_model(serialization_dir)
+            # QRS remove
+            # archive_model(serialization_dir)
             model = Model.load(params, serialization_dir)
             return model
 
@@ -436,7 +438,8 @@ def _train_worker(
                 "Training interrupted by the user. Attempting to create "
                 "a model archive using the current best epoch weights."
             )
-            archive_model(serialization_dir)
+            # QRS remove
+            # archive_model(serialization_dir)
         raise
 
     if master:

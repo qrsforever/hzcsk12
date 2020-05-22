@@ -15,11 +15,6 @@ local _Utils = import '../utils/helper.libsonnet';
                           def=_Utils.dataset_name,
                           readonly=true,
                           tips='dataset name'),
-            _Utils.bool('trainer.shuffle',
-                        'Shuffle',
-                        def=true,
-                        ddd=true,
-                        tips='whether or not to shuffle the instances in the iterator'),
         ],
     },
     {
@@ -39,32 +34,6 @@ local _Utils = import '../utils/helper.libsonnet';
                     (import 'samplers/__init__.jsonnet').get('data_loader.batch_sampler'),
                 ],
             },
-            // {
-            //     name: { en: 'Iterator', cn: self.en },
-            //     type: '_ignore_',
-            //     objs: [
-            //         (import 'iterator/__init__.jsonnet').get(),
-            //     ],
-            // },
         ],
-        // + if _Utils.debug then [
-        //     {
-        //         name: { en: 'Debug', cn: self.en },
-        //         type: '_ignore_',
-        //         objs: [
-        //             _Utils.text('_k12.dev',
-        //                         'NB',
-        //                         def=_Utils.notebook_url,
-        //                         width=800,
-        //                         readonly=true),
-        //         ],
-        //     },
-        // ] else [],
     },
-    // {
-    //     type: 'H',
-    //     objs: [
-    //         _Utils.bool('_k12.dev_mode', 'Develop Mode', def=false),
-    //     ],
-    // },
 ]
