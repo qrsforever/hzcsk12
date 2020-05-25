@@ -12,6 +12,7 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
         iputils-ping \
         && \
     $PIP_INSTALL \
+        ipywidgets \
         jupyter \
         jupyter_contrib_nbextensions \
         jupyter_nbextensions_configurator \

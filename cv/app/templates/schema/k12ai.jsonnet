@@ -72,6 +72,17 @@ local _Utils = import 'utils/helper.libsonnet';
                         },
                     ],
                 },
+                {
+                    name: { en: 'Predict', cn: '预测' },
+                    type: '_ignore_',
+                    objs: [
+                        {
+                            _id_: '_k12.iframe.predict',
+                            type: 'iframe',
+                            html: '',
+                        },
+                    ],
+                },
             ],
         },
     ],

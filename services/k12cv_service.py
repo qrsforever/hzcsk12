@@ -105,7 +105,7 @@ class CVServiceRPC(ServiceRPC):
         # upload train or evaluate data
         if op.startswith('train'):
             self.oss_upload(os.path.join(cache_path, 'output', 'ckpts'), clear=True)
-        elif op.startswith('evaluate'):
+        else: # op.startswith('evaluate')
             self.oss_upload(os.path.join(cache_path, 'output', 'result'), clear=True)
 
     def make_container_volumes(self):
@@ -198,13 +198,13 @@ class CVServiceRPC(ServiceRPC):
             config_tree.put('network.checkpoints_name', ckpts_name)
             config_tree.put('network.checkpoints_dir', 'ckpts')
             ckpts_file_exist = os.path.exists(f'{cachedir}/output/ckpts/{ckpts_name}_latest.pth')
-            if op.startswith('evaluate'):
+            if op.startswith('train'):
+                if not ckpts_file_exist:
+                    config_tree.put('network.resume_continue', False)
+            else:
                 if not ckpts_file_exist:
                     raise FileNotFoundError('model file is not found!')
                 config_tree.put('network.resume_continue', True)
-            else: # train
-                if not ckpts_file_exist:
-                    config_tree.put('network.resume_continue', False)
             if config_tree.get('network.resume_continue'):
                 config_tree.put('network.resume', f'/cache/output/ckpts/{ckpts_name}_latest.pth')
             config_str = HOCONConverter.convert(config_tree, 'json')
@@ -219,7 +219,18 @@ class CVServiceRPC(ServiceRPC):
         if op.startswith('train'):
             command += ' --phase train'
         elif op.startswith('evaluate'):
-            command += ' --phase test --test_dir todo --out_dir /cache/output/result'
+            command += ' --phase test --test_dir json --out_dir /cache/output/result'
+        elif op.startswith('predict'):
+            images = _k12ai_tree.get('predict_images', default=None)
+            if images is None:
+                raise FileNotFoundError('image file is not found!')
+            import base64
+            test_dir = f'{cachedir}/predict'
+            os.mkdir(test_dir)
+            for img in images:
+                with open(os.path.join(test_dir, img['name']), "wb") as fp:
+                    fp.write(base64.b64decode(img["content"]))
+            command += ' --phase test --test_dir /cache/predict --out_dir /cache/output/result'
         else:
             raise NotImplementedError
         return command

@@ -91,6 +91,30 @@ class DataLoader(object):
         )
         return valloader
 
+    def get_testloader(self, dataset=None):
+        if self.configer.get('dataset', default=None) in [None, 'default']:
+            dataset = DefaultDataset(root_dir=self.configer.get('data', 'data_dir'), dataset=dataset,
+                                    aug_transform=self.aug_val_transform,
+                                    img_transform=self.img_transform, configer=self.configer)
+
+        else:
+            Log.error('{} dataset is invalid.'.format(self.configer.get('dataset')))
+            exit(1)
+
+        sampler = None
+        if self.configer.get('network.distributed'):
+            sampler = torch.utils.data.distributed.DistributedSampler(dataset)
+
+        valloader = data.DataLoader(
+            dataset, sampler=sampler,
+            batch_size=self.configer.get('val', 'batch_size'), shuffle=False,
+            num_workers=self.configer.get('data', 'workers'), pin_memory=True,
+            collate_fn=lambda *args: collate(
+                *args, trans_dict=self.configer.get('val', 'data_transformer')
+            )
+        )
+        return valloader
+
 
 if __name__ == "__main__":
     # Test data loader.
