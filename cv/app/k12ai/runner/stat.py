@@ -7,6 +7,7 @@
 # @version 1.0
 # @date 2020-03-18 22:28
 
+import os
 import sys
 import math
 import torch
@@ -68,7 +69,10 @@ class RunnerBase(object):
         self._backbone = runner.configer.get('network.backbone')
         self._m_raw_aug = runner.configer.get('metrics.raw_vs_aug', default=False)
         self._m_train_lr = runner.configer.get('metrics.train_lr', default=False)
+        self._m_train_remain_time = runner.configer.get('metrics.train_remain_time', default=True)
+        self._m_train_loss = runner.configer.get('metrics.train_loss', default=True)
         self._m_train_speed = runner.configer.get('metrics.train_speed', default=False)
+        self._m_val_loss = runner.configer.get('metrics.val_loss', default=True)
         self._m_val_speed = runner.configer.get('metrics.val_speed', default=False)
 
     def send(self):
@@ -84,14 +88,15 @@ class RunnerBase(object):
         self._cur_epoch = runner.runner_state['epoch']
 
         # remain time
-        batch_time = runner.batch_time.avg
-        if self._max_iters is None:
-            self._max_iters = self._max_epoch * len(runner.train_loader) # ignore the last epoch
-        if self._val_batch_time > 0:
-            left_iters = self._max_iters - self._cur_iters
-            left_time = batch_time * left_iters + self._val_batch_time * (left_iters // self._val_interval + 1)
-            formatted_time = str(datetime.timedelta(seconds=int(left_time)))
-            self._mm.add_text('train', 'remain_time', f'{formatted_time}')
+        if self._m_train_remain_time:
+            batch_time = runner.batch_time.avg
+            if self._max_iters is None:
+                self._max_iters = self._max_epoch * len(runner.train_loader) # ignore the last epoch
+            if self._val_batch_time > 0:
+                left_iters = self._max_iters - self._cur_iters
+                left_time = batch_time * left_iters + self._val_batch_time * (left_iters // self._val_interval + 1)
+                formatted_time = str(datetime.timedelta(seconds=int(left_time)))
+                self._mm.add_text('train', 'remain_time', f'{formatted_time}')
 
         if self._m_raw_aug and self._report_images_num < MAX_REPORT_IMGS:
             self._report_images_num += 1
@@ -144,20 +149,22 @@ class ClsRunner(RunnerBase):
         super().handle_train(runner, ddata)
 
         # loss
-        loss = list(runner.train_losses.avg.values())[0]
-        self.check_loss(loss)
-        self._mm.add_scalar('train', 'loss', x=self._cur_iters, y=loss)
+        if self._m_train_loss:
+            loss = list(runner.train_losses.avg.values())[0]
+            self.check_loss(loss)
+            self._mm.add_scalar('train', 'loss', x=self._cur_iters, y=loss)
 
         return self
 
     def handle_validation(self, runner):
         super().handle_validation(runner)
         # loss: train and val
-        y = {
-            'train': list(runner.train_losses.avg.values())[0],
-            'val': list(runner.val_losses.avg.values())[0]
-        }
-        self._mm.add_scalar('train_val', 'loss', x=self._cur_iters, y=y)
+        if self._m_val_loss:
+            y = {
+                'train': list(runner.train_losses.avg.values())[0],
+                'val': list(runner.val_losses.avg.values())[0]
+            }
+            self._mm.add_scalar('train_val', 'loss', x=self._cur_iters, y=y)
 
         # acc
         y = {
@@ -185,11 +192,21 @@ class ClsRunner(RunnerBase):
                 self._mm.add_matrix('measuring', 'confusion_matrix', cm).send()
 
         # 10 images
-        if runner.configer.get('metrics.true_pred_images', default=False):
+        if runner.configer.get('metrics.top10_images', default=False):
             for i, (true, pred, path) in enumerate(zip(y_true, y_pred, files)):
                 if i >= 10:
                     break
-                self._mm.add_image('predict_images', f'IMG-{i+1}_{true}_vs_{pred}', path).send()
+                self._mm.add_image('top10_images', f'IMG-{i+1}_{true}_vs_{pred}', path).send()
+
+        # 10 error images
+        if runner.configer.get('metrics.top10_errors', default=False):
+            i = 0
+            for true, pred, path in zip(y_true, y_pred, files):
+                if i >= 10:
+                    break
+                if true != pred:
+                    self._mm.add_image('top10_errors', f'{os.path.basename(path)}_{true}_vs_{pred}', path).send()
+                    i += 1
 
         # precision, recall, fscore
         P, R, F, _ = precision_recall_fscore_support(y_true, y_pred, average='macro')
