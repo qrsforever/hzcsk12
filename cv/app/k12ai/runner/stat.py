@@ -139,6 +139,9 @@ class RunnerBase(object):
     def handle_evaluate(self, runner):
         pass
 
+    def handle_predict(self, runner):
+        pass
+
 
 class ClsRunner(RunnerBase):
     def __init__(self, data_dir, runner):
@@ -196,7 +199,7 @@ class ClsRunner(RunnerBase):
             for i, (true, pred, path) in enumerate(zip(y_true, y_pred, files)):
                 if i >= 10:
                     break
-                self._mm.add_image('top10_images', f'IMG-{i+1}_{true}_vs_{pred}', path).send()
+                self._mm.add_image('top10_images', f'image-{i+1}_{true}_vs_{pred}', path).send()
 
         # 10 error images
         if runner.configer.get('metrics.top10_errors', default=False):
@@ -333,6 +336,25 @@ class ClsRunner(RunnerBase):
 
         return self
 
+    def handle_predict(self, runner, probs_list, path_list):
+        super().handle_predict(runner)
+
+        show_probs = runner.configer.get('metrics.predict_probs', default=False)
+        show_image = runner.configer.get('metrics.predict_images', default=False)
+
+        # predict label
+        for i, (probs, path) in enumerate(zip(probs_list, path_list)):
+            bsname = os.path.basename(path)
+            target = np.argmax(probs)
+            if show_image:
+                self._mm.add_image('predict', f'result-{i}_{target}', path).send()
+            else:
+                self._mm.add_text('predict', f'target-{i}', f'{bsname}: {target}').send()
+            if show_probs:
+                self._mm.add_text('predict', f'probs-{i}', f'{bsname}: {probs.tolist()}').send()
+
+        return self
+
 
 class DetRunner(RunnerBase):
     def __init__(self, data_dir, runner):
@@ -400,3 +422,8 @@ class RunnerStat(object):
     def evaluate(runner, *args, **kwargs):
         RunnerStat.check(runner)
         RunnerStat.H.handle_evaluate(runner, *args, **kwargs).send()
+
+    @staticmethod
+    def predict(runner, *args, **kwargs):
+        RunnerStat.check(runner)
+        RunnerStat.H.handle_predict(runner, *args, **kwargs).send()

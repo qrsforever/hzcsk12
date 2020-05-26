@@ -60,7 +60,6 @@ class DirListDataset(data.Dataset):
         img_list = list()
         for file_name in os.listdir(image_dir):
             img_list.append(f'{image_dir}/{file_name}')
-        print(img_list)
         return img_list
 
 
@@ -149,18 +148,19 @@ class ImageClassifierTest(object):
 
         predictloader = data.DataLoader(
             dataset, sampler=None,
-            batch_size=self.configer.get('val', 'batch_size'), shuffle=False,
+            batch_size=self.configer.get('test', 'batch_size'), shuffle=False,
             num_workers=self.configer.get('data', 'workers'), pin_memory=True,
             collate_fn=lambda *args: collate(
                 *args, trans_dict=self.configer.get('test', 'data_transformer')
             ))
             
-        predicted_list = []
         path_list = []
+        probs_list = []
         self.cls_net.eval() # keep BN and Dropout
         with torch.no_grad():
             for j, data_dict in enumerate(predictloader):
                 out = self.cls_net(data_dict['img'])
-                print(F.softmax(out, dim=1))
-                predicted_list.append(out.max(1)[1].cpu())
+                probs = F.softmax(out, dim=1).cpu().numpy().astype(float)
+                probs_list.extend(probs)
                 path_list.extend(data_dict['path'])
+        RunnerStat.predict(self, probs_list, path_list)
