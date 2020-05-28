@@ -1,0 +1,44 @@
+syntax = "proto2"; 
+
+
+message PoolLayer {
+    optional string name = 1;
+    repeated string inputs = 2;
+    repeated string outputs = 3;
+    enum PoolMode {
+        MAXPOOL1D = 0;
+        MAXPOOL2D = 1;
+        MAXPOOL3D = 2;
+        AVGPOOL1D = 3;
+        AVGPOOL2D = 4;
+        AVGPOOL3D = 5;
+        ADAPTIVEMAXPOOL1D = 6;
+        ADAPTIVEMAXPOOL2D = 7;
+        ADAPTIVEMAXPOOL3D = 8;
+        ADAPTIVEAVGPOOL1D = 9;
+        ADAPTIVEAVGPOOL2D = 10;
+        ADAPTIVEAVGPOOL3D = 11;
+        MAXUNPOOL1D = 12;
+        MAXUNPOOL2D = 13;
+        MAXUNPOOL3D = 14;
+        FRACTIONALMAXPOOL2D = 15;
+        LPPOOL1D = 16;
+        LPPOOL2D = 17;
+    }
+    optional PoolMode layer_mode = 4;
+    message pooling_parameter {
+        repeated string kernel_size = 1;
+        repeated string stride = 2;
+        repeated string padding = 3;
+        repeated string dilation = 4;
+        optional string return_indices = 5;
+        optional string ceil_mode = 6;
+        optional string count_include_pad = 7;
+        repeated string output_size = 8;
+        optional string norm_type = 9;
+        optional string output_ratio = 10;
+        optional string _random_samples = 11;
+    }
+    optional pooling_parameter layer_params = 5;
+    optional string layer_builder = 6;
+}

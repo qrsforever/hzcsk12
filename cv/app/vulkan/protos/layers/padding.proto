@@ -1,0 +1,25 @@
+syntax = "proto2"; 
+
+message PaddingLayer {
+    optional string name = 1;
+    repeated string inputs = 2;
+    repeated string outputs = 3;
+    enum PadMode {
+        REFLECTIONPAD1D = 0;
+        REFLECTIONPAD2D = 1;
+        REPLICATIONPAD1D = 2;
+        REPLICATIONPAD2D = 3;
+        REPLICATIONPAD3D = 4;
+        ZEROPAD2D = 5;
+        CONSTANTPAD1D = 6;
+        CONSTANTPAD2D = 7;
+        CONSTANTPAD3D = 8;
+    }
+    optional PadMode layer_mode = 4;
+    message padding_params {
+        repeated string padding = 1;
+        optional string value = 2;
+    }
+    optional padding_params layer_params = 5;
+    optional string layer_builder = 6;
+}

@@ -1,0 +1,28 @@
+syntax = "proto2"; 
+
+message ConvLayer {
+    optional string name = 1;
+    repeated string inputs = 2;
+    repeated string outputs = 3;
+    enum ConvMode {
+        CONV1D = 0;
+        CONV2D = 1;
+        CONV3D = 2;
+        TRANSCONV1D = 3;
+        TRANSCONV2D = 4;
+        TRANSCONV3D = 5;
+    }
+    optional ConvMode layer_mode = 4;
+    message conv_parameter {
+        optional string in_channels = 1;
+        optional string out_channels = 2;
+        repeated string kernel_size = 3;
+        repeated string stride = 4;
+        repeated string padding = 5;
+        repeated string dilation = 6;
+        optional string groups = 7;
+        optional string bias = 8;
+    }
+    optional conv_parameter layer_params = 5;
+    optional string layer_builder = 6;
+}

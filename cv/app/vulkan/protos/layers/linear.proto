@@ -1,0 +1,21 @@
+syntax = "proto2"; 
+
+message LinearLayer {
+    optional string name = 1;
+    repeated string inputs = 2;
+    repeated string outputs = 3;
+    enum LinearMode {
+        LINEAR = 0;
+        BILINEAR = 1;
+    }
+    optional LinearMode layer_mode = 4;
+    message linear_parameter {
+        optional string in_features = 1;
+        optional string out_features = 2;
+        optional string bias = 3;
+        optional string in1_features = 4;
+        optional string in2_features = 5;
+    }
+    optional linear_parameter layer_params = 5;
+    optional string layer_builder = 6;
+}

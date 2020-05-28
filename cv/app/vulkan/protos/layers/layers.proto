@@ -1,0 +1,23 @@
+syntax = "proto2"; 
+
+import "conv.proto";
+import "pooling.proto";
+import "linear.proto";
+import "dropout.proto";
+import "activations.proto";
+import "basefunc.proto";
+import "vulkan.proto";
+import "norm.proto";
+import "padding.proto";
+
+message Layer {
+    optional ConvLayer conv = 1;
+    optional PoolLayer pool = 2;
+    optional LinearLayer linear = 3;
+    optional DropoutLayer dropout = 4;
+    optional ActLayer act = 5;
+    optional BaseFuncLayer basefunc = 6;
+    optional VulkanLayer vulkan = 7;
+    optional NormLayer norm = 8;
+    optional PaddingLayer padding = 9;
+}

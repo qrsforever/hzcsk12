@@ -1,0 +1,18 @@
+syntax = "proto2"; 
+
+
+message BaseFuncLayer {
+    optional string name = 1;
+    repeated string inputs = 2;
+    repeated string outputs = 3;
+    enum BaseFunc {
+        CAT = 0;
+        ADD = 1;
+    }
+    optional BaseFunc layer_mode = 4;
+    message BaseFunc_params {
+        optional string dim = 2;
+    }
+    optional BaseFunc_params layer_params = 5;
+    optional string layer_builder = 6;
+}

@@ -1,0 +1,37 @@
+syntax = "proto2"; 
+
+
+message NormLayer {
+    optional string name = 1;
+    repeated string inputs = 2;
+    repeated string outputs = 3;
+    enum NormMode {
+        BATCHNORM1D = 0;
+        BATCHNORM2D = 1;
+        BATCHNORM3D = 2;
+        GROUPNORM = 3;
+        INSTANCENORM1D = 4;
+        INSTANCENORM2D = 5;
+        INSTANCENORM3D = 6;
+        LAYERNORM = 7;
+        LOCALRESPONSENORM = 8;
+    }
+    optional NormMode layer_mode = 4;
+    message Norm_Parameters {
+        optional string num_features = 1;
+        optional string eps = 2;
+        optional string momentum = 3;
+        optional string affine = 4;
+        optional string track_running_stats = 5;
+        repeated string normalized_shape = 6;
+        optional string elementwise_affine = 7;
+        optional string size = 8;
+        optional string alpha = 9;
+        optional string beta = 10;
+        optional string k = 11;
+        optional string num_groups = 12;
+        optional string num_channels = 13;
+    }
+    optional Norm_Parameters layer_params = 5;
+    optional string layer_builder = 6;
+}

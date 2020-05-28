@@ -1,0 +1,45 @@
+syntax = "proto2"; 
+
+message ActLayer {
+    optional string name = 1;
+    repeated string inputs = 2;
+    repeated string outputs = 3;
+    enum ActMode {
+        ELU = 0;
+        HARDSHRINK = 1;
+        HARDTANH = 2;
+        LEAKYRELU = 3;
+        LOGSIGMOID = 4;
+        PRELU = 5;
+        RELU = 6;
+        RELU6 = 7;
+        RRELU = 8;
+        SELU = 9;
+        CELU = 10;
+        SIGMOID = 11;
+        SOFTPLUS = 12;
+        SOFTSHRINGK = 13;
+        SOFTSIGN = 14;
+        TANH = 15;
+        TANHSHRINK = 16;
+        THRESHHOLD = 17;
+    }
+    optional ActMode layer_mode = 4;
+    message activation_params {
+        optional string inplace = 1;
+        optional string alpha = 2;
+        optional string lambd = 3;
+        optional string num_parameters = 4;
+        optional string min_val = 5;
+        optional string max_val = 6;
+        optional string negative_slope = 7;
+        optional string lower = 8;
+        optional string upper = 9;
+        optional string beta = 10;
+        optional string threshold = 11;
+        optional string value = 12;
+        optional string init = 13;
+    }
+    optional activation_params layer_params = 5;
+    optional string layer_builder = 6;
+}
