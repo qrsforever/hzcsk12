@@ -26,13 +26,13 @@ local _Utils = import 'utils/helper.libsonnet';
             ] + (
                 if std.startsWith(_Utils.network, 'custom_') then [
                     {
-                        name: { en: 'Custom', cn: '自定义' },
+                        name: { en: 'Design', cn: '自定义' },
                         type: '_ignore_',
                         objs: [
                             {
                                 _id_: 'network.net_def',
                                 type: 'iframe',
-                                html: '',
+                                html: 'http://' + _Utils.net_ip + ':9091',
                                 width: 800,
                                 height: 400,
                             },
