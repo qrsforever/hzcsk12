@@ -13,15 +13,15 @@ DST_DIR='/hzcsk12'
 
 VENDOR=hzcsai_com
 
-K12AI_PROJECT=k12ai
-K12AI_PORT=8118
+K12NB_PROJECT=k12nb
+K12NB_PORT=8118
 
 __start_notebook()
 {
     PROJECT=$1
     PORT=$2
 
-    REPOSITORY=$VENDOR/$PROJECT:notebook
+    REPOSITORY=$VENDOR/$PROJECT
     JNAME=k12nb
 
     cd $TOP_DIR
@@ -60,7 +60,7 @@ __start_notebook()
 
 __main()
 {
-    __start_notebook $K12AI_PROJECT $K12AI_PORT \
+    __start_notebook $K12NB_PROJECT $K12NB_PORT \
         --env PYTHONPATH=$DST_DIR/hzcsnote:$DST_DIR/hzcsnote/k12libs \
         --volume $TOP_DIR/ml/app:$DST_DIR/hzcsnote/ml/app \
         --volume $TOP_DIR/cv/app:$DST_DIR/hzcsnote/cv/app \

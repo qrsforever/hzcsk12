@@ -113,24 +113,26 @@ __build_image()
         fi
         docker tag $REPOSITORY:$TAG $REPOSITORY
 
-        if [[ $PROJECT == "k12ai" ]]
-        then
-            if [[ ! -d .jupyter_config ]]
-            then
-                git clone https://gitee.com/lidongai/jupyter_config.git .jupyter_config
-            fi
-            docker build --tag $REPOSITORY:notebook --file ${DOCKERFILE%.*}.nb .
-        fi
         cd - >/dev/null
     else
         echo "No need build new image $REPOSITORY!"
     fi
 }
 
+__build_notebook() 
+{
+
+    if [[ ! -d .jupyter_config ]]
+    then
+        git clone https://gitee.com/lidongai/jupyter_config.git .jupyter_config
+    fi
+    docker build --tag ${VENDOR}/k12nb --file Dockerfile.nb .
+}
+
 __main()
 {
     image='all'
-    if [[ x$1 == xai ]] || [[ x$1 == xml ]] || [[ x$1 == xcv ]] || [[ x$1 == xnlp ]] || [[ x$1 == xrl ]]
+    if [[ x$1 == xai ]] || [[ x$1 == xml ]] || [[ x$1 == xcv ]] || [[ x$1 == xnlp ]] || [[ x$1 == xrl ]] || [[ x$1 == xnb ]]
     then
         image=$1
         shift
@@ -147,6 +149,9 @@ __main()
         __build_image "k12cv"  $MAJOR_K12AI $MINOR_K12AI cv/Dockerfile.cv $force
         __build_image "k12nlp" $MAJOR_K12AI $MINOR_K12AI nlp/Dockerfile.nlp $force
         __build_image "k12rl"  $MAJOR_K12AI $MINOR_K12AI rl/Dockerfile.rl $force
+    elif [[ x$image == xnb ]]
+    then
+        __build_notebook
     else
         if [[ x$image == xai ]]
         then
