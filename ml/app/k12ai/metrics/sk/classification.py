@@ -45,6 +45,16 @@ def k12ai_get_metrics(model, data, y_true, y_pred, kwargs):
             print(str(err))
             pass
 
+    if 'dtreeviz' in kwargs:
+        from dtreeviz.trees import dtreeviz
+        viz = dtreeviz(model.algo,
+                data['X_train'],
+                data['y_train'],
+                feature_names=data['feature_names'],
+                class_names=list(data['target_names']),
+                fontname='sans-serif', **kwargs['dtreeviz'])
+        mm().add_image('DecisionNice', f'{model.name}', viz.svg()).send()
+
     # text metrics
     metrics = {}
     if 'accuracy' in kwargs:

@@ -11,17 +11,17 @@ local _Utils = import '../utils/helper.libsonnet';
     {
         type: 'H',
         objs: [
-            _Utils.string('task', 'Task', def=_Utils.task, readonly=true, tips='task type'),
-            _Utils.string('method', 'Method', def=_Utils.method, readonly=true),
-            _Utils.bool('data.pca2D', 'PCA 2D', def=false, ddd=true, tips='PCA reduce data to 2 features'),
+            _Utils.string('task', 'Task', def=_Utils.task, ddd=false, readonly=true, tips='task type'),
+            _Utils.string('method', 'Method', def=_Utils.method, ddd=false, readonly=true),
+            _Utils.bool('data.pca2D', 'PCA 2D', def=false, tips='PCA reduce data to 2 features'),
         ],
     },
     {
         type: 'H',
         objs: [
-            _Utils.float('data.sampling.test_size', 'Test Size', def=0.25, ddd=true, max=0.9),
-            _Utils.int('data.sampling.random_state', 'Random State', def=42, ddd=true),
-            _Utils.bool('data.sampling.shuffle', 'Shuffle', def=true, ddd=true),
+            _Utils.float('data.sampling.test_size', 'Test Size', def=0.25, max=0.9),
+            _Utils.int('data.sampling.random_state', 'Random State', def=42),
+            _Utils.bool('data.sampling.shuffle', 'Shuffle', def=true),
         ],
     },
     {

@@ -12,6 +12,6 @@ from k12ai.models.base import K12Algorithm
 from sklearn.tree import DecisionTreeRegressor as Algo
 
 
-class SKRandomForest(K12Algorithm):
+class SKDecisionTreeRegressor(K12Algorithm):
     def __init__(self, *args, **kwargs):
         super().__init__(Algo, *args, **kwargs)

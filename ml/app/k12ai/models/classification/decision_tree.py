@@ -12,6 +12,6 @@ from k12ai.models.base import K12Algorithm
 from sklearn.tree import DecisionTreeClassifier as Algo
 
 
-class SKDecisionTree(K12Algorithm):
+class SKDecisionTreeClassifier(K12Algorithm):
     def __init__(self, *args, **kwargs):
         super().__init__(Algo, *args, **kwargs)

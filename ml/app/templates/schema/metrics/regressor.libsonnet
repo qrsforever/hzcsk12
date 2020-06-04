@@ -4,7 +4,7 @@
 // @version 1.0
 // @date 2020-02-27 17:15
 
-local _Utils = import '../../utils/helper.libsonnet';
+local _Utils = import '../utils/helper.libsonnet';
 
 local _MultiOuptAgg(method) = {
     _id_: 'metrics.' + method + '.multioutput',

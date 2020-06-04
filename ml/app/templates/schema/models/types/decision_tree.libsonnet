@@ -93,7 +93,6 @@ local _R_Criterion = {
                              max=0.999,
                              min=0.001),
                 _Utils.float('model.decision_tree.min_impurity_decrease', 'Min Impurity Dec', def=0.0),
-                _Utils.bool('_k12.metrics.tree_dot', 'Display Tree', def=false),  // template put here
             ],
         },
         {
@@ -102,7 +101,7 @@ local _R_Criterion = {
                 _Utils.booltrigger('_k12.model.decision_tree.max_depth',
                                    'Max Depth',
                                    def=false,
-                                   trigger=[_Utils.int('model.decision_tree.max_depth', 'Value', def=5, ddd=true)]),
+                                   trigger=[_Utils.int('model.decision_tree.max_depth', 'Value', def=3, ddd=true)]),
                 _Utils.booltrigger('_k12.model.decision_tree.max_leaf_nodes',
                                    'Max Leaf Nodes',
                                    def=false,

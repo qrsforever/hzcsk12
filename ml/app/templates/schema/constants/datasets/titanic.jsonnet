@@ -22,4 +22,9 @@
             |||,
         },
     },
+    metrics: {
+        dtreeviz: {
+            target_name: 'titanic',
+        },
+    },
 }

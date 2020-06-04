@@ -87,7 +87,7 @@ local _R_Criterion = {
                 _Utils.booltrigger('_k12.model.random_forest.max_depth',
                                    'Max Depth',
                                    def=false,
-                                   trigger=[_Utils.int('model.random_forest.max_depth', 'Value', def=5, ddd=true)]),
+                                   trigger=[_Utils.int('model.random_forest.max_depth', 'Value', def=3, ddd=true)]),
                 _Utils.booltrigger('_k12.model.random_forest.max_leaf_nodes',
                                    'Max Leaf Nodes',
                                    def=false,

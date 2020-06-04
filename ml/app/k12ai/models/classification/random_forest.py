@@ -11,6 +11,6 @@ from k12ai.models.base import K12Algorithm
 from sklearn.ensemble import RandomForestClassifier as Algo
 
 
-class SKRandomForest(K12Algorithm):
+class SKRandomForestClassifier(K12Algorithm):
     def __init__(self, *args, **kwargs):
         super().__init__(Algo, *args, **kwargs)

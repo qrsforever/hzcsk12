@@ -12,6 +12,6 @@ from k12ai.models.base import K12Algorithm
 from sklearn.ensemble import GradientBoostingRegressor as Algo
 
 
-class SKGradientBoosting(K12Algorithm):
+class SKGradientBoostingRegressor(K12Algorithm):
     def __init__(self, *args, **kwargs):
         super().__init__(Algo, *args, **kwargs)

@@ -54,4 +54,12 @@
             random_state: 11,
         },
     },
+    metrics: {
+        dtreeviz: {
+            target_name: 'iris',
+            orientation: 'TD',
+            fancy: true,
+            show_node_labels: true,
+        },
+    },
 }

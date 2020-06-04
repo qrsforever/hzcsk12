@@ -4,7 +4,7 @@
 // @version 1.0
 // @date 2020-03-23 16:54
 
-local _Utils = import '../../utils/helper.libsonnet';
+local _Utils = import '../utils/helper.libsonnet';
 
 [
     {

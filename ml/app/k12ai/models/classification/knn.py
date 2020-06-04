@@ -11,6 +11,6 @@ from k12ai.models.base import K12Algorithm
 from sklearn.neighbors import KNeighborsClassifier as Algo
 
 
-class SKKNN(K12Algorithm):
+class SKKNeighborsClassifier(K12Algorithm):
     def __init__(self, *args, **kwargs):
         super().__init__(Algo, *args, **kwargs)
