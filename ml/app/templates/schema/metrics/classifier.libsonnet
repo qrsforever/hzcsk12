@@ -89,47 +89,4 @@ local _Average(method) = {
             _Utils.bool('_k12.metrics.confusion_matrix', 'Confusion Matrix', def=false),
         ],
     },
-] +
-if 'decision_tree' == _Utils.network
-then
-    [
-        {
-            type: 'H',
-            objs: [
-                _Utils.booltrigger('_k12.metrics.dtreeviz',
-                                   'Nice Tree',
-                                   def=false,
-                                   trigger=[
-                                       {
-                                           type: 'H',
-                                           objs: [
-                                               _Utils.string('metrics.dtreeviz.target_name',
-                                                             'target name',
-                                                             def=_Utils.dataset_name,
-                                                             readonly=true),
-                                               _Utils.stringenum(
-                                                   'metrics.dtreeviz.orientation',
-                                                   'orientation',
-                                                   def='TD',
-                                                   enums=[
-                                                       {
-                                                           name: { en: 'TD', cn: self.en },
-                                                           value: 'TD',
-                                                       },
-                                                       {
-                                                           name: { en: 'LR', cn: self.en },
-                                                           value: 'LR',
-                                                       },
-                                                   ]
-                                               ),
-                                               _Utils.bool('metrics.dtreeviz.fancy', 'fancy', def=true),
-                                               _Utils.bool('metrics.dtreeviz.show_node_labels', 'show labels', def=true),
-                                           ],
-                                       },
-                                   ],
-                                   tips='make visualize look nice'),
-                _Utils.bool('_k12.metrics.tree_dot', 'Display Tree', def=false, tips='set Max Depth < 5'),
-            ],
-        },
-    ]
-else []
+] + (import 'common.libsonnet').get()

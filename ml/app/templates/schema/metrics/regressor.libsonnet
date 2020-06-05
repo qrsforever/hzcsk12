@@ -64,4 +64,4 @@ local _MultiOuptAgg(method) = {
                                trigger=[_MultiOuptAgg('evs')]),
         ],
     },
-]
+] + (import 'common.libsonnet').get()

@@ -31,7 +31,7 @@ def k12ai_get_metrics(model, data, y_true, y_pred, kwargs):
         xx, yy = make_meshgrid(X0, X1, h=0.05)
         zz = model.predict(np.c_[xx.ravel(), yy.ravel()])
         fig = plot_decision_boundaries(xx, yy, zz, X0, X1, data['y'])
-        mm().add_image('DecisionBoundary', f'{model.name}', fig).send()
+        mm().add_image('DBoundary', f'{model.name}', fig).send()
 
     # decision tree node
     if 'tree_dot' in kwargs:
@@ -40,20 +40,33 @@ def k12ai_get_metrics(model, data, y_true, y_pred, kwargs):
         try:
             tree_dot = export_graphviz(model.algo, feature_names=data['feature_names'])
             graph = pydotplus.graph_from_dot_data(tree_dot)
-            mm().add_image('DecisionTree', f'{model.name}', graph.create_png()).send()
+            mm().add_image('DTree', f'{model.name}', graph.create_png()).send()
         except Exception as err:
             print(str(err))
             pass
 
     if 'dtreeviz' in kwargs:
         from dtreeviz.trees import dtreeviz
-        viz = dtreeviz(model.algo,
-                data['X_train'],
-                data['y_train'],
-                feature_names=data['feature_names'],
-                class_names=list(data['target_names']),
-                fontname='sans-serif', **kwargs['dtreeviz'])
-        mm().add_image('DecisionNice', f'{model.name}', viz.svg()).send()
+        if 'dtreeviz_estimators_num' in kwargs:
+            num = kwargs['dtreeviz_estimators_num']
+            for i, algo in enumerate(model.algo.estimators_, 1):
+                if i > num:
+                    break
+                viz = dtreeviz(algo,
+                        data['X_train'],
+                        data['y_train'],
+                        feature_names=data['feature_names'],
+                        class_names=list(data['target_names']),
+                        fontname='sans-serif', **kwargs['dtreeviz'])
+                mm().add_image('VTree', f'{model.name}-{i}', viz.svg()).send()
+        else:
+            viz = dtreeviz(model.algo,
+                    data['X_train'],
+                    data['y_train'],
+                    feature_names=data['feature_names'],
+                    class_names=list(data['target_names']),
+                    fontname='sans-serif', **kwargs['dtreeviz'])
+            mm().add_image('DTree', f'{model.name}', viz.svg()).send()
 
     # text metrics
     metrics = {}

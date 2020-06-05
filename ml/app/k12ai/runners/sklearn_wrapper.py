@@ -24,7 +24,7 @@ class SKRunner(BaseRunner):
             from k12ai.models.clustering import k12ai_get_model
             from k12ai.metrics.sk.clustering import k12ai_get_metrics
         else:
-            raise NotImplementedError
+            raise NotImplementedError(f'task:{task}')
 
         model_name = configer.get('model.name')
         model_args = configer.get(f'model.{model_name}')

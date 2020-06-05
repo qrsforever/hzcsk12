@@ -33,6 +33,10 @@ local _network_maps = {
         method: 'sklearn_wrapper',
         name: { en: 'random forest', cn: self.en },
     },
+    adaboost: {
+        method: 'sklearn_wrapper',
+        name: { en: 'adaptive boost', cn: self.en },
+    },
     logistic: {
         method: 'sklearn_wrapper',
         name: { en: 'logistic', cn: self.en },
