@@ -9,6 +9,7 @@
 
 import os
 import argparse
+import datetime
 from pyhocon import ConfigFactory
 from k12ai.utils.logger import Logger
 from k12ai.common.log_message import MessageReport
@@ -20,15 +21,17 @@ def _do_train(configer):
 
     if configer.get('method') == 'sklearn_wrapper':
         from k12ai.runners.sklearn_wrapper import SKRunner
+        mm = MessageMetric()
+        mm.add_text('train', 'remain_time', f'{datetime.timedelta(seconds=110)}')
+        mm.send()
         runner = SKRunner(configer)
         metrics = runner.train()
-        Logger.info(metrics)
         MessageReport.metrics(metrics)
         # Text
-        mm = MessageMetric()
         for key, value in metrics.items():
             mm.add_text('train', key, value)
         mm.send()
+        Logger.info(metrics)
     else:
         raise NotImplementedError
 

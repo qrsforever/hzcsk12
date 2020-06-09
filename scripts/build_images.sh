@@ -126,7 +126,8 @@ __build_notebook()
     then
         git clone https://gitee.com/lidongai/jupyter_config.git .jupyter_config
     fi
-    docker build --tag ${VENDOR}/k12nb --file Dockerfile.nb .
+    REPOSITORY=$VENDOR/k12nb
+    docker build --tag $REPOSITORY --build-arg REPOSITORY=$REPOSITORY --file Dockerfile.nb .
 }
 
 __main()

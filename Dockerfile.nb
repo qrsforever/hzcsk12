@@ -1,5 +1,7 @@
 FROM hzcsai_com/k12ai:latest
 
+LABEL org.label-schema.name=''
+
 ARG jupyter_data_dir=/root/.local/share/jupyter
 ARG jupyter_conf_dir=/root/.jupyter
 
