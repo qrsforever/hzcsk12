@@ -35,7 +35,7 @@ local _network_maps = {
     },
     adaboost: {
         method: 'sklearn_wrapper',
-        name: { en: 'adaptive boost', cn: self.en },
+        name: { en: 'adaptive boosting', cn: self.en },
     },
     logistic: {
         method: 'sklearn_wrapper',
@@ -43,7 +43,11 @@ local _network_maps = {
     },
     gradient_boosting: {
         method: 'sklearn_wrapper',
-        name: { en: 'logistic', cn: self.en },
+        name: { en: 'gradient boosting', cn: self.en },
+    },
+    xgboost: {
+        method: 'xgboost_wrapper',
+        name: { en: 'xgboost', cn: self.en },
     },
 };
 

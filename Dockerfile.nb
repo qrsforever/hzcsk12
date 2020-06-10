@@ -18,6 +18,7 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
     $PIP_INSTALL \
         flask flask_cors \
         /root/ipywidgets.zip \
+        xgboost \ 
         jupyter \
         jupyter_contrib_nbextensions \
         jupyter_nbextensions_configurator \

@@ -18,22 +18,23 @@ from k12ai.common.log_message import MessageMetric
 
 def _do_train(configer):
     Logger.info(f'{configer}')
-
+    mm = MessageMetric()
     if configer.get('method') == 'sklearn_wrapper':
-        from k12ai.runners.sklearn_wrapper import SKRunner
-        mm = MessageMetric()
-        mm.add_text('train', 'remain_time', f'{datetime.timedelta(seconds=110)}')
-        mm.send()
-        runner = SKRunner(configer)
-        metrics = runner.train()
-        MessageReport.metrics(metrics)
-        # Text
-        for key, value in metrics.items():
-            mm.add_text('train', key, value)
-        mm.send()
-        Logger.info(metrics)
+        from k12ai.runners.sklearn_wrapper import SKRunner as Runner
+    elif configer.get('method') == 'xgboost_wrapper':
+        from k12ai.runners.xgboost_wrapper import XGBRunner as Runner
     else:
         raise NotImplementedError
+
+    mm.add_text('train', 'remain_time', f'{datetime.timedelta(seconds=110)}').send()
+
+    runner = Runner(configer)
+    metrics = runner.train()
+    # Text
+    for key, value in metrics.items():
+        mm.add_text('train', key, value)
+    mm.send()
+    Logger.info(metrics)
 
 
 if __name__ == "__main__":

@@ -67,7 +67,7 @@ local _R_Loss = {
         {
             type: 'H',
             objs: [
-                _Utils.float('model.gradient_boosting.learning_rate', 'LR', def=0.1),
+                _Utils.float('model.gradient_boosting.learning_rate', 'LR', def=0.1, min=0.0001, max=1.0),
                 {
                     _id_: 'model.gradient_boosting.criterion',
                     name: { en: 'Criterion', cn: self.en },

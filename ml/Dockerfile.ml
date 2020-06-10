@@ -34,7 +34,8 @@ RUN PIP_INSTALL="pip install -U --no-cache-dir --retries 20 --timeout 120 \
         --trusted-host mirrors.intra.didiyun.com \
         --index-url http://mirrors.intra.didiyun.com/pip/simple" && \
     $PIP_INSTALL \
-    dtreeviz
+    dtreeviz \
+    xgboost
 
 
 CMD ["/bin/bash"]

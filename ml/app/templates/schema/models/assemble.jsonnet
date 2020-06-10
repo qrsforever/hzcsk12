@@ -35,5 +35,7 @@ local _Utils = import '../utils/helper.libsonnet';
         (import 'types/logistic.libsonnet').get()
     else if 'gradient_boosting' == _Utils.network then
         (import 'types/gradient_boosting.libsonnet').get()
+    else if 'xgboost' == _Utils.network then
+        (import 'types/xgboost.libsonnet').get()
     else []
 )

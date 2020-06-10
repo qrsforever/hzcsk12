@@ -12,32 +12,31 @@ local _Utils = import '../../utils/helper.libsonnet';
             type: 'H',
             objs: [
                 _Utils.int('model.adaboost.n_estimators', 'Estimators', def=10, ddd=true, min=1),
-                _Utils.float('mode.adaboost.learning_rate', 'LR', def=1.0, min=0.001, max=1.0),
+                _Utils.float('model.adaboost.learning_rate', 'LR', def=1.0, min=0.001, max=1.0),
                 _Utils.booltrigger('_k12.model.adaboost.random_state',
                                    'Random State',
                                    def=false,
                                    trigger=[_Utils.int('model.adaboost.random_state', 'Value', def=100)]),
             ] + (
                 if _Utils.task == 'classifier'
-                then
-                    [
-                        _Utils.stringenum(
-                            'model.adaboost.algorithm',
-                            'Algo',
-                            def='SAMME.R',
-                            enums=[
-                                {
-                                    name: { en: 'SAMME', cn: self.en },
-                                    value: 'SAMME',
-                                },
-                                {
-                                    name: { en: 'SAMME.R', cn: self.en },
-                                    value: 'SAMME.R',
-                                },
-                            ],
-                            tips='SAMME.R is faster than SAMME'
-                        ),
-                    ]
+                then [
+                    _Utils.stringenum(
+                        'model.adaboost.algorithm',
+                        'Algo',
+                        def='SAMME.R',
+                        enums=[
+                            {
+                                name: { en: 'SAMME', cn: self.en },
+                                value: 'SAMME',
+                            },
+                            {
+                                name: { en: 'SAMME.R', cn: self.en },
+                                value: 'SAMME.R',
+                            },
+                        ],
+                        tips='SAMME.R is faster than SAMME'
+                    ),
+                ]
                 else [
                     _Utils.stringenum(
                         'model.adaboost.loss',

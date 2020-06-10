@@ -97,10 +97,11 @@ def _memstat_message():
     app_gpu_usage = 0.0
     sys_gpu_mfree = []
     for i, g in enumerate(GPUtil.getGPUs(), 0):
-        _peak_update(f'peak_gpu_{i}_memory_cached_MB', memory_cached(i), 2)
-        _peak_update(f'peak_gpu_{i}_memory_allocated_MB', memory_allocated(i), 2)
-        _peak_update(f'peak_gpu_{i}_max_memory_cached_MB', max_memory_cached(i), 2)
-        app_gpu_usage += _peak_update(f'peak_gpu_{i}_max_memory_allocated_MB', max_memory_allocated(i), 2)
+        # TODO cuda segmentation fault
+        # _peak_update(f'peak_gpu_{i}_memory_cached_MB', memory_cached(i), 2)
+        # _peak_update(f'peak_gpu_{i}_memory_allocated_MB', memory_allocated(i), 2)
+        # _peak_update(f'peak_gpu_{i}_max_memory_cached_MB', max_memory_cached(i), 2)
+        # app_gpu_usage += _peak_update(f'peak_gpu_{i}_max_memory_allocated_MB', max_memory_allocated(i), 2)
         sys_gpu_mfree.append(round(GPUtil.getGPUs()[i].memoryFree, 3))
 
     return {
