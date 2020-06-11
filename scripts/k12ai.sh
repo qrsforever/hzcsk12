@@ -12,6 +12,7 @@ top_dir=`cd $(dirname $cur_fil)/..; pwd`
 
 export LC_ALL=C.UTF-8
 export PYTHONPATH=/home/lidong/.local/lib/python3.6/site-packages:$PYTHONPATH
+export K12AI_DEBUG=1
 
 # /etc/crontab
 # 01 *  * * *   root  cd / && /home/lidong/workspace/codes/hzcsai_com/hzcsk12/scripts/k12ai.sh
