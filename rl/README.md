@@ -20,6 +20,11 @@ Date:   Mon Apr 6 18:20:33 2020 -0700
 |`rlpyt/rlpyt/utils/logging/logger.py` | hook log |
 |`rlpyt/rlpyt/samplers/parallel/worker.py` | 解决work进程异常导致主进程死等 |
 |`rlpyt/rlpyt/runners/minibatch_rl.py` | fix bug: get `min_itr_learn` is 0 |
+|`rlpyt/rlpyt/algos/dqn/dqn.py` | fix bug: #152 |
+
+# ISSUES
+
+- [Exception in logger with Pytorch >= 1.4](https://github.com/astooke/rlpyt/issues/152)
 
 # TODO
 
