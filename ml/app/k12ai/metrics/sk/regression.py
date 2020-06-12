@@ -14,6 +14,7 @@ from sklearn.metrics import mean_squared_log_error
 from sklearn.metrics import median_absolute_error
 from sklearn.metrics import r2_score
 
+
 from k12ai.common.util_misc import (sw_list, plot_regression3D)
 from k12ai.common.log_message import MessageMetric as mm
 
@@ -51,4 +52,9 @@ def k12ai_get_metrics(model, data, y_true, y_pred, kwargs):
         metrics['MDAE'] = sw_list(median_absolute_error(y_true, y_pred, **kwargs['mdae']))
     if 'evs' in kwargs:
         metrics['EVS'] = sw_list(explained_variance_score(y_true, y_pred, **kwargs['evs']))
+    if 'auroc' in kwargs:
+        from k12ai.utils.dataviz import make_roc
+        score, fig = make_roc(model, data, kwargs['auroc'])
+        mm().add_image('ROC', f'{model.name}', fig).send()
+        metrics['auc'] = score
     return metrics

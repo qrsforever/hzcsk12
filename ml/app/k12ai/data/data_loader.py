@@ -15,6 +15,8 @@ from sklearn.model_selection import train_test_split
 class DataLoader:
     def __init__(self, configer):
         self._configer = configer
+        self._pca2 = configer.get('data.pca2D', default=False)
+        # self._encode = configer.get('data.encode_labels', default=True)
 
     def get_dataset(self):
         data_dir = self._configer.get('data.data_path')
@@ -30,14 +32,17 @@ class DataLoader:
         if len(y.shape) > 1:
             y = y[:, 0]
 
-        pca2 = self._configer.get('data.pca2D', default=False)
-        if pca2 and X.shape[1] > 2:
+        if self._pca2 and X.shape[1] > 2:
             # nomalize
             X = scale(X, copy=False)
 
             # pca 2D features
             X = PCA(n_components=2, copy=False).fit_transform(X)
             feature_names = ['Component1', 'Component2']
+
+        # if self._encode:
+        #     from sklearn.preprocessing import label_binarize
+        #     y = label_binarize(y, classes=[x for x in range(len(target_names))])
 
         X_train, X_test, y_train, y_test = train_test_split(X, y, **self._configer.get('data.sampling'))
 

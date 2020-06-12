@@ -55,6 +55,56 @@ local _Utils = import '../utils/helper.libsonnet';
                 ),
             ],
         },
+    ] else if 'logistic' == _Utils.network
+    then [
     ]
-    else [],
+    else [
+    ] + (
+        [
+            _Utils.booltrigger('_k12.metrics.auroc',
+                               'ROC',
+                               def=false,
+                               trigger=[
+                                   {
+                                       type: 'H',
+                                       objs: [
+                                           _Utils.stringenum(
+                                               'metrics.auroc.average',
+                                               'Average',
+                                               def='macro',
+                                               enums=[
+                                                   {
+                                                       name: { en: 'micro', cn: self.en },
+                                                       value: 'micro',
+                                                   },
+                                                   {
+                                                       name: { en: 'macro', cn: self.en },
+                                                       value: 'macro',
+                                                   },
+                                                   {
+                                                       name: { en: 'weighted', cn: self.en },
+                                                       value: 'weighted',
+                                                   },
+                                               ]
+                                           ),
+                                           _Utils.stringenum(
+                                               'metrics.auroc.multi_class',
+                                               'Multi Class',
+                                               def='ovr',
+                                               enums=[
+                                                   {
+                                                       name: { en: 'OVR', cn: self.en },
+                                                       value: 'ovr',
+                                                   },
+                                                   {
+                                                       name: { en: 'OVO', cn: self.en },
+                                                       value: 'ovo',
+                                                   },
+                                               ]
+                                           ),
+                                       ],
+                                   },
+                               ]),
+        ]
+    ),
 }

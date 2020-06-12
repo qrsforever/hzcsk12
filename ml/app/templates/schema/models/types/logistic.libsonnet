@@ -118,6 +118,5 @@ local _Utils = import '../../utils/helper.libsonnet';
                                    trigger=[_Utils.float('model.logistic.l1_ratio', 'Value', def=0, min=0, max=1)]),
             ],
         },
-
     ],
 }

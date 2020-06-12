@@ -88,4 +88,10 @@ def k12ai_get_metrics(model, data, y_true, y_pred, kwargs):
         metrics['jaccard_score'] = sw_list(jaccard_score(y_true, y_pred, **kwargs['jaccard']))
     if 'mcc' in kwargs:
         metrics['matthews_corrcoef'] = sw_list(matthews_corrcoef(y_true, y_pred, **kwargs['mcc']))
+
+    if 'auroc' in kwargs:
+        from k12ai.utils.dataviz import make_roc
+        score, fig = make_roc(model, data, kwargs['auroc'])
+        mm().add_image('ROC', f'{model.name}', fig).send()
+        metrics['auc'] = score
     return metrics

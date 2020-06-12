@@ -26,6 +26,9 @@ class K12Algorithm:
     def predict(self, X):
         return self.algo.predict(X)
 
+    def predict_proba(self, X):
+        return self.algo.predict_proba(X)
+
     def train(self, X_train, y_train, X_test):
         self.fit(X_train, y_train)
         return self.predict(X_test)

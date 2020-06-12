@@ -22,6 +22,7 @@ import signal
 import torchvision # noqa
 import numpy as np
 import PIL
+from itertools import cycle
 from collections import OrderedDict
 from torchvision import transforms
 
@@ -189,6 +190,24 @@ def plot_decision_boundaries(xx, yy, zz, X0, X1, Y, C0=None, C1=None):
     ax.set_ylabel('Component 2')
     ax.set_xticks(())
     ax.set_yticks(())
+    return fig
+
+
+def plot_roc_curve(fpr, tpr, roc_auc):
+    plt.clf()
+    fig = plt.figure(dpi=150)
+    colors = cycle(['red', 'green', 'blue', 'aqua', 'darkorange', 'cornflowerblue'])
+    for i, color in zip(range(len(roc_auc)), colors):
+        plt.plot(fpr[i], tpr[i], color=color, lw=1,
+                 label='ROC curve of class {0} (area = {1:0.2f})'
+                 ''.format(i, roc_auc[i]))
+    plt.plot([0, 1], [0, 1], 'k--', lw=1)
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('FPR')
+    plt.ylabel('TPR')
+    plt.title('ROC to multi-class')
+    plt.legend(loc="lower right")
     return fig
 
 
