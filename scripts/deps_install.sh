@@ -14,6 +14,12 @@ else
     echo "install python3 with ssl ok!"
 fi
 
+check=`test -e /etc/exports && echo 1 || echo 0`
+if [[ x$check == x0 ]]
+then
+    sudo apt install -y nfs-common nfs-kernel-server
+fi
+
 check=`python3 -c "import flask" 2>&1`
 if [[ x$check != x ]]
 then

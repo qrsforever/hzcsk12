@@ -5,4 +5,5 @@ dist
 .torchcv
 .pytorch3d
 pytorch3d
+.meshrcnn
 app/k12ai/common
