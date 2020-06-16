@@ -28,8 +28,11 @@ WORKDIR /hzcsk12/cv
 
 COPY app app
 COPY torchcv torchcv
+COPY meshrcnn meshrcnn
 
-ENV PYTHONPATH=/hzcsk12/cv/app:/hzcsk12/cv/torchcv:$PYTHONPATH
+ENV PYTHONPATH=/hzcsk12/cv/app:/hzcsk12/cv/torchcv:/hzcsk12/cv/meshrcnn:$PYTHONPATH
+
+RUN pip install 'git+https://github.com/facebookresearch/detectron2.git'
 
 RUN PIP_INSTALL="pip install -U --no-cache-dir --retries 20 --timeout 120 \
         --trusted-host mirrors.intra.didiyun.com \
@@ -49,6 +52,7 @@ RUN PIP_INSTALL="pip install -U --no-cache-dir --retries 20 --timeout 120 \
         imageio \
         Shapely \
         && \
-        cd torchcv/lib/exts && chmod +x make.sh && sh make.sh
+        cd /hzcsk12/cv/torchcv/lib/exts && chmod +x make.sh && sh make.sh && \
+        cd /hzcsk12/cv/meshrcnn && pip install -e .
 
 CMD ["/bin/bash"]
