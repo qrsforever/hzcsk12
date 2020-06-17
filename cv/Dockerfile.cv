@@ -30,9 +30,13 @@ COPY app app
 COPY torchcv torchcv
 COPY meshrcnn meshrcnn
 
+ENV FORCE_CUDA=1
 ENV PYTHONPATH=/hzcsk12/cv/app:/hzcsk12/cv/torchcv:/hzcsk12/cv/meshrcnn:$PYTHONPATH
 
-RUN pip install 'git+https://github.com/facebookresearch/detectron2.git'
+# RUN pip install 'git+https://github.com/facebookresearch/detectron2.git' && \
+#         pip install 'git+https://github.com/facebookresearch/pytorch3d.git'
+COPY libs/detectron2.zip /root/detectron2.zip
+COPY libs/pytorch3d.zip /root/pytorch3d.zip
 
 RUN PIP_INSTALL="pip install -U --no-cache-dir --retries 20 --timeout 120 \
         --trusted-host mirrors.intra.didiyun.com \
@@ -51,8 +55,14 @@ RUN PIP_INSTALL="pip install -U --no-cache-dir --retries 20 --timeout 120 \
         scikit-image \
         imageio \
         Shapely \
+        /root/detectron2.zip \
+        /root/pytorch3d.zip \
         && \
         cd /hzcsk12/cv/torchcv/lib/exts && chmod +x make.sh && sh make.sh && \
-        cd /hzcsk12/cv/meshrcnn && pip install -e .
+        cd /hzcsk12/cv/meshrcnn && pip install -e . \
+        && \
+        rm /root/detectron2.zip \
+        rm /root/pytorch3d.zip
+
 
 CMD ["/bin/bash"]

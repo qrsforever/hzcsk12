@@ -6,4 +6,5 @@ dist
 .pytorch3d
 pytorch3d
 .meshrcnn
+.detectron2
 app/k12ai/common
