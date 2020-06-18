@@ -133,7 +133,13 @@ __build_notebook()
 __main()
 {
     image='all'
-    if [[ x$1 == xai ]] || [[ x$1 == xml ]] || [[ x$1 == xcv ]] || [[ x$1 == xnlp ]] || [[ x$1 == xrl ]] || [[ x$1 == xnb ]]
+    if [[ x$1 == xai ]] ||  \
+        [[ x$1 == xml ]] || \
+        [[ x$1 == xcv ]] || \
+        [[ x$1 == xnlp ]] || \
+        [[ x$1 == xrl ]] || \
+        [[ x$1 == x3d ]] || \
+        [[ x$1 == xnb ]]
     then
         image=$1
         shift
@@ -150,6 +156,7 @@ __main()
         __build_image "k12cv"  $MAJOR_K12AI $MINOR_K12AI cv/Dockerfile.cv $force
         __build_image "k12nlp" $MAJOR_K12AI $MINOR_K12AI nlp/Dockerfile.nlp $force
         __build_image "k12rl"  $MAJOR_K12AI $MINOR_K12AI rl/Dockerfile.rl $force
+        __build_image "k12rl"  $MAJOR_K12AI $MINOR_K12AI 3d/Dockerfile.3d $force
     elif [[ x$image == xnb ]]
     then
         __build_notebook

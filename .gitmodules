@@ -1,0 +1,6 @@
+[submodule "3d/detectron2"]
+	path = 3d/detectron2
+	url = https://github.com/facebookresearch/detectron2.git
+[submodule "3d/pytorch3d"]
+	path = 3d/pytorch3d
+	url = https://github.com/facebookresearch/pytorch3d.git

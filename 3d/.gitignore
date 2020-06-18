@@ -1,0 +1,9 @@
+**/**/build
+.pytorch3d
+.meshrcnn
+.detectron2
+.fcrn
+fcrn
+meshrcnn
+FCRN
+app/k12ai/common
