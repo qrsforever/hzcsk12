@@ -54,19 +54,19 @@ class NLPServiceRPC(ServiceRPC):
 
     @k12ai_timeit(handler=Logger.info)
     def pre_processing(self, op, user, uuid, params):
-        cache_path = self.get_cache_dir(user, uuid)
+        usercache, innercache = self.get_cache_dir(user, uuid)
         # download train data (weights)
         if params['_k12.model.resume'] or not op.startswith('train'):
-            self.oss_download(os.path.join(cache_path, 'output', 'traindata'))
+            self.oss_download(os.path.join(usercache, 'output', 'traindata'))
 
     @k12ai_timeit(handler=Logger.info)
     def post_processing(self, op, user, uuid, message):
-        cache_path = self.get_cache_dir(user, uuid)
+        usercache, innercache = self.get_cache_dir(user, uuid)
         # upload train or evaluate data
         if op.startswith('train'):
-            self.oss_upload(os.path.join(cache_path, 'output', 'traindata'), clear=True)
+            self.oss_upload(os.path.join(usercache, 'output', 'traindata'), clear=True)
         elif op.startswith('evaluate'):
-            self.oss_upload(os.path.join(cache_path, 'output', 'result'), clear=True)
+            self.oss_upload(os.path.join(usercache, 'output', 'result'), clear=True)
 
     def make_container_volumes(self):
         volumes = {
@@ -87,8 +87,8 @@ class NLPServiceRPC(ServiceRPC):
         return kwargs
 
     def make_container_command(self, op, user, uuid, params):
-        cachedir = self.get_cache_dir(user, uuid)
-        config_file = f'{cachedir}/config.json'
+        usercache, innercache = self.get_cache_dir(user, uuid)
+        config_file = f'{usercache}/config.json'
 
         config_tree = ConfigFactory.from_dict(params)
         _k12ai_tree = config_tree.pop('_k12')
@@ -102,19 +102,19 @@ class NLPServiceRPC(ServiceRPC):
         if op.startswith('train'):
             flag = '--force'
             if resume:
-                config_conf = os.path.join(cachedir, 'config.json')
-                serial_conf = os.path.join(cachedir, 'output/traindata', 'config.json')
+                config_conf = os.path.join(usercache, 'config.json')
+                serial_conf = os.path.join(usercache, 'output/traindata', 'config.json')
                 if os.path.exists(serial_conf):
                     if not k12ai_utils_diff(config_conf, serial_conf):
                         flag = '--recover'
-            command = 'allennlp train /cache/config.json %s --serialization-dir /cache/output/traindata' % flag
+            command = f'allennlp train {innercache}/config.json %s --serialization-dir {innercache}/output/traindata' % flag
         elif op.startswith('evaluate'):
-            model_file_outer = os.path.join(cachedir, 'output/traindata', 'best.th')
+            model_file_outer = os.path.join(usercache, 'output/traindata', 'best.th')
             if not os.path.exists(model_file_outer):
                 raise FileNotFoundError('model file is not found!')
             if not test_file:
                 raise FileNotFoundError('test file is not found!')
-            command = f'allennlp evaluate /cache/output/traindata {test_file}'
+            command = f'allennlp evaluate {innercache}/output/traindata {test_file}'
         else:
             raise NotImplementedError
         return command

@@ -1,11 +1,11 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-# @file k12rl_service.py
+# @file k123d_service.py
 # @brief
 # @author QRS
 # @version 1.0
-# @date 2020-01-19 15:55
+# @date 2020-06-22 10:25
 
 import os, time
 import argparse
@@ -29,77 +29,89 @@ def _delay_do_consul(host, port):
     time.sleep(3)
     while not g_app_quit:
         try:
-            k12ai_consul_register('k12rl', host, port)
+            k12ai_consul_register('k123d', host, port)
             break
         except Exception as err:
             Logger.info("consul agent service register err: {}".format(err))
             time.sleep(3)
 
 
-class RLServiceRPC(ServiceRPC):
+class CV3DServiceRPC(ServiceRPC):
 
     def __init__(self, host, port, image, dataroot):
-        super().__init__('rl', host, port, image, dataroot, _DEBUG_)
+        super().__init__('3d', host, port, image, dataroot, _DEBUG_)
+
+        self._pretrained_dir = '%s/pretrained/cv' % dataroot
 
     def errtype2errcode(self, op, user, uuid, errtype, errtext):
         errcode = 999999
-        if errtype == 'ConfigMissingException':
-            errcode = 100233
-        elif errtype == 'FileNotFoundError':
-            if errtext == 'k12ai: snapshot file is broken!':
-                errcode = 100211
-            elif errtext == 'k12ai: snapshot file is not found!':
-                errcode = 100208
         return errcode
 
     @k12ai_timeit(handler=Logger.info)
     def pre_processing(self, op, user, uuid, params):
-        usercache, innercache = self.get_cache_dir(user, uuid)
-        # download train data (weights)
-        if params['_k12.model.resume'] or not op.startswith('train'):
-            self.oss_download(os.path.join(usercache, 'output', 'run_snap'))
+        pass
 
     @k12ai_timeit(handler=Logger.info)
     def post_processing(self, op, user, uuid, message):
-        usercache, innercache = self.get_cache_dir(user, uuid)
-        # upload train or evaluate data
-        if op.startswith('train'):
-            self.oss_upload(os.path.join(usercache, 'output', 'run_snap'), clear=True)
-        elif op.startswith('evaluate'):
-            self.oss_upload(os.path.join(usercache, 'output', 'result'), clear=True)
+        pass
 
     def make_container_volumes(self):
         volumes = {}
+        volumes[self._pretrained_dir] = {'bind': '/pretrained', 'mode': 'rw'}
         if self._debug:
-            volumes[f'{self._projdir}/app'] = {'bind': f'{self._workdir}/app', 'mode':'rw'}
-            volumes[f'{self._projdir}/rlpyt'] = {'bind': f'{self._workdir}/rlpyt', 'mode': 'rw'}
+            volumes[f'{self._projdir}/app'] = {'bind': f'{self._workdir}/app', 'mode': 'rw'}
         return volumes
 
+    def make_container_environs(self, op, params):
+        environs = {}
+        environs['PYTHONPATH'] = '/hzcsk12/3d/app'
+        return environs
+
     def make_container_kwargs(self, op, params):
-        kwargs = {
-            'shm_size': '4g',
-            'mem_limit': '8g'
-        }
+        kwargs = {}
+        kwargs['runtime'] = 'nvidia'
+        kwargs['shm_size'] = '10g'
+        kwargs['mem_limit'] = '10g'
         return kwargs
+
+    def get_app_memstat(self, params):
+        # TODO
+        bs = params['train.batch_size']
+        dn = params['_k12.data.dataset_name']
+        mm = 1
+        if dn == 'dogsVsCats':
+            mm = 2
+        elif dn == 'aliproducts':
+            mm = 2.5
+        if bs <= 32:
+            gmem = 4500 * mm
+        elif bs == 64:
+            gmem = 5500 * mm
+        elif bs == 128:
+            gmem = 6000 * mm
+        else:
+            gmem = 10000 * mm
+        return {
+            'app_cpu_memory_usage_MB': 6000,
+            'app_gpu_memory_usage_MB': gmem,
+        }
 
     def make_container_command(self, op, user, uuid, params):
         usercache, innercache = self.get_cache_dir(user, uuid)
         config_file = f'{usercache}/config.json'
 
-        if '_k12.task' in params.keys():
-            config_tree = ConfigFactory.from_dict(params)
-            config_str = HOCONConverter.convert(config_tree, 'json')
-        else:
-            config_str = json.dumps(params)
-
         with open(config_file, 'w') as fout:
-            fout.write(config_str)
+            config_tree = ConfigFactory.from_dict(params)
+            fout.write(HOCONConverter.convert(config_tree, 'json'))
 
-        command = 'main.sh'
+        command = f'python {self._workdir}/app/k12ai/main.py --config_file {innercache}/config.json'
+
         if op.startswith('train'):
-            command += f' --phase train --config_file {innercache}/config.json'
+            command += ' --phase train'
         elif op.startswith('evaluate'):
-            command += f' --phase evaluate --config_file {innercache}/config.json'
+            raise NotImplementedError
+        elif op.startswith('predict'):
+            raise NotImplementedError
         else:
             raise NotImplementedError
         return command
@@ -109,19 +121,19 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
             '--host',
-            default=None,
+            default='127.0.0.1',
             type=str,
             dest='host',
             help="host to run app service")
     parser.add_argument(
             '--port',
-            default=8139,
+            default=8169,
             type=int,
             dest='port',
             help="port to run app service")
     parser.add_argument(
             '--consul_addr',
-            default=None,
+            default='127.0.0.1',
             type=str,
             dest='consul_addr',
             help="consul address")
@@ -133,7 +145,7 @@ if __name__ == "__main__":
             help="consul port")
     parser.add_argument(
             '--image',
-            default='hzcsai_com/k12rl',
+            default='hzcsai_com/k123d',
             type=str,
             dest='image',
             help="image to run container")
@@ -147,7 +159,7 @@ if __name__ == "__main__":
 
     if _DEBUG_:
         k12ai_set_loglevel('debug')
-    k12ai_set_logfile('k12rl.log')
+    k12ai_set_logfile('k123d.log')
 
     k12ai_consul_init(args.consul_addr, args.consul_port, _DEBUG_)
 
@@ -157,11 +169,10 @@ if __name__ == "__main__":
     Logger.info(f'start zerorpc server on {args.host}:{args.port}')
 
     try:
-        app = zerorpc.Server(RLServiceRPC(
+        app = zerorpc.Server(CV3DServiceRPC(
             host=args.host, port=args.port,
             image=args.image,
-            dataroot=args.data_root
-        ))
+            dataroot=args.data_root))
         app.bind('tcp://%s:%d' % (args.host, args.port))
         app.run()
     finally:

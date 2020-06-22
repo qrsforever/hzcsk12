@@ -27,7 +27,7 @@ LABEL org.label-schema.schema-version="1.0" \
 WORKDIR /hzcsk12/3d
 
 ENV FORCE_CUDA=1
-ENV PYTHONPATH=/hzcsk12/3d/meshrcnn:$PYTHONPATH
+ENV PYTHONPATH=/hzcsk12/3d/app:/hzcsk12/3d/meshrcnn:$PYTHONPATH
 
 COPY detectron2 detectron2 
 COPY pytorch3d pytorch3d

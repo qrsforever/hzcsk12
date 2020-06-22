@@ -68,7 +68,7 @@ class CVServiceRPC(ServiceRPC):
 
     @k12ai_timeit(handler=Logger.info)
     def pre_processing(self, op, user, uuid, params):
-        cache_path = self.get_cache_dir(user, uuid)
+        usercache, innercache = self.get_cache_dir(user, uuid)
         # download custom dataset
         bucket_name = 'data-platform'
         dataset_path = params['data.data_dir']
@@ -76,22 +76,22 @@ class CVServiceRPC(ServiceRPC):
             dataset_path = dataset_path[len(bucket_name) + 1:]
             self.oss_download(dataset_path,
                     bucket_name=bucket_name,
-                    prefix_map=[os.path.dirname(dataset_path), cache_path])
-            dataset_zipfile = os.path.join(cache_path, os.path.basename(dataset_path))
+                    prefix_map=[os.path.dirname(dataset_path), usercache])
+            dataset_zipfile = os.path.join(usercache, os.path.basename(dataset_path))
             if not os.path.exists(dataset_zipfile):
                 raise FileNotFoundError('dataset file is not found!')
-            result = os.system(f'unzip -qo {dataset_zipfile} -d {cache_path}')
+            result = os.system(f'unzip -qo {dataset_zipfile} -d {usercache}')
             if result != 0:
                 raise RuntimeError('systemcall error for unzip')
-            params['data.data_dir'] = os.path.join('/cache', params['_k12.data.dataset_name'])
+            params['data.data_dir'] = os.path.join(innercache, params['_k12.data.dataset_name'])
 
         # download train data (weights)
         if params['network.resume_continue'] or not op.startswith('train'):
-            self.oss_download(os.path.join(cache_path, 'output', 'ckpts'))
+            self.oss_download(os.path.join(usercache, 'output', 'ckpts'))
 
     @k12ai_timeit(handler=Logger.info)
     def post_processing(self, op, user, uuid, message):
-        cache_path = self.get_cache_dir(user, uuid)
+        usercache, innercache = self.get_cache_dir(user, uuid)
         # modify message: add task environ info
         if op.startswith('train') and isinstance(message, dict):
             environs = self.get_container_environs(user, uuid)
@@ -104,9 +104,9 @@ class CVServiceRPC(ServiceRPC):
 
         # upload train or evaluate data
         if op.startswith('train'):
-            self.oss_upload(os.path.join(cache_path, 'output', 'ckpts'), clear=True)
+            self.oss_upload(os.path.join(usercache, 'output', 'ckpts'), clear=True)
         else: # op.startswith('evaluate')
-            self.oss_upload(os.path.join(cache_path, 'output', 'result'), clear=True)
+            self.oss_upload(os.path.join(usercache, 'output', 'result'), clear=True)
 
     def make_container_volumes(self):
         volumes = {}
@@ -163,8 +163,8 @@ class CVServiceRPC(ServiceRPC):
         }
 
     def make_container_command(self, op, user, uuid, params):
-        cachedir = self.get_cache_dir(user, uuid)
-        config_file = f'{cachedir}/config.json'
+        usercache, innercache = self.get_cache_dir(user, uuid)
+        config_file = f'{usercache}/config.json'
         if '_k12.data.dataset_name' in params.keys():
             config_tree = ConfigFactory.from_dict(params)
             _k12ai_tree = config_tree.pop('_k12')
@@ -194,10 +194,10 @@ class CVServiceRPC(ServiceRPC):
             model_name = config_tree.get('network.model_name', default='unknow')
             backbone = config_tree.get('network.backbone', default='unknow')
             ckpts_name = '%s_%s_%s' % (model_name, backbone, _k12ai_tree.get('data.dataset_name'))
-            config_tree.put('network.checkpoints_root', '/cache/output')
+            config_tree.put('network.checkpoints_root', f'{innercache}/output')
             config_tree.put('network.checkpoints_name', ckpts_name)
             config_tree.put('network.checkpoints_dir', 'ckpts')
-            ckpts_file_exist = os.path.exists(f'{cachedir}/output/ckpts/{ckpts_name}_latest.pth')
+            ckpts_file_exist = os.path.exists(f'{usercache}/output/ckpts/{ckpts_name}_latest.pth')
             if op.startswith('train'):
                 if not ckpts_file_exist:
                     config_tree.put('network.resume_continue', False)
@@ -206,7 +206,7 @@ class CVServiceRPC(ServiceRPC):
                     raise FileNotFoundError('model file is not found!')
                 config_tree.put('network.resume_continue', True)
             if config_tree.get('network.resume_continue'):
-                config_tree.put('network.resume', f'/cache/output/ckpts/{ckpts_name}_latest.pth')
+                config_tree.put('network.resume', f'{innercache}/output/ckpts/{ckpts_name}_latest.pth')
             config_str = HOCONConverter.convert(config_tree, 'json')
         else:
             config_str = json.dumps(params)
@@ -214,23 +214,23 @@ class CVServiceRPC(ServiceRPC):
         with open(config_file, 'w') as fout:
             fout.write(config_str)
 
-        command = 'python %s/torchcv/main.py --config_file /cache/config.json' % self._workdir
+        command = f'python {self._workdir}/torchcv/main.py --config_file {innercache}/config.json'
 
         if op.startswith('train'):
             command += ' --phase train'
         elif op.startswith('evaluate'):
-            command += ' --phase test --test_dir json --out_dir /cache/output/result'
+            command += f' --phase test --test_dir json --out_dir {innercache}/output/result'
         elif op.startswith('predict'):
             images = _k12ai_tree.get('predict_images', default=None)
             if images is None:
                 raise FileNotFoundError('image file is not found!')
             import base64
-            test_dir = f'{cachedir}/predict'
+            test_dir = f'{usercache}/predict'
             os.mkdir(test_dir)
             for img in images:
                 with open(os.path.join(test_dir, img['name']), "wb") as fp:
                     fp.write(base64.b64decode(img["content"]))
-            command += ' --phase test --test_dir /cache/predict --out_dir /cache/output/result'
+            command += f' --phase test --test_dir {innercache}/predict --out_dir {innercache}/output/result'
         else:
             raise NotImplementedError
         return command

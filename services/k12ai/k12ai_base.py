@@ -197,7 +197,7 @@ class ServiceRPC(object):
         usercache = os.path.join(self._userdir, user, uuid)
         if not os.path.exists(usercache):
             os.makedirs(usercache)
-        return usercache
+        return usercache, '/cache'
 
     def get_app_memstat(self, params):
         return {
@@ -206,6 +206,7 @@ class ServiceRPC(object):
         }
 
     def start_container_worker(self, token, op, user, uuid, params):
+        usercache, innercache = self.get_cache_dir(user, uuid)
         try:
             self.on_starting(op, user, uuid, params)
 
@@ -222,9 +223,9 @@ class ServiceRPC(object):
             }
 
             volumes = {
+                usercache: {'bind': innercache, 'mode': 'rw'},
                 self._datadir: {'bind': '/datasets', 'mode': 'rw'},
                 self._commlib: {'bind': f'{self._workdir}/app/k12ai/common', 'mode': 'rw'},
-                self.get_cache_dir(user, uuid): {'bind': f'/cache', 'mode': 'rw'},
                 **self.make_container_volumes()
             }
 

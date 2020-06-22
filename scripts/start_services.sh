@@ -104,6 +104,10 @@ k12rl_service_name=k12rl
 k12rl_addr=$hostlanip
 k12rl_port=8159
 
+k123d_service_name=k123d
+k123d_addr=$hostlanip
+k123d_port=8169
+
 dataset_port=9090
 
 export HOST_NAME=${hostname}
@@ -511,7 +515,41 @@ __start_k12rl_service()
     fi
 }
 
-# 7. setart dataset service
+# 7. check or start k123d service
+__start_k123d_service()
+{
+    [ x$1 != xstart ] && __kill_service ${k123d_service_name}
+    if [[ x$1 == xstop ]]
+    then
+        return
+    fi
+    use_image="hzcsai_com/k123d"
+    if [[ x$2 == xfg ]]
+    then
+        result=0
+        cmdstr=
+    else
+        result=$(__service_health_check ${k123d_service_name})
+        cmdstr="nohup"
+    fi
+    if [[ $result != 1 ]]
+    then
+        export K12CV_DEBUG=$debug
+        cmdstr="$cmdstr python3 ${top_dir}/services/k123d_service.py \
+            --host ${k123d_addr} \
+            --port ${k123d_port} \
+            --consul_addr ${consul_addr} \
+            --consul_port ${consul_port} \
+            --image $use_image"
+
+        __run_command $cmdstr
+        __script_logout "start k123d service"
+    else
+        __script_logout "k123d service is already running"
+    fi
+}
+
+# 8. setart dataset service
 __start_dataset_service()
 {
     result=`ps -eo pid,args | grep "http.server $dataset_port" | grep -v grep`
@@ -553,6 +591,7 @@ __main()
     [ $2 == all -o $2 == cv ]  && __start_k12cv_service  $3 $4
     [ $2 == all -o $2 == rl ]  && __start_k12rl_service  $3 $4
     [ $2 == all -o $2 == nlp ] && __start_k12nlp_service $3 $4
+    [ $2 == all -o $2 == 3d ]  && __start_k123d_service  $3 $4
     cd - > /dev/null
 
     __start_dataset_service /data

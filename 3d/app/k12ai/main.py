@@ -16,8 +16,11 @@ from k12ai.common.log_message import MessageReport
 
 
 def _do_train(configer):
-    Logger.info(f'{configer}')
-    # TODO
+    Logger.info(configer)
+    if configer.get('network') == 'fcrn':
+        from runners.trainer import DepthPredictTrainer as Trainer
+    else:
+        raise NotImplementedError
 
 
 if __name__ == "__main__":

@@ -55,7 +55,13 @@ else
         then
             bgfg="bg"
         fi
-        if [[ x$1 == xall ]] || [[ x$1 == xai ]] || [[ x$1 == xml ]] || [[ x$1 == xcv ]] || [[ x$1 == xnlp ]] || [[ x$1 == xrl ]]
+        if [[ x$1 == xall ]] || \
+            [[ x$1 == xai ]] || \
+            [[ x$1 == xml ]] || \
+            [[ x$1 == xcv ]] || \
+            [[ x$1 == xnlp ]] || \
+            [[ x$1 == xrl ]] || \
+            [[ x$1 == x3d ]]
         then
             if [[ $1 == all ]]
             then
@@ -66,6 +72,6 @@ else
             echo "Wrong task: [all|ai|ml|cv|nlp|rl]]"
         fi
     else
-        echo "k12ai.sh [all|ai|ml|cv|nlp|rl] [start|stop|restart] [bg|fg]"
+        echo "k12ai.sh [all|ai|ml|cv|nlp|rl|3d] [start|stop|restart] [bg|fg]"
     fi
 fi

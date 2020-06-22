@@ -61,8 +61,8 @@ class MLServiceRPC(ServiceRPC):
         return kwargs
 
     def make_container_command(self, op, user, uuid, params):
-        cachedir = self.get_cache_dir(user, uuid)
-        config_file = f'{cachedir}/config.json'
+        usercache, innercache = self.get_cache_dir(user, uuid)
+        config_file = f'{usercache}/config.json'
 
         if '_k12.data.dataset_name' in params.keys():
             config_tree = ConfigFactory.from_dict(params)
@@ -79,9 +79,9 @@ class MLServiceRPC(ServiceRPC):
 
         command = 'python {}'.format('%s/app/k12ai/main.py' % self._workdir)
         if op.startswith('train'):
-            command += ' --phase train --config_file /cache/config.json'
+            command += f' --phase train --config_file {innercache}/config.json'
         elif op.startswith('evaluate'):
-            command += ' --phase evaluate --config_file /cache/config.json'
+            command += f' --phase evaluate --config_file {innercache}/config.json'
         else:
             raise NotImplementedError
         return command
