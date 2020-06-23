@@ -11,6 +11,12 @@ local _Utils = import '../../../utils/helper.libsonnet';
         name: { en: 'SGD Parameters', cn: self.en },
         type: 'H',
         objs: [
+            _Utils.float(jid + '.lr',
+                         'LR',
+                         min=0.0,
+                         max=1.0,
+                         def=0.001,
+                         tips='LR'),
             _Utils.float(jid + '.weight_decay',
                          'Decay',
                          min=0.0,

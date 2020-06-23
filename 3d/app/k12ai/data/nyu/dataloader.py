@@ -7,7 +7,7 @@
 # @version 1.0
 # @date 2020-06-21 12:50
 
-
+import os
 import h5py
 import numpy as np
 import torchvision.transforms as transforms
@@ -20,10 +20,10 @@ IMG_EXTENSIONS = ['.h5', ]
 def is_image_file(filename):
     return any(filename.endswith(extension) for extension in IMG_EXTENSIONS)
 
-def make_dataset(dir):
+
+def make_dataset(root):
     images = []
-    dir = os.path.expanduser(dir)
-    for target in sorted(os.listdir(dir)):
+    for target in sorted(os.listdir(root)):
         d = os.path.join(dir, target)
         if not os.path.isdir(d):
             if is_image_file(d):
@@ -31,7 +31,7 @@ def make_dataset(dir):
     return images
 
 
-class NYUDataset():
+class NYUDataset(object):
     def __init__(self, root, type):
         self.output_size = (228, 304)
         self.imgs = make_dataset(root)

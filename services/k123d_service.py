@@ -9,7 +9,7 @@
 
 import os, time
 import argparse
-import json
+import json # noqa
 import zerorpc
 from threading import Thread
 from pyhocon import ConfigFactory

@@ -9,7 +9,6 @@
 
 import os
 import argparse
-import datetime
 from pyhocon import ConfigFactory
 from k12ai.utils.logger import Logger
 from k12ai.common.log_message import MessageReport
