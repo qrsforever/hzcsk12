@@ -11,7 +11,7 @@ local _Utils = import '../../../utils/helper.libsonnet';
         {
             type: 'H',
             objs: [
-                _Utils.float(jid + '.args.radio', 'Radio', def=0.5),
+                _Utils.float(jid + '.args.p', 'Radio', def=0.5),
             ],
         },
         _Utils.checkboxphase(jid),

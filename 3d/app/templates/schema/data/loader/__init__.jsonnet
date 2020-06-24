@@ -45,7 +45,7 @@ local _Utils = import '../../utils/helper.libsonnet';
                     _Utils.int(jid + '.args.num_workers',
                                'Jobs',
                                def=2,
-                               min=1,
+                               min=0,
                                max=_Utils.num_cpu,
                                tips='the numbers of subprocesses for loading dataset'),
 

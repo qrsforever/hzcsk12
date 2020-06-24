@@ -19,17 +19,17 @@ local _Utils = import '../utils/helper.libsonnet';
             {
                 name: { en: 'Loss', cn: self.en },
                 type: '_ignore_',
-                objs: [(import 'loss/__init__.jsonnet').get('hypes.loss')],
-            },
-            {
-                name: { en: 'Scheduler', cn: self.en },
-                type: '_ignore_',
-                objs: [(import 'lr/__init__.jsonnet').get('hypes.scheduler')],
+                objs: [(import 'loss/__init__.jsonnet').get('hypes.criterion')],
             },
             {
                 name: { en: 'Optimizer', cn: self.en },
                 type: '_ignore_',
                 objs: [(import 'optimizer/__init__.jsonnet').get('hypes.optimizer')],
+            },
+            {
+                name: { en: 'Scheduler', cn: self.en },
+                type: '_ignore_',
+                objs: [(import 'lr/__init__.jsonnet').get('hypes.scheduler')],
             },
         ],
     },

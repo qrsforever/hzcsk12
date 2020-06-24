@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-# @file  criteria.py
+# @file  criterion.py
 # @brief
 # @author QRS
 # @version 1.0

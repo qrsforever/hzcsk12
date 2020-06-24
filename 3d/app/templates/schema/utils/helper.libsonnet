@@ -18,7 +18,7 @@ local _backbone = {
     network:: std.extVar('network'),
     backbone:: if std.objectHas(_backbone, $.network) then _backbone[$.network] else $.network,
     dataset_name:: std.extVar('dataset_name'),
-    dataset_root:: '/datasets/3d/' + $.dataset_name + '/',
+    dataset_root:: '/datasets/' + $.dataset_name + '/',
 
     get_value(obj, keystr, def)::
         if std.type(obj) == 'object' && std.length(keystr) > 1
