@@ -10,17 +10,21 @@
 import os
 import argparse
 from pyhocon import ConfigFactory
+from pyhocon import HOCONConverter
 from k12ai.utils.logger import Logger
 from k12ai.common.log_message import MessageReport
 
 
 def _do_train(configer):
-    Logger.info(configer)
+    Logger.info(HOCONConverter.convert(configer, 'json'))
     if configer.get('network') == 'fcrn':
         from runners.trainer import DepthPredictTrainer as Trainer
+        if 'nyu' == configer.get('data.dataset_name'):
+            from data.nyu.dataloader import NYUDataset
+            pass
+
     else:
         raise NotImplementedError
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

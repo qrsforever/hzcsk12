@@ -27,8 +27,8 @@ class Trainer(object):
 
 class DepthPredictTrainer(Trainer):
     def __init__(
-            self, 
+            self,
             train_data_loader, val_data_loader,
-            model, optimizer, scheduler,
+            model, loss, optimizer, scheduler,
             num_epochs, cache_dir):
         pass

@@ -452,7 +452,7 @@ class GradientDescentTrainer(Trainer):
             batch_generator, self._num_gradient_accumulation_steps
         )
 
-        logger.info("Training")
+        logger.info("Training1234")
 
         num_training_batches = math.ceil(
             len(self.data_loader) / self._num_gradient_accumulation_steps
@@ -498,6 +498,7 @@ class GradientDescentTrainer(Trainer):
             batch_num_total = self._batch_num_total
 
             self.optimizer.zero_grad()
+            print("###########1")
 
             batch_group_outputs = []
             for batch in batch_group:
@@ -575,6 +576,7 @@ class GradientDescentTrainer(Trainer):
                         batches_this_epoch,
                         is_training=True,
                     )
+            print("####2######1")
 
         if self._distributed and not done_early:
             logger.warning(
@@ -823,7 +825,7 @@ class GradientDescentTrainer(Trainer):
                 callback(self, metrics=metrics, epoch=epoch)
 
             epoch_elapsed_time = time.time() - epoch_start_time
-            logger.info("Epoch duration: %s", datetime.timedelta(seconds=epoch_elapsed_time))
+            logger.info("xxxxEpoch duration: %s", datetime.timedelta(seconds=epoch_elapsed_time))
 
             if epoch < self._num_epochs - 1:
                 training_elapsed_time = time.time() - training_start_time
@@ -836,6 +838,7 @@ class GradientDescentTrainer(Trainer):
             epochs_trained += 1
 
             # QRS: add
+            print("#################31111")
             RunnerStat.train(self, metrics, remain_time=estimated_time_remaining)
 
         # make sure pending events are flushed to disk and files are closed properly

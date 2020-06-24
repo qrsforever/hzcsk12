@@ -25,7 +25,7 @@ local _Utils = import '../../utils/helper.libsonnet';
                         value: 'listdir',
                     },
                 ],
-                default: 'jsonfile',
+                default: 'listdir',
             },
             {
                 name: { en: 'Loader Parameters', cn: self.en },

@@ -15,14 +15,23 @@ local _Utils = import '../utils/helper.libsonnet';
             _Utils.string('data.dataset_name', 'Dataset Name', def=_Utils.dataset_name, readonly=true),
         ],
     },
-
     {
         type: 'accordion',
         objs: [
             {
-                name: { en: 'Loss', cn: self.en },
+                name: { en: 'Loader', cn: self.en },
                 type: '_ignore_',
                 objs: [(import 'loader/__init__.jsonnet').get('data.dataset_loader')],
+            },
+        ],
+    },
+    {
+        type: 'accordion',
+        objs: [
+            {
+                name: { en: 'Transform', cn: self.en },
+                type: '_ignore_',
+                objs: [(import 'transforms/__init__.jsonnet').get('data.transforms')],
             },
         ],
     },
