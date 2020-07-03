@@ -68,7 +68,8 @@ __main()
         --volume $TOP_DIR/rl/app:$DST_DIR/hzcsnote/rl/app \
         --volume $TOP_DIR/3d/app:$DST_DIR/hzcsnote/3d/app \
         --volume $TOP_DIR/services/k12ai:$DST_DIR/hzcsnote/k12libs/k12ai \
-        --volume /data:/data
+        --volume /data:/data \
+        --volume /data/pretrained/cv:/root/.cache/torch/checkpoints
 }
 
 __main $*

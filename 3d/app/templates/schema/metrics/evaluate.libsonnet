@@ -9,6 +9,11 @@ local _Utils = import '../utils/helper.libsonnet';
 [
     {
         type: 'H',
-        objs: [],
+        objs: [
+            _Utils.bool('metrics.evaluate.absrel', 'absrel'),
+            _Utils.bool('metrics.evaluate.mse', 'MSE'),
+            _Utils.bool('metrics.evaluate.rmse', 'RMSE'),
+            _Utils.bool('metrics.evaluate.mae', 'MAE'),
+        ],
     },
 ]

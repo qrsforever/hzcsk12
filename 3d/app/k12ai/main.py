@@ -35,7 +35,8 @@ def _do_train(configer):
                 train_dataloader,
                 valid_dataloader,
                 model, criterion, optimizer, scheduler,
-                configer.get('hypes.epoch'), cache_dir='/cache/output')
+                configer.get('hypes.epoch'), configer.get('metrics'),
+                cache_dir='/cache/output')
     else:
         raise NotImplementedError
 
@@ -64,6 +65,8 @@ if __name__ == "__main__":
             if not os.path.exists(args.config_file):
                 raise FileNotFoundError("file {} not found".format(args.config_file))
             _do_train(ConfigFactory.parse_file(args.config_file))
+        elif args.phase == 'evaluate':
+            raise NotImplementedError
         else:
             raise NotImplementedError
         MessageReport.status(MessageReport.FINISH)

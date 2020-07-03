@@ -32,7 +32,7 @@ local _Utils = import '../../utils/helper.libsonnet';
                         trigger: (import 'type/reduceonplateau.libsonnet').get(jid + '.args'),
                     },
                 ],
-                default: 'reduceonplateau',
+                default: 'step',
             },
         ],
     },

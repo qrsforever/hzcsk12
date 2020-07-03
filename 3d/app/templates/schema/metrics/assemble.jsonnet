@@ -7,6 +7,7 @@
 local _Utils = import '../utils/helper.libsonnet';
 
 [
+    _Utils.int('metrics.log_freq', 'Log Frequency', def=100),
     {
         name: { en: 'Phase', cn: self.en },
         type: 'navigation',
