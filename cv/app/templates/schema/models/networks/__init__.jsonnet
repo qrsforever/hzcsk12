@@ -8,58 +8,70 @@ local _Utils = import '../../utils/helper.libsonnet';
 
 {
     get():: [
-        {
-            type: 'H',
-            objs: [
-                _Utils.string('network.model_name', 'Network', def=_Utils.network, readonly=true),
-                _Utils.bool('network.distributed', 'Distributed', def=false, readonly=true),
-                _Utils.bool('network.resume_continue',
-                            'Resume Continue',
-                            def=false,
-                            tips='continue with the last training'),
-            ],
-        },
-        {
-            type: 'H',
-            objs: [
-                _Utils.string('network.backbone', 'Backbone', def=_Utils.backbone, readonly=true),
-                _Utils.bool('network.pretrained',
-                            'Pretrained',
-                            def=false,
-                            tips='if true using the pretrained models weights, not support custom model'),
-                _Utils.bool('network.resume_strict', 'Resume Strict', def=false, readonly=true),
-            ],
-        },
-        {
-            type: 'H',
-            objs: [
                 {
-                    _id_: 'network.norm_type',
-                    name: { en: 'Norm Type', cn: self.en },
-                    type: 'string-enum',
+                    type: 'H',
+                    objs: [
+                        _Utils.string('network.model_name', 'Network', def=_Utils.network, readonly=true),
+                        _Utils.bool('network.distributed', 'Distributed', def=false, readonly=true),
+                        _Utils.bool('network.resume_continue',
+                                    'Resume Continue',
+                                    def=false,
+                                    tips='continue with the last training'),
+                    ],
+                },
+                {
+                    type: 'H',
+                    objs: [
+                        _Utils.string('network.backbone', 'Backbone', def=_Utils.backbone, readonly=true),
+                        _Utils.bool('network.pretrained',
+                                    'Pretrained',
+                                    def=false,
+                                    tips='if true using the pretrained models weights, not support custom model'),
+                        _Utils.bool('network.resume_strict', 'Resume Strict', def=false, readonly=true),
+                    ],
+                },
+            ] + (if _Utils.network == 'pix2pix'
+                 then [
+                     {
+                         type: 'H',
+                         objs: [
+                             _Utils.bool('network.use_dropout', 'Dropout', def=false),
+                             _Utils.int('network.imgpool_size', 'Imgpool', def=0, min=0),
+                         ],
+                     },
+                 ]
+                 else []) +
+            [
+                {
+                    type: 'H',
                     objs: [
                         {
-                            name: { en: 'batch', cn: self.en },
-                            value: 'batchnorm',
+                            _id_: 'network.norm_type',
+                            name: { en: 'Norm Type', cn: self.en },
+                            type: 'string-enum',
+                            objs: [
+                                {
+                                    name: { en: 'batch', cn: self.en },
+                                    value: 'batchnorm',
+                                },
+                                {
+                                    name: { en: 'sync batch', cn: self.en },
+                                    value: 'encsync_batchnorm',
+                                },
+                                {
+                                    name: { en: 'instance', cn: self.en },
+                                    value: 'instancenorm',
+                                },
+                            ],
+                            default: self.objs[0].value,
+                            readonly: true,
                         },
-                        {
-                            name: { en: 'sync batch', cn: self.en },
-                            value: 'encsync_batchnorm',
-                        },
-                        {
-                            name: { en: 'instance', cn: self.en },
-                            value: 'instancenorm',
-                        },
+                        _Utils.bool('network.syncbn', 'SyncBN', def=false, tips='whether to sync BN'),
+                        _Utils.bool('network.resume_val',
+                                    'Resume Validation',
+                                    def=false,
+                                    tips='continue with the last training, first execute the val set'),
                     ],
-                    default: self.objs[0].value,
-                    readonly: true,
                 },
-                _Utils.bool('network.syncbn', 'SyncBN', def=false, tips='whether to sync BN'),
-                _Utils.bool('network.resume_val',
-                            'Resume Validation',
-                            def=false,
-                            tips='continue with the last training, first execute the val set'),
             ],
-        },
-    ],
 }

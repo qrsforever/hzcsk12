@@ -38,9 +38,9 @@ local _pad_mode(jid) = {
 local _data_transform(jid, label) = {
     name: { en: label + ' Data Transform', cn: self.en },
     type: 'object',
-    objs: [
+    objs: [  // 1
         _Utils.int(jid + '.fit_stride', 'Fit Stride', def=1),
-        {
+        {  // 2
             type: 'H',
             objs: [
                 {
@@ -82,39 +82,42 @@ local _data_transform(jid, label) = {
                     default: _Utils.get_default_value(self._id_, self.objs[1].value),
                     readonly: true,
                 },
-                {
-                    _id_: jid + '.align_method',
-                    name: { en: 'Align Method', cn: self.en },
-                    type: 'string-enum-trigger',
-                    objs: [
-                        {
-                            name: { en: 'only scale', cn: self.en },
-                            value: 'only_scale',
-                            trigger: {},
-                        },
-                        {
-                            name: { en: 'scale and pad', cn: self.en },
-                            value: 'scale_and_pad',
-                            trigger: {
-                                type: '_ignore_',
-                                objs: [_pad_mode(jid)],
-                            },
-                        },
-                        {
-                            name: { en: 'only pad', cn: self.en },
-                            value: 'only_pad',
-                            trigger: {
-                                type: '_ignore_',
-                                objs: [_pad_mode(jid)],
-                            },
-                        },
-                    ],
-                    default: _Utils.get_default_value(self._id_, self.objs[2].value),
-                    readonly: true,
-                },
-            ],
-        },
-    ],
+            ] + (if _Utils.task == 'gan'
+                 then []
+                 else [
+                     {
+                         _id_: jid + '.align_method',
+                         name: { en: 'Align Method', cn: self.en },
+                         type: 'string-enum-trigger',
+                         objs: [
+                             {
+                                 name: { en: 'only scale', cn: self.en },
+                                 value: 'only_scale',
+                                 trigger: {},
+                             },
+                             {
+                                 name: { en: 'scale and pad', cn: self.en },
+                                 value: 'scale_and_pad',
+                                 trigger: {
+                                     type: '_ignore_',
+                                     objs: [_pad_mode(jid)],
+                                 },
+                             },
+                             {
+                                 name: { en: 'only pad', cn: self.en },
+                                 value: 'only_pad',
+                                 trigger: {
+                                     type: '_ignore_',
+                                     objs: [_pad_mode(jid)],
+                                 },
+                             },
+                         ],
+                         default: _Utils.get_default_value(self._id_, self.objs[2].value),
+                         readonly: true,
+                     },
+                 ]),
+        },  // 2
+    ],  // 1
 };
 
 local _aug_trans_group_item(jid, method, display) = {

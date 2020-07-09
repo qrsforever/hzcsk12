@@ -15,6 +15,8 @@ from lib.tools.util.average_meter import AverageMeter
 from lib.tools.helper.dc_helper import DCHelper
 from lib.tools.util.logger import Logger as Log
 
+from k12ai.runner.stat import RunnerStat
+
 
 class ImageTranslator(object):
     """
@@ -102,9 +104,12 @@ class ImageTranslator(object):
                          self.configer.get('solver', 'display_iter'),
                          [RunnerHelper.get_lr(self.optimizer_G), RunnerHelper.get_lr(self.optimizer_D)],
                          batch_time=self.batch_time, data_time=self.data_time, loss=self.train_losses))
+
+                # QRS: add
+                RunnerStat.train(self, data_dict)
+
                 self.batch_time.reset()
                 self.data_time.reset()
-                self.train_losses.reset()
 
             if self.configer.get('solver', 'lr')['metric'] == 'iters' \
                     and self.runner_state['iters'] == self.configer.get('solver', 'max_iters'):
@@ -113,6 +118,7 @@ class ImageTranslator(object):
             # Check to val the current model.
             if self.runner_state['iters'] % self.configer.get('solver', 'test_interval') == 0:
                 self.val()
+                self.train_losses.reset()
 
         self.runner_state['epoch'] += 1
 
@@ -136,6 +142,8 @@ class ImageTranslator(object):
             start_time = time.time()
 
         RunnerHelper.save_net(self, self.gan_net, val_loss=self.val_losses.avg)
+
+        RunnerStat.validation(self)
 
         # Print the log info & reset the states.
         Log.info(

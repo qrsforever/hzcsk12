@@ -393,6 +393,37 @@ class DetRunner(RunnerBase):
         return self
 
 
+class GanRunner(RunnerBase):
+    def __init__(self, data_dir, runner):
+        super().__init__(data_dir, runner)
+        self._model = runner.gan_net
+
+    def handle_train(self, runner, ddata):
+        super().handle_train(runner, ddata)
+
+        # loss
+        loss = runner.train_losses.avg
+        self.check_loss(loss)
+        self._mm.add_scalar('train', 'loss', x=self._cur_iters, y=loss)
+
+        return self
+
+    def handle_validation(self, runner):
+        super().handle_validation(runner)
+        y = {
+            'train': runner.train_losses.avg,
+            'val': runner.val_losses.avg
+        }
+        self._mm.add_scalar('train_val', 'loss', x=self._cur_iters, y=y)
+
+        return self
+
+    def handle_evaluate(self, runner):
+        super().handle_evaluate(runner)
+
+        return self
+
+
 class RunnerStat(object):
     H = None
 
@@ -405,6 +436,8 @@ class RunnerStat(object):
                 RunnerStat.H = ClsRunner(data_dir, runner)
             elif task == 'det':
                 RunnerStat.H = DetRunner(data_dir, runner)
+            elif task == 'gan':
+                RunnerStat.H = GanRunner(data_dir, runner)
             else:
                 raise NotImplementedError
 

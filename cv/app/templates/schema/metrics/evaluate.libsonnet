@@ -9,7 +9,7 @@ local _Utils = import '../utils/helper.libsonnet';
 [
     {
         type: 'H',
-        objs: [
+        objs: if _Utils.task == 'cls' then [
             _Utils.bool('metrics.confusion_matrix', 'Confusion Matrix', def=true),
             _Utils.bool('metrics.top10_images', 'Top 10 Images', def=false),
             _Utils.bool('metrics.top10_errors', 'Top 10 Errors', def=false),
@@ -40,6 +40,6 @@ local _Utils = import '../utils/helper.libsonnet';
                         'Guided G-CAM',
                         def=false,
                         tips='only for resnet and vgg now'),
-        ],
+        ] else [],
     },
 ]

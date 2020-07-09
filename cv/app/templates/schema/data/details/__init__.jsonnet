@@ -20,13 +20,17 @@ local _Utils = import '../../utils/helper.libsonnet';
                 else []
             ),
         },
-        {
-            type: 'H',
-            objs: [
-                _Utils.int('data.num_records', 'Records Number', def=0, ddd=true, readonly=true),
-                _Utils.int('data.num_classes', 'Classes Number', def=0, ddd=true, readonly=true),
-            ],
-        },
+    ] + (if _Utils.task == 'gan'
+         then []
+         else [
+             {
+                 type: 'H',
+                 objs: [
+                     _Utils.int('data.num_records', 'Records Number', def=0, ddd=true, readonly=true),
+                     _Utils.int('data.num_classes', 'Classes Number', def=0, ddd=true, readonly=true),
+                 ],
+             },
+         ]) + [
         {
             type: 'H',
             objs: [

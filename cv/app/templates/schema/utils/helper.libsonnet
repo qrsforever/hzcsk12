@@ -37,6 +37,10 @@ local _network_maps = {
         method: 'yolov3',
         backbone: 'yolov3',
     },
+    pix2pix: {
+        method: 'image_translator',
+        backbone: 'none',
+    },
 };
 
 {
@@ -101,10 +105,11 @@ local _network_maps = {
     else if $.dataset_name == 'cellular' then import '../constants/datasets/cellular.jsonnet'
     else if $.dataset_name == 'underwater' then import '../constants/datasets/underwater.jsonnet'
     else if $.dataset_name == 'aliproducts' then import '../constants/datasets/aliproducts.jsonnet'
+    else if $.dataset_name == 'satellite_maps' then import '../constants/datasets/satellite_maps.jsonnet'
     else {},
 
     // basic type node generator function
-    bool(id, en, cn='', def=false, ddd=false, tips='', width=-1, height=-1, readonly=false):: {
+    bool(id, en, cn='', def=false, ddd=true, tips='', width=-1, height=-1, readonly=false):: {
         _id_: id,
         name: { en: en, cn: if std.length(cn) == 0 then self.en else cn },
         type: 'bool',
@@ -115,7 +120,7 @@ local _network_maps = {
         [if readonly then 'readonly']: readonly,
     },
 
-    int(id, en, cn='', def=0, ddd=false, tips='', min=-999666, max=-999666, width=-1, height=-1, readonly=false):: {
+    int(id, en, cn='', def=0, ddd=true, tips='', min=-999666, max=-999666, width=-1, height=-1, readonly=false):: {
         _id_: id,
         name: { en: en, cn: if std.length(cn) == 0 then self.en else cn },
         type: 'int',
@@ -128,7 +133,7 @@ local _network_maps = {
         [if readonly then 'readonly']: readonly,
     },
 
-    float(id, en, cn='', def=0, ddd=false, tips='', min=-999666, max=-999666, width=-1, height=-1, readonly=false):: {
+    float(id, en, cn='', def=0, ddd=true, tips='', min=-999666, max=-999666, width=-1, height=-1, readonly=false):: {
         _id_: id,
         name: { en: en, cn: if std.length(cn) == 0 then self.en else cn },
         type: 'float',
@@ -141,7 +146,7 @@ local _network_maps = {
         [if readonly then 'readonly']: readonly,
     },
 
-    string(id, en, cn='', def='', ddd=false, tips='', width=-1, height=-1, readonly=false):: {
+    string(id, en, cn='', def='', ddd=true, tips='', width=-1, height=-1, readonly=false):: {
         _id_: id,
         name: { en: en, cn: if std.length(cn) == 0 then self.en else cn },
         type: 'string',
@@ -152,7 +157,7 @@ local _network_maps = {
         [if readonly then 'readonly']: readonly,
     },
 
-    text(id, en, cn='', def='', ddd=false, tips='', width=-1, height=-1, readonly=false):: {
+    text(id, en, cn='', def='', ddd=true, tips='', width=-1, height=-1, readonly=false):: {
         _id_: id,
         name: { en: en, cn: if std.length(cn) == 0 then self.en else cn },
         type: 'text',
@@ -163,7 +168,7 @@ local _network_maps = {
         [if readonly then 'readonly']: readonly,
     },
 
-    image(id, en, cn='', def='', ddd=false, tips='', width=-1, height=-1):: {
+    image(id, en, cn='', def='', ddd=true, tips='', width=-1, height=-1):: {
         _id_: id,
         name: { en: en, cn: if std.length(cn) == 0 then self.en else cn },
         type: 'image',
@@ -174,7 +179,7 @@ local _network_maps = {
         readonly: true,
     },
 
-    sampleimage(id, en, cn='', def='', ddd=false, tips='', width=-1, height=-1):: {
+    sampleimage(id, en, cn='', def='', ddd=true, tips='', width=-1, height=-1):: {
         _id_: id,
         name: { en: en, cn: if std.length(cn) == 0 then self.en else cn },
         type: 'image',
@@ -186,7 +191,7 @@ local _network_maps = {
     },
 
 
-    intarray(id, en, cn='', def=[], ddd=false, tips='', width=-1, height=-1, readonly=false):: {
+    intarray(id, en, cn='', def=[], ddd=true, tips='', width=-1, height=-1, readonly=false):: {
         _id_: id,
         name: { en: en, cn: if std.length(cn) == 0 then self.en else cn },
         type: 'int-array',
@@ -197,7 +202,7 @@ local _network_maps = {
         [if readonly then 'readonly']: readonly,
     },
 
-    floatarray(id, en, cn='', def=[], ddd=false, tips='', width=-1, height=-1, readonly=false):: {
+    floatarray(id, en, cn='', def=[], ddd=true, tips='', width=-1, height=-1, readonly=false):: {
         _id_: id,
         name: { en: en, cn: if std.length(cn) == 0 then self.en else cn },
         type: 'float-array',
@@ -208,7 +213,7 @@ local _network_maps = {
         [if readonly then 'readonly']: readonly,
     },
 
-    stringarray(id, en, cn='', def='', ddd=false, tips='', width=-1, height=-1, readonly=false):: {
+    stringarray(id, en, cn='', def='', ddd=true, tips='', width=-1, height=-1, readonly=false):: {
         _id_: id,
         name: { en: en, cn: if std.length(cn) == 0 then self.en else cn },
         type: 'string-array',
@@ -219,7 +224,7 @@ local _network_maps = {
         [if readonly then 'readonly']: readonly,
     },
 
-    booltrigger(id, en, cn='', def=false, ddd=false, tips='', width=-1, height=-1, readonly=false, trigger=[]):: {
+    booltrigger(id, en, cn='', def=false, ddd=true, tips='', width=-1, height=-1, readonly=false, trigger=[]):: {
         _id_: id,
         name: { en: en, cn: if std.length(cn) == 0 then self.en else cn },
         type: 'bool-trigger',
@@ -245,7 +250,7 @@ local _network_maps = {
         [if readonly then 'readonly']: readonly,
     },
 
-    stringenum(id, en, cn='', def='', ddd=false, tips='', width=-1, height=-1, readonly=false, enums=[]):: {
+    stringenum(id, en, cn='', def='', ddd=true, tips='', width=-1, height=-1, readonly=false, enums=[]):: {
         _id_: id,
         name: { en: en, cn: if std.length(cn) == 0 then self.en else cn },
         type: 'string-enum',

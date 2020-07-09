@@ -32,44 +32,54 @@ local _Utils = import '../../utils/helper.libsonnet';
                         value: 'multistep',
                         trigger: (import 'policy/multistep.libsonnet').get(jid + '.multistep'),
                     },
-                ],
-                default: 'multistep',
-            },
-            {
-                _id_: jid + '.is_warm',
-                name: { en: 'Warm up', cn: self.en },
-                type: 'bool-trigger',
-                objs: [
                     {
-                        value: true,
-                        trigger: {
-                            type: 'H',
-                            objs: [
-                                _Utils.int(jid + '.warm.warm_iters',
-                                           'Warm Iters',
-                                           def=1000,
-                                           tips='warmup is working within the iters count'),
-                                _Utils.int(jid + '.warm.power',
-                                           'Power',
-                                           min=1,
-                                           max=10,
-                                           def=1,
-                                           tips='set learning rate power value'),
-                                _Utils.bool(jid + '.warm.freeze_backbone',
-                                            'Freeze',
-                                            width=250,
-                                            def=false,
-                                            tips='set learning rate to 0 forcely within warm iters'),
-                            ],
-                        },
-                    },
-                    {
-                        value: false,
-                        trigger: {},
+                        name: { en: 'LambdaFixLinearLR', cn: self.en },
+                        value: 'lambda_fixlinear',
+                        trigger: (import 'policy/lambda_fixlinear.libsonnet').get(jid + '.lambda_fixlinear'),
                     },
                 ],
-                default: false,
+                default: _Utils.get_default_value(self._id_, self.objs[1].value),
             },
-        ],
+        ] + (if _Utils.task == 'gan'
+             then
+                 []
+             else
+                 [
+                     {
+                         _id_: jid + '.is_warm',
+                         name: { en: 'Warm up', cn: self.en },
+                         type: 'bool-trigger',
+                         objs: [
+                             {
+                                 value: true,
+                                 trigger: {
+                                     type: 'H',
+                                     objs: [
+                                         _Utils.int(jid + '.warm.warm_iters',
+                                                    'Warm Iters',
+                                                    def=1000,
+                                                    tips='warmup is working within the iters count'),
+                                         _Utils.int(jid + '.warm.power',
+                                                    'Power',
+                                                    min=1,
+                                                    max=10,
+                                                    def=1,
+                                                    tips='set learning rate power value'),
+                                         _Utils.bool(jid + '.warm.freeze_backbone',
+                                                     'Freeze',
+                                                     width=250,
+                                                     def=false,
+                                                     tips='set learning rate to 0 forcely within warm iters'),
+                                     ],
+                                 },
+                             },
+                             {
+                                 value: false,
+                                 trigger: {},
+                             },
+                         ],
+                         default: false,
+                     },
+                 ]),
     },
 }

@@ -6,6 +6,89 @@
 
 local _Utils = import '../utils/helper.libsonnet';
 
+local _gan_pix2pix_netparams(net) = [
+    {
+        type: 'H',
+        objs: [
+            {
+                _id_: 'network.' + net + '.net_type',
+                name: { en: 'Net Type', cn: self.en },
+                type: 'string-enum',
+                objs: if net == 'generator' then
+                    [
+                        {
+                            name: { en: 'unet_128', cn: self.en },
+                            value: 'unet_128',
+                        },
+                        {
+                            name: { en: 'unet_256', cn: self.en },
+                            value: 'unet_256',
+                        },
+                        {
+                            name: { en: 'resnet_9', cn: self.en },
+                            value: 'resnet_9blocks',
+                        },
+                        {
+                            name: { en: 'resnet_6', cn: self.en },
+                            value: 'resnet_6blocks',
+                        },
+                    ] else [
+                    {
+                        name: { en: 'n_layers', cn: self.en },
+                        value: 'n_layers',
+                    },
+                    {
+                        name: { en: 'fc', cn: self.en },
+                        value: 'fc',
+                    },
+                    {
+                        name: { en: 'pixel', cn: self.en },
+                        value: 'pixel',
+                    },
+                ],
+                default: _Utils.get_default_value(self._id_, self.objs[0].value),
+            },
+            {
+                _id_: 'network.' + net + '.init_type',
+                name: { en: 'Init Type', cn: self.en },
+                type: 'string-enum',
+                objs: [
+                    {
+                        name: { en: 'normal', cn: self.en },
+                        value: 'normal',
+                    },
+                    {
+                        name: { en: 'xavier', cn: self.en },
+                        value: 'xavier',
+                    },
+                    {
+                        name: { en: 'kaiming', cn: self.en },
+                        value: 'kaiming',
+                    },
+                    {
+                        name: { en: 'orthogonal', cn: self.en },
+                        value: 'orthogonal',
+                    },
+                ],
+                default: _Utils.get_default_value(self._id_, self.objs[0].value),
+            },
+            _Utils.float('network.' + net + '.init_gain', 'Init Gain', def=0.02, min=0.01),
+        ],
+    },
+    {
+        type: 'H',
+        objs: [
+            _Utils.int('network.' + net + '.num_f', 'Num Filters', def=64, min=8),
+            _Utils.int('network.' + net + '.in_c', 'In Channels', def=3, min=1),
+        ] + if net == 'generator'
+        then [
+            _Utils.int('network.' + net + '.out_c', 'Out Channels', def=3, min=1),
+        ] else [
+            _Utils.int('network.' + net + '.n_layers', 'Num Layers', def=3, min=1),
+        ],
+    },
+];
+
 (import 'networks/__init__.jsonnet').get()
 +
 [
@@ -61,6 +144,18 @@ local _Utils = import '../utils/helper.libsonnet';
                             ],
                         },
                     ],
+                },
+            ] else if _Utils.network == 'pix2pix'
+            then [
+                {
+                    name: { en: 'Generator', cn: self.en },
+                    type: '_ignore_',
+                    objs: _gan_pix2pix_netparams('generator'),
+                },
+                {
+                    name: { en: 'Discriminator', cn: self.en },
+                    type: '_ignore_',
+                    objs: _gan_pix2pix_netparams('discriminator'),
                 },
             ] else []
                    + (

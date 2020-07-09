@@ -11,14 +11,14 @@ local _Utils = import '../utils/helper.libsonnet';
         type: 'H',
         objs: [
             _Utils.string('task', 'Task', def=_Utils.task, readonly=true, tips='task type'),
-            _Utils.string('method', 'Method', def=_Utils.method, ddd=true, readonly=true),
+            _Utils.string('method', 'Method', def=_Utils.method, readonly=true),
             _Utils.bool('data.include_val', 'Include Val', def=false, tips='include val dataset on train'),
         ],
     },
     {
         type: 'H',
         objs: [
-            _Utils.string('dataset', 'Loader', def='default', ddd=true, readonly=true),
+            _Utils.string('dataset', 'Loader', def='default', readonly=true),
             _Utils.int('data.workers', 'Workers', min=1, max=_Utils.num_cpu, def=4, tips='the numbers of subprocesses for loading dataset'),
             _Utils.bool('data.drop_last', 'Drop Last', def=false, tips='drop the last incomplete batch'),
         ],
@@ -41,6 +41,7 @@ local _Utils = import '../utils/helper.libsonnet';
                     },
                 ],
                 default: _Utils.get_default_value(self._id_, self.objs[0].value),
+                readonly: true,
             },
             {
                 _id_: 'data.input_mode',
@@ -61,6 +62,7 @@ local _Utils = import '../utils/helper.libsonnet';
                     },
                 ],
                 default: _Utils.get_default_value(self._id_, self.objs[0].value),
+                readonly: true,
                 tips: 'the image mode of model input, usually is RGB',
             },
             (if _Utils.task == 'det' || _Utils.task == 'ins' then

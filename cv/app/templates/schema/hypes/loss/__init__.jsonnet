@@ -33,8 +33,33 @@ local _LossSelect = {
                 value: 'multibox_loss',
                 trigger: (import 'type/multibox_loss.libsonnet').get(),
             },
+        ] else if _Utils.task == 'gan' then [
+            {
+                name: { en: 'gan loss', cn: self.en },
+                value: 'gan_loss',
+                trigger: {
+                    _id_: 'loss.params.gan_loss.gan_mode',
+                    name: { en: 'type', cn: self.en },
+                    type: 'string-enum',
+                    objs: [
+                        {
+                            name: { en: 'vanilla', cn: self.en },
+                            value: 'vanilla',
+                        },
+                        {
+                            name: { en: 'lsgan', cn: self.en },
+                            value: 'lsgan',
+                        },
+                        {
+                            name: { en: 'wgangp', cn: self.en },
+                            value: 'wgangp',
+                        },
+                    ],
+                    default: self.objs[0].value,
+                },
+            },
         ],
-        default: self.objs[0].value,
+        default: _Utils.get_default_value(self._id_, self.objs[0].value),
         readonly: true,
     },
 }

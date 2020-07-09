@@ -38,10 +38,10 @@ class DefaultPix2pixDataset(data.Dataset):
             imgA = self.img_transform(imgA)
             imgB = self.img_transform(imgB)
 
-
         return dict(
             imgA=DataContainer(imgA, stack=True),
             imgB=DataContainer(imgB, stack=True),
+            meta=DataContainer(self.imgA_list[index], stack=True)
         )
 
     def __len__(self):

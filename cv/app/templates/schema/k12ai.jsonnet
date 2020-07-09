@@ -46,7 +46,7 @@ local _Utils = import 'utils/helper.libsonnet';
                     objs: import 'hypes/assemble.jsonnet',
                 },
                 {
-                    name: { en: 'Metrics', cn: self.en },
+                    name: { en: 'Metrics', cn: '测度' },
                     type: '_ignore_',
                     objs: import 'metrics/assemble.jsonnet',
                 },

@@ -19,7 +19,7 @@ class Pix2Pix(nn.Module):
 
         self.fake_AB_pool = ImagePool(self.configer.get('network', 'imgpool_size'))
         # define loss functions
-        self.criterionGAN = GANLoss(gan_mode=self.configer.get('loss', 'params')['gan_mode'])
+        self.criterionGAN = GANLoss(gan_mode=self.configer.get('loss.params.gan_loss')['gan_mode'])
         self.criterionL1 = nn.L1Loss()
 
     def forward(self, data_dict, testing=False):
@@ -40,7 +40,7 @@ class Pix2Pix(nn.Module):
         pred_fake = self.netD.forward(G_fake_AB)
         loss_G_GAN = self.criterionGAN(pred_fake, True)
         # Second, G(A) = B
-        loss_G_L1 = self.criterionL1(fake_B, data_dict['imgB']) * self.configer.get('loss', 'loss_weights')['l1_loss']
+        loss_G_L1 = self.criterionL1(fake_B, data_dict['imgB']) * 100 # self.configer.get('loss', 'loss_weights')['l1_loss']
         loss_G = loss_G_GAN + loss_G_L1
 
         D_fake_AB = self.fake_AB_pool.query(torch.cat((data_dict['imgA'], fake_B), 1))

@@ -8,7 +8,7 @@ local _Utils = import '../../../utils/helper.libsonnet';
 
 {
     get(jid): [
-        _Utils.float(jid + '.radio', 'radio', def=0.5),
+        _Utils.float(jid + '.ratio', 'ratio', def=0.5),
         _Utils.floatarray(jid + '.scale_range', 'scale range', def=[0.75, 1.25]),
         _Utils.floatarray(jid + '.aspect_range', 'aspect range', def=[0.9, 1.1]),
         {

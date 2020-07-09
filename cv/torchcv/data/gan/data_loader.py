@@ -3,6 +3,7 @@
 # Author: Donny You(youansheng@gmail.com)
 
 
+import torch
 from torch.utils import data
 
 from data.gan.datasets.default_pix2pix_dataset import DefaultPix2pixDataset
@@ -10,9 +11,17 @@ from data.gan.datasets.default_cyclegan_dataset import DefaultCycleGANDataset
 from data.gan.datasets.default_facegan_dataset import DefaultFaceGANDataset
 import lib.data.pil_aug_transforms as pil_aug_trans
 import lib.data.cv2_aug_transforms as cv2_aug_trans
-import lib.data.transforms as trans
-from lib.data.collate import collate
+# import lib.data.transforms as trans
+# from lib.data.collate import collate
+from lib.data.collate import stack
+from torchvision import transforms as trans
 from lib.tools.util.logger import Logger as Log
+
+
+def collate(batch, trans_dict, device_ids=None):
+    device_ids = list(range(torch.cuda.device_count())) if device_ids is None else device_ids
+    data_keys = batch[0].keys()
+    return dict({key: stack(batch, data_key=key, device_ids=device_ids) for key in data_keys})
 
 
 class DataLoader(object):
@@ -36,13 +45,15 @@ class DataLoader(object):
             Log.error('Not support {} image tool.'.format(self.configer.get('data', 'image_tool')))
             exit(1)
 
+        trans_dict = self.configer.get('train', 'data_transformer')
+        target_width, target_height = 128, 128
+        if trans_dict['size_mode'] == 'fix_size':
+            target_width, target_height = trans_dict['input_size']
+
         self.img_transform = trans.Compose([
+            trans.Resize((target_width, target_height)),
             trans.ToTensor(),
             trans.Normalize(**self.configer.get('data', 'normalize')), ])
-
-        self.label_transform = trans.Compose([
-            trans.ToLabel(),
-            trans.ReLabel(255, -1), ])
 
     def get_trainloader(self):
         if self.configer.get('dataset', default=None) == 'default_pix2pix':
@@ -65,7 +76,7 @@ class DataLoader(object):
                                             configer=self.configer)
 
         else:
-            Log.error('{} train loader is invalid.'.format(self.configer.get('train', 'loader')))
+            Log.error('{} train loader is invalid.'.format(self.configer.get('dataset', default='unknow')))
             exit(1)
 
         trainloader = data.DataLoader(
@@ -79,8 +90,6 @@ class DataLoader(object):
         )
 
         return trainloader
-
-
 
     def get_valloader(self, dataset=None):
         dataset = 'val' if dataset is None else dataset
