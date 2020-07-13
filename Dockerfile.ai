@@ -46,7 +46,7 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
     pip uninstall enum34 -y && \
     $PIP_INSTALL \
         GPUtil psutil \
-        torchsummary tensorboard seaborn \
+        torchsummary pytorch-lightning tensorboard seaborn \
         onnx pydotplus torchviz pydot graphviz cairosvg \
         pyhocon protobuf "jsonnet>=0.10.0" \
         zerorpc python-consul \

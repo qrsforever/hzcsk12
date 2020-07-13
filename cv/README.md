@@ -54,6 +54,8 @@ Date:   Mon Jan 6 17:43:51 2020 +0800
 | `torchcv/lib/exts/ops/roi_align/src/roi_align_cuda.cpp` | torch1.5 |
 | `torchcv/lib/exts/ops/roi_pool/src/roi_pool_cuda.cpp` | torch1.5 |
 
+**原框架已不再维护, 可以随意修改了, 不需考虑后续更新**
+
 # 注意
 
 - SSD的`num_classes`要比实际类别+1, 即: 类别 + 背景

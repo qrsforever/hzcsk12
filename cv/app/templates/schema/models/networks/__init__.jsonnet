@@ -12,7 +12,7 @@ local _Utils = import '../../utils/helper.libsonnet';
                     type: 'H',
                     objs: [
                         _Utils.string('network.model_name', 'Network', def=_Utils.network, readonly=true),
-                        _Utils.bool('network.distributed', 'Distributed', def=false, readonly=true),
+                        _Utils.bool('network.distributed', 'Distributed', def=false, ddd=false, readonly=true),
                         _Utils.bool('network.resume_continue',
                                     'Resume Continue',
                                     def=false,
@@ -22,7 +22,7 @@ local _Utils = import '../../utils/helper.libsonnet';
                 {
                     type: 'H',
                     objs: [
-                        _Utils.string('network.backbone', 'Backbone', def=_Utils.backbone, readonly=true),
+                        _Utils.string('network.backbone', 'Backbone', def=_Utils.backbone, ddd=false, readonly=true),
                         _Utils.bool('network.pretrained',
                                     'Pretrained',
                                     def=false,

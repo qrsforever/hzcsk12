@@ -106,6 +106,7 @@ local _network_maps = {
     else if $.dataset_name == 'underwater' then import '../constants/datasets/underwater.jsonnet'
     else if $.dataset_name == 'aliproducts' then import '../constants/datasets/aliproducts.jsonnet'
     else if $.dataset_name == 'satellite_maps' then import '../constants/datasets/satellite_maps.jsonnet'
+    else if $.dataset_name == 'chestxray' then import '../constants/datasets/chestxray.jsonnet'
     else {},
 
     // basic type node generator function

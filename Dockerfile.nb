@@ -20,7 +20,7 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
     $PIP_INSTALL \
         flask flask_cors h5py \
         /root/ipywidgets.zip \
-        jupyter \
+        watermark jupyter \
         jupyter_contrib_nbextensions \
         jupyter_nbextensions_configurator \
         && \
@@ -31,10 +31,6 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
     jupyter notebook --generate-config -y && \
     rm /root/ipywidgets.zip
 
-COPY .jupyter_config/jupyter_notebook_config.json ${jupyter_conf_dir}/jupyter_notebook_config.json
-COPY .jupyter_config/notebook.json ${jupyter_conf_dir}/nbconfig/notebook.json
-COPY .jupyter_config/vim_binding ${jupyter_data_dir}/nbextensions/vim_binding
-
 RUN jupyter nbextension enable vim_binding/vim_binding && \
     jupyter nbextension enable jupyter-js-widgets/extension && \
     jupyter nbextension enable execute_time/ExecuteTime && \
@@ -42,5 +38,9 @@ RUN jupyter nbextension enable vim_binding/vim_binding && \
     jupyter nbextension enable table_beautifier/main && \
     jupyter nbextension enable skip-traceback/main && \
     jupyter nbextension enable toc2/main
+
+COPY .jupyter_config/jupyter_notebook_config.json ${jupyter_conf_dir}/jupyter_notebook_config.json
+COPY .jupyter_config/notebook.json ${jupyter_conf_dir}/nbconfig/notebook.json
+COPY .jupyter_config/vim_binding ${jupyter_data_dir}/nbextensions/vim_binding
 
 CMD ["/bin/bash"]
