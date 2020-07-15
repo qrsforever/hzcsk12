@@ -19,6 +19,7 @@ from k12ai.k12ai_base import ServiceRPC
 from k12ai.k12ai_consul import (k12ai_consul_init, k12ai_consul_register)
 from k12ai.k12ai_logger import (k12ai_set_loglevel, k12ai_set_logfile, Logger)
 from k12ai.k12ai_utils import k12ai_timeit
+from k12ai.k12ai_platform import k12ai_platform_stats as get_platform_stats
 
 _DEBUG_ = True if os.environ.get("K12AI_DEBUG") else False
 
@@ -91,6 +92,11 @@ class CVServiceRPC(ServiceRPC):
 
     @k12ai_timeit(handler=Logger.info)
     def post_processing(self, op, user, uuid, message):
+        # report train process resource usage
+        code, resource = get_platform_stats('query', user, uuid, {'containers':True}, isasync=False)
+        if code == 100000:
+            message['resource'] = resource
+
         usercache, innercache = self.get_cache_dir(user, uuid)
         # modify message: add task environ info
         if op.startswith('train') and isinstance(message, dict):
@@ -100,7 +106,7 @@ class CVServiceRPC(ServiceRPC):
                 message['environ']['dataset_name'] = environs['K12AI_DATASET_NAME']
                 message['environ']['model_name'] = environs['K12AI_MODEL_NAME']
                 message['environ']['batch_size'] = environs['K12AI_BATCH_SIZE']
-                # message['environ']['input_size'] = environs['K12AI_INPUT_SIZE']
+                message['environ']['input_size'] = environs['K12AI_INPUT_SIZE']
 
         # upload train or evaluate data
         if op.startswith('train'):
@@ -130,7 +136,7 @@ class CVServiceRPC(ServiceRPC):
             environs['K12AI_DATASET_NAME'] = params['_k12.data.dataset_name']
             environs['K12AI_MODEL_NAME'] = params['network.backbone']
             environs['K12AI_BATCH_SIZE'] = params['train.batch_size']
-            # environs['K12AI_INPUT_SIZE'] = params['train.data_transformer.input_size']
+            environs['K12AI_INPUT_SIZE'] = params['train.data_transformer.input_size']
         return environs
 
     def make_container_kwargs(self, op, params):
@@ -214,7 +220,7 @@ class CVServiceRPC(ServiceRPC):
         with open(config_file, 'w') as fout:
             fout.write(config_str)
 
-        command = f'python {self._workdir}/torchcv/main.py --config_file {innercache}/config.json'
+        command = f'python {self._workdir}/torchcv/main.py --config_file {innercache}/config.json --cudnn false'
 
         if op.startswith('train'):
             command += ' --phase train'

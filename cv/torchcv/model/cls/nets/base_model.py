@@ -3,11 +3,10 @@
 # Author: Donny You(youansheng@gmail.com)
 
 
-import torch
 import torch.nn as nn
 
 from lib.model.module_helper import ModuleHelper
-from model.cls.loss.loss import BASE_LOSS_DICT
+# from lib.tools.util.logger import Logger as Log
 
 
 class BaseModel(nn.Module):
@@ -25,8 +24,29 @@ class BaseModel(nn.Module):
             self.net.fc = nn.Linear(self.net.fc.in_features, num_classes)
         elif backbone.startswith('alexnet'):
             self.net.classifier[6] = nn.Linear(4096, num_classes)
+        elif backbone.startswith('googlenet'):
+            # QRS: not ok
+            raise NotImplementedError(f'backbone:{backbone}')
+            self.net.aux1.fc2 = nn.Linear(1024, num_classes)
+            self.net.aux2.fc2 = nn.Linear(1024, num_classes)
+            self.net.fc = nn.Linear(1024, num_classes)
+        elif backbone.startswith('mobilenet_v2'):
+            self.net.classifier[1] = nn.Linear(self.net.classifier[1].in_features, num_classes)
+        elif backbone.startswith('squeezenet'):
+            self.net.num_classes = num_classes
+            self.net.classifier[1] = nn.Conv2d(512, num_classes, kernel_size=1)
+        elif backbone.startswith('shufflenet'):
+            self.net.fc = nn.Linear(self.net.fc.in_features, num_classes)
+        elif backbone.startswith('densenet'):
+            in_features = {
+                "densenet121": 1024,
+                "densenet161": 2208,
+                "densenet169": 1664,
+                "densenet201": 1920,
+            }
+            self.net.classifier = nn.Linear(in_features[backbone], num_classes)
         else:
-            raise NotImplementedError(f'backbne:{backbone}')
+            raise NotImplementedError(f'backbone:{backbone}')
 
         self.valid_loss_dict = configer.get('loss.loss_weights', configer.get('loss.loss_type'))
 
@@ -39,25 +59,3 @@ class BaseModel(nn.Module):
     # QRS: mod
     def forward(self, inputs):
         return self.net(inputs)
-
-    # def forward(self, data_dict):
-    #     out_dict = dict()
-    #     label_dict = dict()
-    #     loss_dict = dict()
-    #     # QRS: fix error
-    #     # in_img = ModuleHelper.preprocess(data_dict['img'], self.configer.get('data.normalize'))
-    #     # out = self.net(in_img)
-    #     # out_dict['out'] = out
-    #     # label_dict['out'] = data_dict['label'][:, 0]
-    #     out = self.net(data_dict['img'])
-    #     out_dict['out'] = out
-    #     label_dict['out'] = data_dict['label']
-    #     if 'ce_loss' in self.valid_loss_dict:
-    #         loss_dict['ce_loss'] = dict(
-    #             # params=[out, data_dict['label'][:, 0]],
-    #             params=[out, data_dict['label']],
-    #             type=torch.cuda.LongTensor([BASE_LOSS_DICT['ce_loss']]),
-    #             weight=torch.cuda.FloatTensor([self.valid_loss_dict['ce_loss']])
-    #         )
-
-    #     return out_dict, label_dict, loss_dict

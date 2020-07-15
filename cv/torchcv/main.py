@@ -177,6 +177,7 @@ if __name__ == "__main__":
         MessageReport.status(MessageReport.RUNNING)
 
         Log.info('Config Dict: {}'.format(json.dumps(configer.to_dict(), indent=2)))
+        Log.info('torch version {}'.format(torch.__version__))
 
         runner_selector = RunnerSelector(configer)
         runner = None

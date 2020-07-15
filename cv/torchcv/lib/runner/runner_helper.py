@@ -25,7 +25,7 @@ class RunnerHelper(object):
 
         if isinstance(in_data, dict):
             return {k: RunnerHelper.to_device(runner, v) for k, v in in_data.items()}
-
+        
         return in_data.to(device) if isinstance(in_data, torch.Tensor) else in_data
 
     @staticmethod

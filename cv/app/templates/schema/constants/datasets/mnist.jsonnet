@@ -3,9 +3,9 @@
     task: 'cls',
     method: 'image_classifier',
     data: {
-        num_records: 70000,
+        num_records: 10000,  // 70000
         num_classes: 10,
-        data_dir: '/datasets/mnist',
+        data_dir: '/datasets/rmnist',
         image_tool: 'cv2',
         input_mode: 'BGR',
         workers: 1,
@@ -94,9 +94,9 @@
                 nesterov: false,
             },
         },
-        display_iter: 20,
-        save_iters: 200,
-        test_interval: 50,
+        display_iter: 128,
+        save_iters: 1024,
+        test_interval: 512,
         max_epoch: 30,
     },
     loss: {

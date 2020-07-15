@@ -152,12 +152,19 @@ class ImageClassifier(object):
                              self.solver_dict['display_iter'], self.train_losses.info(),
                              RunnerHelper.get_lr(self.optimizer), batch_time=self.batch_time,
                              data_time=self.data_time))
+                # print('%03d' % self.runner_state['epoch'],
+                #         round(torch.cuda.max_memory_allocated()/2**20, 2),
+                #         round(torch.cuda.max_memory_reserved()/2**20, 2),
+                #         round(torch.cuda.memory_allocated()/2**20, 2),
+                #         round(torch.cuda.memory_reserved()/2**20, 2))
 
                 # QRS: add
                 RunnerStat.train(self, data_dict)
 
                 self.batch_time.reset()
                 self.data_time.reset()
+
+            del data_dict, loss, loss_dict
 
             if self.solver_dict['lr']['metric'] == 'iters' and self.runner_state['iters'] == self.solver_dict['max_iters']:
                 break
@@ -167,6 +174,7 @@ class ImageClassifier(object):
 
             # Check to val the current model.
             if self.runner_state['iters'] % self.solver_dict['test_interval'] == 0:
+                torch.cuda.empty_cache()
                 self.val(False)
                 self.train_losses.reset()
 

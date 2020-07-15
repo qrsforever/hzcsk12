@@ -114,10 +114,15 @@ def _get_process_infos():
     return infos
 
 
-def _get_container_infos(client):
+def _get_container_infos(client, user, uuid):
     infos = []
     try:
-        cons = client.containers.list(filters={'label': 'k12ai.service.name'})
+        if user is None or user == '*' or user == 'all':
+            cons = client.containers.list(filters={'label': 'k12ai.service.name'})
+        elif uuid == '0' or uuid == '*' or uuid == 'all':
+            cons = client.containers.list(filters={'label': 'k12ai.service.user=%s'%user})
+        else:
+            cons = client.containers.list(filters={'label': ['k12ai.service.user=%s'%user, 'k12ai.service.uuid=%s'%uuid]})
         if len(cons) == 0:
             return infos
         gpu_process_infos = _get_process_infos()
@@ -128,6 +133,7 @@ def _get_container_infos(client):
             info['op'] = c.labels.get('k12ai.service.op', '')
             info['user'] = c.labels.get('k12ai.service.user', '')
             info['service_uuid'] = c.labels.get('k12ai.service.uuid', '')
+            info['service_starttime'] = c.attrs.get('State', {}).get('StartedAt', '')
             info['cpu_percent'] = _get_container_cpu_pct(stats)
             info['cpu_memory_total_MB'] = MB(stats['memory_stats']['limit'])
             info['cpu_memory_usage_MB'] = MB(stats['memory_stats']['usage'])
@@ -151,7 +157,8 @@ def _get_container_infos(client):
 def _get_service_infos(client, user, uuid):
     infos = []
     try:
-        cons = []
+        if user == '*' or user == 'all':
+            cons = client.containers.list(filters={'label': 'k12ai.service.name'})
         if uuid == '0' or uuid == '*' or uuid == 'all':
             cons = client.containers.list(filters={'label': 'k12ai.service.user=%s'%user})
         else:
@@ -172,13 +179,13 @@ def _get_service_infos(client, user, uuid):
     return infos
 
 
-def _query_stats(docker, op, user, uuid, params):
+def _query_stats(docker, op, user, uuid, params, isasync):
     message = {}
     if not params:
         message = _get_cpu_infos()
         message['gpus'] = _get_gpu_infos()
         message['disks'] = _get_disk_infos()
-        message['containers'] = _get_container_infos(docker)
+        message['containers'] = _get_container_infos(docker, user, uuid)
     elif isinstance(params, dict):
         if params.get('cpus', False):
             message.update(_get_cpu_infos())
@@ -187,9 +194,10 @@ def _query_stats(docker, op, user, uuid, params):
         if params.get('disks', False):
             message['disks'] = _get_disk_infos()
         if params.get('containers', False):
-            message['containers'] = _get_container_infos(docker)
+            message['containers'] = _get_container_infos(docker, user, uuid)
         if params.get('services', False):
             message['services'] = _get_service_infos(docker, user, uuid)
+    if isasync:
         k12ai_consul_message('k12ai', '0', op, user, uuid, 'resource', k12ai_error_message(content=message), clear=True)
     return 100000, message
 
@@ -212,9 +220,9 @@ def k12ai_platform_stats(op, user, uuid, params, isasync):
     if op == 'query':
         docker = _get_docker()
         if isasync:
-            Thread(target=lambda: _query_stats(docker, op, user, uuid, params), daemon=True).start()
+            Thread(target=lambda: _query_stats(docker, op, user, uuid, params, isasync), daemon=True).start()
             return 100000, None
-        return _query_stats(docker, op, user, uuid, params)
+        return _query_stats(docker, op, user, uuid, params, isasync)
 
 
 def k12ai_platform_control(op, user, uuid, params, isasync):

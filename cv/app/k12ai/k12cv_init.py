@@ -27,6 +27,7 @@ PRETRAINED_MODELS = {
     'vgg13': 'vgg13-c768596a.pth',
     'vgg16': 'vgg16-397923af.pth',
     'vgg19': 'vgg19-dcbb9e9d.pth',
+    'alexnet': 'alexnet-owt-4df8aa71.pth',
     'vgg11_bn': 'vgg11_bn-6002323d.pth',
     'vgg13_bn': 'vgg13_bn-abd245e5.pth',
     'vgg16_bn': 'vgg16_bn-6c64b313.pth',
@@ -36,7 +37,15 @@ PRETRAINED_MODELS = {
     'resnet50': 'resnet50-19c8e357.pth',
     'resnet101': 'resnet101-5d3b4d8f.pth',
     'resnet152': 'resnet152-b121ed2d.pth',
-    'alexnet': 'alexnet-owt-4df8aa71.pth',
+    'densenet121': 'densenet121-a639ec97.pth',
+    'densenet169': 'densenet169-b2777c0a.pth',
+    'densenet201': 'densenet201-c1103571.pth',
+    'densenet161': 'densenet161-8d451a50.pth',
+    'mobilenet_v2': 'mobilenet_v2-b0353104.pth',
+    'squeezenet1_0': 'squeezenet1_0-a815701f.pth',
+    'squeezenet1_1': 'squeezenet1_1-f364aa15.pth',
+    'shufflenetv2_x0.5': 'shufflenetv2_x0.5-f707e7126e.pth',
+    'shufflenetv2_x1.0': 'shufflenetv2_x1-5666bf0f80.pth',
 }
 
 
