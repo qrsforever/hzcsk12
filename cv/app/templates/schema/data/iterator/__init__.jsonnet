@@ -11,9 +11,9 @@ local _Utils = import '../../utils/helper.libsonnet';
         {
             type: 'H',
             objs: [
-                _Utils.int('solver.display_iter', 'Display Iters', min=32, def=60, tips='report metrics every display iters'),
-                _Utils.int('solver.test_interval', 'Test Iters', min=64, def=300, tips='use validation dataset every test iters'),
-                _Utils.int('solver.save_iters', 'Save Iters', min=128, def=600, tips='save model files every save iters'),
+                _Utils.int('solver.display_iter', 'Display Iters', min=8, def=32, tips='report metrics every display iters'),
+                _Utils.int('solver.test_interval', 'Test Iters', min=16, def=128, tips='use validation dataset every test iters'),
+                _Utils.int('solver.save_iters', 'Save Iters', min=32, def=256, tips='save model files every save iters'),
             ],
         },
         {

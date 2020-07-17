@@ -174,7 +174,7 @@ class ImageClassifier(object):
 
             # Check to val the current model.
             if self.runner_state['iters'] % self.solver_dict['test_interval'] == 0:
-                torch.cuda.empty_cache()
+                # torch.cuda.empty_cache()
                 self.val(False)
                 self.train_losses.reset()
 

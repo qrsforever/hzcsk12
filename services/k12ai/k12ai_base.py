@@ -11,6 +11,7 @@ import os
 import shutil
 import json, _jsonnet
 import docker
+import time
 from threading import Thread
 
 from k12ai.k12ai_utils import (k12ai_utils_topdir, k12ai_utils_netip)
@@ -116,13 +117,13 @@ class ServiceRPC(object):
         pass
 
     def on_starting(self, op, user, uuid, params):
-        self.clearn_cache(user, uuid)
+        self.clear_cache(user, uuid)
         self.pre_processing(op, user, uuid, params)
 
     def on_finished(self, op, user, uuid, message):
         self.post_processing(op, user, uuid, message)
         if not user.startswith('1660154'):
-            self.clearn_cache(user, uuid)
+            self.clear_cache(user, uuid)
 
     def oss_upload(self, filepath, bucket_name=None, prefix_map=None, clear=False):
         if not os.path.exists(filepath):
@@ -185,7 +186,7 @@ class ServiceRPC(object):
             environs[key] = val
         return environs
 
-    def clearn_cache(self, user, uuid):
+    def clear_cache(self, user, uuid):
         usercache = os.path.join(self._userdir, user, uuid)
         try:
             shutil.rmtree(usercache)

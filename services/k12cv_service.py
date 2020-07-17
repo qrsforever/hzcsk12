@@ -104,9 +104,11 @@ class CVServiceRPC(ServiceRPC):
             if environs:
                 message['environ'] = {}
                 message['environ']['dataset_name'] = environs['K12AI_DATASET_NAME']
+                message['environ']['num_epochs'] = environs['K12AI_NUM_EPOCHS']
                 message['environ']['model_name'] = environs['K12AI_MODEL_NAME']
                 message['environ']['batch_size'] = environs['K12AI_BATCH_SIZE']
                 message['environ']['input_size'] = environs['K12AI_INPUT_SIZE']
+                message['environ']['start_time'] = environs['K12AI_START_TIME']
 
         # upload train or evaluate data
         if op.startswith('train'):
@@ -134,9 +136,12 @@ class CVServiceRPC(ServiceRPC):
         environs = {}
         if op.startswith('train'):
             environs['K12AI_DATASET_NAME'] = params['_k12.data.dataset_name']
+            environs['K12AI_NUM_EPOCHS'] = params['solver.max_epoch']
             environs['K12AI_MODEL_NAME'] = params['network.backbone']
             environs['K12AI_BATCH_SIZE'] = params['train.batch_size']
             environs['K12AI_INPUT_SIZE'] = params['train.data_transformer.input_size']
+            environs['K12AI_START_TIME'] = round(time.time() * 1000)
+
         return environs
 
     def make_container_kwargs(self, op, params):

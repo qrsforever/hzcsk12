@@ -140,6 +140,16 @@
         },
         data: {
             sample: {
+                n0: 'imgs/normal/IM-0354-0001.jpeg',
+                n1: 'imgs/covid/nejmc2001573_f1b.jpeg',
+                n2: 'imgs/normal/IM-0419-0001.jpeg',
+                n3: 'imgs/covid/covid-19-pneumonia-12.jpg',
+                n4: 'imgs/normal/NORMAL2-IM-1234-0001.jpeg',
+                n5: 'imgs/covid/kjr-21-e24-g001-l-a.jpg',
+                n6: 'imgs/normal/NORMAL2-IM-0572-0001.jpeg',
+                n7: 'imgs/covid/01E392EE-69F9-4E33-BFCE-E5C968654078.jpeg',
+                n8: 'imgs/normal/IM-0499-0001-0002.jpeg',
+                n9: 'imgs/covid/01E392EE-69F9-4E33-BFCE-E5C968654078.jpeg',
             },
         },
     },

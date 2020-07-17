@@ -84,12 +84,12 @@ local _network_maps = {
 
     // default dataset, can set default value
     dataset_constants:: if std.length($.dataset_info) > 3 then std.parseJson($.dataset_info)
-    else if $.dataset_name == 'mnist' then import '../constants/datasets/mnist.jsonnet'
+    else if $.dataset_name == 'rmnist' then import '../constants/datasets/mnist.jsonnet'
     else if $.dataset_name == 'cifar10' then import '../constants/datasets/cifar10.jsonnet'
     else if $.dataset_name == 'Animals' then import '../constants/datasets/Animals.jsonnet'
     else if $.dataset_name == 'Boats' then import '../constants/datasets/Boats.jsonnet'
     else if $.dataset_name == 'Chars74K' then import '../constants/datasets/Chars74K.jsonnet'
-    else if $.dataset_name == 'dogsVsCats' then import '../constants/datasets/dogsVsCats.jsonnet'
+    else if $.dataset_name == 'rDogsVsCats' then import '../constants/datasets/dogsVsCats.jsonnet'
     else if $.dataset_name == 'Dogs' then import '../constants/datasets/Dogs.jsonnet'
     else if $.dataset_name == 'EMNIST_Balanced' then import '../constants/datasets/EMNIST_Balanced.jsonnet'
     else if $.dataset_name == 'EMNIST_Digits' then import '../constants/datasets/EMNIST_Digits.jsonnet'
@@ -106,7 +106,7 @@ local _network_maps = {
     else if $.dataset_name == 'underwater' then import '../constants/datasets/underwater.jsonnet'
     else if $.dataset_name == 'aliproducts' then import '../constants/datasets/aliproducts.jsonnet'
     else if $.dataset_name == 'satellite_maps' then import '../constants/datasets/satellite_maps.jsonnet'
-    else if $.dataset_name == 'chestxray' then import '../constants/datasets/chestxray.jsonnet'
+    else if $.dataset_name == 'rchestxray' then import '../constants/datasets/chestxray.jsonnet'
     else {},
 
     // basic type node generator function

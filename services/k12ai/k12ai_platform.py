@@ -133,7 +133,6 @@ def _get_container_infos(client, user, uuid):
             info['op'] = c.labels.get('k12ai.service.op', '')
             info['user'] = c.labels.get('k12ai.service.user', '')
             info['service_uuid'] = c.labels.get('k12ai.service.uuid', '')
-            info['service_starttime'] = c.attrs.get('State', {}).get('StartedAt', '')
             info['cpu_percent'] = _get_container_cpu_pct(stats)
             info['cpu_memory_total_MB'] = MB(stats['memory_stats']['limit'])
             info['cpu_memory_usage_MB'] = MB(stats['memory_stats']['usage'])

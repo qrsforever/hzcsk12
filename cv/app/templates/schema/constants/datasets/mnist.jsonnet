@@ -70,7 +70,7 @@
     solver: {
         lr: {
             metric: 'epoch',
-            base_lr: 0.0001,
+            base_lr: 0.01,
             lr_policy: 'step',
             step: {
                 gamma: 0.1,
