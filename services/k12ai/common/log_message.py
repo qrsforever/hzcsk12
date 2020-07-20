@@ -159,7 +159,7 @@ class MessageReport(object):
 
         if what == MessageReport.STOP:
             k12ai_send_message('error', {
-                'status': 'stop',
+                'status': 'stopped',
                 'event': msg or {'by comamnd way'}
             })
             sys.exit(0) # TODO
@@ -168,7 +168,7 @@ class MessageReport(object):
         if what == MessageReport.FINISH:
             time.sleep(2) # TODO TDZ: database async, must write metrics message before status message
             k12ai_send_message('error', {
-                'status': 'finish',
+                'status': 'finished',
                 'uptime': int(time.time() - g_starttime),
                 'memstat': _memstat_message()
             })

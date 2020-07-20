@@ -225,9 +225,6 @@ def k12ai_platform_stats(op, user, uuid, params, isasync):
 
 
 def k12ai_platform_control(op, user, uuid, params, isasync):
-    if op not in ('container.stop'):
-        return 100902, None
-
     if op == 'container.stop':
         return _stop_container(op, user, uuid, params)
 

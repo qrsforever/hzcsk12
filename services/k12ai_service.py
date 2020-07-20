@@ -87,7 +87,7 @@ def _platform_control():
         op = reqjson['op']
         if op not in ('container.stop'):
             return json.dumps(_err_msg(100102, f'not support op:{op}'))
-        service_uuid = reqjson['service_uuid']
+        service_uuid = reqjson.get('service_uuid', None)
         service_params = reqjson.get('service_params', None)
         if isinstance(service_params, str):
             service_params = json.loads(service_params)
@@ -174,6 +174,7 @@ def _framework_execute():
         user = reqjson['user']
         op = reqjson['op']
         if op not in ('train.start', 'train.stop',
+                'train.pause', 'train.resume', 'train.rob',
                 'evaluate.start', 'evaluate.stop',
                 'predict.start', 'predict.stop'):
             return json.dumps(_err_msg(100102, f'not support op:{op}'))

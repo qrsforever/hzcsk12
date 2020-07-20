@@ -11,7 +11,6 @@ import os
 import shutil
 import json, _jsonnet
 import docker
-import time
 from threading import Thread
 
 from k12ai.k12ai_utils import (k12ai_utils_topdir, k12ai_utils_netip)
@@ -65,9 +64,9 @@ class ServiceRPC(object):
                     errcode = 100001
                 elif 'running' == message['status']:
                     errcode = 100002
-                elif 'stop' == message['status']:
+                elif message['status'] in ('stopped', 'paused', 'robbed'):
                     errcode = self.container_on_stop(op, user, uuid, message)
-                elif 'finish' == message['status']:
+                elif 'finished' == message['status']:
                     errcode = self.container_on_finished(op, user, uuid, message)
             message = k12ai_error_message(errcode, expand=message)
 
@@ -268,14 +267,14 @@ class ServiceRPC(object):
                 'status': 'crash', 'errinfo': gen_exc_info()
             })
 
-    def stop_container_worker(self, token, op, user, uuid, container):
-        op = op.replace('stop', 'start')
+    def stop_container_worker(self, token, status, user, uuid, container):
+        cop = container.attrs['Config']['Labels']['k12ai.service.op']
         try:
             container.kill()
-            self.send_message(token, op, user, uuid, "error", {'status': 'stop', 'event': 'by manual way'})
+            self.send_message(token, cop, user, uuid, "error", {'status': status})
         except Exception as err:
             Logger.error(str(err))
-            self.send_message(token, op, user, uuid, "error", {
+            self.send_message(token, cop, user, uuid, "error", {
                 'status': 'crash', 'errinfo': gen_exc_info()
             })
 
@@ -316,13 +315,19 @@ class ServiceRPC(object):
         Logger.info(f'{token}, {op}, {user}, {uuid}')
         container = self.get_container(user, uuid)
         phase, action = op.split('.')
-        if action == 'stop':
+        if action in ('stop', 'pause', 'rob'):
             if container is None or container.status != 'running':
                 return 100205, None
 
+            status = 'stopped'
+            if action == 'pause':
+                status = 'paused'
+            elif action == 'rob':
+                status = 'robbed'
+
             Thread(target=lambda: self.stop_container_worker(
                 token=token,
-                op=op,
+                status=status,
                 user=user,
                 uuid=uuid,
                 container=container), daemon=True).start()
