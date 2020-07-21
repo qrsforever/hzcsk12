@@ -53,14 +53,14 @@ class NLPServiceRPC(ServiceRPC):
         return 999999
 
     @k12ai_timeit(handler=Logger.info)
-    def pre_processing(self, op, user, uuid, params):
+    def pre_processing(self, appId, op, user, uuid, params):
         usercache, innercache = self.get_cache_dir(user, uuid)
         # download train data (weights)
         if params['_k12.model.resume'] or not op.startswith('train'):
             self.oss_download(os.path.join(usercache, 'output', 'traindata'))
 
     @k12ai_timeit(handler=Logger.info)
-    def post_processing(self, op, user, uuid, message):
+    def post_processing(self, appId, op, user, uuid, message):
         usercache, innercache = self.get_cache_dir(user, uuid)
         # upload train or evaluate data
         if op.startswith('train'):
@@ -86,7 +86,7 @@ class NLPServiceRPC(ServiceRPC):
         }
         return kwargs
 
-    def make_container_command(self, op, user, uuid, params):
+    def make_container_command(self, appId, op, user, uuid, params):
         usercache, innercache = self.get_cache_dir(user, uuid)
         config_file = f'{usercache}/config.json'
 

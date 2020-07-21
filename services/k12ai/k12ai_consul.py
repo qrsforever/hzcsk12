@@ -67,7 +67,7 @@ def k12ai_consul_service(name, timeout=15):
         return RPCServiceAgent(service['Address'], service['Port'], timeout)
 
 
-def k12ai_consul_message(sname, token, op, user, uuid, msgtype, message, clear=False):
+def k12ai_consul_message(sname, appId, token, op, user, uuid, msgtype, message, clear=False):
     client = consul.Consul(g_consul_addr, port=g_consul_port)
     service = client.agent.services().get('k12ai')
     if not service:
@@ -78,8 +78,10 @@ def k12ai_consul_message(sname, token, op, user, uuid, msgtype, message, clear=F
         'version': '0.1.0',
         'ip': k12ai_utils_lanip(),
         'type': msgtype,
+        'appId': appId,
         'token': token,
         'user': user,
+        'op': op,
         'op': op,
         'service_name': sname,
         'service_uuid': uuid,
@@ -91,7 +93,8 @@ def k12ai_consul_message(sname, token, op, user, uuid, msgtype, message, clear=F
     data['data'] = message
 
     # service
-    api = 'http://{}:{}/k12ai/private/message?type={}'.format(service['Address'], service['Port'], msgtype)
+    api = 'http://{}:{}/k12ai/private/message?key={}.{}'.format(service['Address'], service['Port'],
+            appId, msgtype)
     requests.post(api, json=data)
 
     if g_consul_debug:

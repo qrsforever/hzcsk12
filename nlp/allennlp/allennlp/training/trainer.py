@@ -498,7 +498,6 @@ class GradientDescentTrainer(Trainer):
             batch_num_total = self._batch_num_total
 
             self.optimizer.zero_grad()
-            print("###########1")
 
             batch_group_outputs = []
             for batch in batch_group:

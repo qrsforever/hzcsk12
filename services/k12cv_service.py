@@ -68,7 +68,7 @@ class CVServiceRPC(ServiceRPC):
         return errcode
 
     @k12ai_timeit(handler=Logger.info)
-    def pre_processing(self, op, user, uuid, params):
+    def pre_processing(self, appId, op, user, uuid, params):
         usercache, innercache = self.get_cache_dir(user, uuid)
         # download custom dataset
         bucket_name = 'data-platform'
@@ -91,9 +91,9 @@ class CVServiceRPC(ServiceRPC):
             self.oss_download(os.path.join(usercache, 'output', 'ckpts'))
 
     @k12ai_timeit(handler=Logger.info)
-    def post_processing(self, op, user, uuid, message):
+    def post_processing(self, appId, op, user, uuid, message):
         # report train process resource usage
-        code, resource = get_platform_stats('query', user, uuid, {'containers':True}, isasync=False)
+        code, resource = get_platform_stats(appId, 'query', user, uuid, {'containers':True}, isasync=False)
         if code == 100000:
             message['resource'] = resource
 
@@ -173,7 +173,7 @@ class CVServiceRPC(ServiceRPC):
             'app_gpu_memory_usage_MB': gmem,
         }
 
-    def make_container_command(self, op, user, uuid, params):
+    def make_container_command(self, appId, op, user, uuid, params):
         usercache, innercache = self.get_cache_dir(user, uuid)
         config_file = f'{usercache}/config.json'
         if '_k12.data.dataset_name' in params.keys():

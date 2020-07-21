@@ -59,6 +59,7 @@ def _delay_do_loop(host, port):
 def _platform_stats():
     try:
         reqjson = json.loads(request.get_data().decode())
+        appId = reqjson.get('appId', 'talentai')
         user = reqjson['user']
         op = reqjson['op']
         if op not in ('query'):
@@ -72,7 +73,7 @@ def _platform_stats():
         return json.dumps(_err_msg(100101, exc=True))
 
     try:
-        code, msg = k12ai_platform_stats(op, user, service_uuid, service_params, isasync)
+        code, msg = k12ai_platform_stats(appId, op, user, service_uuid, service_params, isasync)
         return json.dumps(_err_msg(code, msg))
     except Exception:
         return json.dumps(_err_msg(100202, exc=True))
@@ -170,6 +171,7 @@ def _framework_memstat():
 def _framework_execute():
     try:
         reqjson = json.loads(request.get_data().decode())
+        appId = reqjson.get('appId', 'talentai')
         token = reqjson['token']
         user = reqjson['user']
         op = reqjson['op']
@@ -198,7 +200,7 @@ def _framework_execute():
     if not agent:
         return json.dumps(_err_msg(100201, f'service name:{service_name}'))
     try:
-        code, msg = agent.execute(token, op, user, service_uuid, service_params)
+        code, msg = agent.execute(appId, token, op, user, service_uuid, service_params)
         return json.dumps(_err_msg(code, msg))
     except Exception:
         return json.dumps(_err_msg(100202, exc=True))
@@ -209,8 +211,8 @@ def _framework_message():
     # Logger.debug('call _framework_message')
     try:
         if g_redis:
-            msgtype = request.args.get("type", default='unknown')
-            g_redis.lpush('k12ai.{}'.format(msgtype), request.get_data().decode())
+            key = request.args.get("key", default='unknown')
+            g_redis.lpush('{}'.format(key), request.get_data().decode())
     except Exception as err:
         print(err)
         Logger.info(err)

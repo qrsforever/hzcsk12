@@ -47,7 +47,7 @@ class ServiceRPC(object):
         self._commlib = os.path.join(k12ai_utils_topdir(), 'services', 'k12ai', 'common')
         self._jschema = os.path.join(self._projdir, 'app', 'templates', 'schema')
 
-    def send_message(self, token, op, user, uuid, msgtype, message, clear=False):
+    def send_message(self, appId, token, op, user, uuid, msgtype, message, clear=False):
         if not msgtype:
             return
         if msgtype == 'error':
@@ -57,7 +57,7 @@ class ServiceRPC(object):
                 if 'warning' == message['status']:
                     errcode = 100005
                 elif isinstance(errinfo, dict) and 'err_type' in errinfo and 'err_text' in errinfo:
-                    errcode = self.container_on_crash(op, user, uuid, message)
+                    errcode = self.container_on_crash(appId, op, user, uuid, message)
             else:
                 # Status
                 if 'starting' == message['status']:
@@ -65,18 +65,18 @@ class ServiceRPC(object):
                 elif 'running' == message['status']:
                     errcode = 100002
                 elif message['status'] in ('stopped', 'paused', 'robbed'):
-                    errcode = self.container_on_stop(op, user, uuid, message)
+                    errcode = self.container_on_stop(appId, op, user, uuid, message)
                 elif 'finished' == message['status']:
-                    errcode = self.container_on_finished(op, user, uuid, message)
+                    errcode = self.container_on_finished(appId, op, user, uuid, message)
             message = k12ai_error_message(errcode, expand=message)
 
         if isinstance(message, dict):
             if len(json.dumps(message)) > 500000: # max 512kb
                 errcode = 100011
                 message = k12ai_error_message(errcode)
-        k12ai_consul_message(f'k12{self._sname}', token, op, user, uuid, msgtype, message, clear)
+        k12ai_consul_message(f'k12{self._sname}', appId, token, op, user, uuid, msgtype, message, clear)
 
-    def container_on_crash(self, op, user, uuid, message):
+    def container_on_crash(self, appId, op, user, uuid, message):
         errtype = message['errinfo']['err_type']
         errtext = message['errinfo']['err_text']
         errcode = self.errtype2errcode(op, user, uuid, errtype, errtext)
@@ -98,29 +98,29 @@ class ServiceRPC(object):
                     errcode = 100909
             elif errtype == 'ImageNotFound':
                 errcode = 100905
-        self.on_finished(op, user, uuid, message)
+        self.on_finished(appId, op, user, uuid, message)
         return errcode
 
-    def container_on_stop(self, op, user, uuid, message):
-        self.on_finished(op, user, uuid, message)
+    def container_on_stop(self, appId, op, user, uuid, message):
+        self.on_finished(appId, op, user, uuid, message)
         return 100004
 
-    def container_on_finished(self, op, user, uuid, message):
-        self.on_finished(op, user, uuid, message)
+    def container_on_finished(self, appId, op, user, uuid, message):
+        self.on_finished(appId, op, user, uuid, message)
         return 100003
 
-    def pre_processing(self, op, user, uuid, params):
+    def pre_processing(self, appId, op, user, uuid, params):
         pass
 
-    def post_processing(self, op, user, uuid, message):
+    def post_processing(self, appId, op, user, uuid, message):
         pass
 
-    def on_starting(self, op, user, uuid, params):
+    def on_starting(self, appId, op, user, uuid, params):
         self.clear_cache(user, uuid)
-        self.pre_processing(op, user, uuid, params)
+        self.pre_processing(appId, op, user, uuid, params)
 
-    def on_finished(self, op, user, uuid, message):
-        self.post_processing(op, user, uuid, message)
+    def on_finished(self, appId, op, user, uuid, message):
+        self.post_processing(appId, op, user, uuid, message)
         if not user.startswith('1660154'):
             self.clear_cache(user, uuid)
 
@@ -144,7 +144,7 @@ class ServiceRPC(object):
         except Exception as err:
             Logger.error(str(err))
 
-    def make_container_command(self, op, cachedir, params):
+    def make_container_command(self, appId, op, cachedir, params):
         raise NotImplementedError
 
     def make_container_labels(self):
@@ -205,10 +205,10 @@ class ServiceRPC(object):
             'app_gpu_memory_usage_MB': 6000,
         }
 
-    def start_container_worker(self, token, op, user, uuid, params):
+    def start_container_worker(self, appId, token, op, user, uuid, params):
         usercache, innercache = self.get_cache_dir(user, uuid)
         try:
-            self.on_starting(op, user, uuid, params)
+            self.on_starting(appId, op, user, uuid, params)
 
             tb_logdir = None
             if '_k12.tb_logdir' in params.keys():
@@ -235,6 +235,7 @@ class ServiceRPC(object):
             environs = {
                 'K12AI_RPC_HOST': self._host,
                 'K12AI_RPC_PORT': self._port,
+                'K12AI_APPID': appId,
                 'K12AI_TOKEN': token,
                 'K12AI_OP': op,
                 'K12AI_USER': user,
@@ -257,24 +258,24 @@ class ServiceRPC(object):
                 **self.make_container_kwargs(op, params)
             }
 
-            self.send_message(token, op, user, uuid, "error", {'status': 'starting'}, clear=True)
-            command = self.make_container_command(op, user, uuid, params)
+            self.send_message(appId, token, op, user, uuid, "error", {'status': 'starting'}, clear=True)
+            command = self.make_container_command(appId, op, user, uuid, params)
             self._docker.containers.run(f'{self._image}', command, **kwargs)
             return
         except Exception as err:
             Logger.error(str(err))
-            self.send_message(token, op, user, uuid, "error", {
+            self.send_message(appId, token, op, user, uuid, "error", {
                 'status': 'crash', 'errinfo': gen_exc_info()
             })
 
-    def stop_container_worker(self, token, status, user, uuid, container):
+    def stop_container_worker(self, appId, token, status, user, uuid, container):
         cop = container.attrs['Config']['Labels']['k12ai.service.op']
         try:
             container.kill()
-            self.send_message(token, cop, user, uuid, "error", {'status': status})
+            self.send_message(appId, token, cop, user, uuid, "error", {'status': status})
         except Exception as err:
             Logger.error(str(err))
-            self.send_message(token, cop, user, uuid, "error", {
+            self.send_message(appId, token, cop, user, uuid, "error", {
                 'status': 'crash', 'errinfo': gen_exc_info()
             })
 
@@ -311,8 +312,8 @@ class ServiceRPC(object):
         }
         return 100000, result
 
-    def execute(self, token, op, user, uuid, params):
-        Logger.info(f'{token}, {op}, {user}, {uuid}')
+    def execute(self, appId, token, op, user, uuid, params):
+        Logger.info(f'appId:{appId}, token:{token}, op:{op}, user:{user}, uuid:{uuid}')
         container = self.get_container(user, uuid)
         phase, action = op.split('.')
         if action in ('stop', 'pause', 'rob'):
@@ -326,6 +327,7 @@ class ServiceRPC(object):
                 status = 'robbed'
 
             Thread(target=lambda: self.stop_container_worker(
+                appId=appId,
                 token=token,
                 status=status,
                 user=user,
@@ -346,6 +348,7 @@ class ServiceRPC(object):
             return 100231, 'parameters type is not dict'
 
         Thread(target=lambda: self.start_container_worker(
+            appId=appId,
             token=token,
             op=op,
             user=user,

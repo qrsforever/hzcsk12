@@ -84,11 +84,13 @@ local _network_maps = {
 
     // default dataset, can set default value
     dataset_constants:: if std.length($.dataset_info) > 3 then std.parseJson($.dataset_info)
+    else if $.dataset_name == 'mnist' then import '../constants/datasets/mnist.jsonnet'
     else if $.dataset_name == 'rmnist' then import '../constants/datasets/mnist.jsonnet'
     else if $.dataset_name == 'cifar10' then import '../constants/datasets/cifar10.jsonnet'
     else if $.dataset_name == 'Animals' then import '../constants/datasets/Animals.jsonnet'
     else if $.dataset_name == 'Boats' then import '../constants/datasets/Boats.jsonnet'
     else if $.dataset_name == 'Chars74K' then import '../constants/datasets/Chars74K.jsonnet'
+    else if $.dataset_name == 'DogsVsCats' then import '../constants/datasets/dogsVsCats.jsonnet'
     else if $.dataset_name == 'rDogsVsCats' then import '../constants/datasets/dogsVsCats.jsonnet'
     else if $.dataset_name == 'Dogs' then import '../constants/datasets/Dogs.jsonnet'
     else if $.dataset_name == 'EMNIST_Balanced' then import '../constants/datasets/EMNIST_Balanced.jsonnet'

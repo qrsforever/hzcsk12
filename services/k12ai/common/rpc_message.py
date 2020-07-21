@@ -13,11 +13,11 @@ import zerorpc
 _DEBUG_ = False
 _RPCClient = None
 _RPCEnable = -1
-K12AI_TOKEN, K12AI_OP, K12AI_USER, K12AI_UUID = None, None, None, None
+K12AI_APPID, K12AI_TOKEN, K12AI_OP, K12AI_USER, K12AI_UUID = None, None, None, None, None
 
 
 def k12ai_send_message(msgtype, message, end=False):
-    global _RPCClient, _RPCEnable, K12AI_TOKEN, K12AI_OP, K12AI_USER, K12AI_UUID
+    global _RPCClient, _RPCEnable, K12AI_APPID, K12AI_TOKEN, K12AI_OP, K12AI_USER, K12AI_UUID
 
     if _RPCEnable == 0:
         return
@@ -28,6 +28,7 @@ def k12ai_send_message(msgtype, message, end=False):
         if not host or not port:
             _RPCEnable = 0
             return
+        K12AI_APPID = os.environ.get('K12AI_APPID', 'Unkown')
         K12AI_TOKEN = os.environ.get('K12AI_TOKEN', 'Unkown')
         K12AI_OP = os.environ.get('K12AI_OP', 'Unkown')
         K12AI_USER = os.environ.get('K12AI_USER', 'Unkown')
@@ -40,7 +41,7 @@ def k12ai_send_message(msgtype, message, end=False):
 
     try:
         if message:
-            _RPCClient.send_message(K12AI_TOKEN, K12AI_OP, K12AI_USER, K12AI_UUID, msgtype, message)
+            _RPCClient.send_message(K12AI_APPID, K12AI_TOKEN, K12AI_OP, K12AI_USER, K12AI_UUID, msgtype, message)
         if end:
             _RPCClient.close()
 

@@ -178,7 +178,7 @@ def _get_service_infos(client, user, uuid):
     return infos
 
 
-def _query_stats(docker, op, user, uuid, params, isasync):
+def _query_stats(docker, appId, op, user, uuid, params, isasync):
     message = {}
     if not params:
         message = _get_cpu_infos()
@@ -197,7 +197,7 @@ def _query_stats(docker, op, user, uuid, params, isasync):
         if params.get('services', False):
             message['services'] = _get_service_infos(docker, user, uuid)
     if isasync:
-        k12ai_consul_message('k12ai', '0', op, user, uuid, 'resource', k12ai_error_message(content=message), clear=True)
+        k12ai_consul_message('k12ai', appId, uuid, op, user, uuid, 'resource', k12ai_error_message(content=message), clear=True)
     return 100000, message
 
 
@@ -212,16 +212,16 @@ def _stop_container(op, user, uuid, params):
     return 100000, None
 
 
-def k12ai_platform_stats(op, user, uuid, params, isasync):
+def k12ai_platform_stats(appId, op, user, uuid, params, isasync):
     if op not in ('query'):
         return 100902, None
 
     if op == 'query':
         docker = _get_docker()
         if isasync:
-            Thread(target=lambda: _query_stats(docker, op, user, uuid, params, isasync), daemon=True).start()
+            Thread(target=lambda: _query_stats(docker, appId, op, user, uuid, params, isasync), daemon=True).start()
             return 100000, None
-        return _query_stats(docker, op, user, uuid, params, isasync)
+        return _query_stats(docker, appId, op, user, uuid, params, isasync)
 
 
 def k12ai_platform_control(op, user, uuid, params, isasync):

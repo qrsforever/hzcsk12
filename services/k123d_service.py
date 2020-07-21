@@ -96,7 +96,7 @@ class CV3DServiceRPC(ServiceRPC):
             'app_gpu_memory_usage_MB': gmem,
         }
 
-    def make_container_command(self, op, user, uuid, params):
+    def make_container_command(self, appId, op, user, uuid, params):
         usercache, innercache = self.get_cache_dir(user, uuid)
         config_file = f'{usercache}/config.json'
 
