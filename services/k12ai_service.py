@@ -59,7 +59,7 @@ def _delay_do_loop(host, port):
 def _platform_stats():
     try:
         reqjson = json.loads(request.get_data().decode())
-        appId = reqjson.get('appId', 'talentai')
+        appId = reqjson.get('appId', 'k12ai')
         user = reqjson['user']
         op = reqjson['op']
         if op not in ('query'):
