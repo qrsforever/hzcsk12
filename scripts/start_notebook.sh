@@ -48,7 +48,7 @@ __start_notebook()
         fi
         SOURCE_NOTE_DIR=`cd $TOP_DIR/../hzcsnote/$subdir; pwd`
         TARGET_NOTE_DIR=$DST_DIR/hzcsnote
-        docker run -dit --name ${JNAME} --restart unless-stopped \
+        docker run -dit --name ${JNAME} --restart unless-stopped --shm-size 10g \
             --volume $SOURCE_NOTE_DIR:$TARGET_NOTE_DIR \
             --entrypoint /bin/bash ${@:3:$#} --network host --hostname ${JNAME} ${REPOSITORY} \
             -c "umask 0000; xvfb-run -a -s \"-screen 0 1400x900x24\" jupyter notebook --no-browser --notebook-dir=$TARGET_NOTE_DIR --allow-root --ip=0.0.0.0 --port=$PORT"
@@ -69,7 +69,7 @@ __main()
         --volume $TOP_DIR/3d/app:$DST_DIR/hzcsnote/3d/app \
         --volume $TOP_DIR/services/k12ai:$DST_DIR/hzcsnote/k12libs/k12ai \
         --volume /data:/data \
-        --volume /data/pretrained/cv:/root/.cache/torch/checkpoints
+        --volume /data/pretrained/cv:/root/.cache/torch/hub/checkpoints
 }
 
 __main $*
