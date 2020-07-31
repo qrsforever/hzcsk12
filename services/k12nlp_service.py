@@ -59,6 +59,8 @@ class NLPServiceRPC(ServiceRPC):
         if params['_k12.model.resume'] or not op.startswith('train'):
             self.oss_download(os.path.join(usercache, 'output', 'traindata'))
 
+        return params
+
     @k12ai_timeit(handler=Logger.info)
     def post_processing(self, appId, op, user, uuid, message):
         usercache, innercache = self.get_cache_dir(user, uuid)

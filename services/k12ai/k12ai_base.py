@@ -110,14 +110,14 @@ class ServiceRPC(object):
         return 100003
 
     def pre_processing(self, appId, op, user, uuid, params):
-        pass
+        return params
 
     def post_processing(self, appId, op, user, uuid, message):
         pass
 
     def on_starting(self, appId, op, user, uuid, params):
         self.clear_cache(user, uuid)
-        self.pre_processing(appId, op, user, uuid, params)
+        return self.pre_processing(appId, op, user, uuid, params)
 
     def on_finished(self, appId, op, user, uuid, message):
         self.post_processing(appId, op, user, uuid, message)
@@ -208,7 +208,7 @@ class ServiceRPC(object):
     def start_container_worker(self, appId, token, op, user, uuid, params):
         usercache, innercache = self.get_cache_dir(user, uuid)
         try:
-            self.on_starting(appId, op, user, uuid, params)
+            params = self.on_starting(appId, op, user, uuid, params)
 
             tb_logdir = None
             if '_k12.tb_logdir' in params.keys():
@@ -344,7 +344,7 @@ class ServiceRPC(object):
         if len(cons) > MAX_TASKS:
             return 100210, f'{len(cons) > MAX_TASKS}'
 
-        if not isinstance(params, dict):
+        if 'resume' != action and not isinstance(params, dict):
             return 100231, 'parameters type is not dict'
 
         Thread(target=lambda: self.start_container_worker(

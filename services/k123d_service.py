@@ -49,7 +49,7 @@ class CV3DServiceRPC(ServiceRPC):
 
     @k12ai_timeit(handler=Logger.info)
     def pre_processing(self, op, user, uuid, params):
-        pass
+        return params
 
     @k12ai_timeit(handler=Logger.info)
     def post_processing(self, op, user, uuid, message):

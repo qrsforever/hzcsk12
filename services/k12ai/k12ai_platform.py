@@ -15,7 +15,6 @@ from subprocess import Popen, PIPE
 from threading import Thread
 
 from k12ai.k12ai_errmsg import k12ai_error_message
-from k12ai.k12ai_utils import k12ai_utils_lanip
 from k12ai.k12ai_consul import k12ai_consul_message
 
 g_cpu_count = -1
@@ -53,7 +52,6 @@ def _get_container_cpu_pct(stats):
 
 def _get_cpu_infos():
     info = {}
-    info['ip'] = k12ai_utils_lanip()
     info['cpu_percent'] = psutil.cpu_percent()
     info['cpu_percent_list'] = psutil.cpu_percent(percpu=True)
     info['cpu_memory_total_MB'] = MB(psutil.virtual_memory().total)
@@ -158,7 +156,7 @@ def _get_service_infos(client, user, uuid):
     try:
         if user == '*' or user == 'all':
             cons = client.containers.list(filters={'label': 'k12ai.service.name'})
-        if uuid == '0' or uuid == '*' or uuid == 'all':
+        elif uuid == '0' or uuid == '*' or uuid == 'all':
             cons = client.containers.list(filters={'label': 'k12ai.service.user=%s'%user})
         else:
             cons = client.containers.list(filters={'label': ['k12ai.service.user=%s'%user, 'k12ai.service.uuid=%s'%uuid]})
@@ -169,6 +167,7 @@ def _get_service_infos(client, user, uuid):
             stats = c.stats(stream=False)
             info['id'] = stats['id'][0:12]
             info['op'] = c.labels.get('k12ai.service.op', '')
+            info['user'] = c.labels.get('k12ai.service.user', '')
             info['service_uuid'] = c.labels.get('k12ai.service.uuid', '')
             info['service_pid'] = c.attrs.get('State', {}).get('Pid', -1)
             info['service_starttime'] = c.attrs.get('State', {}).get('StartedAt', '')

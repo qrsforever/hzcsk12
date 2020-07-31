@@ -12,7 +12,6 @@ import time
 import zerorpc
 import consul
 import requests
-from k12ai.k12ai_utils import k12ai_utils_lanip
 
 g_consul_addr = "127.0.0.1"
 g_consul_port = 8500
@@ -74,14 +73,15 @@ def k12ai_consul_message(sname, appId, token, op, user, uuid, msgtype, message, 
         print("Not found k12ai service!")
         return
 
+    server = f'{service["Address"]}:{service["Port"]}'
+
     data = {
         'version': '0.1.0',
-        'ip': k12ai_utils_lanip(),
+        'server': server,
         'type': msgtype,
         'appId': appId,
         'token': token,
         'user': user,
-        'op': op,
         'op': op,
         'service_name': sname,
         'service_uuid': uuid,
@@ -93,7 +93,7 @@ def k12ai_consul_message(sname, appId, token, op, user, uuid, msgtype, message, 
     data['data'] = message
 
     # service
-    api = 'http://{}:{}/k12ai/private/message?key={}.{}'.format(service['Address'], service['Port'],
+    api = 'http://{}/k12ai/private/message?key={}.{}'.format(server,
             appId, msgtype)
     requests.post(api, json=data)
 

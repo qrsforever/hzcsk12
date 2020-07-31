@@ -18,7 +18,7 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
         iputils-ping \
         && \
     $PIP_INSTALL \
-        flask flask_cors h5py \
+        crontabs redis flask flask_cors h5py \
         /root/ipywidgets.zip \
         watermark jupyter \
         jupyter_contrib_nbextensions \

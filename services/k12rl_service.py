@@ -58,6 +58,8 @@ class RLServiceRPC(ServiceRPC):
         # download train data (weights)
         if params['_k12.model.resume'] or not op.startswith('train'):
             self.oss_download(os.path.join(usercache, 'output', 'run_snap'))
+    
+        return params
 
     @k12ai_timeit(handler=Logger.info)
     def post_processing(self, appId, op, user, uuid, message):

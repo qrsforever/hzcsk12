@@ -46,7 +46,7 @@ def _delay_do_loop(host, port):
 
     while not g_app_quit:
         try:
-            k12ai_platform_stats('query', 'admin', 'admin',
+            k12ai_platform_stats('k12ai', 'query', 'admin', 'admin',
                 {'cpus': True, 'gpus': True}, True)
         except Exception:
             pass

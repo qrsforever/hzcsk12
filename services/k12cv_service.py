@@ -70,6 +70,22 @@ class CVServiceRPC(ServiceRPC):
     @k12ai_timeit(handler=Logger.info)
     def pre_processing(self, appId, op, user, uuid, params):
         usercache, innercache = self.get_cache_dir(user, uuid)
+        # resume training
+        kv_config = os.path.join(usercache, 'kv_config.json')
+        if 'resume' in op and (params is None or 0 == len(params)):
+            self.oss_download(kv_config)
+            if os.path.exists(kv_config):
+                with open(kv_config, 'r') as fr:
+                    params = json.load(fr)
+                    params['network.resume_continue'] = True
+            else:
+                raise FileNotFoundError('config file is not found!')
+        else:
+            # save original parameters
+            with open(kv_config, 'w') as fw:
+                json.dump(params, fw)
+            self.oss_upload(kv_config, clear=True)
+
         # download custom dataset
         bucket_name = 'data-platform'
         dataset_path = params['data.data_dir']
@@ -89,6 +105,8 @@ class CVServiceRPC(ServiceRPC):
         # download train data (weights)
         if params['network.resume_continue'] or not op.startswith('train'):
             self.oss_download(os.path.join(usercache, 'output', 'ckpts'))
+
+        return params
 
     @k12ai_timeit(handler=Logger.info)
     def post_processing(self, appId, op, user, uuid, message):
@@ -112,6 +130,7 @@ class CVServiceRPC(ServiceRPC):
 
         # upload train or evaluate data
         if op.startswith('train'):
+            self.oss_upload(os.path.join(usercache, 'config.json'), clear=True)
             self.oss_upload(os.path.join(usercache, 'output', 'ckpts'), clear=True)
         else: # op.startswith('evaluate')
             self.oss_upload(os.path.join(usercache, 'output', 'result'), clear=True)
@@ -220,7 +239,7 @@ class CVServiceRPC(ServiceRPC):
                 config_tree.put('network.resume', f'{innercache}/output/ckpts/{ckpts_name}_latest.pth')
             config_str = HOCONConverter.convert(config_tree, 'json')
         else:
-            config_str = json.dumps(params)
+            raise RuntimeError('parameters is invalid!')
 
         with open(config_file, 'w') as fout:
             fout.write(config_str)
