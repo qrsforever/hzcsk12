@@ -139,6 +139,7 @@ __main()
         [[ x$1 == xnlp ]] || \
         [[ x$1 == xrl ]] || \
         [[ x$1 == x3d ]] || \
+        [[ x$1 == xpyr ]] || \
         [[ x$1 == xnb ]]
     then
         image=$1
@@ -156,7 +157,8 @@ __main()
         __build_image "k12cv"  $MAJOR_K12AI $MINOR_K12AI cv/Dockerfile.cv $force
         __build_image "k12nlp" $MAJOR_K12AI $MINOR_K12AI nlp/Dockerfile.nlp $force
         __build_image "k12rl"  $MAJOR_K12AI $MINOR_K12AI rl/Dockerfile.rl $force
-        __build_image "k12rl"  $MAJOR_K12AI $MINOR_K12AI 3d/Dockerfile.3d $force
+        __build_image "k123d"  $MAJOR_K12AI $MINOR_K12AI 3d/Dockerfile.3d $force
+        __build_image "k12pyr" $MAJOR_K12AI $MINOR_K12AI pyr/Dockerfile.pyr $force
     elif [[ x$image == xnb ]]
     then
         __build_notebook

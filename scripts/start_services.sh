@@ -108,6 +108,10 @@ k123d_service_name=k123d
 k123d_addr=$hostlanip
 k123d_port=8169
 
+k12pyr_service_name=k12pyr
+k12pyr_addr=$hostlanip
+k12pyr_port=8179
+
 dataset_port=9090
 
 export HOST_NAME=${hostname}
@@ -398,7 +402,7 @@ __start_k12ml_service()
     fi
     if [[ $result != 1 ]]
     then
-        export K12ML_DEBUG=$debug
+        export K12AI_DEBUG=$debug
         cmdstr="$cmdstr python3 ${top_dir}/services/k12ml_service.py \
             --host ${k12ml_addr} \
             --port ${k12ml_port} \
@@ -466,7 +470,7 @@ __start_k12nlp_service()
     fi
     if [[ $result != 1 ]]
     then
-        export K12NLP_DEBUG=$debug
+        export K12AI_DEBUG=$debug
         cmdstr="$cmdstr python3 ${top_dir}/services/k12nlp_service.py \
             --host ${k12nlp_addr} \
             --port ${k12nlp_port} \
@@ -500,7 +504,7 @@ __start_k12rl_service()
     fi
     if [[ $result != 1 ]]
     then
-        export K12RL_DEBUG=$debug
+        export K12AI_DEBUG=$debug
         cmdstr="$cmdstr python3 ${top_dir}/services/k12rl_service.py \
             --host ${k12rl_addr} \
             --port ${k12rl_port} \
@@ -534,7 +538,7 @@ __start_k123d_service()
     fi
     if [[ $result != 1 ]]
     then
-        export K12CV_DEBUG=$debug
+        export K12AI_DEBUG=$debug
         cmdstr="$cmdstr python3 ${top_dir}/services/k123d_service.py \
             --host ${k123d_addr} \
             --port ${k123d_port} \
@@ -549,7 +553,41 @@ __start_k123d_service()
     fi
 }
 
-# 8. setart dataset service
+# 8. check or start k12pyr service
+__start_k12pyr_service()
+{
+    [ x$1 != xstart ] && __kill_service ${k12pyr_service_name}
+    if [[ x$1 == xstop ]]
+    then
+        return
+    fi
+    use_image="hzcsai_com/k12pyr"
+    if [[ x$2 == xfg ]]
+    then
+        result=0
+        cmdstr=
+    else
+        result=$(__service_health_check ${k12pyr_service_name})
+        cmdstr="nohup"
+    fi
+    if [[ $result != 1 ]]
+    then
+        export K12AI_DEBUG=$debug
+        cmdstr="$cmdstr python3 ${top_dir}/services/k12pyr_service.py \
+            --host ${k12pyr_addr} \
+            --port ${k12pyr_port} \
+            --consul_addr ${consul_addr} \
+            --consul_port ${consul_port} \
+            --image $use_image"
+
+        __run_command $cmdstr
+        __script_logout "start k12pyr service"
+    else
+        __script_logout "k12pyr service is already running"
+    fi
+}
+
+# 9. setart dataset service
 __start_dataset_service()
 {
     result=`ps -eo pid,args | grep "http.server $dataset_port" | grep -v grep`
@@ -592,6 +630,7 @@ __main()
     [ $2 == all -o $2 == rl ]  && __start_k12rl_service  $3 $4
     [ $2 == all -o $2 == nlp ] && __start_k12nlp_service $3 $4
     [ $2 == all -o $2 == 3d ]  && __start_k123d_service  $3 $4
+    [ $2 == all -o $2 == pyr ] && __start_k12pyr_service  $3 $4
     cd - > /dev/null
 
     __start_dataset_service /data
