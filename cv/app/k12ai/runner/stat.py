@@ -155,7 +155,7 @@ class ClsRunner(RunnerBase):
         if self._m_train_loss:
             loss = list(runner.train_losses.avg.values())[0]
             self.check_loss(loss)
-            self._mm.add_scalar('train', 'loss', x=self._cur_iters, y=loss)
+            self._mm.add_scalar('训练', '损失', x=self._cur_iters, y=loss)
 
         return self
 
@@ -167,7 +167,7 @@ class ClsRunner(RunnerBase):
                 'train': list(runner.train_losses.avg.values())[0],
                 'val': list(runner.val_losses.avg.values())[0]
             }
-            self._mm.add_scalar('train_val', 'loss', x=self._cur_iters, y=y)
+            self._mm.add_scalar('验证', '损失', x=self._cur_iters, y=y)
 
         # acc
         y = {
@@ -175,7 +175,7 @@ class ClsRunner(RunnerBase):
             'top3': runner.running_score.get_top3_acc()['out'],
             'top5': runner.running_score.get_top5_acc()['out']
         }
-        self._mm.add_scalar('val', 'acc', x=self._cur_iters, y=y)
+        self._mm.add_scalar('验证', '准确率', x=self._cur_iters, y=y)
 
         return self
 
@@ -186,13 +186,13 @@ class ClsRunner(RunnerBase):
         top1 = runner.running_score.get_top1_acc()['out']
         top3 = runner.running_score.get_top3_acc()['out']
         top5 = runner.running_score.get_top5_acc()['out']
-        self._mm.add_text('result', 'acc', f'{top1, top3, top5}')
+        self._mm.add_text('评估', '准确率', f'{top1, top3, top5}')
 
         # confusion matrix
         if runner.configer.get('metrics.confusion_matrix', default=False):
             if runner.configer.get('data.num_classes') < 100:
                 cm = confusion_matrix(y_true, y_pred)
-                self._mm.add_matrix('measuring', 'confusion_matrix', cm).send()
+                self._mm.add_matrix('评估', '混淆矩阵', cm).send()
 
         # 10 images
         if runner.configer.get('metrics.top10_images', default=False):
@@ -214,11 +214,11 @@ class ClsRunner(RunnerBase):
         # precision, recall, fscore
         P, R, F, _ = precision_recall_fscore_support(y_true, y_pred, average='macro')
         if runner.configer.get('metrics.precision', default=False):
-            self._mm.add_text('measuring', 'precision', P)
+            self._mm.add_text('评估', '精度', P)
         if runner.configer.get('metrics.recall', default=False):
-            self._mm.add_text('measuring', 'recall', R)
+            self._mm.add_text('评估', '召回率', R)
         if runner.configer.get('metrics.fscore', default=False):
-            self._mm.add_text('measuring', 'fscore', F)
+            self._mm.add_text('评估', 'F分数', F)
         self._mm.send()
 
         # model graph

@@ -15,6 +15,7 @@ VENDOR=hzcsai_com
 
 K12NB_PROJECT=k12nb
 K12NB_PORT=8118
+# K12NB_WWW_PORT=9091
 
 __start_notebook()
 {
@@ -53,6 +54,10 @@ __start_notebook()
             --entrypoint /bin/bash ${@:3:$#} --network host --hostname ${JNAME} ${REPOSITORY} \
             -c "umask 0000; xvfb-run -a -s \"-screen 0 1400x900x24\" jupyter notebook --no-browser --notebook-dir=$TARGET_NOTE_DIR --allow-root --ip=0.0.0.0 --port=$PORT"
 
+        echo "start http.sever"
+        cd $SOURCE_NOTE_DIR/k12libs/www
+        ./run.sh
+        cd - >/dev/null
     else
         echo "$JNAME: already run!!!"
     fi
