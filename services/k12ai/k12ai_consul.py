@@ -93,7 +93,7 @@ def k12ai_consul_message(sname, appId, token, op, user, uuid, msgtype, message, 
     data['data'] = message
 
     # service
-    api = 'http://{}/k12ai/private/message?key={}.{}'.format(server,
+    api = 'http://{}/k12ai/private/pushmsg?key={}.{}'.format(server,
             appId, msgtype)
     requests.post(api, json=data)
 

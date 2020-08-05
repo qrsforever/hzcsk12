@@ -75,6 +75,7 @@ class PyrServiceRPC(ServiceRPC):
         return kwargs
 
     def make_container_command(self, appId, op, user, uuid, params):
+        print(params)
         usercache, innercache = self.get_cache_dir(user, uuid)
         command = f'python {self._workdir}/app/k12ai/main.py '
         if op.startswith('runcode') and 'code' in params:

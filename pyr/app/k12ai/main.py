@@ -35,7 +35,6 @@ if __name__ == '__main__':
             output = runner.stdout.readline()
             if len(output) == 0 and runner.poll() is not None:
                 break
-            print(output)
             k12ai_send_message('console', {'log': output.strip()})
         k12ai_send_message('console', {'log': 'Finish logger'}, end=True)
     except Exception as err:

@@ -207,18 +207,31 @@ def _framework_execute():
         return json.dumps(_err_msg(100202, exc=True))
 
 
-@app.route('/k12ai/private/message', methods=['POST', 'GET'])
-def _framework_message():
+@app.route('/k12ai/private/pushmsg', methods=['POST', 'GET'])
+def _framework_message_push():
     # Logger.debug('call _framework_message')
     try:
         if g_redis:
             key = request.args.get("key", default='unknown')
-            g_redis.lpush('{}'.format(key), request.get_data().decode())
+            g_redis.lpush(key, request.get_data().decode())
     except Exception as err:
-        print(err)
         Logger.info(err)
         return "-1"
     return "0"
+
+
+@app.route('/k12ai/private/popmsg', methods=['GET'])
+def _framework_message_pop():
+    try:
+        if g_redis:
+            key = request.args.get("key", default='unknown')
+            item = g_redis.lpop(key)
+            if item and len(item) > 0:
+                return item.decode()
+            return ""
+    except Exception as err:
+        Logger.info(err)
+        return ""
 
 
 if __name__ == "__main__":
