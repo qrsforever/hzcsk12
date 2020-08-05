@@ -178,7 +178,8 @@ def _framework_execute():
         if op not in ('train.start', 'train.stop',
                 'train.pause', 'train.resume', 'train.rob',
                 'evaluate.start', 'evaluate.stop',
-                'predict.start', 'predict.stop'):
+                'predict.start', 'predict.stop',
+                'runcode.start', 'runcode.stop'):
             return json.dumps(_err_msg(100102, f'not support op:{op}'))
         service_name = reqjson['service_name']
         service_uuid = reqjson['service_uuid']

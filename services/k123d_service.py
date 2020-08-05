@@ -48,7 +48,7 @@ class CV3DServiceRPC(ServiceRPC):
         return errcode
 
     @k12ai_timeit(handler=Logger.info)
-    def pre_processing(self, op, user, uuid, params):
+    def pre_processing(self, appId, op, user, uuid, params):
         return params
 
     @k12ai_timeit(handler=Logger.info)
