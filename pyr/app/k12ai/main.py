@@ -22,9 +22,9 @@ if __name__ == '__main__':
         print(f'not found pyfile: {args.pyfile}')
 
     try:
-        k12ai_send_message('console', {'log': 'Start logger'})
+        k12ai_send_message('console', {'status': 'running'})
         runner = subprocess.Popen(
-            args=['python', args.pyfile],
+            args=['python', '-u', args.pyfile],
             encoding='utf8',
             bufsize=1,
             stdin=sys.stdin,
@@ -32,10 +32,13 @@ if __name__ == '__main__':
             stderr=subprocess.PIPE)
 
         while True:
-            output = runner.stdout.readline()
+            output = runner.stdout.readlines()
             if len(output) == 0 and runner.poll() is not None:
+                errs = runner.stderr.readlines()
+                if len(errs) > 0:
+                    k12ai_send_message('console', {'log': ''.join(errs)})
                 break
-            k12ai_send_message('console', {'log': output.strip()})
-        k12ai_send_message('console', {'log': 'Finish logger'}, end=True)
+            k12ai_send_message('console', {'log': ''.join(output)})
+        k12ai_send_message('console', {'status': 'finish'}, end=True)
     except Exception as err:
-        k12ai_send_message('console', {'log': f'{err}'}, end=True)
+        k12ai_send_message('console', {'status': 'error', 'log': f'{err}'}, end=True)

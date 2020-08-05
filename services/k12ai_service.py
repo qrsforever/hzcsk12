@@ -225,8 +225,9 @@ def _framework_message_pop():
     try:
         if g_redis:
             key = request.args.get("key", default='unknown')
-            item = g_redis.lpop(key)
-            if item and len(item) > 0:
+            item = g_redis.rpop(key)
+            if item:
+                print(item.decode)
                 return item.decode()
             return ""
     except Exception as err:
