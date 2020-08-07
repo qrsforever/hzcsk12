@@ -42,7 +42,6 @@ class ServiceRPC(object):
         self._cpu_count = k12ai_platform_cpu_count()
         self._gpu_count = k12ai_platform_gpu_count()
 
-        self._datadir = f'{dataroot}/datasets/{self._sname}'
         self._userdir = f'{dataroot}/users'
         self._commlib = os.path.join(k12ai_utils_topdir(), 'services', 'k12ai', 'common')
         self._jschema = os.path.join(self._projdir, 'app', 'templates', 'schema')
@@ -224,7 +223,6 @@ class ServiceRPC(object):
 
             volumes = {
                 usercache: {'bind': innercache, 'mode': 'rw'},
-                self._datadir: {'bind': '/datasets', 'mode': 'rw'},
                 self._commlib: {'bind': f'{self._workdir}/app/k12ai/common', 'mode': 'rw'},
                 **self.make_container_volumes()
             }
@@ -262,8 +260,8 @@ class ServiceRPC(object):
             command = self.make_container_command(appId, op, user, uuid, params)
             self._docker.containers.run(f'{self._image}', command, **kwargs)
             return
-        except Exception as err:
-            Logger.error(str(err))
+        except Exception:
+            Logger.error(gen_exc_info())
             self.send_message(appId, token, op, user, uuid, "error", {
                 'status': 'crash', 'errinfo': gen_exc_info()
             })

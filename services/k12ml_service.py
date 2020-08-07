@@ -41,6 +41,8 @@ class MLServiceRPC(ServiceRPC):
     def __init__(self, host, port, image, dataroot):
         super().__init__('ml', host, port, image, dataroot, _DEBUG_)
 
+        self._datadir = f'{dataroot}/datasets/ml'
+
     def errtype2errcode(self, op, user, uuid, errtype, errtext):
         errcode = 999999
         if errtype == 'ConfigMissingException':
@@ -49,6 +51,7 @@ class MLServiceRPC(ServiceRPC):
 
     def make_container_volumes(self):
         volumes = {}
+        volumes[self._datadir] = {'bind': '/datasets', 'mode': 'rw'},
         if self._debug:
             volumes[f'{self._projdir}/app'] = {'bind': f'{self._workdir}/app', 'mode':'rw'}
         return volumes

@@ -12,8 +12,6 @@ import argparse
 import json # noqa
 import zerorpc
 from threading import Thread
-from pyhocon import ConfigFactory
-from pyhocon import HOCONConverter
 
 from k12ai.k12ai_base import ServiceRPC
 from k12ai.k12ai_consul import (k12ai_consul_init, k12ai_consul_register)
@@ -41,7 +39,8 @@ class PyrServiceRPC(ServiceRPC):
     def __init__(self, host, port, image, dataroot):
         super().__init__('pyr', host, port, image, dataroot, _DEBUG_)
 
-        self._pretrained_dir = '%s/pretrained/cv' % dataroot
+        self._datadir = f'{dataroot}/datasets/cv'
+        self._pretrained_dir = f'{dataroot}/pretrained/cv'
 
     def errtype2errcode(self, op, user, uuid, errtype, errtext):
         errcode = 999999
@@ -52,12 +51,13 @@ class PyrServiceRPC(ServiceRPC):
         return params
 
     @k12ai_timeit(handler=Logger.info)
-    def post_processing(self, op, user, uuid, message):
+    def post_processing(self, appId, op, user, uuid, message):
         pass
 
     def make_container_volumes(self):
         volumes = {}
-        volumes[self._pretrained_dir] = {'bind': '/root/.cache/torch/checkpoints', 'mode': 'rw'}
+        volumes[self._pretrained_dir] = {'bind': '/root/.cache/torch/hub/checkpoints', 'mode': 'rw'}
+        volumes[self._datadir] = {'bind': '/datasets', 'mode': 'rw'}
         if self._debug:
             volumes[f'{self._projdir}/app'] = {'bind': f'{self._workdir}/app', 'mode': 'rw'}
         return volumes
@@ -75,7 +75,6 @@ class PyrServiceRPC(ServiceRPC):
         return kwargs
 
     def make_container_command(self, appId, op, user, uuid, params):
-        print(params)
         usercache, innercache = self.get_cache_dir(user, uuid)
         command = f'python {self._workdir}/app/k12ai/main.py '
         if op.startswith('runcode') and 'code' in params:

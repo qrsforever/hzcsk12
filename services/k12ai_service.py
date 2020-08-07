@@ -181,6 +181,7 @@ def _framework_execute():
                 'predict.start', 'predict.stop',
                 'runcode.start', 'runcode.stop'):
             return json.dumps(_err_msg(100102, f'not support op:{op}'))
+
         service_name = reqjson['service_name']
         service_uuid = reqjson['service_uuid']
         service_params = reqjson.get('service_params', None)
@@ -222,17 +223,20 @@ def _framework_message_push():
 
 @app.route('/k12ai/private/popmsg', methods=['GET'])
 def _framework_message_pop():
+    response = []
     try:
         if g_redis:
             key = request.args.get("key", default='unknown')
-            item = g_redis.rpop(key)
-            if item:
-                print(item.decode)
-                return item.decode()
-            return ""
+            while True:
+                item = g_redis.rpop(key)
+                if item is None:
+                    break
+                response.append(item.decode())
+            return json.dumps(response)
     except Exception as err:
         Logger.info(err)
-        return ""
+    finally:
+        return json.dumps(response)
 
 
 if __name__ == "__main__":

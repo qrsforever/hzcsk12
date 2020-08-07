@@ -157,24 +157,7 @@ local _gan_pix2pix_netparams(net) = [
                     type: '_ignore_',
                     objs: _gan_pix2pix_netparams('discriminator'),
                 },
-            ] else []
-                   + (
-                       if std.startsWith(_Utils.network, 'custom_') then [
-                           {
-                               name: { en: 'Custom', cn: '自定义' },
-                               type: '_ignore_',
-                               objs: [
-                                   {
-                                       _id_: 'network.net_def',
-                                       type: 'iframe',
-                                       html: 'http://' + _Utils.net_ip + ':9091',
-                                       width: 800,
-                                       height: 400,
-                                   },
-                               ],
-                           },
-                       ] else []
-                   ) + [
+            ] else [
                 {
                     name: { en: 'Details', cn: self.en },
                     type: '_ignore_',

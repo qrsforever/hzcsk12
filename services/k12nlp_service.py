@@ -41,6 +41,7 @@ class NLPServiceRPC(ServiceRPC):
     def __init__(self, host, port, image, dataroot):
         super().__init__('nlp', host, port, image, dataroot, _DEBUG_)
 
+        self._datadir = f'{dataroot}/datasets/nlp'
         self._pretrained_dir = '%s/pretrained/nlp' % dataroot
         self._nltk_data_dir = '%s/nltk_data' % dataroot
 
@@ -72,6 +73,7 @@ class NLPServiceRPC(ServiceRPC):
 
     def make_container_volumes(self):
         volumes = {
+            self._datadir: {'bind': '/datasets', 'mode': 'rw'},
             self._pretrained_dir: {'bind': '/pretrained', 'mode': 'rw'},
             self._nltk_data_dir: {'bind': '/root/nltk_data', 'mode': 'ro'}
         }

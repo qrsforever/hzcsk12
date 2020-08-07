@@ -41,7 +41,8 @@ class CV3DServiceRPC(ServiceRPC):
     def __init__(self, host, port, image, dataroot):
         super().__init__('3d', host, port, image, dataroot, _DEBUG_)
 
-        self._pretrained_dir = '%s/pretrained/cv' % dataroot
+        self._datadir = f'{dataroot}/datasets/3d'
+        self._pretrained_dir = f'{dataroot}/pretrained/cv'
 
     def errtype2errcode(self, op, user, uuid, errtype, errtext):
         errcode = 999999
@@ -57,7 +58,8 @@ class CV3DServiceRPC(ServiceRPC):
 
     def make_container_volumes(self):
         volumes = {}
-        volumes[self._pretrained_dir] = {'bind': '/root/.cache/torch/checkpoints', 'mode': 'rw'}
+        volumes[self._datadir] = {'bind': '/datasets', 'mode': 'rw'},
+        volumes[self._pretrained_dir] = {'bind': '/root/.cache/torch/hub/checkpoints', 'mode': 'rw'}
         if self._debug:
             volumes[f'{self._projdir}/app'] = {'bind': f'{self._workdir}/app', 'mode': 'rw'}
         return volumes
