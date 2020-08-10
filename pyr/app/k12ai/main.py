@@ -56,6 +56,8 @@ if __name__ == '__main__':
                     stime = time.time()
             else:
                 time.sleep(0.5)
-        k12ai_send_message('console', {'status': 'finish', 'log': ''.join(cache)}, end=True)
+        if len(cache) > 0:
+            k12ai_send_message('console', {'log': ''.join(cache)})
+        k12ai_send_message('console', {'status': 'finish', 'log': 'program is finished.'}, end=True)
     except Exception as err:
         k12ai_send_message('console', {'status': 'error', 'log': f'{err}\n'}, end=True)

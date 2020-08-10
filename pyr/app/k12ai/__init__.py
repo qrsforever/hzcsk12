@@ -19,9 +19,9 @@ import torchvision
 import pytorch_lightning as pl
 import torch.nn as nn
 
-from torch import optim
 from PIL import Image
-from torch.optim.lr_scheduler import StepLR
+from torch import optim
+from torch.nn import functional as F
 from torch.utils.data import (Dataset, DataLoader)
 
 warnings.filterwarnings('ignore')
@@ -99,6 +99,41 @@ class IDataTransforms(object):
         return RandomVerticalFlip(p=p)
 
 
+class ICriterion(object):
+    @staticmethod
+    def cross_entropy(input, target, reduction='mean', ignore_index=-100):
+        # return nn.CrossEntropyLoss(reduction=reduction)
+        return F.cross_entropy(input, target, reduction=reduction, ignore_index=ignore_index)
+
+
+class IOptimizer(object):
+    @staticmethod
+    def adam(params, base_lr, betas=(0.9, 0.999), weight_decay=0, amsgrad=False):
+        return optim.Adam(
+                params, lr=base_lr, betas=betas,
+                weight_decay=weight_decay, amsgrad=amsgrad)
+
+    @staticmethod
+    def sgd(params, base_lr, momentum=0, dampening=0, weight_decay=0, nesterov=False):
+        return optim.SGD(
+                params, lr=base_lr, momentum=0, dampening=0,
+                weight_decay=0, nesterov=False)
+
+
+class IScheduler(object):
+    @staticmethod
+    def period_step(optimizer, step_size=30, gamma=0.1, last_epoch=-1):
+        return optim.lr_scheduler.StepLR(
+                optimizer,
+                step_size=step_size, gamma=gamma, last_epoch=last_epoch)
+
+    @staticmethod
+    def multi_step(optimizer, milestones, gamma=0.1, last_epoch=-1):
+        return optim.lr_scheduler.MultiStepLR(
+                optimizer,
+                milestones=milestones, gamma=gamma, last_epoch=last_epoch)
+
+
 class EasyaiDataset(ABC, Dataset):
     def __init__(self, mean=None, std=None, **kwargs):
         self.mean, self.std = mean, std
@@ -121,7 +156,7 @@ class EasyaiDataset(ABC, Dataset):
         """
 
     def set_aug_trans(self, transforms:Union[list, None], random_order=False):
-        if transforms:
+        if transforms and len(transforms) > 0:
             if any([not hasattr(x, '__call__') for x in transforms]):
                 raise ValueError(f'set_aug_trans: transforms params is invalid.')
             if random_order:
@@ -148,7 +183,8 @@ class EasyaiDataset(ABC, Dataset):
         return len(self.images)
 
 
-class EasyaiClassifier(pl.LightningModule, IDataTransforms):
+class EasyaiClassifier(pl.LightningModule,
+        IDataTransforms, ICriterion, IOptimizer, IScheduler):
     BACKBONES = [
         'resnet18',
         'resnet50',
@@ -265,34 +301,33 @@ class EasyaiClassifier(pl.LightningModule, IDataTransforms):
         return model
 
     def build_model(self):
-        return self.load_pretrained_model_('resnet18', 10)
+        return self.load_pretrained_model_('resnet18')
 
     # Hypes
-    @property
-    def loss(self):
-        if self.criterion is None:
-            self.criterion = self.configure_criterion()
-        return self.criterion
+    # @property
+    # def loss(self):
+    #     if self.criterion is None:
+    #         self.criterion = self.configure_criterion()
+    #     return self.criterion
 
-    def configure_criterion(self):
-        # default
-        loss = nn.CrossEntropyLoss(reduction='mean')
-        return loss
+    # def configure_criterion(self):
+    #     # default
+    #     return self.cross_entropy_loss(reduction='mean')
 
-    def configure_optimizer(self):
+    def configure_optimizer(self, model):
         # default
-        optimizer = optim.Adam(
-            filter(lambda p: p.requires_grad, self.model.parameters()),
-            lr=0.001)
-        return optimizer
+        return self.adam(
+            filter(lambda p: p.requires_grad, model.parameters()),
+            base_lr=0.001)
 
     def configure_scheduler(self, optimizer):
         # default
-        scheduler = StepLR(optimizer, step_size=30, gamma=0.1)
-        return scheduler
+        return self.period_step(optimizer, step_size=30, gamma=0.1)
 
     def configure_optimizers(self):
-        optimizer = self.configure_optimizer()
+        # TODO
+        # self.criterion = self.configure_criterion()
+        optimizer = self.configure_optimizer(self.model)
         scheduler = self.configure_scheduler(optimizer)
         return [optimizer], [scheduler]
 
@@ -304,8 +339,9 @@ class EasyaiClassifier(pl.LightningModule, IDataTransforms):
 
     def step_(self, batch):
         x, y, _ = batch
-        y_hat = self.model(x)
-        loss = self.loss(y_hat, y)
+        y_hat = self.forward(x)
+        loss = self.cross_entropy(y_hat, y, reduction='mean')
+        # loss = self.loss(y_hat, y)
         return x, y, y_hat, loss
 
     def get_dataloader(self, phase,
@@ -343,6 +379,7 @@ class EasyaiClassifier(pl.LightningModule, IDataTransforms):
             shuffle=False)
 
     def training_step(self, batch, batch_idx):
+        # REQUIRED
         x, y, y_hat, loss = self.step_(batch)
         with torch.no_grad():
             accuracy = self.calculate_acc_(y_hat, y)
@@ -351,7 +388,7 @@ class EasyaiClassifier(pl.LightningModule, IDataTransforms):
             'loss': loss,        # M
             'acc': accuracy,     # O
             'progress_bar': log, # O
-            # 'log': log           # O
+            # 'log': log         # O
         })
         return output
 
@@ -428,13 +465,20 @@ class EasyaiTrainer(pl.Trainer):
     def __init__(self, max_epochs: int = 30, max_steps: Optional[int] = None,
             log_save_interval: int = 100, progress_bar_rate: int = 10,
             log_gpu_memory: Optional[str] = None, model_summary: str = 'top', # 'full', 'top'
+            early_stop:Optional[dict] = None
             ): # noqa
+
+        cb_early_stop = False
+        if early_stop:
+            from pytorch_lightning.callbacks import EarlyStopping
+            cb_early_stop = EarlyStopping(**early_stop) # {'monitor': 'val_loss', 'patience': 3, 'mode': 'min'}
 
         super(EasyaiTrainer, self).__init__(max_epochs=max_epochs, max_steps=max_steps,
                 logger=False,
                 log_save_interval=log_save_interval, progress_bar_refresh_rate=progress_bar_rate,
                 log_gpu_memory=log_gpu_memory, weights_summary=model_summary,
                 num_sanity_val_steps=0,
+                early_stop_callback=cb_early_stop,
                 default_root_dir='/cache', gpus=[0])
 
     def fit(self, model):
@@ -445,6 +489,9 @@ class EasyaiTrainer(pl.Trainer):
             return super().test(model=model)
         else:
             return super().test(model=model, verbose=False)
+
+    def on_fit_start(self):
+        return super().on_fit_start()
 
     def on_fit_end(self):
         return super().on_fit_end()

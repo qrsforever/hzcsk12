@@ -138,7 +138,7 @@ class CVServiceRPC(ServiceRPC):
 
     def make_container_volumes(self):
         volumes = {}
-        volumes[self._datadir] = {'bind': '/datasets', 'mode': 'rw'},
+        volumes[self._datadir] = {'bind': '/datasets', 'mode': 'rw'}
         volumes[self._pretrained_dir] = {'bind': '/pretrained', 'mode': 'rw'}
         if self._debug:
             volumes[f'{self._projdir}/app'] = {'bind': f'{self._workdir}/app', 'mode': 'rw'}

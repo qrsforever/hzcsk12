@@ -59,7 +59,9 @@ class PyrServiceRPC(ServiceRPC):
         volumes[self._pretrained_dir] = {'bind': '/root/.cache/torch/hub/checkpoints', 'mode': 'rw'}
         volumes[self._datadir] = {'bind': '/datasets', 'mode': 'rw'}
         if self._debug:
+            litelib = 'pytorch-lightning/pytorch_lightning'
             volumes[f'{self._projdir}/app'] = {'bind': f'{self._workdir}/app', 'mode': 'rw'}
+            volumes[f'{self._projdir}/{litelib}'] = {'bind': f'{self._workdir}/{litelib}', 'mode': 'rw'}
         return volumes
 
     def make_container_environs(self, op, params):
