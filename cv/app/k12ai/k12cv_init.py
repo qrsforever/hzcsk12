@@ -84,6 +84,7 @@ def _check_custom_model(configer):
             with open(net_def_fil, 'w') as fout:
                 fout.write(net_def_str)
         except Exception as err:
+            print('err: {}'.format(err))
             raise RuntimeError('{}'.format(err))
         return True
     return False
