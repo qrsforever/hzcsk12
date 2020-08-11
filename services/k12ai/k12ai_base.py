@@ -120,7 +120,7 @@ class ServiceRPC(object):
 
     def on_finished(self, appId, op, user, uuid, message):
         self.post_processing(appId, op, user, uuid, message)
-        if not user.startswith('1660154'):
+        if not user.startswith('1660154') and user != '1':
             self.clear_cache(user, uuid)
 
     def oss_upload(self, filepath, bucket_name=None, prefix_map=None, clear=False):
