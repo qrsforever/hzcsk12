@@ -10,6 +10,7 @@
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union, Sequence # noqa
 from abc import ABC, abstractmethod
 from collections import OrderedDict
+from distutils.version import LooseVersion
 
 import os
 import json
@@ -200,7 +201,7 @@ class EasyaiClassifier(pl.LightningModule,
         super(EasyaiClassifier, self).__init__()
         self.model = self.build_model()
         self.criterion = None
-        self.datasets = {'train': None, 'val': None, 'test': None}
+        self.datasets = {'train': None, 'val': None, 'test': None, 'predict': None}
 
     def setup(self, stage: str):
         pass
@@ -460,35 +461,88 @@ class EasyaiClassifier(pl.LightningModule,
 
 
 class EasyaiTrainer(pl.Trainer):
-    version = pl.__version__
+    version = LooseVersion(pl.__version__).version
+    best_ckpt_path = '/cache/checkpoints/best.ckpt'
 
-    def __init__(self, max_epochs: int = 30, max_steps: Optional[int] = None,
-            log_save_interval: int = 100, progress_bar_rate: int = 10,
-            log_gpu_memory: Optional[str] = None, model_summary: str = 'top', # 'full', 'top'
-            early_stop:Optional[dict] = None
+    def __init__(self,
+            resume: bool = True,
+            max_epochs: int = 30,
+            max_steps: Optional[int] = None, # the times of iterations
+            log_gpu_memory: Optional[str] = None, # 'min_max', 'all'
+            model_summary: str = 'top', # 'full', 'top'
+            model_ckpt: Optional[dict] = None, # {'monitor': 'val_loss', 'period': 2, 'mode': 'min'}
+            early_stop: Optional[dict] = None, # {'monitor': 'val_loss', 'patience': 3, 'mode': 'min'}
+            log_save_interval: int = 100, progress_bar_rate: int = 10
             ): # noqa
+
+        resume_from_checkpoint = None
+        if resume and os.path.exists(self.best_ckpt_path):
+            resume_from_checkpoint = self.best_ckpt_path
+
+        cb_model_ckpt = True
+        if model_ckpt:
+            if not isinstance(model_ckpt, dict):
+                raise TypeError('model_ckpt must be dict type!')
+            validkeys = ('monitor', 'period', 'mode')
+            if any([it not in validkeys for it in model_ckpt.keys()]):
+                raise KeyError(f'{model_ckpt.keys()} is not in {validkeys}')
+            from pytorch_lightning.callbacks import ModelCheckpoint
+            cb_model_ckpt = ModelCheckpoint(**model_ckpt)
 
         cb_early_stop = False
         if early_stop:
+            if not isinstance(early_stop, dict):
+                raise TypeError('early_stop must be dict type!')
+            validkeys = ('monitor', 'patience', 'mode')
+            if any([it not in validkeys for it in early_stop.keys()]):
+                raise KeyError(f'{early_stop.keys()} is not in {validkeys}')
             from pytorch_lightning.callbacks import EarlyStopping
-            cb_early_stop = EarlyStopping(**early_stop) # {'monitor': 'val_loss', 'patience': 3, 'mode': 'min'}
+            cb_early_stop = EarlyStopping(**early_stop)
 
         super(EasyaiTrainer, self).__init__(max_epochs=max_epochs, max_steps=max_steps,
                 logger=False,
                 log_save_interval=log_save_interval, progress_bar_refresh_rate=progress_bar_rate,
                 log_gpu_memory=log_gpu_memory, weights_summary=model_summary,
                 num_sanity_val_steps=0,
+                checkpoint_callback=cb_model_ckpt,
                 early_stop_callback=cb_early_stop,
-                default_root_dir='/cache', gpus=[0])
+                default_root_dir='/cache',
+                resume_from_checkpoint=resume_from_checkpoint,
+                check_val_every_n_epoch=1,
+                val_check_interval=1.0,
+                gpus=[0])
 
     def fit(self, model):
         return super().fit(model=model)
 
     def test(self, model=None):
-        if self.version.startswith('0.8'):
+        if self.version == [0, 8, 5]:
             return super().test(model=model)
         else:
             return super().test(model=model, verbose=False)
+
+    def predict(self, model, image_dir='/predict', input_size=128):
+        image_path = os.path.join('/cache', image_dir)
+        # def predict_step(self, batch, batch_idx):
+        #     x, y, y_hat, loss = self.step_(batch)
+        #     accuracy = self.calculate_acc_(y_hat, y)
+        #     output = OrderedDict({
+        #         'test_loss': loss,
+        #         'test_acc': accuracy
+        #     })
+        #     return output
+        try:
+            setattr(model.__class__, 'test_step', 'predict_step')
+            setattr(model.__class__, 'test_epoch_end', 'predict_end')
+            setattr(model.__class__, 'test_step', 'predict_step')
+            if self.version == [0, 8, 5]:
+                return super().test(model=model)
+            else:
+                return super().test(model=model, verbose=False)
+        except:
+            pass
+        finally:
+            pass
 
     def on_fit_start(self):
         return super().on_fit_start()
@@ -501,3 +555,8 @@ class EasyaiTrainer(pl.Trainer):
 
     def on_test_end(self):
         return super().on_test_end()
+
+    def save_checkpoint(self, filepath, weights_only: bool = False):
+        return super().save_checkpoint(self.best_ckpt_path, weights_only)
+
+# High-Performance Computing system (HPC)

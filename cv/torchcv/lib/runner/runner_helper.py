@@ -159,27 +159,30 @@ class RunnerHelper(object):
         if not os.path.exists(checkpoints_dir):
             os.makedirs(checkpoints_dir)
 
-        latest_name = '{}_latest.pth'.format(runner.configer.get('network', 'checkpoints_name'))
+        latest_name = '{}_latest.pth.part'.format(runner.configer.get('network', 'checkpoints_name'))
         torch.save(state, os.path.join(checkpoints_dir, latest_name))
         if performance is not None:
             if performance > runner.runner_state['max_performance']:
-                latest_name = '{}_max_performance.pth'.format(runner.configer.get('network', 'checkpoints_name'))
+                latest_name = '{}_max_performance.pth.part'.format(runner.configer.get('network', 'checkpoints_name'))
                 torch.save(state, os.path.join(checkpoints_dir, latest_name))
                 runner.runner_state['max_performance'] = performance
 
         if val_loss is not None:
             if val_loss < runner.runner_state['min_val_loss']:
-                latest_name = '{}_min_loss.pth'.format(runner.configer.get('network', 'checkpoints_name'))
+                latest_name = '{}_min_loss.pth.part'.format(runner.configer.get('network', 'checkpoints_name'))
                 torch.save(state, os.path.join(checkpoints_dir, latest_name))
                 runner.runner_state['min_val_loss'] = val_loss
 
         if iters is not None:
-            latest_name = '{}_iters{}.pth'.format(runner.configer.get('network', 'checkpoints_name'), iters)
+            latest_name = '{}_iters{}.pth.part'.format(runner.configer.get('network', 'checkpoints_name'), iters)
             torch.save(state, os.path.join(checkpoints_dir, latest_name))
 
         if epoch is not None:
-            latest_name = '{}_epoch{}.pth'.format(runner.configer.get('network', 'checkpoints_name'), epoch)
+            latest_name = '{}_epoch{}.pth.part'.format(runner.configer.get('network', 'checkpoints_name'), epoch)
             torch.save(state, os.path.join(checkpoints_dir, latest_name))
+
+        # QRS add, avoid to save one incompleted model(interupted on saving)
+        os.replace(os.path.join(checkpoints_dir, latest_name), os.path.join(checkpoints_dir, latest_name[:-5]))
 
     @staticmethod
     def freeze_bn(net, norm_type=None):

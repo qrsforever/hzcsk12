@@ -57,7 +57,7 @@ class ServiceRPC(object):
                     errcode = 100005
                 elif isinstance(errinfo, dict) and 'err_type' in errinfo and 'err_text' in errinfo:
                     errcode = self.container_on_crash(appId, op, user, uuid, message)
-            else:
+            elif 'status' in message:
                 # Status
                 if 'starting' == message['status']:
                     errcode = 100001

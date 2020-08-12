@@ -25,7 +25,10 @@ if __name__ == '__main__':
 
     # os.environ['PYTHONUNBUFFERED'] = "1"
     try:
-        k12ai_send_message('console', {'status': 'running', 'log': 'program is running.\n'})
+        k12ai_send_message('error', {
+            'status': 'running',
+            'log': 'program is running.\n'
+        })
         runner = subprocess.Popen(
             args=['python', args.pyfile],
             encoding='utf8',
@@ -47,17 +50,23 @@ if __name__ == '__main__':
                         if all([not err.startswith(x) for x in ('GPU av', 'TPU av', 'CUDA_VI')]):
                             errs.append(err)
                     if len(errs) > 0:
-                        k12ai_send_message('console', {'log': ''.join(errs)})
+                        k12ai_send_message('error', {'log': ''.join(errs)})
                     break
                 cache.append(output)
                 if time.time() > stime + 0.5:
-                    k12ai_send_message('console', {'log': ''.join(cache)})
+                    k12ai_send_message('error', {'log': ''.join(cache)})
                     cache.clear()
                     stime = time.time()
             else:
                 time.sleep(0.5)
         if len(cache) > 0:
-            k12ai_send_message('console', {'log': ''.join(cache)})
-        k12ai_send_message('console', {'status': 'finish', 'log': 'program is finished.'}, end=True)
+            k12ai_send_message('error', {'log': ''.join(cache)})
+        k12ai_send_message('error', {
+            'status': 'finished',
+            'log': 'program is finished.\n'
+        }, end=True)
     except Exception as err:
-        k12ai_send_message('console', {'status': 'error', 'log': f'{err}\n'}, end=True)
+        k12ai_send_message('error', {
+            'status': 'finished',
+            'log': f'{err}.\n'
+        }, end=True)

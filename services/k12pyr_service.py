@@ -48,11 +48,14 @@ class PyrServiceRPC(ServiceRPC):
 
     @k12ai_timeit(handler=Logger.info)
     def pre_processing(self, appId, op, user, uuid, params):
+        usercache, innercache = self.get_cache_dir(user, uuid)
+        self.oss_download(os.path.join(usercache, 'checkpoints'))
         return params
 
     @k12ai_timeit(handler=Logger.info)
     def post_processing(self, appId, op, user, uuid, message):
-        pass
+        usercache, innercache = self.get_cache_dir(user, uuid)
+        self.oss_upload(os.path.join(usercache, 'checkpoints'), clear=True)
 
     def make_container_volumes(self):
         volumes = {}
