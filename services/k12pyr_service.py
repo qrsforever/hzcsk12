@@ -7,7 +7,7 @@
 # @version 1.0
 # @date 2020-08-04 22:31
 
-import os, time
+import os, time, re
 import argparse
 import json # noqa
 import zerorpc
@@ -50,6 +50,16 @@ class PyrServiceRPC(ServiceRPC):
     def pre_processing(self, appId, op, user, uuid, params):
         usercache, innercache = self.get_cache_dir(user, uuid)
         self.oss_download(os.path.join(usercache, 'checkpoints'))
+        if 'code' in params:
+            for line in params['code'].split('\n'):
+                line = line.strip()
+                if not len(line) or line.startswith('#'):
+                    continue
+                # parse parameters to check whether constains oss
+                if 'oss://' in line:
+                    result = re.findall(r'oss://([a-zA-Z0-9\/\_\-]+)[\'\"]', line, re.S)
+                    if len(result) > 0:
+                        self.oss_download(os.path.join(usercache, result[0]))
         return params
 
     @k12ai_timeit(handler=Logger.info)

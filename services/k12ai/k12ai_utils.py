@@ -200,7 +200,7 @@ def k12ai_object_get(client, remote_path, bucket_name=None, prefix_map=None):
             mkdir_p(dfile)
         btime = time.time()
         data = client.get_object(bucket_name, obj.object_name)
-        with open(local_file, 'wb') as file_data: 
+        with open(local_file, 'wb') as file_data:
             for d in data.stream():
                 file_data.write(d)
         etime = time.time()

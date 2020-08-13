@@ -11,10 +11,12 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union, Sequence #
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from distutils.version import LooseVersion
+from urllib.request import urlretrieve
 
 import os
 import json
 import warnings
+import numpy as np
 import torch
 import torchvision
 import pytorch_lightning as pl
@@ -196,11 +198,17 @@ class EasyaiClassifier(pl.LightningModule,
         'shufflenet_v2_x0_5',
         'shufflenet_v2_x1_0',
     ]
+    DATASETS = {
+            'rmnist': 10,      # 28 x 28
+            'rcifar10': 10,    # 32 x 32
+            'rDogsVsCats': 2,  # 224 x 224
+            'flowers': 22,     # 224 x 224
+            'chestxray': 2     # 224 x 224
+    }
 
     def __init__(self):
         super(EasyaiClassifier, self).__init__()
-        self.model = self.build_model()
-        self.criterion = None
+        self.dataset_classes = None
         self.datasets = {'train': None, 'val': None, 'test': None, 'predict': None}
 
     def setup(self, stage: str):
@@ -211,6 +219,9 @@ class EasyaiClassifier(pl.LightningModule,
 
     # Data
     def load_presetting_dataset_(self, dataset_name, dataset_root='/datasets'):
+        if dataset_name not in self.DATASETS.keys():
+            raise ValueError(f'{dataset_name} is not in {self.DATASETS.keys()}')
+
         class JsonfileDataset(EasyaiDataset):
             def data_reader(self, path, phase):
                 """
@@ -220,18 +231,26 @@ class EasyaiClassifier(pl.LightningModule,
                 """
                 image_list = []
                 label_list = []
-                with open(os.path.join(path, f'{phase}.json')) as f:
+
+                with open(os.path.join(path, f'{phase}.json'), 'r') as f:
                     items = json.load(f)
                     for item in items:
                         image_list.append(os.path.join(path, item['image_path']))
                         label_list.append(item['label'])
                 return image_list, label_list
 
+        mean, std = None, None
         root = os.path.join(dataset_root, dataset_name)
+        info = os.path.join(root, f'info.json')
+        if os.path.exists(info):
+            with open(info, 'r') as f:
+                ii = json.load(f)
+                mean, std = ii['mean'], ii['std']
+                self.dataset_classes = ii['classes']
         datasets = {
-            'train': JsonfileDataset(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5), path=root, phase='train'),
-            'val': JsonfileDataset(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5), path=root, phase='val'),
-            'test': JsonfileDataset(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5), path=root, phase='test'),
+            'train': JsonfileDataset(mean=mean, std=std, path=root, phase='train'),
+            'val': JsonfileDataset(mean=mean, std=std, path=root, phase='val'),
+            'test': JsonfileDataset(mean=mean, std=std, path=root, phase='test'),
         }
         return datasets
 
@@ -245,7 +264,7 @@ class EasyaiClassifier(pl.LightningModule,
         except Exception:
             pass
 
-    def prepare_data(self):
+    def prepare_data(self): # private
         datasets = self.prepare_dataset()
         if isinstance(datasets, EasyaiDataset):
             self._safe_delattr(self.__class__, 'val_dataloader')
@@ -271,8 +290,10 @@ class EasyaiClassifier(pl.LightningModule,
         else:
             raise ValueError('the return of prepare_dataset is invalid.')
 
+        self.model = self.build_model()
+
     # Model
-    def load_pretrained_model_(self, model_name, num_classes:int = 1000, pretrained=True):
+    def load_pretrained_model_(self, model_name, num_classes, pretrained=True):
         if model_name not in self.BACKBONES:
             raise ValueError(f'{model_name} is not in {self.BACKBONES}')
         model = getattr(torchvision.models, model_name)(pretrained)
@@ -302,18 +323,10 @@ class EasyaiClassifier(pl.LightningModule,
         return model
 
     def build_model(self):
-        return self.load_pretrained_model_('resnet18')
-
-    # Hypes
-    # @property
-    # def loss(self):
-    #     if self.criterion is None:
-    #         self.criterion = self.configure_criterion()
-    #     return self.criterion
-
-    # def configure_criterion(self):
-    #     # default
-    #     return self.cross_entropy_loss(reduction='mean')
+        num_classes = 1000
+        if self.dataset_classes:
+            num_classes = len(self.dataset_classes)
+        return self.load_pretrained_model_('resnet18', num_classes=num_classes)
 
     def configure_optimizer(self, model):
         # default
@@ -327,7 +340,6 @@ class EasyaiClassifier(pl.LightningModule,
 
     def configure_optimizers(self):
         # TODO
-        # self.criterion = self.configure_criterion()
         optimizer = self.configure_optimizer(self.model)
         scheduler = self.configure_scheduler(optimizer)
         return [optimizer], [scheduler]
@@ -342,7 +354,6 @@ class EasyaiClassifier(pl.LightningModule,
         x, y, _ = batch
         y_hat = self.forward(x)
         loss = self.cross_entropy(y_hat, y, reduction='mean')
-        # loss = self.loss(y_hat, y)
         return x, y, y_hat, loss
 
     def get_dataloader(self, phase,
@@ -386,22 +397,16 @@ class EasyaiClassifier(pl.LightningModule,
             accuracy = self.calculate_acc_(y_hat, y)
         log = {'train_loss': loss, 'train_acc': accuracy}
         output = OrderedDict({
-            'loss': loss,        # M
-            'acc': accuracy,     # O
-            'progress_bar': log, # O
-            # 'log': log         # O
+            'loss': loss,
+            **log
         })
         return output
 
     def training_epoch_end(self, outputs):
-        avg_loss = torch.stack([x['loss'] for x in outputs]).mean()
-        avg_acc = torch.stack([x['acc'] for x in outputs]).mean()
+        avg_loss = torch.stack([x['train_loss'] for x in outputs]).mean()
+        avg_acc = torch.stack([x['train_acc'] for x in outputs]).mean()
         log = {'train_loss': avg_loss, 'train_acc': avg_acc}
-        output = OrderedDict({
-            'progress_loss': log,
-            # 'log': log
-        })
-        return output
+        return {**log}
 
     ## Valid
     def val_dataloader(self) -> DataLoader:
@@ -415,21 +420,14 @@ class EasyaiClassifier(pl.LightningModule,
     def validation_step(self, batch, batch_idx):
         x, y, y_hat, loss = self.step_(batch)
         accuracy = self.calculate_acc_(y_hat, y)
-        output = OrderedDict({
-            'val_loss': loss,
-            'val_acc': accuracy,
-        })
-        return output
+        log = {'val_loss': loss, 'val_acc': accuracy}
+        return log
 
     def validation_epoch_end(self, outputs):
         avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
         avg_acc = torch.stack([x['val_acc'] for x in outputs]).mean()
         log = {'val_loss': avg_loss, 'val_acc': avg_acc}
-        output = OrderedDict({
-            'progress_loss': log,
-            # 'log': log
-        })
-        return output
+        return {'progress_bar': log}
 
     ## Test
     def test_dataloader(self) -> DataLoader:
@@ -443,9 +441,10 @@ class EasyaiClassifier(pl.LightningModule,
     def test_step(self, batch, batch_idx):
         x, y, y_hat, loss = self.step_(batch)
         accuracy = self.calculate_acc_(y_hat, y)
+        log = {'test_loss': loss, 'test_acc': accuracy}
         output = OrderedDict({
-            'test_loss': loss,
-            'test_acc': accuracy
+            'progress_bar': log,
+            **log
         })
         return output
 
@@ -453,11 +452,7 @@ class EasyaiClassifier(pl.LightningModule,
         avg_loss = torch.stack([x['test_loss'] for x in outputs]).mean()
         avg_acc = torch.stack([x['test_acc'] for x in outputs]).mean()
         log = {'test_loss': avg_loss, 'test_acc': avg_acc}
-        output = OrderedDict({
-            'progress_bar': log,
-            # 'log': log
-        })
-        return output
+        return {'progress_bar': log}
 
 
 class EasyaiTrainer(pl.Trainer):
@@ -465,8 +460,8 @@ class EasyaiTrainer(pl.Trainer):
     best_ckpt_path = '/cache/checkpoints/best.ckpt'
 
     def __init__(self,
-            resume: bool = True,
-            max_epochs: int = 30,
+            resume: bool = False,
+            max_epochs: int = 10,
             max_steps: Optional[int] = None, # the times of iterations
             log_gpu_memory: Optional[str] = None, # 'min_max', 'all'
             model_summary: str = 'top', # 'full', 'top'
@@ -521,28 +516,72 @@ class EasyaiTrainer(pl.Trainer):
         else:
             return super().test(model=model, verbose=False)
 
-    def predict(self, model, image_dir='/predict', input_size=128):
-        image_path = os.path.join('/cache', image_dir)
-        # def predict_step(self, batch, batch_idx):
-        #     x, y, y_hat, loss = self.step_(batch)
-        #     accuracy = self.calculate_acc_(y_hat, y)
-        #     output = OrderedDict({
-        #         'test_loss': loss,
-        #         'test_acc': accuracy
-        #     })
-        #     return output
+    def predict(self, model, image_path, input_size=128):
+        class ImageFolderDataset(EasyaiDataset):
+            def data_reader(self, path):
+                extensions = ('.jpg', '.jpeg', '.png', '.bmp', '.webp')
+                image_list = []
+                label_list = []
+                for filename in os.listdir(path):
+                    if not filename.lower().endswith(extensions):
+                        continue
+                    image_list.append(f'{path}/{filename}')
+                    label_list.append(-1)
+                return (image_list, label_list)
+
+        def predict_dataloader(self):
+            if image_path.startswith('oss://'):
+                dataset = ImageFolderDataset(path=os.path.join('/cache', image_path[6:]))
+            elif image_path.startswith('http') or image_path.startswith('ftp'):
+                dstpath = '/cache/user_images'
+                if not os.path.exists(dstpath):
+                    os.makedirs(dstpath)
+                urlretrieve(image_path, os.path.join(dstpath, os.path.basename(image_path)))
+                dataset = ImageFolderDataset(path=dstpath)
+            else:
+                raise NotImplementedError('not in (oss, http, ftp)')
+            dataset.set_img_trans(input_size=input_size)
+            dataloader = DataLoader(dataset, num_workers=1, shuffle=False, batch_size=32, drop_last=False)
+            return dataloader
+
+        def predict_step(self, batch, batch_idx):
+            x, _, p = batch
+            y_hat = self(x)
+            return list(zip(p, F.softmax(y_hat, dim=1).cpu().numpy().astype(float)))
+
+        def predict_epoch_end(self, outputs):
+            result = {}
+            for item in outputs:
+                for path, props in item:
+                    filename = os.path.basename(path)
+                    classidx = np.argmax(props)
+                    if model.dataset_classes and classidx < len(model.dataset_classes):
+                        target = model.dataset_classes[classidx]
+                    else:
+                        target = classidx
+                    result[filename] = target
+            return result
+
         try:
-            setattr(model.__class__, 'test_step', 'predict_step')
-            setattr(model.__class__, 'test_epoch_end', 'predict_end')
-            setattr(model.__class__, 'test_step', 'predict_step')
+            m_test_dataloader = getattr(model.__class__, 'test_dataloader', None)
+            m_test_step = getattr(model.__class__, 'test_step', None)
+            m_test_epoch_end = getattr(model.__class__, 'test_epoch_end', None)
+            setattr(model.__class__, 'test_dataloader', predict_dataloader)
+            setattr(model.__class__, 'test_step', predict_step)
+            setattr(model.__class__, 'test_epoch_end', predict_epoch_end)
             if self.version == [0, 8, 5]:
                 return super().test(model=model)
             else:
                 return super().test(model=model, verbose=False)
-        except:
-            pass
+        except Exception as err:
+            raise err
         finally:
-            pass
+            if m_test_dataloader:
+                setattr(model.__class__, 'test_dataloader', m_test_dataloader)
+            if m_test_step:
+                setattr(model.__class__, 'test_step', m_test_step)
+            if m_test_epoch_end:
+                setattr(model.__class__, 'test_epoch_end', m_test_epoch_end)
 
     def on_fit_start(self):
         return super().on_fit_start()
