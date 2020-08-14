@@ -12,9 +12,12 @@ from abc import ABC, abstractmethod
 from collections import OrderedDict
 from distutils.version import LooseVersion
 from urllib.request import urlretrieve
+from pprint import pprint
+from pytorch_lightning.core.memory import ModelSummary
 
 import os
 import json
+import sys, logging  # noqa
 import warnings
 import numpy as np
 import torch
@@ -28,6 +31,7 @@ from torch.nn import functional as F
 from torch.utils.data import (Dataset, DataLoader)
 
 warnings.filterwarnings('ignore')
+# logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
 from torchvision.transforms import ( # noqa
         Resize,
@@ -340,9 +344,13 @@ class EasyaiClassifier(pl.LightningModule,
 
     def configure_optimizers(self):
         # TODO
-        optimizer = self.configure_optimizer(self.model)
-        scheduler = self.configure_scheduler(optimizer)
-        return [optimizer], [scheduler]
+        optimizers = self.configure_optimizer(self.model)
+        schedulers = self.configure_scheduler(optimizers)
+        if not isinstance(optimizers, (list, tuple)):
+            optimizers = [optimizers]
+        if not isinstance(schedulers, (list, tuple)):
+            schedulers = [schedulers]
+        return optimizers, schedulers
 
     def forward(self, x, *args, **kwargs):
         return self.model(x)
@@ -444,13 +452,15 @@ class EasyaiClassifier(pl.LightningModule,
         return log
 
     def test_epoch_end(self, outputs):
-        avg_loss = torch.stack([x['loss'] for x in outputs]).mean()
         avg_acc = torch.stack([x['acc'] for x in outputs]).mean()
-        log = {'test_loss': avg_loss, 'test_acc': avg_acc}
-        return {'progress_bar': log}
+        return {'test_acc': avg_acc}
 
-    def on_test_epoch_end(self):
-        pass
+    def summarize(self, mode):
+        print('\n' + '-' * 80)
+        model_summary = ModelSummary(self, mode=mode)
+        print('\n' + str(model_summary))
+        print('\n' + '-' * 80)
+        return model_summary
 
 
 class EasyaiTrainer(pl.Trainer):
@@ -510,9 +520,13 @@ class EasyaiTrainer(pl.Trainer):
 
     def test(self, model=None):
         if self.version == [0, 8, 5]:
-            return super().test(model=model)
+            results = super().test(model=model)
         else:
-            return super().test(model=model, verbose=False)
+            results = super().test(model=model, verbose=False)
+        print('-' * 80)
+        for idx, res in enumerate(results):
+            pprint(res)
+            print('-' * 80)
 
     def predict(self, model, image_path, input_size=128):
         class ImageFolderDataset(EasyaiDataset):
