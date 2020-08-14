@@ -395,18 +395,17 @@ class EasyaiClassifier(pl.LightningModule,
         x, y, y_hat, loss = self.step_(batch)
         with torch.no_grad():
             accuracy = self.calculate_acc_(y_hat, y)
-        log = {'train_loss': loss, 'train_acc': accuracy}
         output = OrderedDict({
             'loss': loss,
-            **log
+            'progress_bar': {'acc': accuracy},
         })
         return output
 
-    def training_epoch_end(self, outputs):
-        avg_loss = torch.stack([x['train_loss'] for x in outputs]).mean()
-        avg_acc = torch.stack([x['train_acc'] for x in outputs]).mean()
-        log = {'train_loss': avg_loss, 'train_acc': avg_acc}
-        return {**log}
+    # def training_epoch_end(self, outputs):
+    #     avg_loss = torch.stack([x['train_loss'] for x in outputs]).mean()
+    #     avg_acc = torch.stack([x['train_acc'] for x in outputs]).mean()
+    #     log = {'train_loss': avg_loss, 'train_acc': avg_acc}
+    #     return {**log}
 
     ## Valid
     def val_dataloader(self) -> DataLoader:
@@ -420,12 +419,12 @@ class EasyaiClassifier(pl.LightningModule,
     def validation_step(self, batch, batch_idx):
         x, y, y_hat, loss = self.step_(batch)
         accuracy = self.calculate_acc_(y_hat, y)
-        log = {'val_loss': loss, 'val_acc': accuracy}
+        log = {'loss': loss, 'acc': accuracy}
         return log
 
     def validation_epoch_end(self, outputs):
-        avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
-        avg_acc = torch.stack([x['val_acc'] for x in outputs]).mean()
+        avg_loss = torch.stack([x['loss'] for x in outputs]).mean()
+        avg_acc = torch.stack([x['acc'] for x in outputs]).mean()
         log = {'val_loss': avg_loss, 'val_acc': avg_acc}
         return {'progress_bar': log}
 
@@ -441,18 +440,17 @@ class EasyaiClassifier(pl.LightningModule,
     def test_step(self, batch, batch_idx):
         x, y, y_hat, loss = self.step_(batch)
         accuracy = self.calculate_acc_(y_hat, y)
-        log = {'test_loss': loss, 'test_acc': accuracy}
-        output = OrderedDict({
-            'progress_bar': log,
-            **log
-        })
-        return output
+        log = {'loss': loss, 'acc': accuracy}
+        return log
 
     def test_epoch_end(self, outputs):
-        avg_loss = torch.stack([x['test_loss'] for x in outputs]).mean()
-        avg_acc = torch.stack([x['test_acc'] for x in outputs]).mean()
+        avg_loss = torch.stack([x['loss'] for x in outputs]).mean()
+        avg_acc = torch.stack([x['acc'] for x in outputs]).mean()
         log = {'test_loss': avg_loss, 'test_acc': avg_acc}
         return {'progress_bar': log}
+
+    def on_test_epoch_end(self):
+        pass
 
 
 class EasyaiTrainer(pl.Trainer):
@@ -467,7 +465,7 @@ class EasyaiTrainer(pl.Trainer):
             model_summary: str = 'top', # 'full', 'top'
             model_ckpt: Optional[dict] = None, # {'monitor': 'val_loss', 'period': 2, 'mode': 'min'}
             early_stop: Optional[dict] = None, # {'monitor': 'val_loss', 'patience': 3, 'mode': 'min'}
-            log_save_interval: int = 100, progress_bar_rate: int = 10
+            log_rate: int = 1
             ): # noqa
 
         resume_from_checkpoint = None
@@ -496,7 +494,7 @@ class EasyaiTrainer(pl.Trainer):
 
         super(EasyaiTrainer, self).__init__(max_epochs=max_epochs, max_steps=max_steps,
                 logger=False,
-                log_save_interval=log_save_interval, progress_bar_refresh_rate=progress_bar_rate,
+                progress_bar_refresh_rate=log_rate,
                 log_gpu_memory=log_gpu_memory, weights_summary=model_summary,
                 num_sanity_val_steps=0,
                 checkpoint_callback=cb_model_ckpt,
@@ -583,8 +581,18 @@ class EasyaiTrainer(pl.Trainer):
             if m_test_epoch_end:
                 setattr(model.__class__, 'test_epoch_end', m_test_epoch_end)
 
-    def on_fit_start(self):
-        return super().on_fit_start()
+    def on_validation_start(self):
+        if self.progress_bar_callback:
+            self.progress_bar_callback.disable()
+        return super().on_validation_start()
+
+    def on_validation_end(self):
+        if self.progress_bar_callback:
+            self.progress_bar_callback.enable()
+        return super().on_validation_end()
+
+    def on_fit_start(self, model):
+        return super().on_fit_start(model)
 
     def on_fit_end(self):
         return super().on_fit_end()

@@ -1,11 +1,10 @@
+import importlib
 from abc import ABC
 from collections.abc import Mapping, Sequence
 from copy import copy
 from typing import Any, Callable, Union
 
 import torch
-
-import importlib
 
 TORCHTEXT_AVAILABLE = importlib.util.find_spec("torchtext") is not None
 if TORCHTEXT_AVAILABLE:
@@ -105,6 +104,7 @@ def move_data_to_device(batch: Any, device: torch.device):
                 setattr(device_data, field, device_field)
             return device_data
 
-        return data.to(device, non_blocking=True)
+        kwargs = dict(non_blocking=True) if isinstance(data, torch.Tensor) else {}
+        return data.to(device, **kwargs)
 
     return apply_to_collection(batch, dtype=(TransferableDataType, Batch), function=batch_to)

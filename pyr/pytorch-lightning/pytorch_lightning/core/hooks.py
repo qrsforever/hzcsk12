@@ -4,15 +4,13 @@ import torch
 from torch import Tensor
 from torch.nn import Module
 from torch.optim.optimizer import Optimizer
-from pytorch_lightning.utilities import move_data_to_device, NATIVE_AMP_AVALAIBLE
 
+from pytorch_lightning.utilities import move_data_to_device, AMPType
 
 try:
     from apex import amp
 except ImportError:
-    APEX_AVAILABLE = False
-else:
-    APEX_AVAILABLE = True
+    amp = None
 
 
 class ModelHooks(Module):
@@ -77,6 +75,98 @@ class ModelHooks(Module):
         """
         # do something at the end of training
 
+    def on_pretrain_routine_start(self) -> None:
+        """
+        Called at the beginning of the pretrain routine (between fit and train start).
+
+        - fit
+        - pretrain_routine start
+        - pretrain_routine end
+        - training_start
+
+        """
+        # do something at the start of the pretrain routine
+
+    def on_pretrain_routine_end(self) -> None:
+        """
+        Called at the end of the pretrain routine (between fit and train start).
+
+        - fit
+        - pretrain_routine start
+        - pretrain_routine end
+        - training_start
+
+        """
+        # do something at the end of the pretrain routine
+
+    def on_train_batch_start(self, batch: Any, batch_idx: int, dataloader_idx: int) -> None:
+        """
+        Called in the training loop before anything happens for that batch.
+
+        If you return -1 here, you will skip training for the rest of the current epoch.
+
+        Args:
+            batch: The batched data as it is returned by the training DataLoader.
+            batch_idx: the index of the batch
+            dataloader_idx: the index of the dataloader
+        """
+        # do something when the batch starts
+
+    def on_train_batch_end(self, batch: Any, batch_idx: int, dataloader_idx: int) -> None:
+        """
+        Called in the training loop after the batch.
+
+        Args:
+            batch: The batched data as it is returned by the training DataLoader.
+            batch_idx: the index of the batch
+            dataloader_idx: the index of the dataloader
+        """
+        # do something when the batch ends
+
+    def on_validation_batch_start(self, batch: Any, batch_idx: int, dataloader_idx: int) -> None:
+        """
+        Called in the validation loop before anything happens for that batch.
+
+        Args:
+            batch: The batched data as it is returned by the training DataLoader.
+            batch_idx: the index of the batch
+            dataloader_idx: the index of the dataloader
+        """
+        # do something when the batch starts
+
+    def on_validation_batch_end(self, batch: Any, batch_idx: int, dataloader_idx: int) -> None:
+        """
+        Called in the validation loop after the batch.
+
+        Args:
+            batch: The batched data as it is returned by the training DataLoader.
+            batch_idx: the index of the batch
+            dataloader_idx: the index of the dataloader
+        """
+        # do something when the batch ends
+
+    def on_test_batch_start(self, batch: Any, batch_idx: int, dataloader_idx: int) -> None:
+        """
+        Called in the test loop before anything happens for that batch.
+
+        Args:
+            batch: The batched data as it is returned by the training DataLoader.
+            batch_idx: the index of the batch
+            dataloader_idx: the index of the dataloader
+        """
+        # do something when the batch starts
+
+    def on_test_batch_end(self, batch: Any, batch_idx: int, dataloader_idx: int) -> None:
+        """
+        Called in the test loop after the batch.
+
+        Args:
+            batch: The batched data as it is returned by the training DataLoader.
+            batch_idx: the index of the batch
+            dataloader_idx: the index of the dataloader
+        """
+        # do something when the batch ends
+
     def on_batch_start(self, batch: Any) -> None:
         """
         Called in the training loop before anything happens for that batch.
@@ -85,12 +175,16 @@ class ModelHooks(Module):
 
         Args:
             batch: The batched data as it is returned by the training DataLoader.
+
+        .. warning:: Deprecated in 0.9.0 will remove 1.0.0 (use `on_train_batch_start` instead)
         """
         # do something when the batch starts
 
     def on_batch_end(self) -> None:
         """
         Called in the training loop after the batch.
+
+        .. warning:: Deprecated in 0.9.0 will remove 1.0.0 (use `on_train_batch_end` instead)
         """
         # do something when the batch ends
 
@@ -166,7 +260,7 @@ class ModelHooks(Module):
             for optimizer in optimizers:
                 optimizer.step()
                 model.on_before_zero_grad(optimizer) # < ---- called here
-                optimizer.zero_grad
+                optimizer.zero_grad()
 
         Args:
             optimizer: The optimizer for which grads should be zeroed.
@@ -215,8 +309,8 @@ class ModelHooks(Module):
         """
         loss.backward()
 
-    def amp_scale_loss(self, unscaled_loss, optimizer, optimizer_idx):
-        if NATIVE_AMP_AVALAIBLE:
+    def amp_scale_loss(self, unscaled_loss, optimizer, optimizer_idx, amp_backend: AMPType):
+        if amp_backend == AMPType.NATIVE:
             scaled_loss = self.trainer.scaler.scale(unscaled_loss)
         else:
             scaled_loss = amp.scale_loss(unscaled_loss, optimizer)
@@ -259,8 +353,13 @@ class ModelHooks(Module):
         Note:
             This hook should only transfer the data and not modify it, nor should it move the data to
             any other device than the one passed in as argument (unless you know what you are doing).
-            The :class:`~pytorch_lightning.trainer.trainer.Trainer` already takes care of splitting the
-            batch and determines the target devices.
+
+        Note:
+            This hook only runs on single GPU training (no data-parallel). If you need multi-GPU support
+            for your custom batch objects, you need to define your custom
+            :class:`~torch.nn.parallel.DistributedDataParallel` or
+            :class:`~pytorch_lightning.overrides.data_parallel.LightningDistributedDataParallel` and
+            override :meth:`~pytorch_lightning.core.lightning.LightningModule.configure_ddp`.
 
         See Also:
             - :func:`~pytorch_lightning.utilities.apply_func.move_data_to_device`

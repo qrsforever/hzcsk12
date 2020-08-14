@@ -1,6 +1,6 @@
 from pytorch_lightning.core.lightning import LightningModule
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from pytorch_lightning.utilities import rank_zero_warn
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 
 class ConfigValidator(object):
@@ -10,7 +10,7 @@ class ConfigValidator(object):
 
     def enforce_datamodule_dataloader_override(self, train_dataloader, val_dataloaders, datamodule):
         # If you supply a datamodule you can't supply train_dataloader or val_dataloaders
-        if (train_dataloader or val_dataloaders) and datamodule:
+        if (train_dataloader is not None or val_dataloaders is not None) and datamodule is not None:
             raise MisconfigurationException(
                 'You cannot pass train_dataloader or val_dataloaders to trainer.fit if you supply a datamodule'
             )

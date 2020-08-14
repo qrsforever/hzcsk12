@@ -83,28 +83,28 @@ At a rough level, here's what happens inside Trainer :py:mod:`pytorch_lightning.
 
 """
 
+import io
 import os
 import re
 import signal
 from abc import ABC
-from distutils.version import LooseVersion
 from subprocess import call
-from pkg_resources import parse_version
 
 import torch
 import torch.distributed as torch_distrib
 
 import pytorch_lightning
 from pytorch_lightning import _logger as log
-from pytorch_lightning.core.lightning import LightningModule
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
+from pytorch_lightning.core.lightning import LightningModule
 from pytorch_lightning.loggers import LightningLoggerBase
 from pytorch_lightning.overrides.data_parallel import (
     LightningDistributedDataParallel,
     LightningDataParallel,
 )
-from pytorch_lightning.utilities import rank_zero_warn, NATIVE_AMP_AVALAIBLE
-from pytorch_lightning.utilities.cloud_io import load as pl_load
+from pytorch_lightning.utilities import rank_zero_warn, AMPType
+from pytorch_lightning.utilities.cloud_io import gfile, makedirs
+from pytorch_lightning.utilities.cloud_io import load as pl_load, atomic_save
 
 try:
     import torch_xla
@@ -116,6 +116,11 @@ else:
     XLA_AVAILABLE = True
 
 try:
+    from apex import amp
+except ImportError:
+    amp = None
+
+try:
     import horovod.torch as hvd
 except (ModuleNotFoundError, ImportError):
     HOROVOD_AVAILABLE = False
@@ -125,7 +130,9 @@ else:
 try:
     from omegaconf import Container
 except ImportError:
-    Container = None
+    OMEGACONF_AVAILABLE = False
+else:
+    OMEGACONF_AVAILABLE = True
 
 
 class TrainerIOMixin(ABC):
@@ -149,8 +156,9 @@ class TrainerIOMixin(ABC):
     on_tpu: bool
     num_training_batches: int
     accumulate_grad_batches: int
-    use_amp: bool
     scaler: ...
+    use_tpu: bool
+    amp_backend: AMPType
 
     def get_model(self):
         is_dp_module = isinstance(self.model, (LightningDistributedDataParallel, LightningDataParallel))
@@ -248,28 +256,6 @@ class TrainerIOMixin(ABC):
     # --------------------
     # MODEL SAVE CHECKPOINT
     # --------------------
-    def _atomic_save(self, checkpoint, filepath: str):
-        """Saves a checkpoint atomically, avoiding the creation of incomplete checkpoints.
-
-        This will create a temporary checkpoint with a suffix of ``.part``, then copy it to the final location once
-        saving is finished.
-
-        Args:
-            checkpoint: The object to save.
-                Built to be used with the ``dump_checkpoint`` method, but can deal with anything which ``torch.save``
-                accepts.
-            filepath: The path to which the checkpoint will be saved.
-                This points to the file that the checkpoint will be stored in.
-        """
-        tmp_path = str(filepath) + ".part"
-        # Can't use the new zipfile serialization for 1.6.0 because there's a bug in
-        # torch.hub.load_state_dict_from_url() that prevents it from loading the new files.
-        # More details can be found here: https://github.com/pytorch/pytorch/issues/42239
-        if LooseVersion(torch.__version__).version[:3] == [1, 6, 0]:
-            torch.save(checkpoint, tmp_path, _use_new_zipfile_serialization=False)
-        else:
-            torch.save(checkpoint, tmp_path)
-        os.replace(tmp_path, filepath)
 
     def save_checkpoint(self, filepath, weights_only: bool = False):
         checkpoint = self.dump_checkpoint(weights_only)
@@ -277,14 +263,14 @@ class TrainerIOMixin(ABC):
         if self.is_global_zero:
             # do the actual save
             try:
-                self._atomic_save(checkpoint, filepath)
+                atomic_save(checkpoint, filepath)
             except AttributeError as err:
                 if LightningModule.CHECKPOINT_HYPER_PARAMS_KEY in checkpoint:
                     del checkpoint[LightningModule.CHECKPOINT_HYPER_PARAMS_KEY]
                 rank_zero_warn(
                     'Warning, `module_arguments` dropped from checkpoint.' f' An attribute is not picklable {err}'
                 )
-                self._atomic_save(checkpoint, filepath)
+                atomic_save(checkpoint, filepath)
 
     def restore(self, checkpoint_path: str, on_gpu: bool):
         """
@@ -315,8 +301,10 @@ class TrainerIOMixin(ABC):
             model.cuda(self.root_gpu)
 
         # restore amp scaling
-        if self.use_amp and NATIVE_AMP_AVALAIBLE and 'native_amp_scaling_state' in checkpoint:
+        if self.amp_backend == AMPType.NATIVE and 'native_amp_scaling_state' in checkpoint:
             self.scaler.load_state_dict(checkpoint['native_amp_scaling_state'])
+        elif self.amp_backend == AMPType.APEX and 'amp_scaling_state' in checkpoint:
+            amp.load_state_dict(checkpoint['amp_scaling_state'])
 
         # load training state (affects trainer only)
         self.restore_training_state(checkpoint)
@@ -345,8 +333,8 @@ class TrainerIOMixin(ABC):
             if checkpoint_callbacks:
                 # we add the official checkpoint callback to the end of the list
                 # extra user provided callbacks will not be persisted yet
-                checkpoint['checkpoint_callback_best_model_score'] = self.checkpoint_callback.best_model_score
-                checkpoint['checkpoint_callback_best_model_path'] = self.checkpoint_callback.best_model_path
+                checkpoint[ModelCheckpoint.CHECKPOINT_STATE_BEST_SCORE] = self.checkpoint_callback.best_model_score
+                checkpoint[ModelCheckpoint.CHECKPOINT_STATE_BEST_PATH] = self.checkpoint_callback.best_model_path
 
             if early_stopping_callbacks and checkpoint_callbacks:
                 # we add the official early stopping callback to the end of the list
@@ -366,8 +354,10 @@ class TrainerIOMixin(ABC):
             checkpoint['lr_schedulers'] = lr_schedulers
 
             # save native amp scaling
-            if self.use_amp and NATIVE_AMP_AVALAIBLE and not self.use_tpu:
+            if self.amp_backend == AMPType.NATIVE and not self.use_tpu:
                 checkpoint['native_amp_scaling_state'] = self.scaler.state_dict()
+            elif self.amp_backend == AMPType.APEX:
+                checkpoint['amp_scaling_state'] = amp.state_dict()
 
         # add the module_arguments and state_dict from the model
         model = self.get_model()
@@ -379,7 +369,7 @@ class TrainerIOMixin(ABC):
                 checkpoint[LightningModule.CHECKPOINT_HYPER_PARAMS_NAME] = model._hparams_name
             # add arguments to the checkpoint
             checkpoint[LightningModule.CHECKPOINT_HYPER_PARAMS_KEY] = model.hparams
-            if Container is not None:
+            if OMEGACONF_AVAILABLE:
                 if isinstance(model.hparams, Container):
                     checkpoint[LightningModule.CHECKPOINT_HYPER_PARAMS_TYPE] = type(model.hparams)
 
@@ -396,9 +386,9 @@ class TrainerIOMixin(ABC):
         did_restore = False
 
         # look for hpc weights
-        folderpath = self.weights_save_path
-        if os.path.exists(folderpath):
-            files = os.listdir(folderpath)
+        folderpath = str(self.weights_save_path)
+        if gfile.exists(folderpath):
+            files = gfile.listdir(folderpath)
             hpc_weight_paths = [x for x in files if 'hpc_ckpt' in x]
 
             # if hpc weights exist restore model
@@ -425,8 +415,8 @@ class TrainerIOMixin(ABC):
         early_stopping_callbacks = [c for c in self.callbacks if isinstance(c, EarlyStopping)]
 
         if checkpoint_callbacks:
-            if 'checkpoint_callback_best_model_score' in checkpoint:
-                checkpoint_callbacks[-1].best_model_score = checkpoint['checkpoint_callback_best_model_score']
+            if ModelCheckpoint.CHECKPOINT_STATE_BEST_SCORE in checkpoint:
+                checkpoint_callbacks[-1].best_model_score = checkpoint[ModelCheckpoint.CHECKPOINT_STATE_BEST_SCORE]
             else:
                 # Old naming until version 0.7.6
                 rank_zero_warn(
@@ -434,7 +424,7 @@ class TrainerIOMixin(ABC):
                     'this will not be supported in the future.'
                 )
                 checkpoint_callbacks[-1].best_model_score = checkpoint['checkpoint_callback_best']
-            checkpoint_callbacks[-1].best_model_path = checkpoint['checkpoint_callback_best_model_path']
+            checkpoint_callbacks[-1].best_model_path = checkpoint[ModelCheckpoint.CHECKPOINT_STATE_BEST_PATH]
 
         if early_stopping_callbacks:
             state = checkpoint['early_stop_callback_state_dict']
@@ -477,15 +467,17 @@ class TrainerIOMixin(ABC):
     # ----------------------------------
     def hpc_save(self, folderpath: str, logger):
         # make sure the checkpoint folder exists
-        os.makedirs(folderpath, exist_ok=True)
+        folderpath = str(folderpath)  # because the tests pass a path object
+        if not gfile.exists(folderpath):
+            makedirs(folderpath)
 
         # save logger to make sure we get all the metrics
         logger.save()
 
         ckpt_number = self.max_ckpt_in_folder(folderpath) + 1
 
-        if not os.path.exists(folderpath):
-            os.makedirs(folderpath, exist_ok=True)
+        if not gfile.exists(folderpath):
+            makedirs(folderpath)
         filepath = os.path.join(folderpath, f'hpc_ckpt_{ckpt_number}.ckpt')
 
         # give model a chance to do something on hpc_save
@@ -497,14 +489,14 @@ class TrainerIOMixin(ABC):
         # do the actual save
         # TODO: fix for anything with multiprocess DP, DDP, DDP2
         try:
-            self._atomic_save(checkpoint, filepath)
+            atomic_save(checkpoint, filepath)
         except AttributeError as err:
             if LightningModule.CHECKPOINT_HYPER_PARAMS_KEY in checkpoint:
                 del checkpoint[LightningModule.CHECKPOINT_HYPER_PARAMS_KEY]
             rank_zero_warn(
                 'warning, `module_arguments` dropped from checkpoint.' f' An attribute is not picklable {err}'
             )
-            self._atomic_save(checkpoint, filepath)
+            atomic_save(checkpoint, filepath)
 
         return filepath
 
@@ -521,8 +513,10 @@ class TrainerIOMixin(ABC):
         model.load_state_dict(checkpoint['state_dict'])
 
         # restore amp scaling
-        if self.use_amp and NATIVE_AMP_AVALAIBLE and 'native_amp_scaling_state' in checkpoint:
+        if self.amp_backend == AMPType.NATIVE and 'native_amp_scaling_state' in checkpoint:
             self.scaler.load_state_dict(checkpoint['native_amp_scaling_state'])
+        elif self.amp_backend == AMPType.APEX and 'amp_scaling_state' in checkpoint:
+            amp.load_state_dict(checkpoint['amp_scaling_state'])
 
         if self.root_gpu is not None:
             model.cuda(self.root_gpu)
@@ -536,7 +530,7 @@ class TrainerIOMixin(ABC):
         log.info(f'restored hpc model from: {filepath}')
 
     def max_ckpt_in_folder(self, path, name_key='ckpt_'):
-        files = os.listdir(path)
+        files = gfile.listdir(str(path))
         files = [x for x in files if name_key in x]
         if len(files) == 0:
             return 0

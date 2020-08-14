@@ -31,6 +31,9 @@ ENV TZ=Asia/Shanghai \
 
 WORKDIR /hzcsk12/pyr
 
+COPY app app
+COPY pytorch-lightning pytorch-lightning
+
 RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
     PIP_INSTALL="pip install -U --no-cache-dir --retries 20 --timeout 120 \
         --trusted-host mirrors.intra.didiyun.com \
@@ -42,7 +45,7 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
         && \
     pip uninstall enum34 -y && \
     $PIP_INSTALL \
-        GPUtil psutil \
+        GPUtil psutil packaging\
         torchsummary tensorboard seaborn \
         pyhocon protobuf "jsonnet>=0.10.0" \
         zerorpc python-consul \
@@ -53,9 +56,10 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
     apt-get autoremove && \
     rm -rf /var/lib/apt/lists/* /tmp/* ~/*
 
-COPY app app
-COPY pytorch-lightning pytorch-lightning
-
-RUN cd /hzcsk12/pyr/pytorch-lightning && pip install --editable .
+RUN cd /hzcsk12/pyr/pytorch-lightning && \
+    pip install --no-cache-dir --retries 20 --timeout 120 \
+        --trusted-host mirrors.intra.didiyun.com \
+        --index-url http://mirrors.intra.didiyun.com/pip/simple \
+        --editable .
 
 ENV PYTHONPATH=/hzcsk12/pyr/app:/hzcsk12/pyr/pytorch-lightning:$PYTHONPATH

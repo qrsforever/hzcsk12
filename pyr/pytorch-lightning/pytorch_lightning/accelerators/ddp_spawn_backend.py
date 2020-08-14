@@ -12,18 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 
-import os
 import torch
 import torch.multiprocessing as mp
-from pytorch_lightning.utilities.distributed import rank_zero_only
+
 from pytorch_lightning import _logger as log
+from pytorch_lightning.utilities import AMPType
+from pytorch_lightning.utilities.distributed import rank_zero_only
 
 try:
     from apex import amp
 except ImportError:
-    APEX_AVAILABLE = False
-else:
-    APEX_AVAILABLE = True
+    amp = None
 
 
 class DDPSpawnBackend(object):
@@ -49,7 +48,8 @@ class DDPSpawnBackend(object):
         last_path = self.mp_queue.get()
 
         # transfer back the best path to the trainer
-        self.trainer.checkpoint_callback.best_model_path = best_path
+        if self.trainer.checkpoint_callback:
+            self.trainer.checkpoint_callback.best_model_path = best_path
         # todo, pass also bets score
 
         # load last weights
@@ -110,12 +110,9 @@ class DDPSpawnBackend(object):
             log.info(f'All DDP processes registered. Starting ddp with {self.trainer.world_size} processes')
             log.info('-' * 100)
 
-        # CHOOSE OPTIMIZER
-        # allow for lr schedulers as well
-        optimizers, lr_schedulers, optimizer_frequencies = self.trainer.init_optimizers(model)
-        self.trainer.optimizers = optimizers
-        self.trainer.lr_schedulers = lr_schedulers
-        self.trainer.optimizer_frequencies = optimizer_frequencies
+        # call sync_bn before .cuda(), configure_apex and configure_ddp
+        if self.trainer.sync_batchnorm:
+            model = model.configure_sync_batchnorm(model)
 
         # MODEL
         # copy model to each gpu
@@ -125,14 +122,19 @@ class DDPSpawnBackend(object):
             torch.cuda.set_device(self.trainer.root_gpu)
             model.cuda(self.trainer.root_gpu)
 
+        # CHOOSE OPTIMIZER
+        # allow for lr schedulers as well
+        optimizers, lr_schedulers, optimizer_frequencies = self.trainer.init_optimizers(model)
+        self.trainer.optimizers = optimizers
+        self.trainer.lr_schedulers = lr_schedulers
+        self.trainer.optimizer_frequencies = optimizer_frequencies
+
         # set model properties before going into wrapper
         self.trainer.copy_trainer_model_properties(model)
 
-        # AMP
+        # AMP -
         # run through amp wrapper before going to distributed DP
-        # TODO: remove with dropping NVIDIA AMP support
-        native_amp_available = hasattr(torch.cuda, "amp") and hasattr(torch.cuda.amp, "autocast")
-        if self.trainer.use_amp and not native_amp_available:
+        if self.trainer.amp_backend == AMPType.APEX:
             model, optimizers = model.configure_apex(amp, model, self.trainer.optimizers, self.trainer.amp_level)
             self.trainer.optimizers = optimizers
             self.trainer.reinit_scheduler_properties(self.trainer.optimizers, self.trainer.lr_schedulers)

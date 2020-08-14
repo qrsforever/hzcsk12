@@ -33,17 +33,14 @@ from pytorch_lightning.overrides.data_parallel import (
     LightningDistributedDataParallel,
     LightningDataParallel,
 )
-from pytorch_lightning.utilities import move_data_to_device, NATIVE_AMP_AVALAIBLE
+from pytorch_lightning.utilities import move_data_to_device, AMPType
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from pytorch_lightning.utilities.distributed import rank_zero_only
-from pytorch_lightning.utilities import rank_zero_warn
 
 try:
     from apex import amp
 except ImportError:
-    APEX_AVAILABLE = False
-else:
-    APEX_AVAILABLE = True
+    amp = None
 
 try:
     import torch_xla.core.xla_model as xm
@@ -74,6 +71,7 @@ class TrainerDPMixin(ABC):
     amp_level: str
     precision: ...
     global_rank: int
+    local_rank: int
     tpu_local_core_rank: int
     tpu_global_core_rank: int
     use_tpu: bool
@@ -82,11 +80,7 @@ class TrainerDPMixin(ABC):
     on_colab_kaggle: str
     save_spawn_weights: Callable
     logger: ...
-
-    @property
-    @abstractmethod
-    def use_amp(self) -> bool:
-        """Warning: this is just empty shell for code implemented in other class."""
+    amp_backend: AMPType
 
     @abstractmethod
     def call_setup_hook(self, *args):
@@ -130,12 +124,15 @@ class TrainerDPMixin(ABC):
             m.use_dp = self.use_dp
             m.use_ddp2 = self.use_ddp2
             m.use_ddp = self.use_ddp
-            m.use_amp = self.use_amp
+            m.use_amp = self.amp_backend is not None
             m.testing = self.testing
             m.use_single_gpu = self.use_single_gpu
             m.use_tpu = self.use_tpu
             m.tpu_local_core_rank = self.tpu_local_core_rank
             m.tpu_global_core_rank = self.tpu_global_core_rank
+            m.precision = self.precision
+            m.global_rank = self.global_rank
+            m.local_rank = self.local_rank
 
     def transfer_batch_to_tpu(self, batch: Any, tpu_id: Optional[int] = None):
         """
@@ -212,7 +209,7 @@ class TrainerDPMixin(ABC):
             if isinstance(scheduler, _LRScheduler):
                 scheduler.base_lrs = [lr * hvd.size() for lr in scheduler.base_lrs]
 
-        if self.use_amp:
+        if self.amp_backend:
             model, optimizers = model.configure_apex(amp, model, self.optimizers, self.amp_level)
             self.optimizers = optimizers
             self.reinit_scheduler_properties(self.optimizers, self.lr_schedulers)

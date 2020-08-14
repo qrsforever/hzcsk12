@@ -9,6 +9,7 @@ import subprocess
 
 from k12ai.common.rpc_message import k12ai_send_message
 
+LINE_WIDTH = 80
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -27,7 +28,7 @@ if __name__ == '__main__':
     try:
         k12ai_send_message('error', {
             'status': 'running',
-            'log': 'program is running.\n'
+            'log': '#' * LINE_WIDTH + '\n' + '{:^80s}'.format('RUNNING') + '\n' + '#' * LINE_WIDTH + '\n'
         })
         runner = subprocess.Popen(
             args=['python', args.pyfile],
@@ -63,7 +64,7 @@ if __name__ == '__main__':
             k12ai_send_message('error', {'log': ''.join(cache)})
         k12ai_send_message('error', {
             'status': 'finished',
-            'log': 'program is finished.\n'
+            'log': '#' * LINE_WIDTH + '\n' + '{:^80s}'.format('FINISHED') + '\n' + '#' * LINE_WIDTH + '\n'
         }, end=True)
     except Exception as err:
         k12ai_send_message('error', {

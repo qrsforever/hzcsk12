@@ -10,17 +10,23 @@
 Once you've organized your PyTorch code into a LightningModule,
 the Trainer automates everything else.
 
-.. figure:: /_images/lightning_module/pt_trainer.png
-   :alt: Convert from PyTorch to Lightning
+.. raw:: html
+
+    <video width="800" controls autoplay
+    src="https://pl-bolts-doc-images.s3.us-east-2.amazonaws.com/pl_docs/pt_trainer_mov.m4v"></video>
+
+|
 
 This abstraction achieves the following:
 
-    1. You maintain control over all aspects via PyTorch code without an added abstraction.
+1. You maintain control over all aspects via PyTorch code without an added abstraction.
 
-    2. The trainer uses best practices embedded by contributors and users
-       from top AI labs such as Facebook AI Research, NYU, MIT, Stanford, etc...
+2. The trainer uses best practices embedded by contributors and users
+   from top AI labs such as Facebook AI Research, NYU, MIT, Stanford, etc...
 
-    3. The trainer allows overriding any key part that you don't want automated.
+3. The trainer allows overriding any key part that you don't want automated.
+
+|
 
 -----------
 
@@ -34,15 +40,14 @@ This is the basic use of the trainer:
     model = MyLightningModule()
 
     trainer = Trainer()
-    trainer.fit(model)
+    trainer.fit(model, train_dataloader, val_dataloader)
 
 
 --------
 
-Best Practices
---------------
-For cluster computing, it's recommended you structure your
-main.py file this way
+Trainer in Python scrips
+------------------------
+In Python scripts, it's recommended you use a main function to call the Trainer.
 
 .. code-block:: python
 
@@ -66,6 +71,31 @@ So you can run it like so:
 
     python main.py --gpus 2
 
+.. note::
+
+    Pro-tip: You don't need to define all flags manually. Lightning can add them automatically
+
+.. code-block:: python
+
+    from argparse import ArgumentParser
+
+    def main(args):
+        model = LightningModule()
+        trainer = Trainer.from_argparse_args(args)
+        trainer.fit(model)
+
+    if __name__ == '__main__':
+        parser = ArgumentParser()
+        parser = Trainer.add_argparse_args(parser)
+        args = parser.parse_args()
+
+        main(args)
+
+So you can run it like so:
+
+.. code-block:: bash
+
+    python main.py --gpus 2 --max_steps 10 --limit_train_batches 10 --any_trainer_arg x
 
 .. note::
     If you want to stop a training run early, you can press "Ctrl + C" on your keyboard.
@@ -83,7 +113,7 @@ Once you're done training, feel free to run the test set!
 
 .. code-block:: python
 
-    trainer.test()
+    trainer.test(test_dataloader=test_dataloader)
 
 ------------
 
@@ -176,6 +206,21 @@ before any training.
 
     # run batch size scaling, result overrides hparams.batch_size
     trainer = Trainer(auto_scale_batch_size='binsearch')
+
+auto_select_gpus
+^^^^^^^^^^^^^^^^
+
+If enabled and `gpus` is an integer, pick available gpus automatically.
+This is especially useful when GPUs are configured to be in "exclusive mode",
+such that only one process at a time can access them.
+
+Example::
+
+    # no auto selection (picks first 2 gpus on system, may fail if other process is occupying)
+    trainer = Trainer(gpus=2, auto_select_gpus=False)
+
+    # enable auto selection (will find two available gpus on system)
+    trainer = Trainer(gpus=2, auto_select_gpus=True)
 
 auto_lr_find
 ^^^^^^^^^^^^
@@ -293,10 +338,12 @@ Example::
 default_root_dir
 ^^^^^^^^^^^^^^^^
 
-Default path for logs and weights when no logger
-or :class:`pytorch_lightning.callbacks.ModelCheckpoint` callback passed.
-On certain clusters you might want to separate where logs and checkpoints
-are stored. If you don't then use this argument for convenience.
+Default path for logs and weights when no logger or
+:class:`pytorch_lightning.callbacks.ModelCheckpoint` callback passed.  On
+certain clusters you might want to separate where logs and checkpoints are
+stored. If you don't then use this argument for convenience. Paths can be local
+paths or remote paths such as `s3://bucket/path` or 'hdfs://path/'. Credentials
+will need to be set up to use remote filepaths.
 
 Example::
 
@@ -399,14 +446,17 @@ Under the hood the pseudocode looks like this:
 gpus
 ^^^^
 
-- Number of GPUs to train on
-- or Which GPUs to train on
+- Number of GPUs to train on (int)
+- or which GPUs to train on (list)
 - can handle strings
 
 .. testcode::
 
     # default used by the Trainer (ie: train on CPU)
     trainer = Trainer(gpus=None)
+
+    # equivalent
+    trainer = Trainer(gpus=0)
 
 Example::
 
@@ -424,6 +474,9 @@ Example::
     # combine with num_nodes to train on multiple GPUs across nodes
     # uses 8 gpus in total
     trainer = Trainer(gpus=2, num_nodes=4)
+
+    # train only on GPUs 1 and 4 across nodes
+    trainer = Trainer(gpus=[1, 4], num_nodes=4)
 
 See Also:
     - `Multi-GPU training guide <multi_gpu.rst>`_
@@ -803,7 +856,7 @@ replace_sampler_ddp
 ^^^^^^^^^^^^^^^^^^^
 Enables auto adding of distributed sampler. By default it will add ``shuffle=True``
 for train sampler and ``shuffle=False`` for val/test sampler. If you want to customize
-it, you can set ``replace_ddp_sampler=False`` and add your own distributed sampler.
+it, you can set ``replace_sampler_ddp=False`` and add your own distributed sampler.
 
 .. testcode::
 
@@ -840,6 +893,28 @@ How often to add logging rows (does not write to disk)
     # default used by the Trainer
     trainer = Trainer(row_log_interval=50)
 
+sync_batchnorm
+^^^^^^^^^^^^^^
+
+Enable synchronization between batchnorm layers across all GPUs.
+
+.. testcode::
+
+    trainer = Trainer(sync_batchnorm=True)
+
+amp_backend
+^^^^^^^^^^^
+
+Define a preferable mixed precision, either PyTorch built-in ("native") AMP,
+which is supported from v1.6, or NVIDIA Apex ("apex").
+
+.. testcode::
+
+    # using PyTorch built-in AMP, default used by the Trainer
+    trainer = Trainer(amp_backend='native')
+
+    # using NVIDIA Apex
+    trainer = Trainer(amp_backend='apex')
 
 val_percent_check
 ^^^^^^^^^^^^^^^^^
@@ -1010,8 +1085,8 @@ Options: 'full', 'top', None.
     # don't print a summary
     trainer = Trainer(weights_summary=None)
 
-Trainer class
--------------
+Trainer class API
+-----------------
 
 """
 
