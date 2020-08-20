@@ -463,6 +463,122 @@ class EasyaiClassifier(pl.LightningModule,
         return model_summary
 
 
+class SSD300(nn.Module):
+    # TODO
+
+    def __init__(self, backbone, num_classes):
+        super().__init__()
+        self.feature_provider = backbone
+        self.num_classes = num_classes
+
+
+class MultiBoxLoss(nn.Module):
+    # TODO
+
+    def __init__(self, overlap_thresh=0.5, neg_pos=3):
+        super(MultiBoxLoss, self).__init__()
+        self.threshold = overlap_thresh
+        self.negpos_ratio = neg_pos
+
+
+class EasyaiDetector(EasyaiClassifier,
+        IDataTransforms, ICriterion, IOptimizer, IScheduler):
+
+    def __init__(self):
+        super(EasyaiDetector, self).__init__()
+        self.feature_extractor = SSD300()
+        self.criterion = MultiBoxLoss()
+
+    def forward(self, x):
+        locs, confs = self.feature_extractor(x)
+        return locs, confs
+
+    def prepare_data(self):
+        self.train_data = None # TODO VOCDataset()
+        self.valid_data = None # TODO VOCDataset()
+
+    def train_dataloader(self):
+        train_loader = torch.utils.data.DataLoader(
+            self.train_data,
+            batch_size=32,
+            num_workers=1,
+            shuffle=True,
+            collate_fn=None, # TODO
+        )
+        return train_loader
+
+    def val_dataloader(self):
+        valid_loader = torch.utils.data.DataLoader(
+            self.valid_data,
+            batch_size=32,
+            num_workers=1,
+            shuffle=False,
+            collate_fn=None, # TODO
+        )
+        return valid_loader
+
+    def training_step(self, batch, batch_idx):
+        images, bboxes, bbox_labels = batch
+        locs, confs = self(images)
+
+        # TODO
+        alpha = 0.5
+        loc_loss, conf_loss = self.criterion(locs, confs, bboxes, bbox_labels)
+        loss = conf_loss + alpha * loc_loss
+
+        prog_dict = {'conf_l': conf_loss, 'loc_l': loc_loss}
+        log_dict = {'conf_l': conf_loss, 'loc_l': loc_loss, 'train_loss': loss}
+        return {'loss': loss, 'log': log_dict, 'progress_bar': prog_dict}
+
+    def validation_step(self, batch, batch_idx):
+        images, bboxes, bbox_labels = batch
+        locs, confs = self(images)
+
+        # TODO
+        alpha = 0.5
+        loc_loss, conf_loss = self.criterion(locs, confs, bboxes, bbox_labels)
+        loss = conf_loss + alpha * loc_loss
+
+        for i in range(locs.size(0)):
+            # TODO
+            pass
+
+        confs = F.softmax(confs, dim=2)
+        scores, idxs = confs.max(dim=2)
+
+        # TODO
+        return {'loc_loss': loc_loss, 'conf_loss': conf_loss, 'loss': loss, 'predictions' : '', 'gt' : (bboxes, bbox_labels)}
+
+    def validation_epoch_end(self, outputs):
+        conf_loss = sum([x['conf_loss'] for x in outputs])
+        loc_loss = sum([x['loc_loss'] for x in outputs])
+        loss = sum([x['loss'] for x in outputs])
+
+        conf_loss /= len(outputs)
+        loc_loss /= len(outputs)
+        loss /= len(outputs)
+
+        pred_boxes = []
+        pred_scores = []
+        pred_labels = []
+        gt_boxes = []
+        gt_labels = []
+
+        for x in outputs:
+            pred_boxes.extend(x['predictions'][0])
+            pred_scores.extend(x['predictions'][1])
+            pred_labels.extend(x['predictions'][2])
+
+            gt_boxes.extend(x['gt'][0])
+            gt_labels.extend(x['gt'][1])
+
+        gt_labels = [x + 1 for x in gt_labels]
+
+        # TODO mAP
+
+        return {'val_loss': loss, 'log': {'val_loss': loss}, 'progress_bar': {'avg_val_loss': loss}}
+
+
 class EasyaiTrainer(pl.Trainer):
     version = LooseVersion(pl.__version__).version
     best_ckpt_path = '/cache/checkpoints/best.ckpt'
