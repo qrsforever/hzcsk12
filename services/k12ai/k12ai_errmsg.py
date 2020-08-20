@@ -40,6 +40,8 @@ ERRORS = {
         100210: {'en': 'task starting too many', 'cn': '任务启动错误: 启动的任务太多'},
         100211: {'en': 'task model file is broken', 'cn': '任务启动错误: 模型文件已损坏'},
         100212: {'en': 'dataset file is missing', 'cn': '任务启动错误: 缺少数据集文件'},
+        100213: {'en': 'task predict image file is missing', 'cn': '任务启动错误: 缺少预测文件'},
+        100214: {'en': 'task resume config file is missing', 'cn': '任务启动错误: 缺少任务恢复配置文件'},
 
         100231: {'en': 'task parameter is invalid', 'cn': '任务启动错误: 非法服务参数'},
         100232: {'en': 'task parameter has no key: input file', 'cn': '任务启动错误: 评估服务缺少输入文件'},
@@ -68,12 +70,14 @@ ERRORS = {
 }
 
 
-def gen_exc_info():
+def gen_exc_info(errno=None):
     exc_type, exc_value, exc_tb = sys.exc_info()
     message = {
         'err_type': exc_type.__name__,
-        'err_text': str(exc_value)
+        'err_text': str(exc_value),
     }
+    if isinstance(errno, int) and errno > 0:
+        message['err_code'] = errno
     message['trackback'] = []
     tbs = traceback.extract_tb(exc_tb)
     for tb in tbs:

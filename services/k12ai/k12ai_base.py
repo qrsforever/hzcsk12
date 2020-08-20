@@ -58,7 +58,6 @@ class ServiceRPC(object):
                 elif isinstance(errinfo, dict) and 'err_type' in errinfo and 'err_text' in errinfo:
                     errcode = self.container_on_crash(appId, op, user, uuid, message)
             elif 'status' in message:
-                # Status
                 if 'starting' == message['status']:
                     errcode = 100001
                 elif 'running' == message['status']:
@@ -78,7 +77,10 @@ class ServiceRPC(object):
     def container_on_crash(self, appId, op, user, uuid, message):
         errtype = message['errinfo']['err_type']
         errtext = message['errinfo']['err_text']
-        errcode = self.errtype2errcode(op, user, uuid, errtype, errtext)
+        if 'err_code' in message['errinfo']:
+            errcode = message['errinfo']['err_code']
+        else:
+            errcode = self.errtype2errcode(op, user, uuid, errtype, errtext)
         if errcode == 999999:
             if errtype == 'MemoryError':
                 errcode = 100901
@@ -260,8 +262,11 @@ class ServiceRPC(object):
             command = self.make_container_command(appId, op, user, uuid, params)
             self._docker.containers.run(f'{self._image}', command, **kwargs)
             return
+        except FileNotFoundError as ferr:
+            self.send_message(appId, token, op, user, uuid, "error", {
+                'status': 'crash', 'errinfo': gen_exc_info(errno=ferr.errno)
+            })
         except Exception:
-            Logger.error(gen_exc_info())
             self.send_message(appId, token, op, user, uuid, "error", {
                 'status': 'crash', 'errinfo': gen_exc_info()
             })

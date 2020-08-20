@@ -47,11 +47,6 @@ class CVServiceRPC(ServiceRPC):
 
     def errtype2errcode(self, op, user, uuid, errtype, errtext):
         errcode = 999999
-        if errtype == 'FileNotFoundError':
-            if 'model file is not found' in errtext:
-                errcode = 100208
-            elif 'dataset file is not found' in errtext:
-                errcode = 100212
         if errtype == 'ConfigMissingException':
             errcode = 100233
         elif errtype == 'InvalidModel':
@@ -80,7 +75,7 @@ class CVServiceRPC(ServiceRPC):
                     params = json.load(fr)
                     params['network.resume_continue'] = True
             else:
-                raise FileNotFoundError('config file is not found!')
+                raise FileNotFoundError(100214, 'resume config file is not found!')
         else:
             # save original parameters
             with open(kv_config, 'w') as fw:
@@ -97,7 +92,7 @@ class CVServiceRPC(ServiceRPC):
                     prefix_map=[os.path.dirname(dataset_path), usercache])
             dataset_zipfile = os.path.join(usercache, os.path.basename(dataset_path))
             if not os.path.exists(dataset_zipfile):
-                raise FileNotFoundError('dataset file is not found!')
+                raise FileNotFoundError(100212, 'dataset file is not found!')
             result = os.system(f'unzip -qo {dataset_zipfile} -d {usercache}')
             if result != 0:
                 raise RuntimeError('systemcall error for unzip')
@@ -235,7 +230,7 @@ class CVServiceRPC(ServiceRPC):
                     config_tree.put('network.resume_continue', False)
             else:
                 if not ckpts_file_exist:
-                    raise FileNotFoundError('model file is not found!')
+                    raise FileNotFoundError(100208, 'model file is not found!', f'{ckpts_name}_latest.pth')
                 config_tree.put('network.resume_continue', True)
             if config_tree.get('network.resume_continue'):
                 config_tree.put('network.resume', f'{innercache}/output/ckpts/{ckpts_name}_latest.pth')
@@ -255,7 +250,7 @@ class CVServiceRPC(ServiceRPC):
         elif op.startswith('predict'):
             images = _k12ai_tree.get('predict_images', default=None)
             if images is None:
-                raise FileNotFoundError('image file is not found!')
+                raise FileNotFoundError(100213, 'predict image file is not found!')
             import base64
             test_dir = f'{usercache}/predict'
             os.mkdir(test_dir)
