@@ -10,17 +10,30 @@
 import sys
 import traceback
 
+
+class FrameworkError(Exception):
+    """
+    Args:
+        errcode: int
+        errtext: str
+    """
+    def __init__(self, errcode, errtext=''):
+        self.errcode = errcode
+        self.errtext = errtext
+
+
 ERRORS = {
         100000: {'en': 'success', 'cn': '成功'},
         100001: {'en': 'program staring', 'cn': '程序正在启动'},
         100002: {'en': 'program running', 'cn': '程序正在运行'},
         100003: {'en': 'program normal exit', 'cn': '程序正常结束'},
         100004: {'en': 'program stop manually', 'cn': '程序手动停止'},
-        100005: {'en': 'program warning', 'cn': '程序运行警告'},
-        
+        100005: {'en': 'program pause manually', 'cn': '程序手动暂停'},
+        100006: {'en': 'program rob passively', 'cn': '程序被动抢占'},
+        100009: {'en': 'program warning', 'cn': '程序运行警告'},
+
         100010: {'en': 'schema version is already lastest', 'cn': 'schema已是最新版本'},
         100011: {'en': 'payload is too large', 'cn': '警告: 负载数据太大'},
-
 
         100101: {'en': 'api parameter key is not found', 'cn': 'API参数错误: 非法Key'},
         100102: {'en': 'api parameter value is invalid', 'cn': 'API参数错误: 非法Value'},
@@ -42,6 +55,8 @@ ERRORS = {
         100212: {'en': 'dataset file is missing', 'cn': '任务启动错误: 缺少数据集文件'},
         100213: {'en': 'task predict image file is missing', 'cn': '任务启动错误: 缺少预测文件'},
         100214: {'en': 'task resume config file is missing', 'cn': '任务启动错误: 缺少任务恢复配置文件'},
+        100215: {'en': 'task predict images parameter format is invalid', 'cn': '任务启动错误: 预测路径参数格式非法'},
+        100216: {'en': 'task dataset name parameter is missing', 'cn': '任务启动错误: 配置中缺少数据集名字'},
 
         100231: {'en': 'task parameter is invalid', 'cn': '任务启动错误: 非法服务参数'},
         100232: {'en': 'task parameter has no key: input file', 'cn': '任务启动错误: 评估服务缺少输入文件'},
@@ -76,8 +91,6 @@ def gen_exc_info(errno=None):
         'err_type': exc_type.__name__,
         'err_text': str(exc_value),
     }
-    if isinstance(errno, int) and errno > 0:
-        message['err_code'] = errno
     message['trackback'] = []
     tbs = traceback.extract_tb(exc_tb)
     for tb in tbs:

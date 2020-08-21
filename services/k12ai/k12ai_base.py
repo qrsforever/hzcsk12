@@ -14,7 +14,7 @@ import docker
 from threading import Thread
 
 from k12ai.k12ai_utils import (k12ai_utils_topdir, k12ai_utils_netip)
-from k12ai.k12ai_errmsg import (k12ai_error_message, gen_exc_info)
+from k12ai.k12ai_errmsg import (FrameworkError, k12ai_error_message, gen_exc_info)
 from k12ai.k12ai_consul import k12ai_consul_message
 from k12ai.k12ai_logger import Logger
 from k12ai.k12ai_platform import (k12ai_platform_cpu_count, k12ai_platform_gpu_count, k12ai_platform_memory_free)
@@ -52,10 +52,9 @@ class ServiceRPC(object):
         if msgtype == 'error':
             errcode = 999999
             if 'errinfo' in message:
-                errinfo = message['errinfo']
                 if 'warning' == message['status']:
-                    errcode = 100005
-                elif isinstance(errinfo, dict) and 'err_type' in errinfo and 'err_text' in errinfo:
+                    errcode = 100009
+                elif isinstance(message['errinfo'], dict):
                     errcode = self.container_on_crash(appId, op, user, uuid, message)
             elif 'status' in message:
                 if 'starting' == message['status']:
@@ -75,36 +74,43 @@ class ServiceRPC(object):
         k12ai_consul_message(f'k12{self._sname}', appId, token, op, user, uuid, msgtype, message, clear)
 
     def container_on_crash(self, appId, op, user, uuid, message):
-        errtype = message['errinfo']['err_type']
-        errtext = message['errinfo']['err_text']
+        message = self.on_finished(appId, op, user, uuid, message)
         if 'err_code' in message['errinfo']:
-            errcode = message['errinfo']['err_code']
-        else:
+            return message['errinfo']['err_code']
+
+        errinfo = message['errinfo']
+        if 'err_type' in errinfo and 'err_text' in errinfo:
+            errtype = message['errinfo']['err_type']
+            errtext = message['errinfo']['err_text']
             errcode = self.errtype2errcode(op, user, uuid, errtype, errtext)
-        if errcode == 999999:
-            if errtype == 'MemoryError':
-                errcode = 100901
-            elif errtype == 'NotImplementedError':
-                errcode = 100902
-            elif errtype == 'ConfigurationError':
-                errcode = 100903
-            elif errtype == 'FileNotFoundError':
-                errcode = 100905
-            elif errtype == 'LossNanError':
-                errcode = 100907
-            elif errtype == 'RuntimeError':
-                if 'CUDA out of memory' in errtext:
-                    errcode = 100908
-                elif 'systemcall error' in errtext:
-                    errcode = 100909
-            elif errtype == 'ImageNotFound':
-                errcode = 100905
-        self.on_finished(appId, op, user, uuid, message)
+            if errcode == 999999:
+                if errtype == 'MemoryError':
+                    errcode = 100901
+                elif errtype == 'NotImplementedError':
+                    errcode = 100902
+                elif errtype == 'ConfigurationError':
+                    errcode = 100903
+                elif errtype == 'FileNotFoundError':
+                    errcode = 100905
+                elif errtype == 'LossNanError':
+                    errcode = 100907
+                elif errtype == 'RuntimeError':
+                    if 'CUDA out of memory' in errtext:
+                        errcode = 100908
+                elif errtype == 'ImageNotFound':
+                    errcode = 100905
+        else:
+            errcode = 999999
         return errcode
 
     def container_on_stop(self, appId, op, user, uuid, message):
         self.on_finished(appId, op, user, uuid, message)
-        return 100004
+        kStatuCodes = {
+            'stopped': 100004,
+            'paused':  100005, # noqa
+            'robbed':  100006  # noqa
+        }
+        return kStatuCodes[message['status']]
 
     def container_on_finished(self, appId, op, user, uuid, message):
         self.on_finished(appId, op, user, uuid, message)
@@ -114,7 +120,7 @@ class ServiceRPC(object):
         return params
 
     def post_processing(self, appId, op, user, uuid, message):
-        pass
+        return message
 
     def on_starting(self, appId, op, user, uuid, params):
         self.clear_cache(user, uuid)
@@ -124,6 +130,7 @@ class ServiceRPC(object):
         self.post_processing(appId, op, user, uuid, message)
         if not user.startswith('1660154') and user != '1':
             self.clear_cache(user, uuid)
+        return message
 
     def oss_upload(self, filepath, bucket_name=None, prefix_map=None, clear=False):
         if not os.path.exists(filepath):
@@ -142,6 +149,12 @@ class ServiceRPC(object):
             result = k12ai_object_get(self._ossmc, remote_path=filepath,
                     bucket_name=bucket_name, prefix_map=prefix_map)
             Logger.info(result)
+        except Exception as err:
+            Logger.error(str(err))
+
+    def oss_remove(self, filepath, bucket_name=None):
+        try:
+            k12ai_object_remove(self._ossmc, remote_path=filepath)
         except Exception as err:
             Logger.error(str(err))
 
@@ -262,9 +275,9 @@ class ServiceRPC(object):
             command = self.make_container_command(appId, op, user, uuid, params)
             self._docker.containers.run(f'{self._image}', command, **kwargs)
             return
-        except FileNotFoundError as ferr:
+        except FrameworkError as fwerr:
             self.send_message(appId, token, op, user, uuid, "error", {
-                'status': 'crash', 'errinfo': gen_exc_info(errno=ferr.errno)
+                'status': 'crash', 'errinfo': {'err_code': fwerr.errcode, 'err_text': fwerr.errtext}
             })
         except Exception:
             self.send_message(appId, token, op, user, uuid, "error", {

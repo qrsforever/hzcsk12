@@ -18,8 +18,9 @@ from pyhocon import HOCONConverter
 from k12ai.k12ai_base import ServiceRPC
 from k12ai.k12ai_consul import (k12ai_consul_init, k12ai_consul_register)
 from k12ai.k12ai_logger import (k12ai_set_loglevel, k12ai_set_logfile, Logger)
-from k12ai.k12ai_utils import k12ai_timeit
+from k12ai.k12ai_utils import k12ai_timeit, mkdir_p
 from k12ai.k12ai_platform import k12ai_platform_stats as get_platform_stats
+from k12ai.k12ai_errmsg import FrameworkError
 
 _DEBUG_ = True if os.environ.get("K12AI_DEBUG") else False
 
@@ -46,7 +47,6 @@ class CVServiceRPC(ServiceRPC):
         self._pretrained_dir = f'{dataroot}/pretrained/cv'
 
     def errtype2errcode(self, op, user, uuid, errtype, errtext):
-        errcode = 999999
         if errtype == 'ConfigMissingException':
             errcode = 100233
         elif errtype == 'InvalidModel':
@@ -61,11 +61,14 @@ class CVServiceRPC(ServiceRPC):
             errcode = 100306
         elif errtype == 'TensorSizeError':
             errcode = 100307
+        else:
+            errcode = 999999
         return errcode
 
     @k12ai_timeit(handler=Logger.info)
     def pre_processing(self, appId, op, user, uuid, params):
         usercache, innercache = self.get_cache_dir(user, uuid)
+        ckpts_dir = os.path.join(usercache, 'output', 'ckpts')
         # resume training
         kv_config = os.path.join(usercache, 'kv_config.json')
         if 'resume' in op and (params is None or 0 == len(params)):
@@ -75,12 +78,13 @@ class CVServiceRPC(ServiceRPC):
                     params = json.load(fr)
                     params['network.resume_continue'] = True
             else:
-                raise FileNotFoundError(100214, 'resume config file is not found!')
+                raise FrameworkError(100214)
         else:
             # save original parameters
             with open(kv_config, 'w') as fw:
                 json.dump(params, fw)
             self.oss_upload(kv_config, clear=True)
+            params['network.resume_continue'] = False
 
         # download custom dataset
         bucket_name = 'data-platform'
@@ -92,16 +96,36 @@ class CVServiceRPC(ServiceRPC):
                     prefix_map=[os.path.dirname(dataset_path), usercache])
             dataset_zipfile = os.path.join(usercache, os.path.basename(dataset_path))
             if not os.path.exists(dataset_zipfile):
-                raise FileNotFoundError(100212, 'dataset file is not found!')
+                raise FrameworkError(100212)
             result = os.system(f'unzip -qo {dataset_zipfile} -d {usercache}')
             if result != 0:
-                raise RuntimeError('systemcall error for unzip')
+                raise FrameworkError(100909, 'unzip error')
             params['data.data_dir'] = os.path.join(innercache, params['_k12.data.dataset_name'])
 
         # download train data (weights)
-        if params['network.resume_continue'] or not op.startswith('train'):
-            self.oss_download(os.path.join(usercache, 'output', 'ckpts'))
+        if params['network.resume_continue']:
+            self.oss_download(ckpts_dir)
+        else:
+            # remote ckpts
+            self.oss_remove(ckpts_dir)
 
+        # download predict images
+        if 'predict' in op:
+            imguri = params.get('_k12.predict_images', default=None)
+            if imguri:
+                if isinstance(imguri, str) and imguri.startswith('oss://'):
+                    self.oss_download(os.path.join(usercache, imguri[6:]))
+                elif isinstance(imguri, (list, tuple)):
+                    import base64
+                    test_dir = os.path.join(usercache, 'predict_images') # TODO don't modify path
+                    mkdir_p(test_dir)
+                    for img in imguri:
+                        with open(os.path.join(test_dir, img['name']), "wb") as fp:
+                            fp.write(base64.b64decode(img["content"]))
+                else:
+                    raise FrameworkError(100215)
+            else:
+                raise FrameworkError(100213)
         return params
 
     @k12ai_timeit(handler=Logger.info)
@@ -230,13 +254,13 @@ class CVServiceRPC(ServiceRPC):
                     config_tree.put('network.resume_continue', False)
             else:
                 if not ckpts_file_exist:
-                    raise FileNotFoundError(100208, 'model file is not found!', f'{ckpts_name}_latest.pth')
+                    raise FrameworkError(100208)
                 config_tree.put('network.resume_continue', True)
             if config_tree.get('network.resume_continue'):
                 config_tree.put('network.resume', f'{innercache}/output/ckpts/{ckpts_name}_latest.pth')
             config_str = HOCONConverter.convert(config_tree, 'json')
         else:
-            raise RuntimeError('parameters is invalid!')
+            raise FrameworkError(100216)
 
         with open(config_file, 'w') as fout:
             fout.write(config_str)
@@ -248,16 +272,7 @@ class CVServiceRPC(ServiceRPC):
         elif op.startswith('evaluate'):
             command += f' --phase test --test_dir json --out_dir {innercache}/output/result'
         elif op.startswith('predict'):
-            images = _k12ai_tree.get('predict_images', default=None)
-            if images is None:
-                raise FileNotFoundError(100213, 'predict image file is not found!')
-            import base64
-            test_dir = f'{usercache}/predict'
-            os.mkdir(test_dir)
-            for img in images:
-                with open(os.path.join(test_dir, img['name']), "wb") as fp:
-                    fp.write(base64.b64decode(img["content"]))
-            command += f' --phase test --test_dir {innercache}/predict --out_dir {innercache}/output/result'
+            command += f' --phase test --test_dir {innercache}/predict_images --out_dir {innercache}/output/result'
         else:
             raise NotImplementedError
         return command
