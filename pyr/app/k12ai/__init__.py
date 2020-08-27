@@ -327,9 +327,10 @@ class EasyaiClassifier(pl.LightningModule,
         return model
 
     def build_model(self):
-        num_classes = 1000
         if self.dataset_classes:
             num_classes = len(self.dataset_classes)
+        else:
+            num_classes = 1000
         return self.load_pretrained_model_('resnet18', num_classes=num_classes)
 
     def configure_optimizer(self, model):
@@ -371,6 +372,7 @@ class EasyaiClassifier(pl.LightningModule,
                        drop_last=False, shuffle=False):
         if phase not in self.datasets.keys():
             raise RuntimeError(f'get {phase} data loader  error.')
+
         dataset = self.datasets[phase]
         dataset.set_aug_trans(transforms=data_augment, random_order=random_order)
         dataset.set_img_trans(input_size=input_size, normalize=normalize)

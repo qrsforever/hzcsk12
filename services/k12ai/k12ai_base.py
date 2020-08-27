@@ -128,8 +128,7 @@ class ServiceRPC(object):
 
     def on_finished(self, appId, op, user, uuid, message):
         self.post_processing(appId, op, user, uuid, message)
-        if not user.startswith('1660154') and user != '1':
-            self.clear_cache(user, uuid)
+        self.clear_cache(user, uuid)
         return message
 
     def oss_upload(self, filepath, bucket_name=None, prefix_map=None, clear=False):
@@ -224,6 +223,10 @@ class ServiceRPC(object):
         try:
             params = self.on_starting(appId, op, user, uuid, params)
 
+            dev = False
+            if 'developer' in params.keys():
+                dev = params['developer']
+
             tb_logdir = None
             if '_k12.tb_logdir' in params.keys():
                 tb_logdir = params['_k12.tb_logdir']
@@ -256,13 +259,16 @@ class ServiceRPC(object):
                 **self.make_container_environs(op, params)
             }
 
+            if dev:
+                environs['K12AI_DEVELOPER'] = dev
+
             if tb_logdir:
                 environs['K12AI_TBLOG_DIR'] = tb_logdir
 
             # W: don't set hostname
             kwargs = {
                 'name': '%s-%s-%s' % (op, user, uuid),
-                'auto_remove': False if tb_logdir else True,
+                'auto_remove': not dev,
                 'detach': True,
                 'runtime': 'nvidia',
                 'labels': labels,
@@ -360,7 +366,7 @@ class ServiceRPC(object):
         if len(cons) > MAX_TASKS:
             return 100210, f'{len(cons) > MAX_TASKS}'
 
-        if 'resume' != action and not isinstance(params, dict):
+        if 'train.start' == op and not isinstance(params, dict):
             return 100231, 'parameters type is not dict'
 
         Thread(target=lambda: self.start_container_worker(

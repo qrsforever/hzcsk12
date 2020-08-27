@@ -10,14 +10,13 @@
 import os
 import zerorpc
 
-_DEBUG_ = False
 _RPCClient = None
 _RPCEnable = -1
-K12AI_APPID, K12AI_TOKEN, K12AI_OP, K12AI_USER, K12AI_UUID = None, None, None, None, None
+K12AI_DEVELOPER, K12AI_APPID, K12AI_TOKEN, K12AI_OP, K12AI_USER, K12AI_UUID = False, None, None, None, None, None
 
 
 def k12ai_send_message(msgtype, message, end=False):
-    global _RPCClient, _RPCEnable, K12AI_APPID, K12AI_TOKEN, K12AI_OP, K12AI_USER, K12AI_UUID
+    global _RPCClient, _RPCEnable, K12AI_DEVELOPER, K12AI_APPID, K12AI_TOKEN, K12AI_OP, K12AI_USER, K12AI_UUID
 
     if _RPCEnable == 0:
         return
@@ -28,6 +27,8 @@ def k12ai_send_message(msgtype, message, end=False):
         if not host or not port:
             _RPCEnable = 0
             return
+
+        K12AI_DEVELOPER = True if os.environ.get('K12AI_DEVELOPER', None) else False
         K12AI_APPID = os.environ.get('K12AI_APPID', 'Unkown')
         K12AI_TOKEN = os.environ.get('K12AI_TOKEN', 'Unkown')
         K12AI_OP = os.environ.get('K12AI_OP', 'Unkown')
@@ -45,8 +46,8 @@ def k12ai_send_message(msgtype, message, end=False):
         if end:
             _RPCClient.close()
 
-        if _DEBUG_ or msgtype == 'error':
+        if K12AI_DEVELOPER or msgtype == 'error':
             print(message)
     except Exception as err:
-        if _DEBUG_:
+        if K12AI_DEVELOPER:
             print(err)

@@ -71,7 +71,7 @@ layer{
     layer_mode : CONV2D
     layer_params:{
       in_channels : "64"
-      out_channels : "128" 
+      out_channels : "128"
       kernel_size : "5"
       padding : "2"
     }

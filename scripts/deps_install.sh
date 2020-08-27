@@ -6,6 +6,10 @@ then
     sudo apt install -y nfs-common nfs-kernel-server
 fi
 
+# sudo apt install dkms
+# sudo dkms install -m nvidia -v 418.67
+# cuda_10.1.168_418.67_linux.run
+
 check=`python3 -c "import ssl" 2>&1`
 pyver=`python3 --version | cut -d\  -f2`
 if [[ x$check != x ]] || [[ $pyver != "3.6.8" ]]

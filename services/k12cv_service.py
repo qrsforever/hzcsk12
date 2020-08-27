@@ -69,9 +69,15 @@ class CVServiceRPC(ServiceRPC):
     def pre_processing(self, appId, op, user, uuid, params):
         usercache, innercache = self.get_cache_dir(user, uuid)
         ckpts_dir = os.path.join(usercache, 'output', 'ckpts')
-        # resume training
         kv_config = os.path.join(usercache, 'kv_config.json')
-        if 'resume' in op and (params is None or 0 == len(params)):
+        if 'train.start' == op:
+            # save original parameters
+            with open(kv_config, 'w') as fw:
+                json.dump(params, fw)
+            self.oss_upload(kv_config, clear=True)
+            params['network.resume_continue'] = False
+        else:
+            # resume train or evaluate or predict
             self.oss_download(kv_config)
             if os.path.exists(kv_config):
                 with open(kv_config, 'r') as fr:
@@ -79,12 +85,6 @@ class CVServiceRPC(ServiceRPC):
                     params['network.resume_continue'] = True
             else:
                 raise FrameworkError(100214)
-        else:
-            # save original parameters
-            with open(kv_config, 'w') as fw:
-                json.dump(params, fw)
-            self.oss_upload(kv_config, clear=True)
-            params['network.resume_continue'] = False
 
         # download custom dataset
         bucket_name = 'data-platform'
@@ -154,6 +154,7 @@ class CVServiceRPC(ServiceRPC):
             self.oss_upload(os.path.join(usercache, 'output', 'ckpts'), clear=True)
         else: # op.startswith('evaluate')
             self.oss_upload(os.path.join(usercache, 'output', 'result'), clear=True)
+        return message
 
     def make_container_volumes(self):
         volumes = {}
