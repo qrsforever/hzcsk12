@@ -5,7 +5,7 @@
     data: {
         num_records: 402,
         num_classes: 2,
-        data_dir: '/datasets/chestxray',
+        data_dir: '/datasets/rchestxray',
         image_tool: 'pil',
         input_mode: 'RGB',
         workers: 1,

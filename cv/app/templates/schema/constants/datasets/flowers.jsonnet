@@ -5,7 +5,7 @@
     data: {
         num_records: 1760,
         num_classes: 22,
-        data_dir: '/datasets/flowers',
+        data_dir: '/datasets/rflowers',
         image_tool: 'cv2',
         input_mode: 'BGR',
         workers: 1,
