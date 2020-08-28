@@ -64,8 +64,8 @@
         data_transformer: {
             size_mode: 'fix_size',
             input_size: [
-                128,
-                128,
+                224,
+                224,
             ],
             align_method: 'scale_and_pad',
         },
@@ -78,8 +78,8 @@
         data_transformer: {
             size_mode: 'fix_size',
             input_size: [
-                128,
-                128,
+                224,
+                224,
             ],
             align_method: 'scale_and_pad',
         },
@@ -92,8 +92,8 @@
         data_transformer: {
             size_mode: 'fix_size',
             input_size: [
-                128,
-                128,
+                224,
+                224,
             ],
             align_method: 'scale_and_pad',
         },
