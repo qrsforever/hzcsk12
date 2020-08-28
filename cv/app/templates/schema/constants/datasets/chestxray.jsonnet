@@ -97,7 +97,7 @@
         display_iter: 4,
         save_iters: 40,
         test_interval: 16,
-        max_epoch: 30,
+        max_epoch: 500,
     },
     loss: {
         loss_type: 'ce_loss',

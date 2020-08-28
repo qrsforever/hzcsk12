@@ -3,14 +3,14 @@
     task: 'cls',
     method: 'image_classifier',
     data: {
-        num_records: 1760,
-        num_classes: 22,
+        num_records: 3263,
+        num_classes: 5,
         data_dir: '/datasets/rfruits',
-        image_tool: 'cv2',
-        input_mode: 'BGR',
+        image_tool: 'pil',
+        input_mode: 'RGB',
         workers: 1,
         normalize: {
-            div_value: 255,
+            div_value: 1,
             mean: [
                 0.7507,
                 0.6427,

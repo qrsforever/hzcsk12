@@ -36,6 +36,7 @@ class Controller(object):
 
                 runner.train()
                 if runner.runner_state['epoch'] == runner.configer.get('solver', 'max_epoch'):
+                    Log.info('Last Valid Test on training end')
                     runner.val()
                     break
         else:
