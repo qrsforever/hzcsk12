@@ -24,7 +24,7 @@ import torch
 import torchvision
 import pytorch_lightning as pl
 import torch.nn as nn
-import GPUtil
+import GPUtil # noqa
 
 from PIL import Image
 from torch import optim
@@ -143,8 +143,8 @@ class IScheduler(object):
 
 
 class EasyaiDataset(ABC, Dataset):
-    def __init__(self, mean=None, std=None, **kwargs):
-        self.mean, self.std = mean, std
+    def __init__(self, **kwargs):
+        self.mean, self.std = None, None
         self.augtrans = None
         self.imgtrans = ToTensor()
 
@@ -156,6 +156,22 @@ class EasyaiDataset(ABC, Dataset):
             self.images, self.labels = data['images'], data['labels']
         else:
             raise ValueError('The return of data_reader must be List or Dict')
+
+    @property
+    def mean(self):
+        return self.mean
+
+    @mean.setter
+    def mean(self, mean):
+        self.mean = mean
+
+    @property
+    def std(self):
+        return self.std
+
+    @std.setter
+    def std(self, std):
+        self.std = std
 
     @abstractmethod
     def data_reader(self, **kwargs) -> Union[Tuple[List, List, List], Dict[str, List]]:
@@ -213,9 +229,10 @@ class EasyaiClassifier(pl.LightningModule,
     }
 
     def __init__(self):
-        super(EasyaiClassifier, self).__init__()
+        super().__init__()
         self.dataset_classes = None
         self.datasets = {'train': None, 'val': None, 'test': None, 'predict': None}
+        self.dataset_info = None
 
     def setup(self, stage: str):
         pass
@@ -244,21 +261,16 @@ class EasyaiClassifier(pl.LightningModule,
                         label_list.append(item['label'])
                 return image_list, label_list
 
-        mean, std = None, None
         root = os.path.join(dataset_root, dataset_name)
         info = os.path.join(root, f'info.json')
         if os.path.exists(info):
             with open(info, 'r') as f:
                 ii = json.load(f)
-                print('-' * 80)
-                pprint(ii)
-                print('-' * 80)
-                mean, std = ii['mean'], ii['std']
-                self.dataset_classes = ii['classes']
+                self.dataset_info = ii
         datasets = {
-            'train': JsonfileDataset(mean=mean, std=std, path=root, phase='train'),
-            'val': JsonfileDataset(mean=mean, std=std, path=root, phase='val'),
-            'test': JsonfileDataset(mean=mean, std=std, path=root, phase='test'),
+            'train': JsonfileDataset(path=root, phase='train'),
+            'val': JsonfileDataset(path=root, phase='val'),
+            'test': JsonfileDataset(path=root, phase='test'),
         }
         return datasets
 
@@ -396,13 +408,13 @@ class EasyaiClassifier(pl.LightningModule,
         loss = self.cross_entropy(y_hat, y, reduction='mean')
         return x, y, y_hat, loss
 
-    def get_dataloader(self, phase,
+    def get_dataloader(self, phase, input_size=32, batch_size=32,
                        data_augment=None, random_order=False,
-                       normalize=False, input_size=32,
-                       batch_size=32, num_workers=1,
+                       normalize=False, num_workers=1,
                        drop_last=False, shuffle=False):
         if phase not in self.datasets.keys():
             raise RuntimeError(f'get {phase} data loader  error.')
+        self.example_input_array = torch.zeros(batch_size, 3, input_size, input_size) 
         dataset = self.datasets[phase]
         dataset.set_aug_trans(transforms=data_augment, random_order=random_order)
         dataset.set_img_trans(input_size=input_size, normalize=normalize)
@@ -415,17 +427,16 @@ class EasyaiClassifier(pl.LightningModule,
 
     ## Train
     def train_dataloader(self) -> DataLoader:
-        return self.get_dataloader(
-            phase='train',
+        return self.get_dataloader('train',
+            input_size=128,
+            batch_size=32,
             data_augment=[
                 self.random_resized_crop(size=(128, 128)),
                 self.random_brightness(factor=0.3),
                 self.random_rotation(degrees=30)
             ],
             random_order=False,
-            input_size=128,
             normalize=True,
-            batch_size=32,
             num_workers=1,
             drop_last=False,
             shuffle=False)
@@ -452,7 +463,7 @@ class EasyaiClassifier(pl.LightningModule,
         return self.get_dataloader('val',
                 input_size=128,
                 batch_size=32,
-                num_workers=2,
+                num_workers=1,
                 drop_last=False,
                 shuffle=False)
 
@@ -669,12 +680,12 @@ class EasyaiTrainer(pl.Trainer):
     def fit(self, model):
         return super().fit(model=model)
 
-    def test(self, model):
+    def test(self, model=None):
         if not os.path.exists(self.best_ckpt_path):
             raise FileNotFoundError('not found model weights file')
         save_oldval = self.resume_from_checkpoint 
         self.resume_from_checkpoint = self.best_ckpt_path
-        results = super().test(model=model, verbose=False)
+        results = super().test(model=model, ckpt_path=self.best_ckpt_path, verbose=False)
         self.resume_from_checkpoint = save_oldval 
         if results is not None:
             print('-' * 80)
