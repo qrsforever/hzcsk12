@@ -44,7 +44,7 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
         tzdata \
         && \
     pip uninstall enum34 -y && \
-    $PIP_INSTALL \
+    $PIP_INSTALL pip setuptools \
         GPUtil psutil packaging\
         torchsummary tensorboard seaborn \
         pyhocon protobuf "jsonnet>=0.10.0" \
@@ -63,3 +63,24 @@ RUN cd /hzcsk12/pyr/pytorch-lightning && \
         --editable .
 
 ENV PYTHONPATH=/hzcsk12/pyr/app:/hzcsk12/pyr/pytorch-lightning:$PYTHONPATH
+
+ARG jupyter_data_dir=/root/.local/share/jupyter
+ARG jupyter_conf_dir=/root/.jupyter
+
+RUN PIP_INSTALL="pip install -U --no-cache-dir --retries 20 --timeout 120 \
+        --trusted-host pypi.tuna.tsinghua.edu.cn \
+        --index-url https://pypi.tuna.tsinghua.edu.cn/simple" && \
+    $PIP_INSTALL \
+        jupyter \
+        jupyter_contrib_nbextensions \
+        jupyter_nbextensions_configurator \
+        && \
+    jupyter contrib nbextension install --sys-prefix && \
+    jupyter nbextensions_configurator enable && \
+    mkdir -p ${jupyter_data_dir}/nbextensions && \
+    mkdir -p ${jupyter_conf_dir}/nbconfig && \
+    jupyter notebook --generate-config -y
+
+COPY .jupyter_config/jupyter_notebook_config.json ${jupyter_conf_dir}/jupyter_notebook_config.json
+COPY .jupyter_config/notebook.json ${jupyter_conf_dir}/nbconfig/notebook.json
+COPY .jupyter_config/vim_binding ${jupyter_data_dir}/nbextensions/vim_binding

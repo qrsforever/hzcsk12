@@ -243,15 +243,17 @@ class CVServiceRPC(ServiceRPC):
                 if v == 'shuffle_trans_seq':
                     config_tree.put('test.aug_trans.shuffle_trans_seq', [k], append=True)
             # CheckPoints
-            model_name = config_tree.get('network.model_name', default='unknow')
-            backbone = config_tree.get('network.backbone', default='unknow')
-            ckpts_name = '%s_%s_%s' % (model_name, backbone, _k12ai_tree.get('data.dataset_name'))
+            # model_name = config_tree.get('network.model_name', default='unknow')
+            # backbone = config_tree.get('network.backbone', default='unknow')
+            ckpts_name = 'nw' # '%s_%s_%s' % (model_name, backbone, _k12ai_tree.get('data.dataset_name'))
             config_tree.put('network.checkpoints_root', f'{innercache}/output')
             config_tree.put('network.checkpoints_name', ckpts_name)
             config_tree.put('network.checkpoints_dir', 'ckpts')
             ckpts_file_exist = os.path.exists(f'{usercache}/output/ckpts/{ckpts_name}_latest.pth')
             if op.startswith('train'):
+                print("#########OP: ", op)
                 if not ckpts_file_exist:
+                    print("###########31211")
                     config_tree.put('network.resume_continue', False)
             else:
                 if not ckpts_file_exist:

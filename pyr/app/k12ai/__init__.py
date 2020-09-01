@@ -24,6 +24,7 @@ import torch
 import torchvision
 import pytorch_lightning as pl
 import torch.nn as nn
+import GPUtil
 
 from PIL import Image
 from torch import optim
@@ -129,13 +130,13 @@ class IOptimizer(object):
 
 class IScheduler(object):
     @staticmethod
-    def period_step(optimizer, step_size=30, gamma=0.1, last_epoch=-1):
+    def step_lr(optimizer, step_size=30, gamma=0.1, last_epoch=-1):
         return optim.lr_scheduler.StepLR(
                 optimizer,
                 step_size=step_size, gamma=gamma, last_epoch=last_epoch)
 
     @staticmethod
-    def multi_step(optimizer, milestones, gamma=0.1, last_epoch=-1):
+    def multistep_lr(optimizer, milestones, gamma=0.1, last_epoch=-1):
         return optim.lr_scheduler.MultiStepLR(
                 optimizer,
                 milestones=milestones, gamma=gamma, last_epoch=last_epoch)
@@ -206,8 +207,9 @@ class EasyaiClassifier(pl.LightningModule,
             'rmnist': 10,      # 28 x 28
             'rcifar10': 10,    # 32 x 32
             'rDogsVsCats': 2,  # 224 x 224
-            'flowers': 22,     # 224 x 224
-            'chestxray': 2     # 224 x 224
+            'rflowers': 22,    # 224 x 224
+            'rchestxray': 2,   # 224 x 224
+            'rfruits': 5       # 224 x 224
     }
 
     def __init__(self):
@@ -221,7 +223,6 @@ class EasyaiClassifier(pl.LightningModule,
     def teardown(self, stage: str):
         pass
 
-    # Data
     def load_presetting_dataset_(self, dataset_name, dataset_root='/datasets'):
         if dataset_name not in self.DATASETS.keys():
             raise ValueError(f'{dataset_name} is not in {self.DATASETS.keys()}')
@@ -249,6 +250,9 @@ class EasyaiClassifier(pl.LightningModule,
         if os.path.exists(info):
             with open(info, 'r') as f:
                 ii = json.load(f)
+                print('-' * 80)
+                pprint(ii)
+                print('-' * 80)
                 mean, std = ii['mean'], ii['std']
                 self.dataset_classes = ii['classes']
         datasets = {
@@ -258,8 +262,26 @@ class EasyaiClassifier(pl.LightningModule,
         }
         return datasets
 
+    def load_mnist(self):
+        return self.load_presetting_dataset_('rmnist', dataset_root='/datasets')
+
+    def load_cifar10(self):
+        return self.load_presetting_dataset_('rcifar10', dataset_root='/datasets')
+
+    def load_dogcat(self):
+        return self.load_presetting_dataset_('rDogsVsCats', dataset_root='/datasets')
+
+    def load_flowers(self):
+        return self.load_presetting_dataset_('rflowers', dataset_root='/datasets')
+
+    def load_fruits(self):
+        return self.load_presetting_dataset_('rfruits', dataset_root='/datasets')
+
+    def load_chestxray(self):
+        return self.load_presetting_dataset_('rchestxray', dataset_root='/datasets')
+
     def prepare_dataset(self) -> Union[EasyaiDataset, List[EasyaiDataset], Dict[str, EasyaiDataset]]:
-        return self.load_presetting_dataset_('rmnist')
+        return self.load_rmnist()
 
     @staticmethod
     def _safe_delattr(cls, method):
@@ -326,12 +348,21 @@ class EasyaiClassifier(pl.LightningModule,
                 raise NotImplementedError(f'{model_name}')
         return model
 
-    def build_model(self):
-        if self.dataset_classes:
-            num_classes = len(self.dataset_classes)
-        else:
-            num_classes = 1000
+    def load_resnet18(self, num_classes):
         return self.load_pretrained_model_('resnet18', num_classes=num_classes)
+
+    def load_densenet121(self, num_classes):
+        return self.load_pretrained_model_('densenet121', num_classes=num_classes)
+
+    def load_squeezenet10(self, num_classes):
+        return self.load_pretrained_model_('squeezenet1_0', num_classes=num_classes)
+
+    def load_squeezenet11(self, num_classes):
+        return self.load_pretrained_model_('squeezenet1_1', num_classes=num_classes)
+
+    def build_model(self):
+        nclses = len(self.dataset_classes) if self.dataset_classes else 1000
+        return self.load_resnet18(num_classes=nclses)
 
     def configure_optimizer(self, model):
         # default
@@ -341,7 +372,7 @@ class EasyaiClassifier(pl.LightningModule,
 
     def configure_scheduler(self, optimizer):
         # default
-        return self.period_step(optimizer, step_size=30, gamma=0.1)
+        return self.step_lr(optimizer, step_size=30, gamma=0.1)
 
     def configure_optimizers(self):
         # TODO
@@ -367,12 +398,11 @@ class EasyaiClassifier(pl.LightningModule,
 
     def get_dataloader(self, phase,
                        data_augment=None, random_order=False,
-                       normalize=False, input_size=None,
+                       normalize=False, input_size=32,
                        batch_size=32, num_workers=1,
                        drop_last=False, shuffle=False):
         if phase not in self.datasets.keys():
             raise RuntimeError(f'get {phase} data loader  error.')
-
         dataset = self.datasets[phase]
         dataset.set_aug_trans(transforms=data_augment, random_order=random_order)
         dataset.set_img_trans(input_size=input_size, normalize=normalize)
@@ -584,13 +614,14 @@ class EasyaiDetector(EasyaiClassifier,
 class EasyaiTrainer(pl.Trainer):
     version = LooseVersion(pl.__version__).version
     best_ckpt_path = '/cache/checkpoints/best.ckpt'
+    model_summary = None
 
     def __init__(self,
             resume: bool = False,
             max_epochs: int = 10,
             max_steps: Optional[int] = None, # the times of iterations
             log_gpu_memory: Optional[str] = None, # 'min_max', 'all'
-            model_summary: str = 'top', # 'full', 'top'
+            model_summary: Optional[str] = None, # 'full', 'top'
             model_ckpt: Optional[dict] = None, # {'monitor': 'val_loss', 'period': 2, 'mode': 'min'}
             early_stop: Optional[dict] = None, # {'monitor': 'val_loss', 'patience': 3, 'mode': 'min'}
             log_rate: int = 1
@@ -620,6 +651,8 @@ class EasyaiTrainer(pl.Trainer):
             from pytorch_lightning.callbacks import EarlyStopping
             cb_early_stop = EarlyStopping(**early_stop)
 
+        self.model_summary = model_summary
+
         super(EasyaiTrainer, self).__init__(max_epochs=max_epochs, max_steps=max_steps,
                 logger=False,
                 progress_bar_refresh_rate=log_rate,
@@ -636,15 +669,18 @@ class EasyaiTrainer(pl.Trainer):
     def fit(self, model):
         return super().fit(model=model)
 
-    def test(self, model=None):
-        if self.version == [0, 8, 5]:
-            results = super().test(model=model)
-        else:
-            results = super().test(model=model, verbose=False)
-        print('-' * 80)
-        for idx, res in enumerate(results):
-            pprint(res)
+    def test(self, model):
+        if not os.path.exists(self.best_ckpt_path):
+            raise FileNotFoundError('not found model weights file')
+        save_oldval = self.resume_from_checkpoint 
+        self.resume_from_checkpoint = self.best_ckpt_path
+        results = super().test(model=model, verbose=False)
+        self.resume_from_checkpoint = save_oldval 
+        if results is not None:
             print('-' * 80)
+            for idx, res in enumerate(results):
+                pprint(res)
+                print('-' * 80)
 
     def predict(self, model, image_path, input_size=128):
         class ImageFolderDataset(EasyaiDataset):
