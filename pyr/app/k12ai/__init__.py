@@ -14,7 +14,6 @@ from distutils.version import LooseVersion
 from urllib.request import urlretrieve
 from pprint import pprint
 from pytorch_lightning.core.memory import ModelSummary
-
 import os
 import json
 import sys, logging  # noqa
@@ -24,7 +23,7 @@ import torch
 import torchvision
 import pytorch_lightning as pl
 import torch.nn as nn
-import GPUtil # noqa
+import GPUtil
 
 from PIL import Image
 from torch import optim
@@ -141,10 +140,16 @@ class IScheduler(object):
                 optimizer,
                 milestones=milestones, gamma=gamma, last_epoch=last_epoch)
 
+    @staticmethod
+    def reduce_lr(optimizer, mode='min', factor=0.1, patience=10):
+        return optim.lr_scheduler.ReduceLROnPlateau(
+                optimizer,
+                mode=mode, factor=factor, patience=patience)
+
 
 class EasyaiDataset(ABC, Dataset):
     def __init__(self, **kwargs):
-        self.mean, self.std = None, None
+        self._mean, self._std = None, None
         self.augtrans = None
         self.imgtrans = ToTensor()
 
@@ -159,19 +164,19 @@ class EasyaiDataset(ABC, Dataset):
 
     @property
     def mean(self):
-        return self.mean
+        return self._mean
 
     @mean.setter
     def mean(self, mean):
-        self.mean = mean
+        self._mean = mean
 
     @property
     def std(self):
-        return self.std
+        return self._std
 
     @std.setter
     def std(self, std):
-        self.std = std
+        self._std = std
 
     @abstractmethod
     def data_reader(self, **kwargs) -> Union[Tuple[List, List, List], Dict[str, List]]:
@@ -188,13 +193,15 @@ class EasyaiDataset(ABC, Dataset):
             else:
                 self.augtrans = Compose(transforms)
 
-    def set_img_trans(self, input_size:Union[Tuple[int, int], int, None], normalize=True):
+    def set_img_trans(self, input_size:Union[Tuple[int, int], int, None], normalize=False):
         trans = []
         if input_size:
             trans.append(Resize(input_size))
         trans.append(ToTensor())
-        if normalize and self.mean and self.std:
+        if normalize is True and self.mean and self.std:
             trans.append(Normalize(mean=self.mean, std=self.std))
+        elif isinstance(normalize, list) and len(normalize) == 2:
+            trans.append(Normalize(mean=normalize[0], std=normalize[1]))
         self.imgtrans = Compose(trans)
 
     def __getitem__(self, index):
@@ -230,15 +237,19 @@ class EasyaiClassifier(pl.LightningModule,
 
     def __init__(self):
         super().__init__()
-        self.dataset_classes = None
         self.datasets = {'train': None, 'val': None, 'test': None, 'predict': None}
         self.dataset_info = None
 
     def setup(self, stage: str):
-        pass
+        torch.cuda.empty_cache()
 
     def teardown(self, stage: str):
-        pass
+        for idx, gpu in enumerate(GPUtil.getGPUs()):
+            allocmem = round(torch.cuda.memory_allocated(idx) / 1024**2, 2)
+            allocmax = round(torch.cuda.max_memory_allocated(idx) / 1024**2, 2)
+            print(f'({stage})\tGPU-{idx} memory allocated: {allocmem} MB\t max memory allocated: {allocmax} MB')
+            # print(gpu)
+        torch.cuda.empty_cache()
 
     def load_presetting_dataset_(self, dataset_name, dataset_root='/datasets'):
         if dataset_name not in self.DATASETS.keys():
@@ -263,15 +274,18 @@ class EasyaiClassifier(pl.LightningModule,
 
         root = os.path.join(dataset_root, dataset_name)
         info = os.path.join(root, f'info.json')
+        mean, std = None, None
         if os.path.exists(info):
             with open(info, 'r') as f:
-                ii = json.load(f)
-                self.dataset_info = ii
-        datasets = {
-            'train': JsonfileDataset(path=root, phase='train'),
-            'val': JsonfileDataset(path=root, phase='val'),
-            'test': JsonfileDataset(path=root, phase='test'),
-        }
+                self.dataset_info = json.load(f)
+                print('-' * 80)
+                pprint(self.dataset_info)
+                mean, std = self.dataset_info['mean'], self.dataset_info['std']
+        datasets = {}
+        for phase in ('train', 'val', 'test'):
+            datasets[phase] = JsonfileDataset(path=root, phase=phase)
+            datasets[phase].mean = mean
+            datasets[phase].std = std
         return datasets
 
     def load_mnist(self):
@@ -373,8 +387,8 @@ class EasyaiClassifier(pl.LightningModule,
         return self.load_pretrained_model_('squeezenet1_1', num_classes=num_classes)
 
     def build_model(self):
-        nclses = len(self.dataset_classes) if self.dataset_classes else 1000
-        return self.load_resnet18(num_classes=nclses)
+        num_classes = self.dataset_info['num_classes'] if self.dataset_info else 1000
+        return self.load_resnet18(num_classes)
 
     def configure_optimizer(self, model):
         # default
@@ -408,7 +422,7 @@ class EasyaiClassifier(pl.LightningModule,
         loss = self.cross_entropy(y_hat, y, reduction='mean')
         return x, y, y_hat, loss
 
-    def get_dataloader(self, phase, input_size=32, batch_size=32,
+    def get_dataloader(self, phase, batch_size=32, input_size=32, 
                        data_augment=None, random_order=False,
                        normalize=False, num_workers=1,
                        drop_last=False, shuffle=False):
@@ -428,8 +442,8 @@ class EasyaiClassifier(pl.LightningModule,
     ## Train
     def train_dataloader(self) -> DataLoader:
         return self.get_dataloader('train',
-            input_size=128,
             batch_size=32,
+            input_size=128,
             data_augment=[
                 self.random_resized_crop(size=(128, 128)),
                 self.random_brightness(factor=0.3),
@@ -461,8 +475,8 @@ class EasyaiClassifier(pl.LightningModule,
     ## Valid
     def val_dataloader(self) -> DataLoader:
         return self.get_dataloader('val',
-                input_size=128,
                 batch_size=32,
+                input_size=128,
                 num_workers=1,
                 drop_last=False,
                 shuffle=False)
@@ -482,8 +496,8 @@ class EasyaiClassifier(pl.LightningModule,
     ## Test
     def test_dataloader(self) -> DataLoader:
         return self.get_dataloader('test',
-                input_size=128,
                 batch_size=32,
+                input_size=128,
                 num_workers=1,
                 drop_last=False,
                 shuffle=False)
@@ -502,7 +516,6 @@ class EasyaiClassifier(pl.LightningModule,
         print('\n' + '-' * 80)
         model_summary = ModelSummary(self, mode=mode)
         print('\n' + str(model_summary))
-        print('\n' + '-' * 80)
         return model_summary
 
 
@@ -624,7 +637,6 @@ class EasyaiDetector(EasyaiClassifier,
 
 class EasyaiTrainer(pl.Trainer):
     version = LooseVersion(pl.__version__).version
-    best_ckpt_path = '/cache/checkpoints/best.ckpt'
     model_summary = None
 
     def __init__(self,
@@ -635,9 +647,11 @@ class EasyaiTrainer(pl.Trainer):
             model_summary: Optional[str] = None, # 'full', 'top'
             model_ckpt: Optional[dict] = None, # {'monitor': 'val_loss', 'period': 2, 'mode': 'min'}
             early_stop: Optional[dict] = None, # {'monitor': 'val_loss', 'patience': 3, 'mode': 'min'}
-            log_rate: int = 1
+            log_rate: int = 1,
+            ckpt_path: str = 'best' # 调试使用
             ): # noqa
 
+        self.best_ckpt_path = f'/cache/checkpoints/{ckpt_path}.ckpt'
         resume_from_checkpoint = None
         if resume and os.path.exists(self.best_ckpt_path):
             resume_from_checkpoint = self.best_ckpt_path
@@ -687,9 +701,9 @@ class EasyaiTrainer(pl.Trainer):
         self.resume_from_checkpoint = self.best_ckpt_path
         results = super().test(model=model, ckpt_path=self.best_ckpt_path, verbose=False)
         self.resume_from_checkpoint = save_oldval 
-        if results is not None:
+        if results is not None and isinstance(results, list):
             print('-' * 80)
-            for idx, res in enumerate(results):
+            for res in results:
                 pprint(res)
                 print('-' * 80)
 
@@ -732,8 +746,8 @@ class EasyaiTrainer(pl.Trainer):
                 for path, props in item:
                     filename = os.path.basename(path)
                     classidx = np.argmax(props)
-                    if model.dataset_classes and classidx < len(model.dataset_classes):
-                        target = model.dataset_classes[classidx]
+                    if model.dataset_info and classidx < model.dataset_info['num_classes']:
+                        target = model.dataset_info['label_names'][classidx]
                     else:
                         target = classidx
                     result[filename] = target
