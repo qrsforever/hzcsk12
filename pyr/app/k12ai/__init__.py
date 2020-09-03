@@ -14,6 +14,7 @@ from distutils.version import LooseVersion
 from urllib.request import urlretrieve
 from pprint import pprint
 from pytorch_lightning.core.memory import ModelSummary
+from pytorch_lightning.loggers.base import LightningLoggerBase # noqa
 import os
 import json
 import sys, logging  # noqa
@@ -32,6 +33,9 @@ from torch.utils.data import (Dataset, DataLoader)
 
 warnings.filterwarnings('ignore')
 # logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+
+# np.set_printoptions(suppress=True)
+
 
 from torchvision.transforms import ( # noqa
         Resize,
@@ -141,10 +145,10 @@ class IScheduler(object):
                 milestones=milestones, gamma=gamma, last_epoch=last_epoch)
 
     @staticmethod
-    def reduce_lr(optimizer, mode='min', factor=0.1, patience=10):
+    def reduceon_lr(optimizer, mode='min', factor=0.1, patience=3, min_lr=1e-6):
         return optim.lr_scheduler.ReduceLROnPlateau(
-                optimizer,
-                mode=mode, factor=factor, patience=patience)
+                optimizer, verbose=False,
+                mode=mode, factor=factor, patience=patience, min_lr=min_lr)
 
 
 class EasyaiDataset(ABC, Dataset):
@@ -638,11 +642,13 @@ class EasyaiDetector(EasyaiClassifier,
 class EasyaiTrainer(pl.Trainer):
     version = LooseVersion(pl.__version__).version
     model_summary = None
+    log_lr = False
 
     def __init__(self,
             resume: bool = False,
             max_epochs: int = 10,
             max_steps: Optional[int] = None, # the times of iterations
+            log_lr: bool = False,
             log_gpu_memory: Optional[str] = None, # 'min_max', 'all'
             model_summary: Optional[str] = None, # 'full', 'top'
             model_ckpt: Optional[dict] = None, # {'monitor': 'val_loss', 'period': 2, 'mode': 'min'}
@@ -650,6 +656,40 @@ class EasyaiTrainer(pl.Trainer):
             log_rate: int = 1,
             ckpt_path: str = 'best' # 调试使用
             ): # noqa
+
+        # class PrintLogger(LightningLoggerBase):
+        #     def __init__(self):
+        #         super().__init__()
+        #
+        #     @property
+        #     def experiment(self):
+        #         pass
+        #
+        #     @property
+        #     def name(self):
+        #         return 'easyaiecho'
+        #
+        #     @property
+        #     def version(self):
+        #         return '1.0'
+        #
+        #     def save(self):
+        #         pass
+        #
+        #     def log_hyperparams(self, params):
+        #         pass
+        #
+        #     def log_metrics(self, metrics, step):
+        #         # print('-' * 80)
+        #         # pprint(metrics)
+        #         pass
+
+        callbacks = []
+        # if log_lr:
+        #     from pytorch_lightning.callbacks.lr_logger import LearningRateLogger
+        #     lr_logger = LearningRateLogger(logging_interval='epoch')
+        #     callbacks.append(lr_logger)
+        self.log_lr = log_lr
 
         self.best_ckpt_path = f'/cache/checkpoints/{ckpt_path}.ckpt'
         resume_from_checkpoint = None
@@ -679,7 +719,8 @@ class EasyaiTrainer(pl.Trainer):
         self.model_summary = model_summary
 
         super(EasyaiTrainer, self).__init__(max_epochs=max_epochs, max_steps=max_steps,
-                logger=False,
+                logger=False, # PrintLogger(),
+                callbacks=callbacks,
                 progress_bar_refresh_rate=log_rate,
                 log_gpu_memory=log_gpu_memory, weights_summary=model_summary,
                 num_sanity_val_steps=0,
@@ -777,6 +818,17 @@ class EasyaiTrainer(pl.Trainer):
     def on_validation_start(self):
         if self.progress_bar_callback:
             self.progress_bar_callback.disable()
+
+        if self.log_lr:
+            lrs = []
+            for scheduler in self.lr_schedulers:
+                ss = scheduler['scheduler']
+                if isinstance(ss, optim.lr_scheduler.ReduceLROnPlateau):
+                    for i, param_group in enumerate(ss.optimizer.param_groups):
+                        lrs.append(np.float32(param_group['lr']))
+                else:
+                    lrs.extend([np.float32(x) for x in ss.get_lr()])
+            self.add_progress_bar_metrics({'lr': lrs})
         return super().on_validation_start()
 
     def on_validation_end(self):
