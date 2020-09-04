@@ -9,7 +9,7 @@
 
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union, Sequence # noqa
 from abc import ABC, abstractmethod
-from collections import OrderedDict
+from collections import OrderedDict # noqa
 from distutils.version import LooseVersion
 from urllib.request import urlretrieve
 from pprint import pprint
@@ -200,6 +200,8 @@ class EasyaiDataset(ABC, Dataset):
     def set_img_trans(self, input_size:Union[Tuple[int, int], int, None], normalize=False):
         trans = []
         if input_size:
+            if isinstance(input_size, int):
+                input_size = (input_size, input_size)
             trans.append(Resize(input_size))
         trans.append(ToTensor())
         if normalize is True and self.mean and self.std:
@@ -235,6 +237,7 @@ class EasyaiClassifier(pl.LightningModule,
             'rcifar10': 10,    # 32 x 32
             'rDogsVsCats': 2,  # 224 x 224
             'rflowers': 22,    # 224 x 224
+            'rflowers5': 5,    # 224 x 224
             'rchestxray': 2,   # 224 x 224
             'rfruits': 5       # 224 x 224
     }
@@ -303,6 +306,9 @@ class EasyaiClassifier(pl.LightningModule,
 
     def load_flowers(self):
         return self.load_presetting_dataset_('rflowers', dataset_root='/datasets')
+
+    def load_flowers5(self):
+        return self.load_presetting_dataset_('rflowers5', dataset_root='/datasets')
 
     def load_fruits(self):
         return self.load_presetting_dataset_('rfruits', dataset_root='/datasets')
@@ -378,17 +384,17 @@ class EasyaiClassifier(pl.LightningModule,
                 raise NotImplementedError(f'{model_name}')
         return model
 
-    def load_resnet18(self, num_classes):
-        return self.load_pretrained_model_('resnet18', num_classes=num_classes)
+    def load_resnet18(self, num_classes, pretrained=True):
+        return self.load_pretrained_model_('resnet18', num_classes=num_classes, pretrained=pretrained)
 
-    def load_densenet121(self, num_classes):
-        return self.load_pretrained_model_('densenet121', num_classes=num_classes)
+    def load_densenet121(self, num_classes, pretrained=True):
+        return self.load_pretrained_model_('densenet121', num_classes=num_classes, pretrained=pretrained)
 
-    def load_squeezenet10(self, num_classes):
-        return self.load_pretrained_model_('squeezenet1_0', num_classes=num_classes)
+    def load_squeezenet10(self, num_classes, pretrained=True):
+        return self.load_pretrained_model_('squeezenet1_0', num_classes=num_classes, pretrained=pretrained)
 
-    def load_squeezenet11(self, num_classes):
-        return self.load_pretrained_model_('squeezenet1_1', num_classes=num_classes)
+    def load_squeezenet11(self, num_classes, pretrained=True):
+        return self.load_pretrained_model_('squeezenet1_1', num_classes=num_classes, pretrained=pretrained)
 
     def build_model(self):
         num_classes = self.dataset_info['num_classes'] if self.dataset_info else 1000
@@ -426,13 +432,13 @@ class EasyaiClassifier(pl.LightningModule,
         loss = self.cross_entropy(y_hat, y, reduction='mean')
         return x, y, y_hat, loss
 
-    def get_dataloader(self, phase, batch_size=32, input_size=32, 
+    def get_dataloader(self, phase, batch_size=32, input_size=32,
                        data_augment=None, random_order=False,
                        normalize=False, num_workers=1,
                        drop_last=False, shuffle=False):
         if phase not in self.datasets.keys():
             raise RuntimeError(f'get {phase} data loader  error.')
-        self.example_input_array = torch.zeros(batch_size, 3, input_size, input_size) 
+        self.example_input_array = torch.zeros(batch_size, 3, input_size, input_size)
         dataset = self.datasets[phase]
         dataset.set_aug_trans(transforms=data_augment, random_order=random_order)
         dataset.set_img_trans(input_size=input_size, normalize=normalize)
@@ -462,19 +468,16 @@ class EasyaiClassifier(pl.LightningModule,
     def training_step(self, batch, batch_idx):
         # REQUIRED
         x, y, y_hat, loss = self.step_(batch)
-        with torch.no_grad():
-            accuracy = self.calculate_acc_(y_hat, y)
-        output = OrderedDict({
-            'loss': loss,
-            'progress_bar': {'acc': accuracy},
-        })
-        return output
+        # with torch.no_grad():
+        acc = self.calculate_acc_(y_hat, y)
+        log = {'loss': loss, 'acc': acc}
+        return log
 
-    # def training_epoch_end(self, outputs):
-    #     avg_loss = torch.stack([x['train_loss'] for x in outputs]).mean()
-    #     avg_acc = torch.stack([x['train_acc'] for x in outputs]).mean()
-    #     log = {'train_loss': avg_loss, 'train_acc': avg_acc}
-    #     return {**log}
+    def training_epoch_end(self, outputs):
+        avg_loss = torch.stack([x['loss'] for x in outputs]).mean()
+        avg_acc = torch.stack([x['acc'] for x in outputs]).mean()
+        log = {'train_loss': avg_loss, 'train_acc': avg_acc}
+        return {'progress_bar': log}
 
     ## Valid
     def val_dataloader(self) -> DataLoader:
@@ -487,13 +490,13 @@ class EasyaiClassifier(pl.LightningModule,
 
     def validation_step(self, batch, batch_idx):
         x, y, y_hat, loss = self.step_(batch)
-        accuracy = self.calculate_acc_(y_hat, y)
-        log = {'loss': loss, 'acc': accuracy}
+        acc = self.calculate_acc_(y_hat, y)
+        log = {'val_loss': loss, 'val_acc': acc}
         return log
 
     def validation_epoch_end(self, outputs):
-        avg_loss = torch.stack([x['loss'] for x in outputs]).mean()
-        avg_acc = torch.stack([x['acc'] for x in outputs]).mean()
+        avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
+        avg_acc = torch.stack([x['val_acc'] for x in outputs]).mean()
         log = {'val_loss': avg_loss, 'val_acc': avg_acc}
         return {'progress_bar': log}
 
@@ -714,7 +717,7 @@ class EasyaiTrainer(pl.Trainer):
             if any([it not in validkeys for it in early_stop.keys()]):
                 raise KeyError(f'{early_stop.keys()} is not in {validkeys}')
             from pytorch_lightning.callbacks import EarlyStopping
-            cb_early_stop = EarlyStopping(**early_stop)
+            cb_early_stop = EarlyStopping(**early_stop, verbose=True)
 
         self.model_summary = model_summary
 
@@ -738,10 +741,10 @@ class EasyaiTrainer(pl.Trainer):
     def test(self, model=None):
         if not os.path.exists(self.best_ckpt_path):
             raise FileNotFoundError('not found model weights file')
-        save_oldval = self.resume_from_checkpoint 
+        save_oldval = self.resume_from_checkpoint
         self.resume_from_checkpoint = self.best_ckpt_path
         results = super().test(model=model, ckpt_path=self.best_ckpt_path, verbose=False)
-        self.resume_from_checkpoint = save_oldval 
+        self.resume_from_checkpoint = save_oldval
         if results is not None and isinstance(results, list):
             print('-' * 80)
             for res in results:
