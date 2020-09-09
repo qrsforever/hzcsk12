@@ -233,7 +233,6 @@ def _framework_message_pop():
                 if item is None:
                     break
                 response.append(item.decode())
-            return json.dumps(response)
     except Exception as err:
         Logger.info(err)
     finally:

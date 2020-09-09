@@ -49,8 +49,8 @@ class ServiceRPC(object):
     def send_message(self, appId, token, op, user, uuid, msgtype, message, clear=False):
         if not msgtype:
             return
-        if msgtype == 'error':
-            errcode = 999999
+        if msgtype in ('error', 'runlog'):
+            errcode = 100000 if msgtype == 'runlog' else 999999
             if 'errinfo' in message:
                 if 'warning' == message['status']:
                     errcode = 100009

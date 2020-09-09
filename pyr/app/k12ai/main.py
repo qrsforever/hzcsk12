@@ -26,7 +26,7 @@ if __name__ == '__main__':
 
     # os.environ['PYTHONUNBUFFERED'] = "1"
     try:
-        k12ai_send_message('error', {
+        k12ai_send_message('runlog', {
             'status': 'running',
             'log': '#' * LINE_WIDTH + '\n' + '{:^80s}'.format('RUNNING') + '\n' + '#' * LINE_WIDTH + '\n'
         })
@@ -51,23 +51,23 @@ if __name__ == '__main__':
                         if all([not err.startswith(x) for x in ('GPU av', 'TPU av', 'CUDA_VI')]):
                             errs.append(err)
                     if len(errs) > 0:
-                        k12ai_send_message('error', {'log': ''.join(errs)})
+                        k12ai_send_message('runlog', {'log': ''.join(errs)})
                     break
                 cache.append(output)
                 if time.time() > stime + 0.5:
-                    k12ai_send_message('error', {'log': ''.join(cache)})
+                    k12ai_send_message('runlog', {'log': ''.join(cache)})
                     cache.clear()
                     stime = time.time()
             else:
                 time.sleep(0.5)
         if len(cache) > 0:
-            k12ai_send_message('error', {'log': ''.join(cache)})
-        k12ai_send_message('error', {
+            k12ai_send_message('runlog', {'log': ''.join(cache)})
+        k12ai_send_message('runlog', {
             'status': 'finished',
             'log': '#' * LINE_WIDTH + '\n' + '{:^80s}'.format('FINISHED') + '\n' + '#' * LINE_WIDTH + '\n'
         }, end=True)
     except Exception as err:
-        k12ai_send_message('error', {
+        k12ai_send_message('runlog', {
             'status': 'finished',
             'log': f'{err}.\n'
         }, end=True)

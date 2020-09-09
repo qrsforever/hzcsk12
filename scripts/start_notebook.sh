@@ -84,7 +84,7 @@ __main()
         __start_notebook $K12PYR_PROJECT $K12PYR_PORT \
             --env PYTHONPATH=$DST_DIR:$DST_DIR/pyr/app:$DST_DIR/pyr/pytorch-lightning \
             --volume $TOP_DIR/pyr/app:$DST_DIR/pyr/app \
-            --volume $TOP_DIR/pyr/pytorch-lightning/pytorch-lightning:$DST_DIR/pyr/pytorch-lightning/pytorch-lightning \
+            --volume $TOP_DIR/pyr/pytorch-lightning/pytorch_lightning:$DST_DIR/pyr/pytorch-lightning/pytorch_lightning \
             --volume /data:/data \
             --volume /data/pretrained/cv:/root/.cache/torch/hub/checkpoints
     else
