@@ -424,7 +424,7 @@ class EasyaiClassifier(pl.LightningModule,
         return self.model(x)
 
     def calculate_acc_(self, y_pred, y_true):
-        return (torch.argmax(y_pred, axis=1) == y_true).float().mean()
+        return (torch.argmax(y_pred, dim=1) == y_true).float().mean()
 
     def step_(self, batch):
         x, y, _ = batch

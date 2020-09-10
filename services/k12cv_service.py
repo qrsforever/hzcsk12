@@ -81,8 +81,12 @@ class CVServiceRPC(ServiceRPC):
             self.oss_download(kv_config)
             if os.path.exists(kv_config):
                 with open(kv_config, 'r') as fr:
-                    params = json.load(fr)
-                    params['network.resume_continue'] = True
+                    _jdata = json.load(fr)
+                    if params is not None:
+                        params.update(_jdata)
+                    else:
+                        params = _jdata 
+                params['network.resume_continue'] = True
             else:
                 raise FrameworkError(100214)
 
@@ -111,7 +115,7 @@ class CVServiceRPC(ServiceRPC):
 
         # download predict images
         if 'predict' in op:
-            imguri = params.get('_k12.predict_images', default=None)
+            imguri = params.get('_k12.predict_images')
             if imguri:
                 if isinstance(imguri, str) and imguri.startswith('oss://'):
                     self.oss_download(os.path.join(usercache, imguri[6:]))
