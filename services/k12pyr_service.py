@@ -39,7 +39,7 @@ class PyrServiceRPC(ServiceRPC):
     def __init__(self, host, port, image, dataroot):
         super().__init__('pyr', host, port, image, dataroot, _DEBUG_)
 
-        self._datadir = f'{dataroot}/datasets/cv'
+        self._datadir = f'{dataroot}/datasets'
         self._pretrained_dir = f'{dataroot}/pretrained/cv'
 
     def errtype2errcode(self, op, user, uuid, errtype, errtext):

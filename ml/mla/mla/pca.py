@@ -1,7 +1,8 @@
 # coding:utf-8
-from scipy.linalg import svd
-import numpy as np
 import logging
+
+import numpy as np
+from scipy.linalg import svd
 
 from mla.base import BaseEstimator
 
@@ -47,7 +48,7 @@ class PCA(BaseEstimator):
             Vh = Vh.T
 
         s_squared = s ** 2
-        variance_ratio = s_squared / (s_squared).sum()
+        variance_ratio = s_squared / s_squared.sum()
         logging.info("Explained variance ratio: %s" % (variance_ratio[0: self.n_components]))
         self.components = Vh[0: self.n_components]
 

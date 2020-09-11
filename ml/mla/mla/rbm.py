@@ -1,10 +1,10 @@
 # coding:utf-8
 import logging
 
-from mla.base import BaseEstimator
-from scipy.special import expit
 import numpy as np
+from scipy.special import expit
 
+from mla.base import BaseEstimator
 from mla.utils import batch_iterator
 
 np.random.seed(9999)
@@ -64,7 +64,7 @@ class RBM(BaseEstimator):
                 positive_associations = np.dot(batch.T, positive_hidden)
 
                 negative_visible = sigmoid(np.dot(hidden_states, self.W.T) + self.bias_v)
-                negative_visible = self._sample(negative_visible)  # use the samped hidden state h1 to sample v1
+                negative_visible = self._sample(negative_visible)  # use the sampled hidden state h1 to sample v1
                 negative_hidden = sigmoid(np.dot(negative_visible, self.W) + self.bias_h)
                 negative_associations = np.dot(negative_visible.T, negative_hidden)
 

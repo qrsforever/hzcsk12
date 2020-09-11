@@ -26,11 +26,11 @@ class HousePricesDataLoader(K12DataLoader):
         # Missing value
         for col in ('PoolQC', 'MiscFeature', 'Alley', 'Fence', 'FireplaceQu', 'GarageCond',
                 'GarageQual', 'GarageFinish', 'GarageType', 'BsmtCond', 'BsmtExposure',
-                'BsmtQual', 'BsmtFinType2', 'BsmtFinType1', 'MasVnrArea', 'Utilities'):
+                'BsmtQual', 'BsmtFinType2', 'BsmtFinType1', 'Utilities'):
             train_data_df[col] = train_data_df[col].fillna('None')
 
         for col in ('GarageYrBlt', 'GarageArea', 'GarageCars', 'BsmtHalfBath', 'BsmtFullBath',
-                      'BsmtFinSF2', 'BsmtFinSF1', 'BsmtUnfSF', 'TotalBsmtSF'):
+                      'BsmtFinSF2', 'BsmtFinSF1', 'BsmtUnfSF', 'TotalBsmtSF', 'MasVnrArea'):
             train_data_df[col] = train_data_df[col].fillna(0)
 
         for col in ('MSZoning', 'Exterior1st', 'Exterior2nd', 'SaleType', 'Electrical', 'KitchenQual'):
@@ -41,10 +41,6 @@ class HousePricesDataLoader(K12DataLoader):
 
         # For dummies
         for col in ('MSSubClass', 'OverallCond', 'YearBuilt', 'YrSold', 'MoSold'):
-            train_data_df[col] = train_data_df[col].astype(str)
-            train_data_df[col] = train_data_df[col].astype(str)
-            train_data_df[col] = train_data_df[col].astype(str)
-            train_data_df[col] = train_data_df[col].astype(str)
             train_data_df[col] = train_data_df[col].astype(str)
 
         train_data_df = pd.get_dummies(train_data_df)

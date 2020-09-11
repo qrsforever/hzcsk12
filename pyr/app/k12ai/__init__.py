@@ -31,6 +31,13 @@ from torch import optim
 from torch.nn import functional as F
 from torch.utils.data import (Dataset, DataLoader)
 
+### ML
+from sklearn.model_selection import train_test_split
+from sklearn.base import (ClassifierMixin, RegressorMixin)
+from sklearn import preprocessing
+from sklearn.metrics import accuracy_score, confusion_matrix # noqa
+from .ml.datasets import ML_load_dataset
+
 warnings.filterwarnings('ignore')
 # logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
@@ -258,7 +265,7 @@ class EasyaiClassifier(pl.LightningModule,
             # print(gpu)
         torch.cuda.empty_cache()
 
-    def load_presetting_dataset_(self, dataset_name, dataset_root='/datasets'):
+    def load_presetting_dataset_(self, dataset_name, dataset_root='/datasets/cv'):
         if dataset_name not in self.DATASETS.keys():
             raise ValueError(f'{dataset_name} is not in {self.DATASETS.keys()}')
 
@@ -296,25 +303,34 @@ class EasyaiClassifier(pl.LightningModule,
         return datasets
 
     def load_mnist(self):
-        return self.load_presetting_dataset_('rmnist', dataset_root='/datasets')
+        return self.load_presetting_dataset_('rmnist')
 
     def load_cifar10(self):
-        return self.load_presetting_dataset_('rcifar10', dataset_root='/datasets')
+        return self.load_presetting_dataset_('rcifar10')
 
     def load_dogcat(self):
-        return self.load_presetting_dataset_('rDogsVsCats', dataset_root='/datasets')
+        return self.load_presetting_dataset_('rDogsVsCats')
 
     def load_flowers(self):
-        return self.load_presetting_dataset_('rflowers', dataset_root='/datasets')
+        return self.load_presetting_dataset_('rflowers')
 
     def load_flowers5(self):
-        return self.load_presetting_dataset_('rflowers5', dataset_root='/datasets')
+        return self.load_presetting_dataset_('rflowers5')
 
     def load_fruits(self):
-        return self.load_presetting_dataset_('rfruits', dataset_root='/datasets')
+        return self.load_presetting_dataset_('rfruits')
 
     def load_chestxray(self):
-        return self.load_presetting_dataset_('rchestxray', dataset_root='/datasets')
+        return self.load_presetting_dataset_('rchestxray')
+
+    def load_houseprice(self):
+        return ML_load_dataset('houseprice', dataset_root='/datasets/ml/house-prices')
+
+    def load_sfcrime(self):
+        return ML_load_dataset('sfcrime', dataset_root='/datasets/ml/sf-crime')
+
+    def load_titanic(self):
+        return ML_load_dataset('titanic', dataset_root='/datasets/ml/titanic')
 
     def prepare_dataset(self) -> Union[EasyaiDataset, List[EasyaiDataset], Dict[str, EasyaiDataset]]:
         return self.load_rmnist()
@@ -420,6 +436,15 @@ class EasyaiClassifier(pl.LightningModule,
             schedulers = [schedulers]
         return optimizers, schedulers
 
+    def configure_estimator(self) -> dict:
+        return {'test_size': 0.4}
+
+    def fit_end(self, preds, trues):
+        print('fit result', accuracy_score(preds, trues))
+
+    def predict_end(self, preds):
+        print('predict result: ', preds)
+
     def forward(self, x, *args, **kwargs):
         return self.model(x)
 
@@ -474,9 +499,11 @@ class EasyaiClassifier(pl.LightningModule,
         return log
 
     def training_epoch_end(self, outputs):
-        avg_loss = torch.stack([x['loss'] for x in outputs]).mean()
-        avg_acc = torch.stack([x['acc'] for x in outputs]).mean()
-        log = {'train_loss': avg_loss, 'train_acc': avg_acc}
+        log = {
+            'train_loss': torch.stack([x['loss'] for x in outputs]).mean()
+        }
+        if 'acc' in outputs[0]:
+            log['train_acc'] = torch.stack([x['acc'] for x in outputs]).mean()
         return {'progress_bar': log}
 
     ## Valid
@@ -495,9 +522,11 @@ class EasyaiClassifier(pl.LightningModule,
         return log
 
     def validation_epoch_end(self, outputs):
-        avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
-        avg_acc = torch.stack([x['val_acc'] for x in outputs]).mean()
-        log = {'val_loss': avg_loss, 'val_acc': avg_acc}
+        log = {}
+        if 'val_loss' in outputs[0]:
+            log['val_loss'] = torch.stack([x['val_loss'] for x in outputs]).mean()
+        if 'val_acc' in outputs[0]:
+            log['val_acc'] = torch.stack([x['val_acc'] for x in outputs]).mean()
         return {'progress_bar': log}
 
     ## Test
@@ -516,14 +545,20 @@ class EasyaiClassifier(pl.LightningModule,
         return log
 
     def test_epoch_end(self, outputs):
-        avg_acc = torch.stack([x['acc'] for x in outputs]).mean()
-        return {'test_acc': avg_acc}
+        log = {}
+        if 'acc' in outputs[0]:
+            log['test_acc'] = torch.stack([x['acc'] for x in outputs]).mean()
+        return log
 
     def summarize(self, mode):
         print('\n' + '-' * 80)
         model_summary = ModelSummary(self, mode=mode)
         print('\n' + str(model_summary))
         return model_summary
+
+
+class EasyaiRegressor(EasyaiClassifier):
+    pass
 
 
 class SSD300(nn.Module):
@@ -648,6 +683,7 @@ class EasyaiTrainer(pl.Trainer):
     log_lr = False
 
     def __init__(self,
+            framework='cv',
             resume: bool = False,
             max_epochs: int = 10,
             max_steps: Optional[int] = None, # the times of iterations
@@ -660,163 +696,209 @@ class EasyaiTrainer(pl.Trainer):
             ckpt_path: str = 'best' # 调试使用
             ): # noqa
 
-        # class PrintLogger(LightningLoggerBase):
-        #     def __init__(self):
-        #         super().__init__()
-        #
-        #     @property
-        #     def experiment(self):
-        #         pass
-        #
-        #     @property
-        #     def name(self):
-        #         return 'easyaiecho'
-        #
-        #     @property
-        #     def version(self):
-        #         return '1.0'
-        #
-        #     def save(self):
-        #         pass
-        #
-        #     def log_hyperparams(self, params):
-        #         pass
-        #
-        #     def log_metrics(self, metrics, step):
-        #         # print('-' * 80)
-        #         # pprint(metrics)
-        #         pass
+        self.ml_model = None
+        self.framework = framework
+        if framework == 'cv':
+            # class PrintLogger(LightningLoggerBase):
+            #     def __init__(self):
+            #         super().__init__()
+            #
+            #     @property
+            #     def experiment(self):
+            #         pass
+            #
+            #     @property
+            #     def name(self):
+            #         return 'easyaiecho'
+            #
+            #     @property
+            #     def version(self):
+            #         return '1.0'
+            #
+            #     def save(self):
+            #         pass
+            #
+            #     def log_hyperparams(self, params):
+            #         pass
+            #
+            #     def log_metrics(self, metrics, step):
+            #         # print('-' * 80)
+            #         # pprint(metrics)
+            #         pass
 
-        callbacks = []
-        # if log_lr:
-        #     from pytorch_lightning.callbacks.lr_logger import LearningRateLogger
-        #     lr_logger = LearningRateLogger(logging_interval='epoch')
-        #     callbacks.append(lr_logger)
-        self.log_lr = log_lr
+            callbacks = []
+            # if log_lr:
+            #     from pytorch_lightning.callbacks.lr_logger import LearningRateLogger
+            #     lr_logger = LearningRateLogger(logging_interval='epoch')
+            #     callbacks.append(lr_logger)
+            self.log_lr = log_lr
 
-        self.best_ckpt_path = f'/cache/checkpoints/{ckpt_path}.ckpt'
-        resume_from_checkpoint = None
-        if resume and os.path.exists(self.best_ckpt_path):
-            resume_from_checkpoint = self.best_ckpt_path
+            self.best_ckpt_path = f'/cache/checkpoints/{ckpt_path}.ckpt'
+            resume_from_checkpoint = None
+            if resume and os.path.exists(self.best_ckpt_path):
+                resume_from_checkpoint = self.best_ckpt_path
 
-        cb_model_ckpt = True
-        if model_ckpt:
-            if not isinstance(model_ckpt, dict):
-                raise TypeError('model_ckpt must be dict type!')
-            validkeys = ('monitor', 'period', 'mode')
-            if any([it not in validkeys for it in model_ckpt.keys()]):
-                raise KeyError(f'{model_ckpt.keys()} is not in {validkeys}')
-            from pytorch_lightning.callbacks import ModelCheckpoint
-            cb_model_ckpt = ModelCheckpoint(**model_ckpt)
+            cb_model_ckpt = True
+            if model_ckpt:
+                if not isinstance(model_ckpt, dict):
+                    raise TypeError('model_ckpt must be dict type!')
+                validkeys = ('monitor', 'period', 'mode')
+                if any([it not in validkeys for it in model_ckpt.keys()]):
+                    raise KeyError(f'{model_ckpt.keys()} is not in {validkeys}')
+                from pytorch_lightning.callbacks import ModelCheckpoint
+                cb_model_ckpt = ModelCheckpoint(**model_ckpt)
 
-        cb_early_stop = False
-        if early_stop:
-            if not isinstance(early_stop, dict):
-                raise TypeError('early_stop must be dict type!')
-            validkeys = ('monitor', 'patience', 'mode')
-            if any([it not in validkeys for it in early_stop.keys()]):
-                raise KeyError(f'{early_stop.keys()} is not in {validkeys}')
-            from pytorch_lightning.callbacks import EarlyStopping
-            cb_early_stop = EarlyStopping(**early_stop, verbose=True)
+            cb_early_stop = False
+            if early_stop:
+                if not isinstance(early_stop, dict):
+                    raise TypeError('early_stop must be dict type!')
+                validkeys = ('monitor', 'patience', 'mode')
+                if any([it not in validkeys for it in early_stop.keys()]):
+                    raise KeyError(f'{early_stop.keys()} is not in {validkeys}')
+                from pytorch_lightning.callbacks import EarlyStopping
+                cb_early_stop = EarlyStopping(**early_stop, verbose=True)
 
-        self.model_summary = model_summary
+            self.model_summary = model_summary
 
-        super(EasyaiTrainer, self).__init__(max_epochs=max_epochs, max_steps=max_steps,
-                logger=False, # PrintLogger(),
-                callbacks=callbacks,
-                progress_bar_refresh_rate=log_rate,
-                log_gpu_memory=log_gpu_memory, weights_summary=model_summary,
-                num_sanity_val_steps=0,
-                checkpoint_callback=cb_model_ckpt,
-                early_stop_callback=cb_early_stop,
-                default_root_dir='/cache',
-                resume_from_checkpoint=resume_from_checkpoint,
-                check_val_every_n_epoch=1,
-                val_check_interval=1.0,
-                gpus=[0])
+            super(EasyaiTrainer, self).__init__(max_epochs=max_epochs, max_steps=max_steps,
+                    logger=False, # PrintLogger(),
+                    callbacks=callbacks,
+                    progress_bar_refresh_rate=log_rate,
+                    log_gpu_memory=log_gpu_memory, weights_summary=model_summary,
+                    num_sanity_val_steps=0,
+                    checkpoint_callback=cb_model_ckpt,
+                    early_stop_callback=cb_early_stop,
+                    default_root_dir='/cache',
+                    resume_from_checkpoint=resume_from_checkpoint,
+                    check_val_every_n_epoch=1,
+                    val_check_interval=1.0,
+                    gpus=[0])
 
     def fit(self, model):
-        return super().fit(model=model)
+        if self.framework == 'cv':
+            return super().fit(model=model)
+        # ML
+        self.framework = 'ml'
+        self.ml_model = None
+        ml_model = model.build_model()
+        if not (isinstance(model, EasyaiClassifier)
+                and isinstance(ml_model, ClassifierMixin)) \
+                        and not (isinstance(model, EasyaiRegressor)
+                                and isinstance(ml_model, RegressorMixin)):
+            raise RuntimeError('model is invalid!')
+
+        X, Y, feature_names, target_names = model.prepare_dataset()
+        print(feature_names.tolist())
+        params = model.configure_estimator()
+        test_size = 0.4
+        scaler = None
+        if 'test_size' in params:
+            test_size = params['test_size']
+        if 'scaler_mode' in params:
+            if 'zscore' == params['scaler_mode']:
+                scaler = preprocessing.StandardScaler()
+            elif 'minmax' == params['scaler_mode']:
+                scaler = preprocessing.MinMaxScaler()
+
+        train_x, test_x, train_y, test_y = train_test_split(X, Y, test_size=test_size)
+        if scaler:
+            train_x = scaler.fit_transform(train_x)
+            test_x = scaler.transform(test_x)
+        ml_model.fit(train_x, train_y)
+        predict_y = ml_model.predict(test_x)
+        model.fit_end(predict_y, test_y)
+        # print('fit accuracy:', accuracy_score(predict_y, test_y))
+        self.ml_model = ml_model
 
     def test(self, model=None):
-        if not os.path.exists(self.best_ckpt_path):
-            raise FileNotFoundError('not found model weights file')
-        save_oldval = self.resume_from_checkpoint
-        self.resume_from_checkpoint = self.best_ckpt_path
-        results = super().test(model=model, ckpt_path=self.best_ckpt_path, verbose=False)
-        self.resume_from_checkpoint = save_oldval
-        if results is not None and isinstance(results, list):
-            print('-' * 80)
-            for res in results:
-                pprint(res)
+        if self.framework == 'cv':
+            if not os.path.exists(self.best_ckpt_path):
+                raise FileNotFoundError('not found model weights file')
+            save_oldval = self.resume_from_checkpoint
+            self.resume_from_checkpoint = self.best_ckpt_path
+            results = super().test(model=model, ckpt_path=self.best_ckpt_path, verbose=False)
+            self.resume_from_checkpoint = save_oldval
+            if results is not None and isinstance(results, list):
                 print('-' * 80)
+                for res in results:
+                    pprint(res)
+                    print('-' * 80)
 
-    def predict(self, model, image_path, input_size=128):
-        class ImageFolderDataset(EasyaiDataset):
-            def data_reader(self, path):
-                extensions = ('.jpg', '.jpeg', '.png', '.bmp', '.webp')
-                image_list = []
-                label_list = []
-                for filename in os.listdir(path):
-                    if not filename.lower().endswith(extensions):
-                        continue
-                    image_list.append(f'{path}/{filename}')
-                    label_list.append(-1)
-                return (image_list, label_list)
+    def predict(self, model, image_path=None, features=None, input_size=128):
+        if self.framework == 'cv' and image_path is None:
+            class ImageFolderDataset(EasyaiDataset):
+                def data_reader(self, path):
+                    extensions = ('.jpg', '.jpeg', '.png', '.bmp', '.webp')
+                    image_list = []
+                    label_list = []
+                    for filename in os.listdir(path):
+                        if not filename.lower().endswith(extensions):
+                            continue
+                        image_list.append(f'{path}/{filename}')
+                        label_list.append(-1)
+                    return (image_list, label_list)
 
-        def predict_dataloader(self):
-            if image_path.startswith('oss://'):
-                dataset = ImageFolderDataset(path=os.path.join('/cache', image_path[6:]))
-            elif image_path.startswith('http') or image_path.startswith('ftp'):
-                dstpath = '/cache/user_images'
-                if not os.path.exists(dstpath):
-                    os.makedirs(dstpath)
-                urlretrieve(image_path, os.path.join(dstpath, os.path.basename(image_path)))
-                dataset = ImageFolderDataset(path=dstpath)
-            else:
-                raise NotImplementedError('not in (oss, http, ftp)')
-            dataset.set_img_trans(input_size=input_size)
-            dataloader = DataLoader(dataset, num_workers=1, shuffle=False, batch_size=32, drop_last=False)
-            return dataloader
+            def predict_dataloader(self):
+                if image_path.startswith('oss://'):
+                    dataset = ImageFolderDataset(path=os.path.join('/cache', image_path[6:]))
+                elif image_path.startswith('http') or image_path.startswith('ftp'):
+                    dstpath = '/cache/user_images'
+                    if not os.path.exists(dstpath):
+                        os.makedirs(dstpath)
+                    urlretrieve(image_path, os.path.join(dstpath, os.path.basename(image_path)))
+                    dataset = ImageFolderDataset(path=dstpath)
+                else:
+                    raise NotImplementedError('not in (oss, http, ftp)')
+                dataset.set_img_trans(input_size=input_size)
+                dataloader = DataLoader(dataset, num_workers=1, shuffle=False, batch_size=32, drop_last=False)
+                return dataloader
 
-        def predict_step(self, batch, batch_idx):
-            x, _, p = batch
-            y_hat = self(x)
-            return list(zip(p, F.softmax(y_hat, dim=1).cpu().numpy().astype(float)))
+            def predict_step(self, batch, batch_idx):
+                x, _, p = batch
+                y_hat = self(x)
+                return list(zip(p, F.softmax(y_hat, dim=1).cpu().numpy().astype(float)))
 
-        def predict_epoch_end(self, outputs):
-            result = {}
-            for item in outputs:
-                for path, props in item:
-                    filename = os.path.basename(path)
-                    classidx = np.argmax(props)
-                    if model.dataset_info and classidx < model.dataset_info['num_classes']:
-                        target = model.dataset_info['label_names'][classidx]
-                    else:
-                        target = classidx
-                    result[filename] = target
-            return result
+            def predict_epoch_end(self, outputs):
+                result = {}
+                for item in outputs:
+                    for path, props in item:
+                        filename = os.path.basename(path)
+                        classidx = np.argmax(props)
+                        if model.dataset_info and classidx < model.dataset_info['num_classes']:
+                            target = model.dataset_info['label_names'][classidx]
+                        else:
+                            target = classidx
+                        result[filename] = target
+                return result
 
-        try:
-            m_test_dataloader = getattr(model.__class__, 'test_dataloader', None)
-            m_test_step = getattr(model.__class__, 'test_step', None)
-            m_test_epoch_end = getattr(model.__class__, 'test_epoch_end', None)
-            setattr(model.__class__, 'test_dataloader', predict_dataloader)
-            setattr(model.__class__, 'test_step', predict_step)
-            setattr(model.__class__, 'test_epoch_end', predict_epoch_end)
-            if self.version == [0, 8, 5]:
-                return super().test(model=model)
-            else:
-                return super().test(model=model, verbose=False)
-        except Exception as err:
-            raise err
-        finally:
-            if m_test_dataloader:
-                setattr(model.__class__, 'test_dataloader', m_test_dataloader)
-            if m_test_step:
-                setattr(model.__class__, 'test_step', m_test_step)
-            if m_test_epoch_end:
-                setattr(model.__class__, 'test_epoch_end', m_test_epoch_end)
+            try:
+                m_test_dataloader = getattr(model.__class__, 'test_dataloader', None)
+                m_test_step = getattr(model.__class__, 'test_step', None)
+                m_test_epoch_end = getattr(model.__class__, 'test_epoch_end', None)
+                setattr(model.__class__, 'test_dataloader', predict_dataloader)
+                setattr(model.__class__, 'test_step', predict_step)
+                setattr(model.__class__, 'test_epoch_end', predict_epoch_end)
+                if self.version == [0, 8, 5]:
+                    return super().test(model=model)
+                else:
+                    return super().test(model=model, verbose=False)
+            except Exception as err:
+                raise err
+            finally:
+                if m_test_dataloader:
+                    setattr(model.__class__, 'test_dataloader', m_test_dataloader)
+                if m_test_step:
+                    setattr(model.__class__, 'test_step', m_test_step)
+                if m_test_epoch_end:
+                    setattr(model.__class__, 'test_epoch_end', m_test_epoch_end)
+        elif self.framework == 'ml':
+            if self.ml_model is None or features is None:
+                raise RuntimeError('ml model not run fit or lack features')
+            if 1 == len(features.shape):
+                features = np.expand_dims(features, 0)
+            result = self.ml_model.predict(features)
+            model.predict_end(result)
+            # print('predict result:', result)
 
     def on_validation_start(self):
         if self.progress_bar_callback:

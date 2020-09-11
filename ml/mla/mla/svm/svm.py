@@ -1,8 +1,10 @@
 # coding:utf-8
+import logging
+
+import numpy as np
+
 from mla.base import BaseEstimator
 from mla.svm.kernerls import Linear
-import numpy as np
-import logging
 
 np.random.seed(9999)
 
@@ -73,15 +75,11 @@ class SVM(BaseEstimator):
 
                 # Find intercept
                 b1 = (
-                    self.b
-                    - e_i
-                    - self.y[i] * (self.alpha[i] - alpha_io) * self.K[i, i]
+                    self.b - e_i - self.y[i] * (self.alpha[i] - alpha_io) * self.K[i, i]
                     - self.y[j] * (self.alpha[j] - alpha_jo) * self.K[i, j]
                 )
                 b2 = (
-                    self.b
-                    - e_j
-                    - self.y[j] * (self.alpha[j] - alpha_jo) * self.K[j, j]
+                    self.b - e_j - self.y[j] * (self.alpha[j] - alpha_jo) * self.K[j, j]
                     - self.y[i] * (self.alpha[i] - alpha_io) * self.K[i, j]
                 )
                 if 0 < self.alpha[i] < self.C:
