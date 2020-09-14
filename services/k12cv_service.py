@@ -125,7 +125,10 @@ class CVServiceRPC(ServiceRPC):
                     mkdir_p(test_dir)
                     for img in imguri:
                         with open(os.path.join(test_dir, img['name']), "wb") as fp:
-                            fp.write(base64.b64decode(img["content"]))
+                            content = img["content"].split(',')
+                            if len(content) > 1:
+                                content = content[1]
+                            fp.write(base64.b64decode(content))
                 else:
                     raise FrameworkError(100215)
             else:
