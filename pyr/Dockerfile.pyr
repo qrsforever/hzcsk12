@@ -48,6 +48,7 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
         GPUtil psutil packaging\
         torchsummary tensorboard seaborn \
         pyhocon protobuf "jsonnet>=0.10.0" \
+        xgboost \
         zerorpc python-consul \
         && \
     ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && \

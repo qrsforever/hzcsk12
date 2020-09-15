@@ -20,6 +20,7 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
     $PIP_INSTALL \
         crontabs redis flask flask_cors h5py protobuf-compiler \
         /root/ipywidgets.zip \
+        xgboost \
         watermark jupyter \
         jupyter_contrib_nbextensions \
         jupyter_nbextensions_configurator \
