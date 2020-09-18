@@ -50,7 +50,7 @@ class ServiceRPC(object):
         if not msgtype:
             return
         if msgtype in ('error', 'runlog'):
-            errcode = 100000 if msgtype == 'runlog' else 999999
+            errcode = 000000 if msgtype == 'runlog' else 999999
             if 'errinfo' in message:
                 if 'warning' == message['status']:
                     errcode = 100009
@@ -128,7 +128,7 @@ class ServiceRPC(object):
 
     def on_finished(self, appId, op, user, uuid, message):
         self.post_processing(appId, op, user, uuid, message)
-        self.clear_cache(user, uuid)
+        # self.clear_cache(user, uuid)
         return message
 
     def oss_upload(self, filepath, bucket_name=None, prefix_map=None, clear=False):

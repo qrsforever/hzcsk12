@@ -23,6 +23,7 @@ class FrameworkError(Exception):
 
 
 ERRORS = {
+        000000: {'en': 'ignore message', 'cn': '忽略'},
         100000: {'en': 'success', 'cn': '成功'},
         100001: {'en': 'program staring', 'cn': '程序正在启动'},
         100002: {'en': 'program running', 'cn': '程序正在运行'},
