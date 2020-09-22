@@ -541,13 +541,13 @@ class EasyaiClassifier(pl.LightningModule,
     def test_step(self, batch, batch_idx):
         x, y, y_hat, loss = self.step_(batch)
         accuracy = self.calculate_acc_(y_hat, y)
-        log = {'loss': loss, 'acc': accuracy}
+        log = {'test_acc': accuracy}
         return log
 
     def test_epoch_end(self, outputs):
         log = {}
         if 'acc' in outputs[0]:
-            log['test_acc'] = torch.stack([x['acc'] for x in outputs]).mean()
+            log['test_acc'] = torch.stack([x['test_acc'] for x in outputs]).mean()
         return log
 
     def summarize(self, mode):

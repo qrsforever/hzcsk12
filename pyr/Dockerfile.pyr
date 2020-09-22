@@ -63,7 +63,7 @@ RUN cd /hzcsk12/pyr/pytorch-lightning && \
         --index-url http://mirrors.intra.didiyun.com/pip/simple \
         --editable .
 
-ENV PYTHONPATH=/hzcsk12/pyr/app:/hzcsk12/pyr/pytorch-lightning:$PYTHONPATH
+ENV PYTHONPATH=/hzcsk12:/hzcsk12/pyr/app:/hzcsk12/pyr/pytorch-lightning:/hzcsk12/pyr/detectron2:$PYTHONPATH
 
 ARG jupyter_data_dir=/root/.local/share/jupyter
 ARG jupyter_conf_dir=/root/.jupyter
