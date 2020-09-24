@@ -19,6 +19,7 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
         && \
     $PIP_INSTALL \
         crontabs redis flask flask_cors h5py protobuf-compiler \
+        tfrecord \
         /root/ipywidgets.zip \
         xgboost detectron2\
         watermark jupyter \
