@@ -1,5 +1,6 @@
 {
     "bind_addr": "10.255.0.58", 
+    "client_addr": "0.0.0.0", 
     "datacenter": "k12ai",
     "data_dir": "/var/consul",
     "encrypt": "EXz7LFN8hpQ4id8EDYiFoQ==",
