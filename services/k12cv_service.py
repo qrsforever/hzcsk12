@@ -330,7 +330,7 @@ if __name__ == "__main__":
         k12ai_set_loglevel('debug')
     k12ai_set_logfile('k12cv.log')
 
-    k12ai_consul_init(args.consul_addr, args.consul_port, _DEBUG_)
+    k12ai_consul_init(args.consul_addr, args.consul_port, False)
 
     thread = Thread(target=_delay_do_consul, args=(args.host, args.port))
     thread.start()

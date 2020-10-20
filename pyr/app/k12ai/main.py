@@ -7,7 +7,7 @@ import argparse
 import select
 import subprocess
 
-from .common.rpc_message import k12ai_send_message
+from k12ai.common.rpc_message import k12ai_send_message
 
 LINE_WIDTH = 80
 

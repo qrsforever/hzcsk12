@@ -285,7 +285,7 @@ if __name__ == "__main__":
             help="consul port")
     args = parser.parse_args()
 
-    k12ai_consul_init(args.consul_addr, args.consul_port, _DEBUG_)
+    k12ai_consul_init(args.consul_addr, args.consul_port, False)
 
     thread = Thread(target=_delay_do_loop, args=(args.host, args.port))
     thread.start()

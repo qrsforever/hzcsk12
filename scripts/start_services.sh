@@ -71,6 +71,9 @@ fi
 log_fil=/tmp/k12ai_log.txt
 k12logs=/tmp/k12logs
 
+# check consul server
+is_consul_server=${IS_CONSUL_SERVER:-'0'}
+
 # service name, address and ports
 redis_addr=${REDIS_ADDR:-'10.255.0.41'}
 redis_port=10090
@@ -623,7 +626,7 @@ __main()
     __service_environment_check
 
     cd $k12logs
-    __start_consul_service
+    # __start_consul_service
     [ $2 == all -o $2 == ai ]  && __start_k12ai_service  $3 $4 
     [ $2 == all -o $2 == ml ]  && __start_k12ml_service  $3 $4
     [ $2 == all -o $2 == cv ]  && __start_k12cv_service  $3 $4

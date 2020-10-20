@@ -39,7 +39,7 @@ def _delay_do_consul(host, port):
 class RLServiceRPC(ServiceRPC):
 
     def __init__(self, host, port, image, dataroot):
-        super().__init__('rl', host, port, image, dataroot, _DEBUG_)
+        super().__init__('rl', host, port, image, dataroot, False)
 
         self._datadir = f'{dataroot}/datasets/rl'
 

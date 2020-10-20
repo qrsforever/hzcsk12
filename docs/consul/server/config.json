@@ -1,0 +1,20 @@
+{
+    "bind_addr": "10.255.0.58", 
+    "datacenter": "k12ai",
+    "data_dir": "/var/consul",
+    "encrypt": "EXz7LFN8hpQ4id8EDYiFoQ==",
+    "log_level": "INFO",
+    "enable_syslog": true,
+    "enable_debug": true,
+    "node_name": "eta",
+    "server": true,
+    "bootstrap_expect": 3,
+    "leave_on_terminate": false,
+    "skip_leave_on_interrupt": true,
+    "rejoin_after_leave": true,
+    "retry_join": [ 
+        "10.255.0.201:8301",
+        "10.255.0.202:8301",
+        "10.255.0.58:8301"
+    ]
+}
