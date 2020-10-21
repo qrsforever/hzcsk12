@@ -83,7 +83,7 @@ minio_server_url='s3-internal.didiyunapi.com'
 minio_access_key='AKDD002E38WR1J7RMPTGRIGNVCVINY'
 minio_secret_key='ASDDXYWs45ov7MNJbj5Wc2PM9gC0FSqCIkiyQkVC'
 
-consul_name=consul-dev
+consul_name=monitor
 consul_addr=$hostlanip
 consul_port=8500
 
@@ -330,22 +330,24 @@ __start_consul_service()
     consul_container=`docker container ls --filter name=${consul_name} --filter status=running -q`
     if [[ x$consul_container == x ]]
     then
-        if [[ ! -d /srv/consul ]]
+        if [[ ! -d /var/consul ]]
         then
-            sudo mkdir /srv/consul
-            sudo chmod 777 /srv/consul
+            sudo mkdir /var/consul
+            sudo chmod 777 /var/consul
+        fi
+        if [[ $is_consul_server == 1 ]]
+        then
+            consul_args="-config-dir=/k12ai/server -bind=${hostlanip} -ui"
+        else
+            consul_args="-config-dir=/k12ai/client"
         fi
         docker run -dit \
             --restart=always \
             --name=${consul_name}\
-            --volume /srv/consul:/srv/consul \
+            --volume /var/consul:/var/consul \
+            --volume ${top_dir}/scripts/consul:/k12ai \
             --network host \
-            --hostname ${consul_name} \
-            consul agent -dev -server -bootstrap \
-            -http-port=${consul_port} \
-            -node=${hostname} \
-            -data-dir=/srv/consul \
-            -datacenter=k12ai -client='0.0.0.0' -ui
+            consul agent -node=${hostname} ${consul_args}
         __script_logout "start consul service"
     else
         __script_logout "consul service is ok."
@@ -626,7 +628,7 @@ __main()
     __service_environment_check
 
     cd $k12logs
-    # __start_consul_service
+    __start_consul_service
     [ $2 == all -o $2 == ai ]  && __start_k12ai_service  $3 $4 
     [ $2 == all -o $2 == ml ]  && __start_k12ml_service  $3 $4
     [ $2 == all -o $2 == cv ]  && __start_k12cv_service  $3 $4
