@@ -18,6 +18,12 @@ export K12AI_DEBUG=1
 # 01 *  * * *   root  cd / && /home/lidong/workspace/codes/hzcsai_com/hzcsk12/scripts/k12ai.sh
 # @reboot  root  cd / && /home/lidong/workspace/codes/hzcsai_com/hzcsk12/scripts/k12ai.sh
 
+check_result=`lsmod | grep "nvidia"`
+if [[ x$check_result == x ]]
+then
+    # first need check /usr/src/nvidia*
+    dkms install -m nvidia -v 418.67
+fi
 
 __main()
 {
