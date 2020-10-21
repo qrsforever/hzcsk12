@@ -74,6 +74,15 @@ k12logs=/tmp/k12logs
 # check consul server
 is_consul_server=${IS_CONSUL_SERVER:-'0'}
 
+if [[ $is_consul_server == 0 ]]
+then
+    # TODO see eta,chi,sigma as server machine
+    if (( ${#hostname} < 8 ))
+    then
+        is_consul_server=1
+    fi
+fi
+
 # service name, address and ports
 redis_addr=${REDIS_ADDR:-'10.255.0.41'}
 redis_port=10090
