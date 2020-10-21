@@ -8,7 +8,7 @@ fi
 
 # sudo apt install dkms
 # sudo dkms install -m nvidia -v 418.67
-# cuda_10.1.168_418.67_linux.run
+# sudo ./cuda_10.1.168_418.67_linux.run --silent --driver --no-man-page  --no-opengl-libs
 
 check=`python3 -c "import ssl" 2>&1`
 pyver=`python3 --version | cut -d\  -f2`
