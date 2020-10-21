@@ -347,9 +347,9 @@ __start_consul_service()
         consul_args="-bind=${hostlanip} -client=${hostlanip}"
         if [[ $is_consul_server == 1 ]]
         then
-            consul_args+="-config-dir=/k12ai/server -ui"
+            consul_args+=" -config-dir=/k12ai/server -ui"
         else
-            consul_args+="-config-dir=/k12ai/client"
+            consul_args+=" -config-dir=/k12ai/client"
         fi
         docker run -dit \
             --restart=always \
