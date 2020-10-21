@@ -1,20 +1,11 @@
 {
-    "bind_addr": "192.168.1.21",
-    "datacenter": "dc1",
+    "datacenter": "k12ai",
     "data_dir": "/var/consul",
-    "encrypt": "EXz7LFN8hpQ4id8EDYiFoQ==",
+    "encrypt": "fzoPSN5m4Km5n3SBO2W95ESNCu14C1qoO1dnqWvO21w=",
     "log_level": "INFO",
-    "enable_syslog": true,
+    "enable_syslog": false,
     "enable_debug": true,
-    "node_name": "001-1",
     "server": false,
-    "service": {
-        "name": "Apache", "tags": ["HTTP"], "port": 80,
-        "check": {
-            "script": "curl localhost >/dev/null 2>&1",
-            "interval": "10s"
-        }
-    },
     "rejoin_after_leave": true,
     "retry_join": [
         "10.255.0.201:8301",

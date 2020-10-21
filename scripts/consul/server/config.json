@@ -22,7 +22,7 @@
             "type": "checks",
             "state": "critical",
             "handler_type": "script",
-            "args": ["/k12ai/check_critical.py"]
+            "args": ["/k12ai/server/check_critical.py"]
         }
     ]
 }
