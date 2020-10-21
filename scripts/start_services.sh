@@ -344,11 +344,10 @@ __start_consul_service()
             sudo mkdir /var/consul
             sudo chmod 777 /var/consul
         fi
+        consul_args="-config-dir=/k12ai/server -bind=${hostlanip} -client=${hostlanip}"
         if [[ $is_consul_server == 1 ]]
         then
-            consul_args="-config-dir=/k12ai/server -bind=${hostlanip} -ui"
-        else
-            consul_args="-config-dir=/k12ai/client -bind=${hostlanip}"
+            consul_args+=" -ui"
         fi
         docker run -dit \
             --restart=always \
