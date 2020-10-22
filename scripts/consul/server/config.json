@@ -6,6 +6,7 @@
     "skip_leave_on_interrupt": true,
     "watches": [
         {
+            "stale": true,
             "type": "checks",
             "state": "critical",
             "handler_type": "script",
