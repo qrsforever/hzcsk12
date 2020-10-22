@@ -101,31 +101,31 @@ consul_addr=$hostlanip
 consul_port=8500
 
 k12ai_service_name=k12ai
-k12ai_addr=0.0.0.0 # $hostlanip
+k12ai_addr=$hostlanip
 k12ai_port=8119
 
 k12ml_service_name=k12ml
-k12ml_addr=0.0.0.0 # $hostlanip
+k12ml_addr=$hostlanip
 k12ml_port=8129
 
 k12cv_service_name=k12cv
-k12cv_addr=0.0.0.0 # $hostlanip
+k12cv_addr=$hostlanip
 k12cv_port=8139
 
 k12nlp_service_name=k12nlp
-k12nlp_addr=0.0.0.0 # $hostlanip
+k12nlp_addr=$hostlanip
 k12nlp_port=8149
 
 k12rl_service_name=k12rl
-k12rl_addr=0.0.0.0 # $hostlanip
+k12rl_addr=$hostlanip
 k12rl_port=8159
 
 k123d_service_name=k123d
-k123d_addr=0.0.0.0 # $hostlanip
+k123d_addr=$hostlanip
 k123d_port=8169
 
 k12pyr_service_name=k12pyr
-k12pyr_addr=0.0.0.0 # $hostlanip
+k12pyr_addr=$hostlanip
 k12pyr_port=8179
 
 dataset_port=9090

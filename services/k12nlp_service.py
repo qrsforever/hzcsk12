@@ -179,9 +179,8 @@ if __name__ == "__main__":
         app = zerorpc.Server(NLPServiceRPC(
             host=args.host, port=args.port,
             image=args.image,
-            dataroot=args.data_root
-        ))
-        app.bind('tcp://%s:%d' % (args.host, args.port))
+            dataroot=args.data_root))
+        app.bind('tcp://0.0.0.0:%d' % (args.port))
         app.run()
     finally:
         g_app_quit = True

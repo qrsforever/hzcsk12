@@ -302,7 +302,7 @@ if __name__ == "__main__":
         Logger.error('redis not connect: {}'.format(err))
 
     try:
-        app.run(host=args.host, port=args.port)
+        app.run(host='0.0.0.0', port=args.port)
     finally:
         g_app_quit = True
         thread.join()
