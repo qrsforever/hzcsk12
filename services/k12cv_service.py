@@ -332,8 +332,8 @@ if __name__ == "__main__":
 
     k12ai_consul_init(args.consul_addr, args.consul_port, False)
 
-    thread = Thread(target=_delay_do_consul, args=(args.host, args.port))
-    thread.start()
+    # thread = Thread(target=_delay_do_consul, args=(args.host, args.port))
+    # thread.start()
 
     Logger.info(f'start zerorpc server on {args.host}:{args.port}')
 

@@ -21,7 +21,7 @@ g_errors_store = True
 
 class RPCServiceAgent(object):
     def __init__(self, addr, port, timeout):
-        self._addr = addr
+        self._addr = 'localhost' if not addr else addr
         self._port = port
         self._timeout = timeout
 
@@ -48,6 +48,8 @@ def k12ai_consul_init(addr, port, debug=False):
 
 
 def k12ai_consul_register(name, host, port, timeout=5):
+    # TODO using configuration
+    return
     client = consul.Consul(host=g_consul_addr, port=g_consul_port)
     client.agent.service.register(
             name=name, address=host, port=port, tags=('k12ai',),
