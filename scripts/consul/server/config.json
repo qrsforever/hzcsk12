@@ -1,22 +1,9 @@
 {
-    "datacenter": "k12ai",
-    "data_dir": "/var/consul",
-    "encrypt": "fzoPSN5m4Km5n3SBO2W95ESNCu14C1qoO1dnqWvO21w=",
-    "log_level": "INFO",
-    "enable_syslog": false,
-    "enable_debug": true,
     "server": true,
+    "log_level": "INFO",
     "bootstrap_expect": 3,
-    "rejoin_after_leave": true,
-    "retry_interval": "30s",
     "leave_on_terminate": false,
     "skip_leave_on_interrupt": true,
-    "disable_host_node_id": false,
-    "retry_join": [ 
-        "10.255.0.201:8301",
-        "10.255.0.202:8301",
-        "10.255.0.58:8301"
-    ],
     "watches": [
         {
             "type": "checks",

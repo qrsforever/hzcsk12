@@ -2,11 +2,16 @@
     "datacenter": "k12ai",
     "data_dir": "/var/consul",
     "encrypt": "fzoPSN5m4Km5n3SBO2W95ESNCu14C1qoO1dnqWvO21w=",
-    "log_level": "INFO",
+    "ports": { 
+        "http": 8500
+    },
     "enable_syslog": false,
     "enable_debug": true,
-    "server": false,
+    "enable_script_checks": true,
+    "disable_update_check": true,
+    "disable_host_node_id": false,
     "rejoin_after_leave": true,
+    "retry_interval": "30s",
     "retry_join": [
         "10.255.0.201:8301",
         "10.255.0.202:8301",
