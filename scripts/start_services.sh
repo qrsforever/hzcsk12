@@ -16,6 +16,9 @@ fi
 cur_fil=${BASH_SOURCE[0]}
 top_dir=`cd $(dirname $cur_fil)/..; pwd`
 
+VERSION=$(git describe --tags --always)
+NUMBER=$(git rev-list HEAD $top_dir | wc -l | awk '{print $1}')
+
 debug=1
 use_image='unkown'
 
@@ -337,31 +340,31 @@ __service_image_check()
 __start_consul_service()
 {
     consul_container=`docker container ls --filter name=${consul_name} --filter status=running -q`
-    if [[ x$consul_container == x ]]
+    if [[ x$consul_container != x ]]
     then
-        if [[ ! -d /var/consul ]]
-        then
-            sudo mkdir /var/consul
-            sudo chmod 777 /var/consul
-        fi
-        consul_args="-bind=${hostlanip} -client=${hostlanip}"
-        if [[ $is_consul_server == 1 ]]
-        then
-            consul_args+=" -config-dir=/k12ai/server -ui"
-        else
-            consul_args+=" -config-dir=/k12ai/client"
-        fi
-        docker run -dit \
-            --restart=always \
-            --name=${consul_name}\
-            --volume /var/consul:/var/consul \
-            --volume ${top_dir}/scripts/consul:/k12ai \
-            --network host \
-            pyconsul agent -node=${hostname} ${consul_args}
-        __script_logout "start consul service"
-    else
-        __script_logout "consul service is ok."
+        docker container stop $consul_container 
+        docker container rm $consul_container 
     fi
+    if [[ ! -d /var/consul ]]
+    then
+        sudo mkdir /var/consul
+        sudo chmod 777 /var/consul
+    fi
+    if [[ $is_consul_server == 1 ]]
+    then
+        consul_args="-config-dir=/k12ai/server -ui"
+    else
+        consul_args="-config-dir=/k12ai/client"
+    fi
+    consul_args=" -node-meta=version:$NUMBER.$VERSION -bind=${hostlanip} -client=${hostlanip}"
+    docker run -dit \
+        --restart=always \
+        --name=${consul_name}\
+        --volume /var/consul:/var/consul \
+        --volume ${top_dir}/scripts/consul:/k12ai \
+        --network host \
+        pyconsul agent -node=${hostname} ${consul_args}
+    __script_logout "start consul service"
 }
 
 # 2. check or start k12ai service
@@ -638,7 +641,7 @@ __main()
     __service_environment_check
 
     cd $k12logs
-    __start_consul_service
+    [ $2 == all ] && __start_consul_service
     [ $2 == all -o $2 == ai ]  && __start_k12ai_service  $3 $4 
     [ $2 == all -o $2 == ml ]  && __start_k12ml_service  $3 $4
     [ $2 == all -o $2 == cv ]  && __start_k12cv_service  $3 $4
