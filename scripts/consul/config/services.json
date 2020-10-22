@@ -1,0 +1,138 @@
+{
+    "services": [
+        {
+            "id": "k12ai",
+            "name": "k12ai",
+            "tags": [
+                "k12ai",
+                "restapi"
+            ],
+            "address": "localhost",
+            "port": 8119,
+            "checks": [
+                {
+                    "name": "HTTP on port 8119",
+                    "http": "http://localhost:8119/health",
+                    "interval": "5s",
+                    "timeout": "10s",
+                    "success_before_passing": 3,
+                    "failures_before_critical": 3
+                }
+            ]
+        },
+        {
+            "id": "k12ml",
+            "name": "k12ml",
+            "tags": [
+                "k12ai"
+            ],
+            "address": "localhost",
+            "port": 8129,
+            "checks": [
+                {
+                    "name": "TCP on port 8129",
+                    "tcp": "localhost:8129",
+                    "interval": "10s",
+                    "timeout": "20s",
+                    "success_before_passing": 3,
+                    "failures_before_critical": 3
+                }
+            ]
+        },
+        {
+            "id": "k12cv",
+            "name": "k12cv",
+            "tags": [
+                "k12ai"
+            ],
+            "address": "localhost",
+            "port": 8139,
+            "checks": [
+                {
+                    "name": "TCP on port 8139",
+                    "tcp": "localhost:8139",
+                    "interval": "10s",
+                    "timeout": "20s",
+                    "success_before_passing": 3,
+                    "failures_before_critical": 3
+                }
+            ]
+        },
+        {
+            "id": "k12nlp",
+            "name": "k12nlp",
+            "tags": [
+                "k12ai"
+            ],
+            "address": "localhost",
+            "port": 8149,
+            "checks": [
+                {
+                    "name": "TCP on port 8149",
+                    "tcp": "localhost:8149",
+                    "interval": "10s",
+                    "timeout": "20s",
+                    "success_before_passing": 3,
+                    "failures_before_critical": 3
+                }
+            ]
+        },
+        {
+            "id": "k12rl",
+            "name": "k12rl",
+            "tags": [
+                "k12ai"
+            ],
+            "address": "localhost",
+            "port": 8159,
+            "checks": [
+                {
+                    "name": "TCP on port 8159",
+                    "tcp": "localhost:8159",
+                    "interval": "10s",
+                    "timeout": "20s",
+                    "success_before_passing": 3,
+                    "failures_before_critical": 3
+                }
+            ]
+        },
+        {
+            "id": "k123d",
+            "name": "k123d",
+            "tags": [
+                "k12ai"
+            ],
+            "address": "localhost",
+            "port": 8169,
+            "checks": [
+                {
+                    "name": "TCP on port 8169",
+                    "tcp": "localhost:8169",
+                    "interval": "10s",
+                    "timeout": "20s",
+                    "success_before_passing": 3,
+                    "failures_before_critical": 3
+                }
+            ]
+        },
+        {
+            "id": "k12pyr",
+            "name": "k12pyr",
+            "tags": [
+                "k12ai"
+            ],
+            "address": "localhost",
+            "port": 8179,
+            "checks": [
+                {
+                    "name": "TCP on port 8179",
+                    "tcp": "localhost:8179",
+                    "interval": "10s",
+                    "timeout": "20s",
+                    "success_before_passing": 3,
+                    "failures_before_critical": 3
+                }
+            ]
+        }
+    ]
+}

@@ -16,8 +16,9 @@ fi
 cur_fil=${BASH_SOURCE[0]}
 top_dir=`cd $(dirname $cur_fil)/..; pwd`
 
-VERSION=$(git describe --tags --always)
-NUMBER=$(git rev-list HEAD $top_dir | wc -l | awk '{print $1}')
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+COMMIT=$(git rev-parse HEAD | cut -c 1-12)
+NUMBER=$(git rev-list HEAD | wc -l | awk '{print $1}')
 
 debug=1
 use_image='unkown'
@@ -100,31 +101,31 @@ consul_addr=$hostlanip
 consul_port=8500
 
 k12ai_service_name=k12ai
-k12ai_addr=$hostlanip
+k12ai_addr=0.0.0.0 # $hostlanip
 k12ai_port=8119
 
 k12ml_service_name=k12ml
-k12ml_addr=$hostlanip
+k12ml_addr=127.0.0.1 # $hostlanip
 k12ml_port=8129
 
 k12cv_service_name=k12cv
-k12cv_addr=$hostlanip
+k12cv_addr=127.0.0.1 # $hostlanip
 k12cv_port=8139
 
 k12nlp_service_name=k12nlp
-k12nlp_addr=$hostlanip
+k12nlp_addr=127.0.0.1 # $hostlanip
 k12nlp_port=8149
 
 k12rl_service_name=k12rl
-k12rl_addr=$hostlanip
+k12rl_addr=127.0.0.1 # $hostlanip
 k12rl_port=8159
 
 k123d_service_name=k123d
-k123d_addr=$hostlanip
+k123d_addr=127.0.0.1 # $hostlanip
 k123d_port=8169
 
 k12pyr_service_name=k12pyr
-k12pyr_addr=$hostlanip
+k12pyr_addr=127.0.0.1 # $hostlanip
 k12pyr_port=8179
 
 dataset_port=9090
@@ -350,13 +351,15 @@ __start_consul_service()
         sudo mkdir /var/consul
         sudo chmod 777 /var/consul
     fi
+ 
     if [[ $is_consul_server == 1 ]]
     then
-        consul_args="-config-dir=/k12ai/server -ui"
+        consul_args="-config-file=/k12ai/server/config.json"
     else
-        consul_args="-config-dir=/k12ai/client"
+        consul_args="-config-file=/k12ai/client/config.json"
     fi
-    consul_args+=" -node-meta=version:$NUMBER.$VERSION -bind=${hostlanip} -client=${hostlanip}"
+    consul_args+=" -config-dir=/k12ai/config -bind=${hostlanip} -client=${hostlanip}"
+    consul_args+=" -node-meta=k12ai_code_version:$NUMBER -node-meta=k12ai_code_commit:$COMMIT -node-meta=k12ai_code_branch:$BRANCH"
     docker run -dit \
         --restart=always \
         --name=${consul_name}\
@@ -641,7 +644,6 @@ __main()
     __service_environment_check
 
     cd $k12logs
-    [ $2 == all ] && __start_consul_service
     [ $2 == all -o $2 == ai ]  && __start_k12ai_service  $3 $4 
     [ $2 == all -o $2 == ml ]  && __start_k12ml_service  $3 $4
     [ $2 == all -o $2 == cv ]  && __start_k12cv_service  $3 $4
@@ -649,6 +651,7 @@ __main()
     [ $2 == all -o $2 == nlp ] && __start_k12nlp_service $3 $4
     [ $2 == all -o $2 == 3d ]  && __start_k123d_service  $3 $4
     [ $2 == all -o $2 == pyr ] && __start_k12pyr_service  $3 $4
+    [ $2 == all ] && __start_consul_service
     cd - > /dev/null
 
     __start_dataset_service /data

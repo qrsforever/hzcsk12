@@ -1,0 +1,15 @@
+{
+    "datacenter": "k12ai",
+    "data_dir": "/var/consul",
+    "encrypt": "fzoPSN5m4Km5n3SBO2W95ESNCu14C1qoO1dnqWvO21w=",
+    "log_level": "INFO",
+    "enable_syslog": false,
+    "enable_debug": true,
+    "server": false,
+    "rejoin_after_leave": true,
+    "retry_join": [
+        "10.255.0.201:8301",
+        "10.255.0.202:8301",
+        "10.255.0.58:8301"
+    ]
+}
