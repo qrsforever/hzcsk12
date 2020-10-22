@@ -7,7 +7,7 @@
     },
     "enable_syslog": false,
     "enable_debug": true,
-    "enable_script_checks": true,
+    "enable_script_checks": false,
     "disable_update_check": true,
     "disable_host_node_id": false,
     "rejoin_after_leave": true,
