@@ -11,6 +11,7 @@
     "retry_interval": "30s",
     "leave_on_terminate": false,
     "skip_leave_on_interrupt": true,
+    "disable_host_node_id": false,
     "retry_join": [ 
         "10.255.0.201:8301",
         "10.255.0.202:8301",

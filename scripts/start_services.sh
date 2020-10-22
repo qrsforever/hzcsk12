@@ -357,7 +357,7 @@ __start_consul_service()
             --volume /var/consul:/var/consul \
             --volume ${top_dir}/scripts/consul:/k12ai \
             --network host \
-            consul agent -node=${hostname} ${consul_args}
+            pyconsul agent -node=${hostname} ${consul_args}
         __script_logout "start consul service"
     else
         __script_logout "consul service is ok."
