@@ -356,7 +356,7 @@ __start_consul_service()
     else
         consul_args="-config-dir=/k12ai/client"
     fi
-    consul_args=" -node-meta=version:$NUMBER.$VERSION -bind=${hostlanip} -client=${hostlanip}"
+    consul_args+=" -node-meta=version:$NUMBER.$VERSION -bind=${hostlanip} -client=${hostlanip}"
     docker run -dit \
         --restart=always \
         --name=${consul_name}\
