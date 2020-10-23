@@ -7,6 +7,7 @@
             "port": 8119,
             "checks": [
                 {
+                    "id": "k12ai:8119",
                     "name": "HTTP on port 8119",
                     "http": "http://localhost:8119/health",
                     "interval": "5s",
@@ -23,6 +24,7 @@
             "port": 8129,
             "checks": [
                 {
+                    "id": "k12ml:8129",
                     "name": "TCP on port 8129",
                     "tcp": "localhost:8129",
                     "interval": "10s",
@@ -39,6 +41,7 @@
             "port": 8139,
             "checks": [
                 {
+                    "id": "k12cv:8139",
                     "name": "TCP on port 8139",
                     "tcp": "localhost:8139",
                     "interval": "10s",
@@ -55,6 +58,7 @@
             "port": 8149,
             "checks": [
                 {
+                    "id": "k12nlp:8149",
                     "name": "TCP on port 8149",
                     "tcp": "localhost:8149",
                     "interval": "10s",
@@ -71,6 +75,7 @@
             "port": 8159,
             "checks": [
                 {
+                    "id": "k12rl:8159",
                     "name": "TCP on port 8159",
                     "tcp": "localhost:8159",
                     "interval": "10s",
@@ -87,6 +92,7 @@
             "port": 8169,
             "checks": [
                 {
+                    "id": "k123d:8169",
                     "name": "TCP on port 8169",
                     "tcp": "localhost:8169",
                     "interval": "10s",
@@ -103,6 +109,7 @@
             "port": 8179,
             "checks": [
                 {
+                    "id": "k12pyr:8179",
                     "name": "TCP on port 8179",
                     "tcp": "localhost:8179",
                     "interval": "10s",
