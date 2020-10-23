@@ -55,7 +55,7 @@ def main():
     for item in data:
         node = item["Node"]
         name = item["ServiceName"]
-        if tcp_port_check(node, int(item['ServiceID'])):
+        if tcp_port_check(node, int(item['CheckID'][-4:])):
             continue
         else:
             if node not in content:
