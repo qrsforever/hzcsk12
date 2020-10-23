@@ -11,6 +11,7 @@ from urllib.request import urlopen
 def debug_out(fname, data):
     with open('/tmp/%s.txt' % fname, 'a') as fw:
         fw.write(data)
+        fw.write('\n')
 
 def main():
     host = os.environ.get('CONSUL_ADDR', None)
@@ -25,6 +26,7 @@ def main():
     data = json.load(sys.stdin)
     if len(data) == 0:
         return
+    debug_out('trigger_data', json.dumps(data))
 
     content = {}
     for item in data:

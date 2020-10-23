@@ -8,8 +8,10 @@
     "enable_syslog": false,
     "enable_debug": true,
     "enable_script_checks": false,
+    "enable_local_script_checks": false,
     "disable_update_check": true,
     "disable_host_node_id": false,
+    "discard_check_output": true,
     "rejoin_after_leave": true,
     "retry_interval": "30s",
     "retry_join": [
