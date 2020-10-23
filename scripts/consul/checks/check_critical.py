@@ -5,11 +5,20 @@ import os
 import sys
 import json
 import socket
-# import hashlib
-# from urllib.parse import quote_plus, unquote_plus
+import hashlib
+from urllib.parse import quote_plus
 from urllib.request import urlopen
 
 DEBUG = True
+
+PHONES = [
+    '15801310416'
+]
+
+MSG_URI = 'http://115.231.168.138:8861'
+UID = '966646'
+CODE = '4YC3HDAZRO'
+SRCPHONE = '88191008369646'
 
 def debug_out(fname, data):
     if DEBUG:
@@ -47,13 +56,29 @@ def main():
         node = item["Node"]
         name = item["ServiceName"]
         if tcp_port_check(node, int(item['ServiceID'])):
-            debug_out('tcp_ok', json.dumps(item))
             continue
         else:
             if node not in content:
                 content[node] = []
             content[node].append(name)
+    if len(content) == 0:
+        return
     debug_out('report_content', json.dumps(content))
+
+    report_context = '【TalentAI远程监控】{} <-验证码-> '.format(json.dumps(content))
+
+    report_data = []
+    for tel in PHONES:
+        report_data.append({
+            "phone": tel,
+            "context": report_context})
+    msg = quote_plus(json.dumps(report_data, ensure_ascii=False, separators=(',', ':')))
+    sign = hashlib.md5('{}{}'.format(msg, CODE).encode()).hexdigest()
+    request = '{}?uid={}&msg={}&sign={}&srcphone={}'.format(MSG_URI, UID, msg, sign, SRCPHONE)
+    debug_out('report_content', request)
+
+    urlopen(request)
+
 
 if __name__ == "__main__":
     try:
