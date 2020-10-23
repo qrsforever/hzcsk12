@@ -360,6 +360,7 @@ __start_consul_service()
     fi
     consul_args+=" -config-dir=/k12ai/config -bind=${hostlanip} -client=${hostlanip}"
     consul_args+=" -node-meta=k12ai_code_version:$NUMBER -node-meta=k12ai_code_commit:$COMMIT -node-meta=k12ai_code_branch:$BRANCH"
+    consul_args+=" -node-meta=k12ai_host_name:${hostname}"
     docker run -dit \
         --restart=always \
         --name=${consul_name} \

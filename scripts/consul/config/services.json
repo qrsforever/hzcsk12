@@ -1,7 +1,7 @@
 {
     "services": [
         {
-            "id": "k12ai",
+            "id": "8119",
             "name": "k12ai",
             "address": "localhost",
             "port": 8119,
@@ -17,7 +17,7 @@
             ]
         },
         {
-            "id": "k12ml",
+            "id": "8129",
             "name": "k12ml",
             "address": "localhost",
             "port": 8129,
@@ -33,7 +33,7 @@
             ]
         },
         {
-            "id": "k12cv",
+            "id": "8139",
             "name": "k12cv",
             "address": "localhost",
             "port": 8139,
@@ -49,7 +49,7 @@
             ]
         },
         {
-            "id": "k12nlp",
+            "id": "8149",
             "name": "k12nlp",
             "address": "localhost",
             "port": 8149,
@@ -65,7 +65,7 @@
             ]
         },
         {
-            "id": "k12rl",
+            "id": "8159",
             "name": "k12rl",
             "address": "localhost",
             "port": 8159,
@@ -81,7 +81,7 @@
             ]
         },
         {
-            "id": "k123d",
+            "id": "8169",
             "name": "k123d",
             "address": "localhost",
             "port": 8169,
@@ -97,7 +97,7 @@
             ]
         },
         {
-            "id": "k12pyr",
+            "id": "8179",
             "name": "k12pyr",
             "address": "localhost",
             "port": 8179,
