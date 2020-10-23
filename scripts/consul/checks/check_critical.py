@@ -61,23 +61,22 @@ def main():
             if node not in content:
                 content[node] = []
             content[node].append(name)
-    if len(content) == 0:
-        return
-    debug_out('report_content', json.dumps(content))
 
-    report_context = '【TalentAI远程监控】{} <-验证码-> '.format(json.dumps(content))
+    for node, ctx in content.items():
+        report_context = '【TalentAI故障】{}:{} <验证码> '.format(node, ','.join(ctx))
+        debug_out('report_content', report_context )
 
-    report_data = []
-    for tel in PHONES:
-        report_data.append({
-            "phone": tel,
-            "context": report_context})
-    msg = quote_plus(json.dumps(report_data, ensure_ascii=False, separators=(',', ':')))
-    sign = hashlib.md5('{}{}'.format(msg, CODE).encode()).hexdigest()
-    request = '{}?uid={}&msg={}&sign={}&srcphone={}'.format(MSG_URI, UID, msg, sign, SRCPHONE)
-    debug_out('report_content', request)
+        report_data = []
+        for tel in PHONES:
+            report_data.append({
+                "phone": tel,
+                "context": report_context})
+        msg = quote_plus(json.dumps(report_data, ensure_ascii=False, separators=(',', ':')))
+        sign = hashlib.md5('{}{}'.format(msg, CODE).encode()).hexdigest()
+        request = '{}?uid={}&msg={}&sign={}&srcphone={}'.format(MSG_URI, UID, msg, sign, SRCPHONE)
+        debug_out('report_content', request)
 
-    urlopen(request)
+        urlopen(request)
 
 
 if __name__ == "__main__":
