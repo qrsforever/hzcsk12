@@ -362,7 +362,9 @@ __start_consul_service()
     consul_args+=" -node-meta=k12ai_code_version:$NUMBER -node-meta=k12ai_code_commit:$COMMIT -node-meta=k12ai_code_branch:$BRANCH"
     docker run -dit \
         --restart=always \
-        --name=${consul_name}\
+        --name=${consul_name} \
+        --env CONSUL_ADDR=${consul_addr} \
+        --env CONSUL_PORT=${consul_port} \
         --volume /var/consul:/var/consul \
         --volume ${top_dir}/scripts/consul:/k12ai \
         --network host \
