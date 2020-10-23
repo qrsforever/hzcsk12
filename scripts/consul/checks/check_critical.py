@@ -60,11 +60,11 @@ def main():
         else:
             if node not in content:
                 content[node] = []
-            content[node].append(name)
+            content[node].append(name[3:])
 
     for node, ctx in content.items():
-        report_context = '【TalentAI故障】{}:{} <验证码> '.format(node, ','.join(ctx))
-        debug_out('report_content', report_context )
+        report_context = '【TalentAI故障】{}:{} 验证码'.format(node, ','.join(ctx))
+        debug_out('report_content', report_context)
 
         report_data = []
         for tel in PHONES:
