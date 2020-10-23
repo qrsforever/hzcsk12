@@ -3,10 +3,6 @@
         {
             "id": "k12ai",
             "name": "k12ai",
-            "tags": [
-                "k12ai",
-                "restapi"
-            ],
             "address": "localhost",
             "port": 8119,
             "checks": [
@@ -23,9 +19,6 @@
         {
             "id": "k12ml",
             "name": "k12ml",
-            "tags": [
-                "k12ai"
-            ],
             "address": "localhost",
             "port": 8129,
             "checks": [
@@ -42,9 +35,6 @@
         {
             "id": "k12cv",
             "name": "k12cv",
-            "tags": [
-                "k12ai"
-            ],
             "address": "localhost",
             "port": 8139,
             "checks": [
@@ -61,9 +51,6 @@
         {
             "id": "k12nlp",
             "name": "k12nlp",
-            "tags": [
-                "k12ai"
-            ],
             "address": "localhost",
             "port": 8149,
             "checks": [
@@ -80,9 +67,6 @@
         {
             "id": "k12rl",
             "name": "k12rl",
-            "tags": [
-                "k12ai"
-            ],
             "address": "localhost",
             "port": 8159,
             "checks": [
@@ -99,9 +83,6 @@
         {
             "id": "k123d",
             "name": "k123d",
-            "tags": [
-                "k12ai"
-            ],
             "address": "localhost",
             "port": 8169,
             "checks": [
@@ -118,9 +99,6 @@
         {
             "id": "k12pyr",
             "name": "k12pyr",
-            "tags": [
-                "k12ai"
-            ],
             "address": "localhost",
             "port": 8179,
             "checks": [
