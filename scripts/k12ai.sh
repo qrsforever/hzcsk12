@@ -15,7 +15,7 @@ export PYTHONPATH=/home/lidong/.local/lib/python3.6/site-packages:$PYTHONPATH
 export K12AI_DEBUG=1
 
 # /etc/crontab
-# 01 *  * * *   root  cd / && /home/lidong/workspace/codes/hzcsai_com/hzcsk12/scripts/k12ai.sh
+# 01 *  * * *   root  cd / && IS_CRONTAB_CHECK=1 /home/lidong/workspace/codes/hzcsai_com/hzcsk12/scripts/k12ai.sh
 # @reboot  root  cd / && /home/lidong/workspace/codes/hzcsai_com/hzcsk12/scripts/k12ai.sh
 
 check_result=`lsmod | grep "nvidia"`

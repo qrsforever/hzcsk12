@@ -77,6 +77,7 @@ k12logs=/tmp/k12logs
 
 # check consul server
 is_consul_server=${IS_CONSUL_SERVER:-'0'}
+is_crontab_check=${IS_CRONTAB_CHECK:-'0'}
 
 if [[ $is_consul_server == 0 ]]
 then
@@ -341,7 +342,8 @@ __service_image_check()
 __start_consul_service()
 {
     consul_container=`docker container ls --filter name=${consul_name} --filter status=running -q`
-    if [[ x$consul_container != x ]]
+    
+    if [[ $is_crontab_check == 0 && x$consul_container != x ]]
     then
         docker container stop $consul_container 
         docker container rm $consul_container 
