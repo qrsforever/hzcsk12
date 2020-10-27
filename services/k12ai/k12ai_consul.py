@@ -95,8 +95,7 @@ def k12ai_consul_message(sname, appId, token, op, user, uuid, msgtype, message, 
     data['data'] = message
 
     # service
-    api = 'http://{}/k12ai/private/pushmsg?key={}.{}'.format(server,
-            appId, msgtype)
+    api = 'http://{}/k12ai/private/pushmsg?key={}.{}'.format(server, appId, msgtype)
     requests.post(api, json=data)
 
     if g_consul_debug:
@@ -106,5 +105,5 @@ def k12ai_consul_message(sname, appId, token, op, user, uuid, msgtype, message, 
         jsondata = json.dumps(data, indent=2)
         if len(jsondata) < 512000:
             client.kv.put(key, jsondata)
-        if g_errors_store and msgtype == 'error' and message['code'] > 100100:
-            client.kv.put('errors/%s' % data['datetime'], json.dumps(data, indent=2))
+    if g_errors_store and msgtype == 'error' and message['code'] > 100100:
+        client.kv.put('errors/%s/%s/%s' % (user, uuid, data['datatime']), json.dumps(data, indent=2))
