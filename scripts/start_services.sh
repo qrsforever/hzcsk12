@@ -130,6 +130,7 @@ k12pyr_addr=$hostlanip
 k12pyr_port=8179
 
 dataset_port=9090
+notewww_port=9091
 
 export HOST_NAME=${hostname}
 export HOST_LANIP=${hostlanip}
@@ -619,11 +620,31 @@ __start_dataset_service()
     result=`ps -eo pid,args | grep "http.server $dataset_port" | grep -v grep`
     if [[ x$result == x ]]
     then
-        cd $1
-        __run_command nohup python3 -m http.server $dataset_port
-        cd - > /dev/null
+        if [[ -d $1 ]]
+        then
+            cd $1
+            __run_command nohup python3 -m http.server $dataset_port
+            cd - > /dev/null
+        fi
     else
         __script_logout "http.server $dataset_port already run"
+    fi
+}
+
+# 10. setart notewww service
+__start_notewww_service()
+{
+    result=`ps -eo pid,args | grep "http.server $notewww_port" | grep -v grep`
+    if [[ x$result == x ]]
+    then
+        if [[ -d $1 ]]
+        then
+            cd $1
+            __run_command nohup python3 -m http.server $notewww_port
+            cd - > /dev/null
+        fi
+    else
+        __script_logout "http.server $notewww_port already run"
     fi
 }
 
@@ -660,6 +681,7 @@ __main()
     cd - > /dev/null
 
     __start_dataset_service /data
+    __start_notewww_service $top_dir/../hzcsnote/k12libs/www
 }
 
 __main $@
