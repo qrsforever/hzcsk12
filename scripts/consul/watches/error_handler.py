@@ -54,7 +54,7 @@ def main():
         try:
             smtpObj = smtplib.SMTP('smtp.qq.com')
             smtpObj.login(sender, passwd)
-            smtpObj.sendmail(sender, recver, msg.as_string())
+            smtpObj.sendmail(sender, recver.split(','), msg.as_string())
             smtpObj.quit()
             os.system('curl --request DELETE http://{}:{}/v1/kv/{}'.format(host, port, key))
         except smtplib.SMTPException as e:
