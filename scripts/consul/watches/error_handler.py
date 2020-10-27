@@ -9,7 +9,7 @@ import smtplib
 from email.mime.text import MIMEText
 from urllib.request import urlopen
 
-DEBUG = True
+DEBUG = False
 
 def debug_out(fname, data):
     if DEBUG:
@@ -43,12 +43,13 @@ def main():
         key = item['Key']
         value = base64.b64decode(item['Value'].encode()).decode()
 
-        msg = MIMEText(value, 'json')
+        msg = MIMEText(value, 'plain', 'utf-8')
         msg['From'] = sender
         msg['To'] = recver
-        msg['Subject'] = 'TalentAI异常'
+        msg['Subject'] = '[TalentAI异常] %s' % key
 
         debug_out('errors_key', key)
+        debug_out('errors_value', value)
 
         try:
             smtpObj = smtplib.SMTP('smtp.qq.com')
@@ -58,7 +59,9 @@ def main():
             os.system('curl --request DELETE http://{}:{}/v1/kv/{}'.format(host, port, key))
         except smtplib.SMTPException as e:
             debug_out('errors_except', '%s'.format(e))
-            print(e)
+        except Exception as e:
+            debug_out('errors_except', '%s'.format(e))
 
 if __name__ == "__main__":
     main()
+    print('0')
