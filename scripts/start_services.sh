@@ -101,6 +101,10 @@ consul_name=monitor
 consul_addr=$hostlanip
 consul_port=8500
 
+email_sender='475343653@qq.com'
+email_passwd='pjedhzwigxvcbjbf'
+email_recver='985612771@qq.com,tdz_lm@163.com'
+
 k12ai_service_name=k12ai
 k12ai_addr=$hostlanip
 k12ai_port=8119
@@ -369,6 +373,9 @@ __start_consul_service()
         --name=${consul_name} \
         --env CONSUL_ADDR=${consul_addr} \
         --env CONSUL_PORT=${consul_port} \
+        --env EMAIL_SENDER=${email_sender} \
+        --env EMAIL_PASSWD=${email_passwd} \
+        --env EMAIL_RECVER=${email_recver} \
         --volume /var/consul:/var/consul \
         --volume ${top_dir}/scripts/consul:/k12ai \
         --network host \

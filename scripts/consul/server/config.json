@@ -8,8 +8,12 @@
         {
             "type": "checks",
             "state": "critical",
-            "handler_type": "script",
-            "args": ["/k12ai/checks/check_critical.py"]
+            "args": ["/k12ai/watches/check_critical.py"]
+        },
+        {
+            "type": "keyprefix",
+            "prefix": "errors",
+            "args": ["/k12ai/watches/error_handler.py"]
         }
     ],
     "ui": true

@@ -9,7 +9,7 @@ import hashlib
 from urllib.parse import quote_plus
 from urllib.request import urlopen
 
-DEBUG = True
+DEBUG = False
 
 PHONES = [
     '15801310416'
