@@ -106,4 +106,4 @@ def k12ai_consul_message(sname, appId, token, op, user, uuid, msgtype, message, 
         if len(jsondata) < 512000:
             client.kv.put(key, jsondata)
     if g_errors_store and msgtype == 'error' and message['code'] > 100100:
-        client.kv.put('errors/%s/%s/%s' % (user, uuid, data['datatime']), json.dumps(data, indent=2))
+        client.kv.put('errors/%s/%s/%s' % (user, uuid, data['datetime']), json.dumps(data, indent=2))
