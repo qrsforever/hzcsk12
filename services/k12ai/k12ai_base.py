@@ -72,7 +72,7 @@ class ServiceRPC(object):
                     errcode, message = self.container_on_finished(appId, op, user, uuid, message)
                 elif 'monitor' == message['status']:
                     errcode, message = self.container_on_monitor(appId, op, user, uuid, message)
-                    if message is None:
+                    if errcode < 0:
                         return
             message = k12ai_error_message(errcode, expand=message)
 
@@ -133,7 +133,7 @@ class ServiceRPC(object):
                 if 'service_gpu_memory_usage_MB' in info:
                     if info['service_gpu_memory_usage_MB'] > MAX_MSIZE:
                         return 100012, info
-        return 100000, None
+        return -1, None
 
     def pre_processing(self, appId, op, user, uuid, params):
         return params
