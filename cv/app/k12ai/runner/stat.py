@@ -126,6 +126,9 @@ class RunnerBase(object):
         self._cur_iters = runner.runner_state['iters']
         self._cur_epoch = runner.runner_state['epoch']
 
+        # TODO monitor memory, but within container cannot get info by nvidia-smi, so ...
+        MessageReport.status(MessageReport.MONITOR, 'gpu_memory')
+
         batch_time = runner.batch_time.avg
         self._val_batch_time = runner.batch_time.sum
 

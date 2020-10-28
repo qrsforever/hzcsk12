@@ -119,6 +119,7 @@ class MessageReport(object):
     EXCEPT = 4
     STOP = 5
     FINISH = 6
+    MONITOR = 7
 
     @staticmethod
     def logw(*args, **kwargs):
@@ -171,6 +172,13 @@ class MessageReport(object):
                 'status': 'finished',
                 'uptime': int(time.time() - g_starttime),
                 'memstat': _memstat_message()
+            })
+            return
+
+        if what == MessageReport.MONITOR:
+            k12ai_send_message('error', {
+                'status': 'monitor',
+                'monitor': msg
             })
             return
 

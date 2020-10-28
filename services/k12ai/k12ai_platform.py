@@ -91,7 +91,7 @@ def _get_disk_infos():
     return infos
 
 
-def _get_process_infos():
+def _get_process_infos(pid = -1):
     infos = []
     try:
         process = Popen(['nvidia-smi', "pmon", "--count", "1", "--select", "mu"], stdout=PIPE)
@@ -101,12 +101,13 @@ def _get_process_infos():
             info = {}
             result = output[i].split()
             if len(result) > 5:
-                info['idx'] = result[0]
-                info['pid'] = result[1]
-                info['gpu_percent'] = float(result[4])
-                info['gpu_memory_usage_MB'] = int(result[3])
-                info['gpu_memory_percent'] = float(result[5])
-            infos.append(info)
+                if pid == -1 or pid == int(result[1]):
+                    info['idx'] = int(result[0])
+                    info['pid'] = int(result[1])
+                    info['gpu_percent'] = float(result[4])
+                    info['gpu_memory_usage_MB'] = int(result[3])
+                    info['gpu_memory_percent'] = float(result[5])
+                    infos.append(info)
     except Exception as err:
         print('error:{}'.format(err))
     return infos
@@ -171,6 +172,9 @@ def _get_service_infos(client, user, uuid):
             info['service_uuid'] = c.labels.get('k12ai.service.uuid', '')
             info['service_pid'] = c.attrs.get('State', {}).get('Pid', -1)
             info['service_starttime'] = c.attrs.get('State', {}).get('StartedAt', '')
+            gpu_process_infos = _get_process_infos(pid=info['service_pid'])
+            if len(gpu_process_infos) == 1:
+                info['service_gpu_memory_usage_MB'] = gpu_process_infos[0]['gpu_memory_usage_MB']
             infos.append(info)
     except Exception as err:
         print('error:{}'.format(err))

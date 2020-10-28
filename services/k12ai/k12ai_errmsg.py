@@ -35,6 +35,7 @@ ERRORS = {
 
         100010: {'en': 'schema version is already lastest', 'cn': 'schema已是最新版本'},
         100011: {'en': 'payload is too large', 'cn': '警告: 负载数据太大'},
+        100012: {'en': 'model is beyond limit size', 'cn': '警告: 模型占用GPU超过限制值'},
 
         100101: {'en': 'api parameter key is not found', 'cn': 'API参数错误: 非法Key'},
         100102: {'en': 'api parameter value is invalid', 'cn': 'API参数错误: 非法Value'},

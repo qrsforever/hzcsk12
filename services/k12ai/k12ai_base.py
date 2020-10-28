@@ -17,12 +17,17 @@ from k12ai.k12ai_utils import (k12ai_utils_topdir, k12ai_utils_netip)
 from k12ai.k12ai_errmsg import (FrameworkError, k12ai_error_message, gen_exc_info)
 from k12ai.k12ai_consul import k12ai_consul_message
 from k12ai.k12ai_logger import Logger
-from k12ai.k12ai_platform import (k12ai_platform_cpu_count, k12ai_platform_gpu_count, k12ai_platform_memory_free)
+from k12ai.k12ai_platform import ( # noqa
+        k12ai_platform_cpu_count,
+        k12ai_platform_gpu_count,
+        k12ai_platform_stats,
+        k12ai_platform_memory_free)
 from k12ai.k12ai_utils import ( # noqa
         k12ai_oss_client, k12ai_object_remove,
         k12ai_object_get, k12ai_object_put)
 
 MAX_TASKS = 10
+MAX_MSIZE = 2000 # max model size
 
 
 class ServiceRPC(object):
@@ -55,16 +60,20 @@ class ServiceRPC(object):
                 if 'warning' == message['status']:
                     errcode = 100009
                 elif isinstance(message['errinfo'], dict):
-                    errcode = self.container_on_crash(appId, op, user, uuid, message)
+                    errcode, message = self.container_on_crash(appId, op, user, uuid, message)
             elif 'status' in message:
                 if 'starting' == message['status']:
                     errcode = 100001
                 elif 'running' == message['status']:
                     errcode = 100002
                 elif message['status'] in ('stopped', 'paused', 'robbed'):
-                    errcode = self.container_on_stop(appId, op, user, uuid, message)
+                    errcode, message = self.container_on_stop(appId, op, user, uuid, message)
                 elif 'finished' == message['status']:
-                    errcode = self.container_on_finished(appId, op, user, uuid, message)
+                    errcode, message = self.container_on_finished(appId, op, user, uuid, message)
+                elif 'monitor' == message['status']:
+                    errcode, message = self.container_on_monitor(appId, op, user, uuid, message)
+                    if message is None:
+                        return
             message = k12ai_error_message(errcode, expand=message)
 
         if isinstance(message, dict):
@@ -76,7 +85,7 @@ class ServiceRPC(object):
     def container_on_crash(self, appId, op, user, uuid, message):
         message = self.on_finished(appId, op, user, uuid, message)
         if 'err_code' in message['errinfo']:
-            return message['errinfo']['err_code']
+            return message['errinfo']['err_code'], message
 
         errinfo = message['errinfo']
         if 'err_type' in errinfo and 'err_text' in errinfo:
@@ -101,20 +110,30 @@ class ServiceRPC(object):
                     errcode = 100905
         else:
             errcode = 999999
-        return errcode
+        return errcode, message
 
     def container_on_stop(self, appId, op, user, uuid, message):
-        self.on_finished(appId, op, user, uuid, message)
+        message = self.on_finished(appId, op, user, uuid, message)
         kStatuCodes = {
             'stopped': 100004,
             'paused':  100005, # noqa
             'robbed':  100006  # noqa
         }
-        return kStatuCodes[message['status']]
+        return kStatuCodes[message['status']], message
 
     def container_on_finished(self, appId, op, user, uuid, message):
-        self.on_finished(appId, op, user, uuid, message)
-        return 100003
+        message = self.on_finished(appId, op, user, uuid, message)
+        return 100003, message
+
+    def container_on_monitor(self, appId, op, user, uuid, message):
+        if isinstance(message, dict) and message['monitor'] == 'gpu_memory':
+            code, resource = k12ai_platform_stats(appId, 'query', user, uuid, {'services':True}, isasync=False)
+            if code == 100000 and len(resource['services']) == 1:
+                info = resource['services'][0]
+                if 'service_gpu_memory_usage_MB' in info:
+                    if info['service_gpu_memory_usage_MB'] > MAX_MSIZE:
+                        return 100012, info
+        return 100000, None
 
     def pre_processing(self, appId, op, user, uuid, params):
         return params
