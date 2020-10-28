@@ -220,8 +220,8 @@ def _framework_message_push():
     try:
         if g_redis:
             key = request.args.get("key", default='unknown')
-            print(request.get_data().decode())
             g_redis.lpush(key, request.get_data().decode())
+            g_redis.expire(key, 432000) # 5 days
     except Exception as err:
         Logger.info(err)
         return "-1"

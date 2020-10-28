@@ -46,7 +46,7 @@ def k12ai_send_message(msgtype, message, end=False):
         if end:
             _RPCClient.close()
 
-        if K12AI_DEVELOPER or msgtype == 'error':
+        if K12AI_DEVELOPER:
             print(message)
     except Exception as err:
         if K12AI_DEVELOPER:
