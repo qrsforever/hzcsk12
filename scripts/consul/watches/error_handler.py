@@ -10,6 +10,9 @@ from email.mime.text import MIMEText
 from urllib.request import urlopen
 
 DEBUG = False
+EMAIL_SENDER = '475343653@qq.com'
+EMAIL_PASSWD = 'pjedhzwigxvcbjbf'
+EMAIL_RECVER = '985612771@qq.com,896538205@qq.com,tdz_lm@163.com'
 
 def debug_out(fname, data):
     if DEBUG:
@@ -18,11 +21,11 @@ def debug_out(fname, data):
             fw.write('\n')
 
 def main():
-    sender = os.environ.get('EMAIL_SENDER', None)
-    passwd = os.environ.get('EMAIL_PASSWD', None)
-    recver = os.environ.get('EMAIL_RECVER', None)
-    if sender is None or passwd is None or recver is None:
-        return
+    sender = EMAIL_SENDER # os.environ.get('EMAIL_SENDER', None)
+    passwd = EMAIL_PASSWD # os.environ.get('EMAIL_PASSWD', None)
+    recver = EMAIL_RECVER # os.environ.get('EMAIL_RECVER', None)
+    # if sender is None or passwd is None or recver is None:
+    #     return
 
     host = os.environ.get('CONSUL_ADDR', None)
     port = os.environ.get('CONSUL_PORT', None)

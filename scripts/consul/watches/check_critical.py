@@ -12,7 +12,8 @@ from urllib.request import urlopen
 DEBUG = False
 
 PHONES = [
-    '15801310416'
+    '15801310416',
+    '13552406449'
 ]
 
 MSG_URI = 'http://115.231.168.138:8861'

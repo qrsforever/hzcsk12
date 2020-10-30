@@ -101,10 +101,6 @@ consul_name=monitor
 consul_addr=$hostlanip
 consul_port=8500
 
-email_sender='475343653@qq.com'
-email_passwd='pjedhzwigxvcbjbf'
-email_recver='985612771@qq.com,tdz_lm@163.com'
-
 k12ai_service_name=k12ai
 k12ai_addr=$hostlanip
 k12ai_port=8119
@@ -373,9 +369,6 @@ __start_consul_service()
         --name=${consul_name} \
         --env CONSUL_ADDR=${consul_addr} \
         --env CONSUL_PORT=${consul_port} \
-        --env EMAIL_SENDER=${email_sender} \
-        --env EMAIL_PASSWD=${email_passwd} \
-        --env EMAIL_RECVER=${email_recver} \
         --volume /var/consul:/var/consul \
         --volume ${top_dir}/scripts/consul:/k12ai \
         --network host \
@@ -678,11 +671,11 @@ __main()
 
     cd $k12logs
     [ $2 == all -o $2 == ai ]  && __start_k12ai_service  $3 $4 
-    [ $2 == all -o $2 == ml ]  && __start_k12ml_service  $3 $4
+    # [ $2 == all -o $2 == ml ]  && __start_k12ml_service  $3 $4
     [ $2 == all -o $2 == cv ]  && __start_k12cv_service  $3 $4
-    [ $2 == all -o $2 == rl ]  && __start_k12rl_service  $3 $4
-    [ $2 == all -o $2 == nlp ] && __start_k12nlp_service $3 $4
-    [ $2 == all -o $2 == 3d ]  && __start_k123d_service  $3 $4
+    # [ $2 == all -o $2 == rl ]  && __start_k12rl_service  $3 $4
+    # [ $2 == all -o $2 == nlp ] && __start_k12nlp_service $3 $4
+    # [ $2 == all -o $2 == 3d ]  && __start_k123d_service  $3 $4
     [ $2 == all -o $2 == pyr ] && __start_k12pyr_service  $3 $4
     [ $2 == all ] && __start_consul_service
     cd - > /dev/null
