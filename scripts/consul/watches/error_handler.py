@@ -44,6 +44,8 @@ def main():
 
     for item in data:
         key = item['Key']
+        if '16601548608' in key:
+            continue
         value = base64.b64decode(item['Value'].encode()).decode()
 
         msg = MIMEText(value, 'plain', 'utf-8')
