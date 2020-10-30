@@ -47,6 +47,7 @@ class CVServiceRPC(ServiceRPC):
         self._pretrained_dir = f'{dataroot}/pretrained/cv'
 
     def errtype2errcode(self, op, user, uuid, errtype, errtext):
+        errcode = 999999
         if errtype == 'ConfigMissingException':
             errcode = 100233
         elif errtype == 'InvalidModel':
@@ -61,8 +62,11 @@ class CVServiceRPC(ServiceRPC):
             errcode = 100306
         elif errtype == 'TensorSizeError':
             errcode = 100307
-        else:
-            errcode = 999999
+        elif errtype == 'RuntimeError':
+            if 'SSDModel1024' in errtext:
+                errcode = 100308
+            elif 'SSDModel512' in errtext:
+                errcode = 100309
         return errcode
 
     @k12ai_timeit(handler=Logger.info)

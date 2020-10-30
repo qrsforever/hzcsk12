@@ -158,11 +158,11 @@ local _gan_pix2pix_netparams(net) = [
                     objs: _gan_pix2pix_netparams('discriminator'),
                 },
             ] else [
-                {
-                    name: { en: 'Details', cn: self.en },
-                    type: '_ignore_',
-                    objs: (import 'details/__init__.jsonnet').get(),
-                },
             ],
+    },
+    {
+        name: { en: 'Details', cn: self.en },
+        type: '_ignore_',
+        objs: (import 'details/__init__.jsonnet').get(),
     },
 ]

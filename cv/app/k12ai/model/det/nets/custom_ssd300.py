@@ -14,6 +14,7 @@ from model.det.layers.ssd_detection_layer import SSDDetectionLayer
 from model.det.layers.ssd_target_generator import SSDTargetGenerator
 
 from k12ai.tools.util.net_def import load_custom_model
+# from lib.tools.util.logger import Logger as Log
 
 
 class CustomSSD300(Vgg16SSD300):
@@ -22,19 +23,34 @@ class CustomSSD300(Vgg16SSD300):
         self.configer = configer
         cache_dir = configer.get('network.checkpoints_root')
         model_name = self.configer.get('network.model_name')
-        self.backbone = load_custom_model(cache_dir, model_name).named_modules()
-        cnt = 0
+        # self.backbone = load_custom_model(cache_dir, model_name).named_modules()
+        self.backbone = [mod for mod in load_custom_model(cache_dir, model_name).children()]
+
+        cnn_layers = [(i, mod) for i, mod in enumerate(self.backbone) if isinstance(mod, nn.Conv2d)]
+
+        # check
+        if len(cnn_layers) == 0 or cnn_layers[-1][1].out_channels != 1024:
+            print('SSDModel1024')
+            raise RuntimeError('SSDModel1024: the last cnn out channels must be 1024')
+
+        seg_idx = -1
+        for idx, mod in cnn_layers[::-1]:
+            if mod.out_channels == 512:
+                break
+            seg_idx = idx
+        if cnn_layers[0][0] == seg_idx:
+            print('SSDModel512')
+            raise RuntimeError('SSDModel512: must exist the cnn out channels 512')
+
+        print(seg_idx)
+
         self.sub_backbone_1 = nn.ModuleList()
         self.sub_backbone_2 = nn.ModuleList()
-        for key, module in self.backbone:
-            if not key:
-                continue
-            if cnt < 23:
+        for i, module in enumerate(self.backbone):
+            if i < seg_idx:
                 self.sub_backbone_1.append(module)
             else:
                 self.sub_backbone_2.append(module)
-
-            cnt += 1
 
         self.norm4 = L2Norm(512, 20)
         self.ssd_head = SSDHead(configer)

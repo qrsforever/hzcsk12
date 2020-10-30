@@ -29,6 +29,7 @@ def k12ai_send_message(msgtype, message, end=False):
             return
 
         K12AI_DEVELOPER = True if os.environ.get('K12AI_DEVELOPER', None) else False
+
         K12AI_APPID = os.environ.get('K12AI_APPID', 'Unkown')
         K12AI_TOKEN = os.environ.get('K12AI_TOKEN', 'Unkown')
         K12AI_OP = os.environ.get('K12AI_OP', 'Unkown')
@@ -36,18 +37,19 @@ def k12ai_send_message(msgtype, message, end=False):
         K12AI_UUID = os.environ.get('K12AI_UUID', 'Unkown')
         _RPCClient = zerorpc.Client(
                 connect_to='tcp://{}:{}'.format(host, port),  # noqa
-                timeout=2,
+                timeout=3,
                 passive_heartbeat=True)
         _RPCEnable = 1
 
     try:
+        if K12AI_DEVELOPER:
+            print(message)
+
         if message:
             _RPCClient.send_message(K12AI_APPID, K12AI_TOKEN, K12AI_OP, K12AI_USER, K12AI_UUID, msgtype, message)
         if end:
             _RPCClient.close()
 
-        if K12AI_DEVELOPER:
-            print(message)
     except Exception as err:
         if K12AI_DEVELOPER:
             print(err)

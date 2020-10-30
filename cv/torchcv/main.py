@@ -208,5 +208,6 @@ if __name__ == "__main__":
     except Exception:
         # QRS: add for catch internal except
         MessageReport.status(MessageReport.EXCEPT)
+        time.sleep(1)
     finally:
         pass

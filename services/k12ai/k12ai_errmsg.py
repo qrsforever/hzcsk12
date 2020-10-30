@@ -71,6 +71,8 @@ ERRORS = {
         100305: {'en': 'cv anchor method is not valid', 'cn': '框架运行错误: CV框架非法Anchor方式'},
         100306: {'en': 'cv image format type is not valid', 'cn': '框架运行错误: CV框架非法图片类型'},
         100307: {'en': 'cv tensor size error', 'cn': '框架运行错误: CV框架Tensor大小不合理'},
+        100308: {'en': 'cv SSD model last 1024 cnn', 'cn': '框架运行错误: SSD后一层CNN参数错误'},
+        100309: {'en': 'cv SSD model not exist 512 cnn', 'cn': '框架运行错误: SSD中没有512CNN输出'},
 
         100901: {'en': 'out of memory', 'cn': '常见错误: 内存溢出'},
         100902: {'en': 'not implemented yet', 'cn': '常见错误: 尚未实现'},
