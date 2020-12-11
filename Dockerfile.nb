@@ -15,12 +15,12 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
         --index-url https://pypi.tuna.tsinghua.edu.cn/simple" && \
     apt-get update --fix-missing && \
     DEBIAN_FRONTEND=noninteractive $APT_INSTALL \
-        iputils-ping jq \
+        iputils-ping jq net-tools \
         && \
     $PIP_INSTALL \
         crontabs redis flask flask_cors h5py protobuf-compiler \
-        tfrecord plotly opencv-python \
-        onnx onnxruntime \
+        tfrecord plotly opencv-python opencv-contrib-python imutils \
+        minio onnx onnxruntime netron \
         /root/ipywidgets.zip \
         xgboost detectron2\
         watermark jupyter \
