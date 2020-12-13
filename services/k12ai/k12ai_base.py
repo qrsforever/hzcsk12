@@ -147,7 +147,7 @@ class ServiceRPC(object):
 
     def on_finished(self, appId, op, user, uuid, message):
         self.post_processing(appId, op, user, uuid, message)
-        # self.clear_cache(user, uuid)
+        self.clear_cache(user, uuid)
         return message
 
     def oss_upload(self, filepath, bucket_name=None, prefix_map=None, clear=False):
