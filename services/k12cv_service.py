@@ -67,6 +67,10 @@ class CVServiceRPC(ServiceRPC):
                 errcode = 100308
             elif 'SSDModel512' in errtext:
                 errcode = 100309
+            elif errtext.startswith('size mismatch'):
+                errcode = 100401
+            elif errtext.startswith('pad should be smaller than half of kernel size'):
+                errcode = 100402
         return errcode
 
     @k12ai_timeit(handler=Logger.info)

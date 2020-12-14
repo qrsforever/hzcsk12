@@ -74,6 +74,9 @@ ERRORS = {
         100308: {'en': 'cv SSD model last 1024 cnn', 'cn': '框架运行错误: SSD后一层CNN参数错误'},
         100309: {'en': 'cv SSD model not exist 512 cnn', 'cn': '框架运行错误: SSD中没有512CNN输出'},
 
+        100401: {'en': 'custom model: size mismatch', 'cn': '自定义模型错误: 模型上下层size大小不匹配'},
+        100402: {'en': 'custom model: set pad error', 'cn': '自定义模型错误: Pad参数要大于kernel值的一半'},
+
         100901: {'en': 'out of memory', 'cn': '常见错误: 内存溢出'},
         100902: {'en': 'not implemented yet', 'cn': '常见错误: 尚未实现'},
         100903: {'en': 'configuration error', 'cn': '常见错误: 参数配置错误'},
