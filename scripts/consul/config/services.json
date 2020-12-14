@@ -18,23 +18,6 @@
             ]
         },
         {
-            "id": "k12ml",
-            "name": "k12ml",
-            "address": "localhost",
-            "port": 8129,
-            "checks": [
-                {
-                    "id": "k12ml:8129",
-                    "name": "TCP on port 8129",
-                    "tcp": "localhost:8129",
-                    "interval": "10s",
-                    "timeout": "20s",
-                    "success_before_passing": 3,
-                    "failures_before_critical": 3
-                }
-            ]
-        },
-        {
             "id": "k12cv",
             "name": "k12cv",
             "address": "localhost",
@@ -44,57 +27,6 @@
                     "id": "k12cv:8139",
                     "name": "TCP on port 8139",
                     "tcp": "localhost:8139",
-                    "interval": "10s",
-                    "timeout": "20s",
-                    "success_before_passing": 3,
-                    "failures_before_critical": 3
-                }
-            ]
-        },
-        {
-            "id": "k12nlp",
-            "name": "k12nlp",
-            "address": "localhost",
-            "port": 8149,
-            "checks": [
-                {
-                    "id": "k12nlp:8149",
-                    "name": "TCP on port 8149",
-                    "tcp": "localhost:8149",
-                    "interval": "10s",
-                    "timeout": "20s",
-                    "success_before_passing": 3,
-                    "failures_before_critical": 3
-                }
-            ]
-        },
-        {
-            "id": "k12rl",
-            "name": "k12rl",
-            "address": "localhost",
-            "port": 8159,
-            "checks": [
-                {
-                    "id": "k12rl:8159",
-                    "name": "TCP on port 8159",
-                    "tcp": "localhost:8159",
-                    "interval": "10s",
-                    "timeout": "20s",
-                    "success_before_passing": 3,
-                    "failures_before_critical": 3
-                }
-            ]
-        },
-        {
-            "id": "k123d",
-            "name": "k123d",
-            "address": "localhost",
-            "port": 8169,
-            "checks": [
-                {
-                    "id": "k123d:8169",
-                    "name": "TCP on port 8169",
-                    "tcp": "localhost:8169",
                     "interval": "10s",
                     "timeout": "20s",
                     "success_before_passing": 3,
