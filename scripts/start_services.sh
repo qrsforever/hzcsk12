@@ -76,6 +76,7 @@ log_fil=/tmp/k12ai_log.txt
 k12logs=/tmp/k12logs
 
 # check consul server
+is_system_reboot=${IS_SYSTEM_REBOOT:-'0'}
 is_consul_server=${IS_CONSUL_SERVER:-'0'}
 is_crontab_check=${IS_CRONTAB_CHECK:-'0'}
 
@@ -344,7 +345,7 @@ __start_consul_service()
 {
     consul_container=`docker container ls --filter name=${consul_name} --filter status=running -q`
     
-    if [[ $is_crontab_check == 0 && x$consul_container != x ]]
+    if [[ x$consul_container != x && ($is_system_reboot == 1 || $is_crontab_check == 0) ]]
     then
         docker container stop $consul_container 
         docker container rm $consul_container 
