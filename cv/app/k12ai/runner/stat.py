@@ -137,7 +137,7 @@ class RunnerBase(object):
             self._mm.add_scalar('val', 'speed', x=self._cur_iters, y=1.0 / batch_time)
 
         # progress
-        self._mm.add_scalar('train_val', 'progress', x=self._cur_iters, y=round(100 * self._cur_epoch / self._max_epoch, 2))
+        self._mm.add_scalar('训练', '进度', x=self._cur_iters, y=round(100 * self._cur_epoch / self._max_epoch, 2))
 
     def handle_evaluate(self, runner):
         pass
