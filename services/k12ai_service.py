@@ -245,6 +245,18 @@ def _framework_message_pop():
         return json.dumps(response)
 
 
+@app.route('/k12ai/private/meminfo', methods=['GET'])
+def _framework_message_meminfo():
+    response = []
+    try:
+        user = request.args.get("user", default=None)
+        ret, response = k12ai_platform_stats('k12ai', 'query', user, '*', {'services': True}, False)
+    except Exception as err:
+        Logger.info(err)
+    finally:
+        return json.dumps(response)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
