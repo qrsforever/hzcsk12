@@ -191,12 +191,6 @@ class ClsRunner(RunnerBase):
         top5 = runner.running_score.get_top5_acc()['out']
         self._mm.add_text('评估', '准确率', f'{top1, top3, top5}')
 
-        # confusion matrix
-        if runner.configer.get('metrics.confusion_matrix', default=False):
-            if runner.configer.get('data.num_classes') < 100:
-                cm = confusion_matrix(y_true, y_pred)
-                self._mm.add_matrix('评估', '混淆矩阵', cm).send()
-
         # 10 images
         if runner.configer.get('metrics.top10_images', default=False):
             for i, (true, pred, path) in enumerate(zip(y_true, y_pred, files)):
@@ -222,6 +216,13 @@ class ClsRunner(RunnerBase):
             self._mm.add_text('评估', '召回率', R)
         if runner.configer.get('metrics.fscore', default=False):
             self._mm.add_text('评估', 'F分数', F)
+
+        # confusion matrix
+        if runner.configer.get('metrics.confusion_matrix', default=False):
+            if runner.configer.get('data.num_classes') < 100:
+                cm = confusion_matrix(y_true, y_pred)
+                self._mm.add_matrix('评估', '混淆矩阵', cm)
+
         self._mm.send()
 
         # model graph
