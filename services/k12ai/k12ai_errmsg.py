@@ -76,6 +76,8 @@ ERRORS = {
 
         100401: {'en': 'custom model: size mismatch', 'cn': '自定义模型错误: 模型上下层size大小不匹配'},
         100402: {'en': 'custom model: set pad error', 'cn': '自定义模型错误: Pad参数要大于kernel值的一半'},
+        100403: {'en': 'custom model: missing in_channels', 'cn': '自定义模型错误: 卷积层缺少in_channels参数'},
+        100404: {'en': 'custom model: layer is not defined', 'cn': '自定义模型错误: 连线错误(箭头顺序)'},
 
         100901: {'en': 'out of memory', 'cn': '常见错误: 内存溢出'},
         100902: {'en': 'not implemented yet', 'cn': '常见错误: 尚未实现'},

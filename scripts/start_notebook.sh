@@ -15,7 +15,7 @@ VENDOR=hzcsai_com
 
 K12NB_PROJECT=k12nb
 K12NB_PORT=8118
-# K12NB_WWW_PORT=9091
+K12NB_WWW_PORT=9091
 
 K12PYR_PROJECT=k12pyr
 K12PYR_PORT=8178
@@ -47,7 +47,9 @@ __start_notebook()
     fi
     cd - > /dev/null
 
+    echo "###${JNAME}"
     check_exist=`docker container ls --filter name=${JNAME} --filter status=running -q`
+    echo "docker container ls --filter name=${JNAME} --filter status=running -q"
     if [[ x$check_exist == x ]]
     then
         subdir=`echo $PROJECT | cut -c4-`

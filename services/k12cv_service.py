@@ -11,6 +11,8 @@ import os, time
 import argparse
 import json
 import zerorpc
+import re
+
 from threading import Thread
 from pyhocon import ConfigFactory
 from pyhocon import HOCONConverter
@@ -62,6 +64,12 @@ class CVServiceRPC(ServiceRPC):
             errcode = 100306
         elif errtype == 'TensorSizeError':
             errcode = 100307
+        elif errtype == 'TypeError':
+            if 'in_channels' in errtext:
+                errcode = 100403
+        elif errtype == 'NameError':
+            if re.search(r'.*_[a-z0-9]{10}_feat', errtext):
+                errcode = 100404
         elif errtype == 'RuntimeError':
             if 'SSDModel1024' in errtext:
                 errcode = 100308
