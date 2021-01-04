@@ -21,6 +21,7 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
         crontabs redis flask flask_cors h5py protobuf-compiler \
         tfrecord plotly opencv-python opencv-contrib-python imutils \
         minio onnx onnxruntime netron \
+        pytorch-lightning \
         /root/ipywidgets.zip \
         xgboost detectron2\
         watermark jupyter \
