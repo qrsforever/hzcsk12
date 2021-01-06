@@ -85,6 +85,18 @@
         },
     },
     test: {
+        batch_size: 32,
+        aug_trans: {
+            trans_seq: [],
+        },
+        data_transformer: {
+            size_mode: 'fix_size',
+            input_size: [
+                32,
+                32,
+            ],
+            align_method: 'scale_and_pad',
+        },
     },
     network: {
         model_name: 'base_model',
