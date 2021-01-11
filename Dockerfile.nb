@@ -23,8 +23,8 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
         minio onnx onnxruntime netron \
         pytorch-lightning \
         /root/ipywidgets.zip \
-        xgboost detectron2\
-        watermark jupyter \
+        xgboost detectron2 \
+        watermark jupyter xlrd \
         jupyter_contrib_nbextensions \
         jupyter_nbextensions_configurator \
         && \
