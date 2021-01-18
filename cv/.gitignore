@@ -7,4 +7,5 @@ dist
 pytorch3d
 .meshrcnn
 .detectron2
+.pytorch-CycleGAN-and-pix2pix
 app/k12ai/common
