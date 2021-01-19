@@ -65,6 +65,7 @@ else
             [[ x$1 == xai ]] || \
             [[ x$1 == xml ]] || \
             [[ x$1 == xcv ]] || \
+            [[ x$1 == xgan ]] || \
             [[ x$1 == xnlp ]] || \
             [[ x$1 == xrl ]] || \
             [[ x$1 == xpyr ]] || \
@@ -76,9 +77,9 @@ else
             fi
             $top_dir/scripts/start_services.sh dev $1 $act $bgfg
         else
-            echo "Wrong task: [all|ai|ml|cv|nlp|rl|pyr]]"
+            echo "Wrong task: [all|ai|ml|cv|gan||nlp|rl|pyr]]"
         fi
     else
-        echo "k12ai.sh [all|ai|ml|cv|nlp|rl|3d|pyr] [start|stop|restart] [bg|fg]"
+        echo "k12ai.sh [all|ai|ml|cv|gan||nlp|rl|3d|pyr] [start|stop|restart] [bg|fg]"
     fi
 fi

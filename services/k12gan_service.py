@@ -1,11 +1,11 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-# @file k12cv_service.py
+# @file k12gan_service.py
 # @brief
 # @author QRS
 # @version 1.0
-# @date 2019-11-27 17:08:18
+# @date 2021-01-19
 
 import os, time
 import argparse
@@ -29,276 +29,47 @@ _DEBUG_ = True if os.environ.get("K12AI_DEBUG") else False
 g_app_quit = False
 
 
-def _delay_do_consul(host, port):
-    time.sleep(3)
-    while not g_app_quit:
-        try:
-            k12ai_consul_register('k12cv', host, port)
-            break
-        except Exception as err:
-            Logger.info("consul agent service register err: {}".format(err))
-            time.sleep(3)
-
-
-class CVServiceRPC(ServiceRPC):
+class GanServiceRPC(ServiceRPC):
 
     def __init__(self, host, port, image, dataroot):
-        super().__init__('cv', host, port, image, dataroot, _DEBUG_)
+        super().__init__('gan', host, port, image, dataroot, _DEBUG_)
 
-        self._datadir = f'{dataroot}/datasets/cv'
-        self._pretrained_dir = f'{dataroot}/pretrained/cv'
+        self._datadir = f'{dataroot}/datasets/gan'
+        self._pretrained_dir = f'{dataroot}/pretrained/gan'
 
     def errtype2errcode(self, op, user, uuid, errtype, errtext):
         errcode = 999999
-        if errtype == 'ConfigMissingException':
-            errcode = 100233
-        elif errtype == 'InvalidModel':
-            errcode = 100302
-        elif errtype == 'InvalidOptimizerMethod':
-            errcode = 100303
-        elif errtype == 'InvalidPadMode':
-            errcode = 100304
-        elif errtype == 'InvalidAnchorMethod':
-            errcode = 100305
-        elif errtype == 'ImageTypeError':
-            errcode = 100306
-        elif errtype == 'TensorSizeError':
-            errcode = 100307
-        elif errtype == 'TypeError':
-            if 'in_channels' in errtext:
-                errcode = 100403
-        elif errtype == 'NameError':
-            if re.search(r'.*_[a-z0-9]{10}_feat', errtext):
-                errcode = 100404
-        elif errtype == 'RuntimeError':
-            if 'SSDModel1024' in errtext:
-                errcode = 100308
-            elif 'SSDModel512' in errtext:
-                errcode = 100309
-            elif errtext.startswith('size mismatch'):
-                errcode = 100401
-            elif errtext.startswith('pad should be smaller than half of kernel size'):
-                errcode = 100402
         return errcode
 
     @k12ai_timeit(handler=Logger.info)
     def pre_processing(self, appId, op, user, uuid, params):
-        usercache, innercache = self.get_cache_dir(user, uuid)
-        ckpts_dir = os.path.join(usercache, 'output', 'ckpts')
-        kv_config = os.path.join(usercache, 'kv_config.json')
-        if 'train.start' == op:
-            # save original parameters
-            with open(kv_config, 'w') as fw:
-                json.dump(params, fw)
-            self.oss_upload(kv_config, clear=True)
-            params['network.resume_continue'] = False
-        else:
-            # resume train or evaluate or predict
-            self.oss_download(kv_config)
-            if os.path.exists(kv_config):
-                with open(kv_config, 'r') as fr:
-                    _jdata = json.load(fr)
-                    if params is not None:
-                        params.update(_jdata)
-                    else:
-                        params = _jdata 
-                params['network.resume_continue'] = True
-            else:
-                raise FrameworkError(100214)
-
-        # download custom dataset
-        bucket_name = 'data-platform'
-        dataset_path = params['data.data_dir']
-        if dataset_path.startswith(bucket_name):
-            dataset_path = dataset_path[len(bucket_name) + 1:]
-            self.oss_download(dataset_path,
-                    bucket_name=bucket_name,
-                    prefix_map=[os.path.dirname(dataset_path), usercache])
-            dataset_zipfile = os.path.join(usercache, os.path.basename(dataset_path))
-            if not os.path.exists(dataset_zipfile):
-                raise FrameworkError(100212)
-            result = os.system(f'unzip -qo {dataset_zipfile} -d {usercache}')
-            if result != 0:
-                raise FrameworkError(100909, 'unzip error')
-            params['data.data_dir'] = os.path.join(innercache, params['_k12.data.dataset_name'])
-
-        # download train data (weights)
-        if params['network.resume_continue']:
-            self.oss_download(ckpts_dir)
-        else:
-            # remote ckpts
-            self.oss_remove(ckpts_dir)
-
-        # download predict images
-        if 'predict' in op:
-            imguri = params.get('_k12.predict_images')
-            if imguri:
-                if isinstance(imguri, str) and imguri.startswith('oss://'):
-                    self.oss_download(os.path.join(usercache, imguri[6:]))
-                elif isinstance(imguri, (list, tuple)):
-                    import base64
-                    test_dir = os.path.join(usercache, 'predict_images') # TODO don't modify path
-                    mkdir_p(test_dir)
-                    for img in imguri:
-                        with open(os.path.join(test_dir, img['name']), "wb") as fp:
-                            content = img["content"].split(',')
-                            if len(content) > 1:
-                                content = content[1]
-                            fp.write(base64.b64decode(content))
-                else:
-                    raise FrameworkError(100215)
-            else:
-                raise FrameworkError(100213)
         return params
 
     @k12ai_timeit(handler=Logger.info)
     def post_processing(self, appId, op, user, uuid, message):
-        # report train process resource usage
-        code, resource = get_platform_stats(appId, 'query', user, uuid, {'containers':True}, isasync=False)
-        if code == 100000:
-            message['resource'] = resource
-
-        usercache, innercache = self.get_cache_dir(user, uuid)
-        # modify message: add task environ info
-        if op.startswith('train') and isinstance(message, dict):
-            environs = self.get_container_environs(user, uuid)
-            if environs:
-                message['environ'] = {}
-                message['environ']['dataset_name'] = environs['K12AI_DATASET_NAME']
-                message['environ']['num_epochs'] = environs['K12AI_NUM_EPOCHS']
-                message['environ']['model_name'] = environs['K12AI_MODEL_NAME']
-                message['environ']['batch_size'] = environs['K12AI_BATCH_SIZE']
-                message['environ']['input_size'] = environs['K12AI_INPUT_SIZE']
-                message['environ']['start_time'] = environs['K12AI_START_TIME']
-
-        # upload train or evaluate data
-        if op.startswith('train'):
-            self.oss_upload(os.path.join(usercache, 'config.json'), clear=True)
-            self.oss_upload(os.path.join(usercache, 'output', 'ckpts'), clear=True)
-        else: # op.startswith('evaluate')
-            self.oss_upload(os.path.join(usercache, 'output', 'result'), clear=True)
         return message
 
     def make_container_volumes(self):
         volumes = {}
-        volumes[self._datadir] = {'bind': '/datasets', 'mode': 'rw'}
-        volumes[self._pretrained_dir] = {'bind': '/pretrained', 'mode': 'rw'}
+        volumes[self._datadir] = {'bind': '/datasets', 'mode': 'r'}
+        volumes[self._pretrained_dir] = {'bind': '/pretrained', 'mode': 'r'}
         if self._debug:
             volumes[f'{self._projdir}/app'] = {'bind': f'{self._workdir}/app', 'mode': 'rw'}
-            volumes[f'{self._projdir}/torchcv/data'] = {'bind': f'{self._workdir}/torchcv/data', 'mode': 'rw'}
-            volumes[f'{self._projdir}/torchcv/metric'] = {'bind': f'{self._workdir}/torchcv/metric', 'mode': 'rw'}
-            volumes[f'{self._projdir}/torchcv/model'] = {'bind': f'{self._workdir}/torchcv/model', 'mode': 'rw'}
-            volumes[f'{self._projdir}/torchcv/runner'] = {'bind': f'{self._workdir}/torchcv/runner', 'mode': 'rw'}
-            volumes[f'{self._projdir}/torchcv/lib/data'] = {'bind': f'{self._workdir}/torchcv/lib/data', 'mode': 'rw'}
-            volumes[f'{self._projdir}/torchcv/lib/model'] = {'bind': f'{self._workdir}/torchcv/lib/model', 'mode': 'rw'}
-            volumes[f'{self._projdir}/torchcv/lib/runner'] = {'bind': f'{self._workdir}/torchcv/lib/runner', 'mode': 'rw'}
-            volumes[f'{self._projdir}/torchcv/lib/tools'] = {'bind': f'{self._workdir}/torchcv/lib/tools', 'mode': 'rw'}
-            volumes[f'{self._projdir}/torchcv/main.py'] = {'bind': f'{self._workdir}/torchcv/main.py', 'mode': 'rw'}
+            volumes[f'{self._projdir}/pytorch-CycleGAN-and-pix2pix'] = {'bind': f'{self._workdir}/pytorch-CycleGAN-and-pix2pix', 'mode': 'rw'}
         return volumes
 
     def make_container_environs(self, op, params):
         environs = {}
-        if op.startswith('train'):
-            environs['K12AI_DATASET_NAME'] = params['_k12.data.dataset_name']
-            environs['K12AI_NUM_EPOCHS'] = params['solver.max_epoch']
-            environs['K12AI_MODEL_NAME'] = params['network.backbone']
-            environs['K12AI_BATCH_SIZE'] = params['train.batch_size']
-            environs['K12AI_INPUT_SIZE'] = params['train.data_transformer.input_size']
-            environs['K12AI_START_TIME'] = round(time.time() * 1000)
-
         return environs
 
     def make_container_kwargs(self, op, params):
         kwargs = {}
         kwargs['runtime'] = 'nvidia'
         kwargs['shm_size'] = '10g'
-        kwargs['mem_limit'] = '10g'
+        kwargs['mem_limit'] = '20g'
         return kwargs
 
-    def get_app_memstat(self, params):
-        # TODO
-        bs = params['train.batch_size']
-        dn = params['_k12.data.dataset_name']
-        mm = 1
-        if dn == 'dogsVsCats':
-            mm = 2
-        elif dn == 'aliproducts':
-            mm = 2.5
-        if bs <= 32:
-            gmem = 4500 * mm
-        elif bs == 64:
-            gmem = 5500 * mm
-        elif bs == 128:
-            gmem = 6000 * mm
-        else:
-            gmem = 10000 * mm
-        return {
-            'app_cpu_memory_usage_MB': 6000,
-            'app_gpu_memory_usage_MB': gmem,
-        }
-
     def make_container_command(self, appId, op, user, uuid, params):
-        usercache, innercache = self.get_cache_dir(user, uuid)
-        config_file = f'{usercache}/config.json'
-        if '_k12.data.dataset_name' in params.keys():
-            config_tree = ConfigFactory.from_dict(params)
-            _k12ai_tree = config_tree.pop('_k12')
-            # Aug Trans
-            if config_tree.get('train.aug_trans.trans_seq', default=None) is None:
-                config_tree.put('train.aug_trans.trans_seq', [])
-            if config_tree.get('val.aug_trans.trans_seq', default=None) is None:
-                config_tree.put('val.aug_trans.trans_seq', [])
-            if config_tree.get('test.aug_trans.trans_seq', default=None) is None:
-                config_tree.put('test.aug_trans.trans_seq', [])
-            for k, v in _k12ai_tree.get('trans_seq_group.train', default={}).items():
-                if v == 'trans_seq':
-                    config_tree.put('train.aug_trans.trans_seq', [k], append=True)
-                if v == 'shuffle_trans_seq':
-                    config_tree.put('train.aug_trans.shuffle_trans_seq', [k], append=True)
-            for k, v in _k12ai_tree.get('trans_seq_group.val', default={}).items():
-                if v == 'trans_seq':
-                    config_tree.put('val.aug_trans.trans_seq', [k], append=True)
-                if v == 'shuffle_trans_seq':
-                    config_tree.put('val.aug_trans.shuffle_trans_seq', [k], append=True)
-            for k, v in _k12ai_tree.get('trans_seq_group.test', default={}).items():
-                if v == 'trans_seq':
-                    config_tree.put('test.aug_trans.trans_seq', [k], append=True)
-                if v == 'shuffle_trans_seq':
-                    config_tree.put('test.aug_trans.shuffle_trans_seq', [k], append=True)
-            # CheckPoints
-            model_name = config_tree.get('network.model_name', default='unknow')
-            backbone = config_tree.get('network.backbone', default='unknow')
-            ckpts_name = '%s_%s_%s' % (model_name, backbone, _k12ai_tree.get('data.dataset_name'))
-            config_tree.put('network.checkpoints_root', f'{innercache}/output')
-            config_tree.put('network.checkpoints_name', ckpts_name)
-            config_tree.put('network.checkpoints_dir', 'ckpts')
-            ckpts_file_exist = os.path.exists(f'{usercache}/output/ckpts/{ckpts_name}_latest.pth')
-            if op.startswith('train'):
-                if not ckpts_file_exist:
-                    config_tree.put('network.resume_continue', False)
-            else:
-                if not ckpts_file_exist:
-                    raise FrameworkError(100208)
-                config_tree.put('network.resume_continue', True)
-            if config_tree.get('network.resume_continue'):
-                config_tree.put('network.resume', f'{innercache}/output/ckpts/{ckpts_name}_latest.pth')
-            config_str = HOCONConverter.convert(config_tree, 'json')
-        else:
-            raise FrameworkError(100216)
-
-        with open(config_file, 'w') as fout:
-            fout.write(config_str)
-
-        command = f'python {self._workdir}/torchcv/main.py --config_file {innercache}/config.json --cudnn false'
-
-        if op.startswith('train'):
-            command += ' --phase train'
-        elif op.startswith('evaluate'):
-            command += f' --phase test --test_dir json --out_dir {innercache}/output/result'
-        elif op.startswith('predict'):
-            command += f' --phase test --test_dir {innercache}/predict_images --out_dir {innercache}/output/result'
-        else:
-            raise NotImplementedError
         return command
 
 
@@ -312,7 +83,7 @@ if __name__ == "__main__":
             help="host to run app service")
     parser.add_argument(
             '--port',
-            default=8139,
+            default=8239,
             type=int,
             dest='port',
             help="port to run app service")
@@ -330,7 +101,7 @@ if __name__ == "__main__":
             help="consul port")
     parser.add_argument(
             '--image',
-            default='hzcsai_com/k12cv',
+            default='hzcsai_com/k12gan',
             type=str,
             dest='image',
             help="image to run container")
@@ -344,17 +115,14 @@ if __name__ == "__main__":
 
     if _DEBUG_:
         k12ai_set_loglevel('debug')
-    k12ai_set_logfile('k12cv.log')
+    k12ai_set_logfile('k12gan.log')
 
     k12ai_consul_init(args.consul_addr, args.consul_port,  _DEBUG_)
-
-    # thread = Thread(target=_delay_do_consul, args=(args.host, args.port))
-    # thread.start()
 
     Logger.info(f'start zerorpc server on {args.host}:{args.port}')
 
     try:
-        app = zerorpc.Server(CVServiceRPC(
+        app = zerorpc.Server(GanServiceRPC(
             host=args.host, port=args.port,
             image=args.image,
             dataroot=args.data_root))
