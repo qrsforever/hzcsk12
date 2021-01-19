@@ -479,6 +479,41 @@ __start_k12cv_service()
     fi
 }
 
+# 4. check or start k12cv service
+__start_k12cv_service()
+{
+    [ x$1 != xstart ] && __kill_service ${k12cv_service_name}
+    if [[ x$1 == xstop ]]
+    then
+        return
+    fi
+    use_image="hzcsai_com/k12cv"
+    if [[ x$2 == xfg ]]
+    then
+        result=0
+        cmdstr=
+    else
+        result=$(__service_health_check ${k12cv_service_name})
+        cmdstr="nohup"
+    fi
+    if [[ $result != 1 ]]
+    then
+        export K12CV_DEBUG=$debug
+        cmdstr="$cmdstr python3 ${top_dir}/services/k12cv_service.py \
+            --host ${k12cv_addr} \
+            --port ${k12cv_port} \
+            --consul_addr ${consul_addr} \
+            --consul_port ${consul_port} \
+            --image $use_image"
+
+        __run_command $cmdstr
+        __script_logout "start k12cv service"
+    else
+        __script_logout "k12cv service is already running"
+    fi
+}
+
+
 # 5. check or start k12nlp service
 __start_k12nlp_service()
 {
@@ -674,6 +709,7 @@ __main()
     [ $2 == all -o $2 == ai ]  && __start_k12ai_service  $3 $4 
     # [ $2 == all -o $2 == ml ]  && __start_k12ml_service  $3 $4
     [ $2 == all -o $2 == cv ]  && __start_k12cv_service  $3 $4
+    [ $2 == all -o $2 == gan ]  && __start_k12gan_service  $3 $4
     # [ $2 == all -o $2 == rl ]  && __start_k12rl_service  $3 $4
     # [ $2 == all -o $2 == nlp ] && __start_k12nlp_service $3 $4
     # [ $2 == all -o $2 == 3d ]  && __start_k123d_service  $3 $4
