@@ -4,6 +4,7 @@ from util import util
 import torch
 import models
 import data
+import json
 
 
 class BaseOptions():
@@ -20,9 +21,10 @@ class BaseOptions():
     def initialize(self, parser):
         """Define the common options that are used in both training and test."""
         # basic parameters
+        parser.add_argument('--config_file', type=str, default='/config.json', help='configure file')
         # parser.add_argument('--dataroot', required=True, help='path to images (should have subfolders trainA, trainB, valA, valB, etc)')
         parser.add_argument('--dataroot', type=str, default='/datagan', help='path to images (should have subfolders trainA, trainB, valA, valB, etc)')
-        parser.add_argument('--name', type=str, default='experiment_name', help='name of the experiment. It decides where to store samples and models')
+        parser.add_argument('--name', type=str, default='', help='name of the experiment. It decides where to store samples and models')
         parser.add_argument('--gpu_ids', type=str, default='0', help='gpu ids: e.g. 0  0,1,2, 0,2. use -1 for CPU')
         parser.add_argument('--checkpoints_dir', type=str, default='./checkpoints', help='models are saved here')
         # model parameters
@@ -111,14 +113,19 @@ class BaseOptions():
             opt_file.write(message)
             opt_file.write('\n')
 
-    def parse(self, config_file=None):
+    def parse(self):
         """Parse our options, create checkpoints directory suffix, and set up gpu device."""
         opt = self.gather_options()
         opt.isTrain = self.isTrain   # train or test
 
         # k12ai merge config file
-        if config_file:
-            pass
+        if os.path.exists(opt.config_file):
+            with open(opt.config_file) as fr:
+                config = {**vars(opt), **json.load(fr)}
+                opt = argparse.Namespace(**config)
+            num_epochs = opt.n_epochs
+            opt.n_epochs = int(num_epochs / 2)
+            opt.n_epochs_decay = num_epochs - opt.n_epochs
 
         # process opt.suffix
         if opt.suffix:

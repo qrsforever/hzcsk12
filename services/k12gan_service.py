@@ -26,8 +26,6 @@ from k12ai.k12ai_errmsg import FrameworkError
 
 _DEBUG_ = True if os.environ.get("K12AI_DEBUG") else False
 
-g_app_quit = False
-
 
 class GanServiceRPC(ServiceRPC):
 
@@ -51,26 +49,36 @@ class GanServiceRPC(ServiceRPC):
 
     def make_container_volumes(self):
         volumes = {}
-        volumes[self._datadir] = {'bind': '/datasets', 'mode': 'r'}
-        volumes[self._pretrained_dir] = {'bind': '/pretrained', 'mode': 'r'}
+        volumes[self._datadir] = {'bind': '/datasets', 'mode': 'ro'}
+        volumes[self._pretrained_dir] = {'bind': '/pretrained', 'mode': 'ro'}
         if self._debug:
-            volumes[f'{self._projdir}/app'] = {'bind': f'{self._workdir}/app', 'mode': 'rw'}
-            volumes[f'{self._projdir}/pytorch-CycleGAN-and-pix2pix'] = {'bind': f'{self._workdir}/pytorch-CycleGAN-and-pix2pix', 'mode': 'rw'}
+            volumes[f'{self._projdir}/app'] = {'bind': f'{self._workdir}/app', 'mode': 'ro'}
+            volumes[f'{self._projdir}/pytorch-CycleGAN-and-pix2pix'] = {'bind': f'{self._workdir}/pytorch-CycleGAN-and-pix2pix', 'mode': 'ro'}
         return volumes
-
-    def make_container_environs(self, op, params):
-        environs = {}
-        return environs
 
     def make_container_kwargs(self, op, params):
         kwargs = {}
         kwargs['runtime'] = 'nvidia'
         kwargs['shm_size'] = '10g'
-        kwargs['mem_limit'] = '20g'
+        kwargs['mem_limit'] = '12g'
         return kwargs
 
     def make_container_command(self, appId, op, user, uuid, params):
+        Logger.info(params)
+        usercache, innercache = self.get_cache_dir(user, uuid)
+        config_file = f'{usercache}/config.json'
+        with open(config_file, 'w') as fw:
+            fw.write(json.dumps(params))
+
+        if op.startswith('train'):
+            command = f'python {self._workdir}/app/k12ai/train.py --phase train --config_file {innercache}/config.json'
+        else:
+            raise NotImplementedError
         return command
+
+    # temp
+    def clear_cache(self, user, uuid):
+        pass
 
 
 if __name__ == "__main__":
@@ -117,17 +125,13 @@ if __name__ == "__main__":
         k12ai_set_loglevel('debug')
     k12ai_set_logfile('k12gan.log')
 
-    k12ai_consul_init(args.consul_addr, args.consul_port,  _DEBUG_)
+    k12ai_consul_init(args.consul_addr, args.consul_port, _DEBUG_)
 
     Logger.info(f'start zerorpc server on {args.host}:{args.port}')
 
-    try:
-        app = zerorpc.Server(GanServiceRPC(
-            host=args.host, port=args.port,
-            image=args.image,
-            dataroot=args.data_root))
-        app.bind('tcp://0.0.0.0:%d' % (args.port))
-        app.run()
-    finally:
-        g_app_quit = True
-        thread.join()
+    app = zerorpc.Server(GanServiceRPC(
+        host=args.host, port=args.port,
+        image=args.image,
+        dataroot=args.data_root))
+    app.bind('tcp://0.0.0.0:%d' % (args.port))
+    app.run()

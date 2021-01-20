@@ -35,6 +35,23 @@
             ]
         },
         {
+            "id": "k12gan",
+            "name": "k12gan",
+            "address": "localhost",
+            "port": 8239,
+            "checks": [
+                {
+                    "id": "k12cv:8239",
+                    "name": "TCP on port 8239",
+                    "tcp": "localhost:8239",
+                    "interval": "10s",
+                    "timeout": "20s",
+                    "success_before_passing": 3,
+                    "failures_before_critical": 3
+                }
+            ]
+        },
+        {
             "id": "k12pyr",
             "name": "k12pyr",
             "address": "localhost",

@@ -61,6 +61,7 @@ class ServiceRPC(object):
                     errcode = 100009
                 elif isinstance(message['errinfo'], dict):
                     errcode, message = self.container_on_crash(appId, op, user, uuid, message)
+                Logger.info(message)
             elif 'status' in message:
                 if 'starting' == message['status']:
                     errcode = 100001
@@ -260,7 +261,7 @@ class ServiceRPC(object):
 
             volumes = {
                 usercache: {'bind': innercache, 'mode': 'rw'},
-                self._commlib: {'bind': f'{self._workdir}/app/k12ai/common', 'mode': 'rw'},
+                self._commlib: {'bind': f'{self._workdir}/app/k12ai/common', 'mode': 'ro'},
                 **self.make_container_volumes()
             }
 
@@ -298,6 +299,7 @@ class ServiceRPC(object):
 
             self.send_message(appId, token, op, user, uuid, "error", {'status': 'starting'}, clear=True)
             command = self.make_container_command(appId, op, user, uuid, params)
+            Logger.info(kwargs)
             self._docker.containers.run(f'{self._image}', command, **kwargs)
             return
         except FrameworkError as fwerr:

@@ -52,10 +52,12 @@ def _delay_do_loop(host, port):
             pass
         time.sleep(30)
 
+
 ### check health
 @app.route('/health', methods=['GET'])
 def _health():
     return 'ok'
+
 
 ### Platform
 @app.route('/k12ai/platform/stats', methods=['POST'], endpoint='platform_stats')

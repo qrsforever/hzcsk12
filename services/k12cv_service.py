@@ -13,7 +13,7 @@ import json
 import zerorpc
 import re
 
-from threading import Thread
+# from threading import Thread
 from pyhocon import ConfigFactory
 from pyhocon import HOCONConverter
 
@@ -346,7 +346,7 @@ if __name__ == "__main__":
         k12ai_set_loglevel('debug')
     k12ai_set_logfile('k12cv.log')
 
-    k12ai_consul_init(args.consul_addr, args.consul_port,  _DEBUG_)
+    k12ai_consul_init(args.consul_addr, args.consul_port, _DEBUG_)
 
     # thread = Thread(target=_delay_do_consul, args=(args.host, args.port))
     # thread.start()
@@ -362,4 +362,4 @@ if __name__ == "__main__":
         app.run()
     finally:
         g_app_quit = True
-        thread.join()
+        # thread.join()

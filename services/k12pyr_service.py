@@ -11,7 +11,7 @@ import os, time, re
 import argparse
 import json # noqa
 import zerorpc
-from threading import Thread
+# from threading import Thread
 
 from k12ai.k12ai_base import ServiceRPC
 from k12ai.k12ai_consul import (k12ai_consul_init, k12ai_consul_register)
@@ -161,4 +161,4 @@ if __name__ == "__main__":
         app.run()
     finally:
         g_app_quit = True
-        thread.join()
+        # thread.join()
