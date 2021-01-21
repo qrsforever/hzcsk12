@@ -12,10 +12,10 @@ import time
 from options.train_options import TrainOptions
 from data import create_dataset
 from models import create_model
+from k12ai.common.log_message import MessageMetric, MessageReport
 
 
-if __name__ == '__main__':
-    opt = TrainOptions().parse()
+def main(opt):
     dataset = create_dataset(opt)
     dataset_size = len(dataset)
     print('The number of training images = %d' % dataset_size)
@@ -23,16 +23,13 @@ if __name__ == '__main__':
     model = create_model(opt)
     model.setup(opt)
     total_iters = 0
-
-    for epoch in range(1, opt.n_epochs + opt.n_epochs_decay + 1):
+    lr = opt.lr
+    mm = MessageMetric()
+    num_epochs = opt.n_epochs + opt.n_epochs_decay
+    for epoch in range(1, num_epochs + 1):
         epoch_start_time = time.time()
-        iter_data_time = time.time()
         epoch_iter = 0
-        model.update_learning_rate()
         for i, data in enumerate(dataset):
-            iter_start_time = time.time()
-            if total_iters % opt.print_freq == 0:
-                t_data = iter_start_time - iter_data_time
 
             total_iters += opt.batch_size
             epoch_iter += opt.batch_size
@@ -41,12 +38,32 @@ if __name__ == '__main__':
 
             if total_iters % opt.print_freq == 0:
                 losses = model.get_current_losses()
-                t_comp = (time.time() - iter_start_time) / opt.batch_size
-                print(epoch, epoch_iter, losses, t_comp)
+                print(epoch, epoch_iter, losses, lr, '\n')
+
+                for key, val in losses.items():
+                    mm.add_scalar('训练', f'损失{key}', x=epoch_iter, y=val)
+                mm.add_scalar('训练', '学习率', x=epoch_iter, y=lr).send()
 
             if total_iters % opt.save_latest_freq == 0:
                 model.save_networks('latest')
 
-            iter_data_time = time.time()
+        model.save_networks('latest')
+        lr = model.update_learning_rate()
 
-        print('End of epoch %d / %d \t Time Taken: %d sec' % (epoch, opt.n_epochs + opt.n_epochs_decay, time.time() - epoch_start_time))
+        print('End of epoch %d / %d \t lr: %.7f Time Taken: %d sec\n' % (
+            epoch, num_epochs, lr,
+            time.time() - epoch_start_time))
+        mm.add_scalar('训练', '进度', x=epoch, y=round(epoch / num_epochs, 2))
+
+
+if __name__ == '__main__':
+    opt = TrainOptions().parse()
+    MessageReport.status(MessageReport.RUNNING)
+    try:
+        main(opt)
+        MessageReport.status(MessageReport.FINISH)
+    except Exception:
+        MessageReport.status(MessageReport.EXCEPT)
+        time.sleep(1)
+    finally:
+        pass

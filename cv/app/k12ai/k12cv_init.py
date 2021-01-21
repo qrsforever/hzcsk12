@@ -70,8 +70,7 @@ def _hook_runner_selector(configer, custom):
 def _check_custom_model(configer):
     model_name = configer.get('network.model_name')
     Log.info('model name[%s]' % model_name)
-    if model_name.split("_")[0] == "custom":
-        if model_name not in (
+    if model_name.split("_")[0] == "custom"
                 'custom_base',
                 'custom_ssd300',
                 'custom_ssd512'):

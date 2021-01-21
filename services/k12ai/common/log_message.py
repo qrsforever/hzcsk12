@@ -28,7 +28,6 @@ from k12ai.common.rpc_message import k12ai_send_message
 from k12ai.common.util_misc import ( # noqa
     image2bytes,
     handle_exception,
-    dr_scatter3D,
     dr_scatter2D,
 )
 

@@ -7,21 +7,15 @@
 # @version 1.0
 # @date 2021-01-19
 
-import os, time
+import os
 import argparse
 import json
 import zerorpc
-import re
-
-from threading import Thread
-from pyhocon import ConfigFactory
-from pyhocon import HOCONConverter
 
 from k12ai.k12ai_base import ServiceRPC
-from k12ai.k12ai_consul import (k12ai_consul_init, k12ai_consul_register)
+from k12ai.k12ai_consul import k12ai_consul_init
 from k12ai.k12ai_logger import (k12ai_set_loglevel, k12ai_set_logfile, Logger)
-from k12ai.k12ai_utils import k12ai_timeit, mkdir_p
-from k12ai.k12ai_platform import k12ai_platform_stats as get_platform_stats
+from k12ai.k12ai_utils import k12ai_timeit
 from k12ai.k12ai_errmsg import FrameworkError
 
 _DEBUG_ = True if os.environ.get("K12AI_DEBUG") else False
@@ -41,10 +35,35 @@ class GanServiceRPC(ServiceRPC):
 
     @k12ai_timeit(handler=Logger.info)
     def pre_processing(self, appId, op, user, uuid, params):
+        usercache, innercache = self.get_cache_dir(user, uuid)
+        if 'train.start' == op:
+            params['continue_train'] = False
+        else:
+            config = os.path.join(usercache, 'config.json')
+            self.oss_download(config)
+            if os.path.exists(config):
+                with open(config, 'r') as fr:
+                    _jdata = json.load(fr)
+                    if params is not None:
+                        params.update(_jdata)
+                    else:
+                        params = _jdata
+                params['continue_train'] = True
+            else:
+                raise FrameworkError(100214)
+        if params['continue_train']:
+            self.oss_download(os.path.join(usercache, 'ckpts'))
+
         return params
 
     @k12ai_timeit(handler=Logger.info)
     def post_processing(self, appId, op, user, uuid, message):
+        usercache, innercache = self.get_cache_dir(user, uuid)
+        if op.startswith('train'):
+            self.oss_upload(os.path.join(usercache, 'config.json'), clear=True)
+            self.oss_upload(os.path.join(usercache, 'ckpts'), clear=True)
+        else: # op.startswith('evaluate')
+            self.oss_upload(os.path.join(usercache, 'results'), clear=True)
         return message
 
     def make_container_volumes(self):
@@ -60,7 +79,7 @@ class GanServiceRPC(ServiceRPC):
         kwargs = {}
         kwargs['runtime'] = 'nvidia'
         kwargs['shm_size'] = '10g'
-        kwargs['mem_limit'] = '12g'
+        kwargs['mem_limit'] = '10g'
         return kwargs
 
     def make_container_command(self, appId, op, user, uuid, params):
@@ -72,11 +91,12 @@ class GanServiceRPC(ServiceRPC):
 
         if op.startswith('train'):
             command = f'python {self._workdir}/app/k12ai/train.py --phase train --config_file {innercache}/config.json'
+        elif op.startswith('evaluate'):
+            command = f'python {self._workdir}/app/k12ai/test.py --phase test --config_file {innercache}/config.json'
         else:
             raise NotImplementedError
         return command
 
-    # temp
     def clear_cache(self, user, uuid):
         pass
 
