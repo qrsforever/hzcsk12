@@ -45,9 +45,8 @@ class GanServiceRPC(ServiceRPC):
                 with open(config, 'r') as fr:
                     _jdata = json.load(fr)
                     if params is not None:
-                        params.update(_jdata)
-                    else:
-                        params = _jdata
+                        _jdata.update(params)
+                    params = _jdata
                 params['continue_train'] = True
             else:
                 raise FrameworkError(100214)
@@ -95,6 +94,8 @@ class GanServiceRPC(ServiceRPC):
             command = f'python {self._workdir}/app/k12ai/train.py --phase train --config_file {innercache}/config.json'
         elif op.startswith('evaluate'):
             command = f'python {self._workdir}/app/k12ai/test.py --phase test --config_file {innercache}/config.json'
+        elif op.startswith('predict'):
+            command = f'python {self._workdir}/app/k12ai/predict.py --phase test --config_file {innercache}/config.json'
         else:
             raise NotImplementedError
         return command
