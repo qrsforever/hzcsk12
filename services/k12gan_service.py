@@ -83,6 +83,8 @@ class GanServiceRPC(ServiceRPC):
         return kwargs
 
     def make_container_command(self, appId, op, user, uuid, params):
+        # TODO
+        params['continue_train'] = True
         Logger.info(params)
         usercache, innercache = self.get_cache_dir(user, uuid)
         config_file = f'{usercache}/config.json'

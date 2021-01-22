@@ -129,5 +129,6 @@ def k12ai_error_message(code=100000, content=None, expand=None, exc=False):
     if exc:
         msg['expand'] = {}
         msg['expand']['excinfo'] = gen_exc_info()
-    # print(msg)
+    if code > 100100:
+        print(msg)
     return msg

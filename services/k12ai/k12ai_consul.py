@@ -101,7 +101,7 @@ def k12ai_consul_message(sname, appId, token, op, user, uuid, msgtype, message, 
     if g_consul_debug:
         if clear:
             client.kv.delete('framework/%s/%s' % (user, uuid), recurse=True)
-        key = 'framework/%s/%s/%s/%s/%s' % (user, uuid, op.split('.')[0], msgtype, data['datetime'])
+        key = 'framework/%s/%s/%s/%s/%s' % (user, uuid, op.split('.')[0], msgtype, data['timestamp'])
         jsondata = json.dumps(data, indent=2)
         if len(jsondata) < 512000:
             client.kv.put(key, jsondata)

@@ -40,9 +40,10 @@ def main(opt):
                 losses = model.get_current_losses()
                 print(epoch, epoch_iter, losses, lr, '\n')
 
-                for key, val in losses.items():
-                    mm.add_scalar('训练', f'损失{key}', x=epoch_iter, y=val)
+                # for key, val in losses.items():
+                #     mm.add_scalar('训练', f'损失{key}', x=epoch_iter, y=val)
                 mm.add_scalar('训练', '学习率', x=epoch_iter, y=lr).send()
+                mm.add_scalar('训练', '损失', x=epoch_iter, y=losses).send()
 
             if total_iters % opt.save_latest_freq == 0:
                 model.save_networks('latest')

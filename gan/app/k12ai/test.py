@@ -41,7 +41,7 @@ def main(opt):
             img_nump = util.tensor2im(img_data)
             util.save_image(img_nump, img_path, opt.aspect_ratio)
             if i < 3:
-                mm.add_image('评估', f'{path_prefix}_{img_name}', img_path).send()
+                mm.add_image('评估', f'{img_name}', img_path).send()
 
 
 if __name__ == '__main__':
