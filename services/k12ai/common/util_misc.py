@@ -256,3 +256,12 @@ def dr_scatter3D(data, labels):
     colors = cm.rainbow(np.linspace(0, 1, 1))
     ax.scatter(tsne[:, 0], tsne[:, 1], tsne[:, 2], c=colors, alpha=0.5)
     return fig
+
+
+def print_options(opt):
+    message = ''
+    message += '----------------- Options ---------------\n'
+    for k, v in sorted(vars(opt).items()):
+        message += '{:>25}: {:<30}\n'.format(str(k), str(v))
+    message += '----------------- End -------------------'
+    print(message)

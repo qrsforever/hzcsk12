@@ -13,13 +13,17 @@ from options.train_options import TrainOptions
 from data import create_dataset
 from models import create_model
 from k12ai.common.log_message import MessageMetric, MessageReport
+from k12ai.common.util_misc import print_options
 
 
 def main(opt):
+    print(opt.dataroot, opt.dataroot.split('/')[-1])
+    opt.name = opt.dataroot.split('/')[-1]
+    print_options(opt)
+
     dataset = create_dataset(opt)
     dataset_size = len(dataset)
     print('The number of training images = %d' % dataset_size)
-
     model = create_model(opt)
     model.setup(opt)
     total_iters = 0
@@ -40,8 +44,6 @@ def main(opt):
                 losses = model.get_current_losses()
                 print(epoch, epoch_iter, losses, lr, '\n')
 
-                # for key, val in losses.items():
-                #     mm.add_scalar('训练', f'损失{key}', x=epoch_iter, y=val)
                 mm.add_scalar('训练', '学习率', x=epoch_iter, y=lr).send()
                 mm.add_scalar('训练', '损失', x=epoch_iter, y=losses).send()
 

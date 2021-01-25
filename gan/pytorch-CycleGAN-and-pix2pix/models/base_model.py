@@ -1,5 +1,6 @@
 import os
 import torch
+from util import util
 from collections import OrderedDict
 from abc import ABC, abstractmethod
 from . import networks
@@ -85,7 +86,9 @@ class BaseModel(ABC):
             self.schedulers = [networks.get_scheduler(optimizer, opt) for optimizer in self.optimizers]
         if not self.isTrain or opt.continue_train:
             load_suffix = 'iter_%d' % opt.load_iter if opt.load_iter > 0 else opt.epoch
-            self.load_networks(load_suffix)
+            self.load_networks(load_suffix, self.save_dir)
+        elif opt.pretrained_dir != '':
+            self.load_networks(opt.epoch, os.path.join(opt.pretrained_dir, opt.name))
         self.print_networks(opt.verbose)
 
     def eval(self):
@@ -148,6 +151,7 @@ class BaseModel(ABC):
         Parameters:
             epoch (int) -- current epoch; used in the file name '%s_net_%s.pth' % (epoch, name)
         """
+        util.mkdirs(self.save_dir)
         for name in self.model_names:
             if isinstance(name, str):
                 save_filename = '%s_net_%s.pth' % (epoch, name)
@@ -174,7 +178,7 @@ class BaseModel(ABC):
         else:
             self.__patch_instance_norm_state_dict(state_dict, getattr(module, key), keys, i + 1)
 
-    def load_networks(self, epoch):
+    def load_networks(self, epoch, save_dir):
         """Load all the networks from the disk.
 
         Parameters:
@@ -183,7 +187,10 @@ class BaseModel(ABC):
         for name in self.model_names:
             if isinstance(name, str):
                 load_filename = '%s_net_%s.pth' % (epoch, name)
-                load_path = os.path.join(self.save_dir, load_filename)
+                load_path = os.path.join(save_dir, load_filename)
+                if not os.path.exists(load_path):
+                    print('not found weight: %s' % load_path)
+                    continue
                 net = getattr(self, 'net' + name)
                 if isinstance(net, torch.nn.DataParallel):
                     net = net.module

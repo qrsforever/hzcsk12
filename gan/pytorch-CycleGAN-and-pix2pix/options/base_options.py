@@ -1,6 +1,5 @@
 import argparse
 import os
-from util import util
 import torch
 import models
 import data
@@ -27,6 +26,7 @@ class BaseOptions():
         parser.add_argument('--name', type=str, default='', help='name of the experiment. It decides where to store samples and models')
         parser.add_argument('--gpu_ids', type=str, default='0', help='gpu ids: e.g. 0  0,1,2, 0,2. use -1 for CPU')
         parser.add_argument('--checkpoints_dir', type=str, default='/cache/ckpts', help='models are saved here')
+        parser.add_argument('--pretrained_dir', type=str, default='', help='pretrained models are saved here')
         # model parameters
         parser.add_argument('--model', type=str, default='cycle_gan', help='chooses which model to use. [cycle_gan | pix2pix | test | colorization]')
         parser.add_argument('--input_nc', type=int, default=3, help='# of input image channels: 3 for RGB and 1 for grayscale')
@@ -106,12 +106,12 @@ class BaseOptions():
         print(message)
 
         # save to the disk
-        expr_dir = os.path.join(opt.checkpoints_dir, opt.name)
-        util.mkdirs(expr_dir)
-        file_name = os.path.join(expr_dir, '{}_opt.txt'.format(opt.phase))
-        with open(file_name, 'wt') as opt_file:
-            opt_file.write(message)
-            opt_file.write('\n')
+        # expr_dir = os.path.join(opt.checkpoints_dir, opt.name)
+        # util.mkdirs(expr_dir)
+        # file_name = os.path.join(expr_dir, '{}_opt.txt'.format(opt.phase))
+        # with open(file_name, 'wt') as opt_file:
+        #     opt_file.write(message)
+        #     opt_file.write('\n')
 
     def parse(self):
         """Parse our options, create checkpoints directory suffix, and set up gpu device."""
@@ -132,7 +132,7 @@ class BaseOptions():
             suffix = ('_' + opt.suffix.format(**vars(opt))) if opt.suffix != '' else ''
             opt.name = opt.name + suffix
 
-        self.print_options(opt)
+        # self.print_options(opt)
 
         # set gpu ids
         str_ids = opt.gpu_ids.split(',')

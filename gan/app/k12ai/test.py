@@ -13,13 +13,17 @@ from data import create_dataset
 from models import create_model
 from util import util
 from k12ai.common.log_message import MessageMetric, MessageReport
+from k12ai.common.util_misc import print_options
 
 
 def main(opt):
+    opt.name = opt.dataroot.split('/')[-1]
     opt.num_threads = 0
     opt.batch_size = 1
     opt.serial_batches = True
     opt.no_flip = True
+    print_options(opt)
+
     dataset = create_dataset(opt)
     model = create_model(opt)
     model.setup(opt)

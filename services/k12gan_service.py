@@ -65,6 +65,11 @@ class GanServiceRPC(ServiceRPC):
             self.oss_upload(os.path.join(usercache, 'results'), clear=True)
         return message
 
+    def make_container_environs(self, op, params):
+        environs = {}
+        environs['K12AI_DEVELOPER'] = '1'
+        return environs
+
     def make_container_volumes(self):
         volumes = {}
         volumes[self._datadir] = {'bind': '/datasets', 'mode': 'ro'}
@@ -83,7 +88,7 @@ class GanServiceRPC(ServiceRPC):
 
     def make_container_command(self, appId, op, user, uuid, params):
         # TODO
-        params['continue_train'] = True
+        # params['continue_train'] = True
         Logger.info(params)
         usercache, innercache = self.get_cache_dir(user, uuid)
         config_file = f'{usercache}/config.json'
