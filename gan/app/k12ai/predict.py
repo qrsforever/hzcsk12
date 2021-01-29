@@ -16,6 +16,7 @@ from models import create_model
 from util import util
 from k12ai.common.log_message import MessageMetric, MessageReport
 from k12ai.common.util_misc import print_options
+from k12ai.mnist.predict import predict_mnist_gan
 
 
 def main(opt):
@@ -47,7 +48,7 @@ def main(opt):
             img_path = f'{path_prefix}_{img_name}.png'
             img_nump = util.tensor2im(img_data)
             util.save_image(img_nump, img_path, opt.aspect_ratio)
-            mm.add_image('评估', f'{img_name}', img_path).send()
+            mm.add_image('测试', f'{img_name}', img_path).send()
 
 
 if __name__ == '__main__':
@@ -55,12 +56,15 @@ if __name__ == '__main__':
     MessageReport.status(MessageReport.RUNNING)
     try:
         opt.name = opt.dataroot.split('/')[-1]
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            imgpath = os.path.join(tmp_dir, 'b4img.png')
-            with open(imgpath, 'wb') as fw:
-                fw.write(base64.b64decode(opt.b64_image))
-            opt.dataroot = tmp_dir
-            main(opt)
+        if opt.name == 'mnist':
+            predict_mnist_gan(opt)
+        else:
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                imgpath = os.path.join(tmp_dir, 'b4img.png')
+                with open(imgpath, 'wb') as fw:
+                    fw.write(base64.b64decode(opt.b64_image))
+                opt.dataroot = tmp_dir
+                main(opt)
         MessageReport.status(MessageReport.FINISH)
     except Exception:
         MessageReport.status(MessageReport.EXCEPT)

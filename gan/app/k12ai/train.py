@@ -19,6 +19,9 @@ from k12ai.common.util_misc import print_options
 def main(opt):
     print(opt.dataroot, opt.dataroot.split('/')[-1])
     opt.name = opt.dataroot.split('/')[-1]
+    if opt.name == 'mnist':
+        from k12ai.mnist.train import train_mnist_gan
+        return train_mnist_gan(opt)
     print_options(opt)
 
     dataset = create_dataset(opt)
@@ -44,8 +47,8 @@ def main(opt):
                 losses = model.get_current_losses()
                 print(epoch, epoch_iter, losses, lr, '\n')
 
-                mm.add_scalar('训练', '学习率', x=epoch_iter, y=lr).send()
-                mm.add_scalar('训练', '损失', x=epoch_iter, y=losses).send()
+                mm.add_scalar('训练', '学习率', x=total_iters, y=lr).send()
+                mm.add_scalar('训练', '损失', x=total_iters, y=losses).send()
 
             if total_iters % opt.save_latest_freq == 0:
                 model.save_networks('latest')
@@ -56,7 +59,7 @@ def main(opt):
         print('End of epoch %d / %d \t lr: %.7f Time Taken: %d sec\n' % (
             epoch, num_epochs, lr,
             time.time() - epoch_start_time))
-        mm.add_scalar('训练', '进度', x=epoch, y=round(epoch / num_epochs, 2))
+        mm.add_scalar('训练', '进度', x=epoch, y=round(epoch / num_epochs, 2)).send()
 
 
 if __name__ == '__main__':
