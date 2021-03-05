@@ -1,6 +1,5 @@
 #!/bin/python3
 
-import io
 import torch
 import torchvision
 
@@ -22,11 +21,8 @@ def predict_mnist_gan(opt):
     ims = torchvision.utils.make_grid(samples, nrow=5, normalize=True)
     ims = ims.numpy().transpose((1, 2, 0))
 
-    import matplotlib.pyplot as plt
-    plt.figure(figsize=(8, 8))
-    plt.axis('off')
-    bio = io.BytesIO()
+    # import matplotlib.pyplot as plt
+    # plt.figure(figsize=(8, 8))
+    # plt.axis('off')
     # plt.imsave('/cache/test.jpg', ims)
-    plt.imsave(bio, ims)
-    bio.seek(0)
-    mm.add_image('测试', '5x5', bio.read()).send()
+    mm.add_image('测试', '5x5', ims).send()

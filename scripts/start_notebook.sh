@@ -100,6 +100,7 @@ __main()
             --volume $TOP_DIR/pyr/app:$DST_DIR/hzcsnote/pyr/app \
             --volume $TOP_DIR/services/k12ai:$DST_DIR/hzcsnote/k12libs/k12ai \
             --volume /data:/data \
+            --volume /raceai:/raceai \
             --volume /data/pretrained/cv:/root/.cache/torch/hub/checkpoints
     fi
 }

@@ -105,8 +105,8 @@ class GanServiceRPC(ServiceRPC):
             raise NotImplementedError
         return command
 
-    # def clear_cache(self, user, uuid):
-    #     pass
+    def clear_cache(self, user, uuid):
+        pass
 
 
 if __name__ == "__main__":

@@ -9,22 +9,30 @@ ARG jupyter_conf_dir=/root/.jupyter
 
 COPY external/ipywidgets-8.0.0a0.zip /root/ipywidgets.zip
 
+# opencv-contrib-python 
+
 RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
     PIP_INSTALL="pip install -U --no-cache-dir --retries 20 --timeout 120 \
-        --trusted-host pypi.tuna.tsinghua.edu.cn \
-        --index-url https://pypi.tuna.tsinghua.edu.cn/simple" && \
+        --trusted-host mirrors.intra.didiyun.com \
+        --index-url http://mirrors.intra.didiyun.com/pip/simple" && \
     apt-get update --fix-missing && \
     DEBIAN_FRONTEND=noninteractive $APT_INSTALL \
         iputils-ping tree jq net-tools \
         && \
     $PIP_INSTALL \
         crontabs redis flask flask_cors h5py protobuf-compiler \
-        tfrecord plotly opencv-python opencv-contrib-python imutils \
-        minio onnx onnxruntime netron \
         pytorch-lightning \
+        tfrecord plotly opencv-python imutils \
+        minio onnx onnxruntime netron \
+        watermark xlrd xgboost
+
+RUN PIP_INSTALL="pip install -U --no-cache-dir --retries 20 --timeout 120 \
+        --trusted-host pypi.tuna.tsinghua.edu.cn \
+        --index-url https://pypi.tuna.tsinghua.edu.cn/simple" && \
+    $PIP_INSTALL \
         /root/ipywidgets.zip \
-        xgboost detectron2 \
-        watermark jupyter xlrd \
+        detectron2 \
+        jupyter \
         jupyter_contrib_nbextensions \
         jupyter_nbextensions_configurator \
         && \
