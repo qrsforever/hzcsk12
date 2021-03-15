@@ -1,4 +1,4 @@
-FROM egkimdok/pytorch-kaldi:cuda10.1-cudnn7-ubuntu16.04
+FROM hzcsai_com/kaldi 
 
 LABEL maintainer="k12asr@hzcsai.com"
 
@@ -26,7 +26,9 @@ LABEL org.label-schema.schema-version="1.0" \
 
 WORKDIR /hzcsk12/asr
 
-RUN PIP_INSTALL="pip install -U --no-cache-dir --retries 20 --timeout 120 \
+RUN apt-get update && apt-get install -y python3-pip
+
+RUN PIP_INSTALL="pip3 install -U --no-cache-dir --retries 20 --timeout 120 \
                  --trusted-host mirrors.intra.didiyun.com \
         --index-url http://mirrors.intra.didiyun.com/pip/simple" && \
     $PIP_INSTALL blockdiag

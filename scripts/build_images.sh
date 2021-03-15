@@ -137,6 +137,7 @@ __main()
         [[ x$1 == xml ]] || \
         [[ x$1 == xcv ]] || \
         [[ x$1 == xgan ]] || \
+        [[ x$1 == xasr ]] || \
         [[ x$1 == xnlp ]] || \
         [[ x$1 == xrl ]] || \
         [[ x$1 == x3d ]] || \
@@ -157,6 +158,7 @@ __main()
         __build_image "k12ml"  $MAJOR_K12AI $MINOR_K12AI ml/Dockerfile.ml $force
         __build_image "k12cv"  $MAJOR_K12AI $MINOR_K12AI cv/Dockerfile.cv $force
         __build_image "k12gan" $MAJOR_K12AI $MINOR_K12AI gan/Dockerfile.gan $force
+        __build_image "k12asr" $MAJOR_K12AI $MINOR_K12AI nlp/Dockerfile.asr $force
         __build_image "k12nlp" $MAJOR_K12AI $MINOR_K12AI nlp/Dockerfile.nlp $force
         __build_image "k12rl"  $MAJOR_K12AI $MINOR_K12AI rl/Dockerfile.rl $force
         __build_image "k123d"  $MAJOR_K12AI $MINOR_K12AI 3d/Dockerfile.3d $force

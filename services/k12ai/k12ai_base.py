@@ -160,8 +160,10 @@ class ServiceRPC(object):
             result = k12ai_object_put(self._ossmc, local_path=filepath,
                     bucket_name=bucket_name, prefix_map=prefix_map)
             Logger.info(result)
+            return result
         except Exception as err:
             Logger.error(str(err))
+            return {}
 
     def oss_download(self, filepath, bucket_name=None, prefix_map=None):
         try:

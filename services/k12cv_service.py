@@ -174,7 +174,7 @@ class CVServiceRPC(ServiceRPC):
         # upload train or evaluate data
         if op.startswith('train'):
             self.oss_upload(os.path.join(usercache, 'config.json'), clear=True)
-            self.oss_upload(os.path.join(usercache, 'output', 'ckpts'), clear=True)
+            message['ckpts'] = self.oss_upload(os.path.join(usercache, 'output', 'ckpts'), clear=True)
         else: # op.startswith('evaluate')
             self.oss_upload(os.path.join(usercache, 'output', 'result'), clear=True)
         return message

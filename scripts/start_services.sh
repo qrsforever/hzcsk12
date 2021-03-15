@@ -134,6 +134,10 @@ k12pyr_service_name=k12pyr
 k12pyr_addr=$hostlanip
 k12pyr_port=8179
 
+k12asr_service_name=k12asr
+k12asr_addr=$hostlanip
+k12asr_port=8199
+
 dataset_port=9090
 notewww_port=9091
 
@@ -654,7 +658,41 @@ __start_k12pyr_service()
     fi
 }
 
-# 9. setart dataset service
+# 9. check or start k12asr service
+__start_k12asr_service()
+{
+    [ x$1 != xstart ] && __kill_service ${k12asr_service_name}
+    if [[ x$1 == xstop ]]
+    then
+        return
+    fi
+    use_image="hzcsai_com/k12asr"
+    if [[ x$2 == xfg ]]
+    then
+        result=0
+        cmdstr=
+    else
+        result=$(__service_health_check ${k12asr_service_name})
+        cmdstr="nohup"
+    fi
+    if [[ $result != 1 ]]
+    then
+        export k12gan_DEBUG=$debug
+        cmdstr="$cmdstr python3 ${top_dir}/services/k12gan_service.py \
+            --host ${k12gan_addr} \
+            --port ${k12gan_port} \
+            --consul_addr ${consul_addr} \
+            --consul_port ${consul_port} \
+            --image $use_image"
+
+        __run_command $cmdstr
+        __script_logout "start k12gan service"
+    else
+        __script_logout "k12gan service is already running"
+    fi
+}
+
+# x. setart dataset service
 __start_dataset_service()
 {
     result=`ps -eo pid,args | grep "http.server $dataset_port" | grep -v grep`
@@ -671,7 +709,7 @@ __start_dataset_service()
     fi
 }
 
-# 10. setart notewww service
+# y. setart notewww service
 __start_notewww_service()
 {
     result=`ps -eo pid,args | grep "http.server $notewww_port" | grep -v grep`
