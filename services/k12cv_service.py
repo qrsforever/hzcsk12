@@ -12,6 +12,7 @@ import argparse
 import json
 import zerorpc
 import re
+import base64
 
 # from threading import Thread
 from pyhocon import ConfigFactory
@@ -132,24 +133,25 @@ class CVServiceRPC(ServiceRPC):
 
         # download predict images
         if 'predict' in op:
+            Logger.info(params)
             imguri = params.get('_k12.predict_images')
             test_dir = os.path.join(usercache, 'predict_images') # TODO don't modify path
             mkdir_p(test_dir)
             if imguri:
-                if isinstance(imguri, str):
-                    if imguri.startswith('oss://'):
-                        self.oss_download(os.path.join(test_dir, imguri[6:]))
-                    elif imguri.startswith('http') or imguri.startswith('ftp'):
-                        x = parse.quote(imguri, safe=':/?-=')
-                        request.urlretrieve(x, os.path.join(test_dir, os.path.basename(x)))
-                elif isinstance(imguri, (list, tuple)):
-                    import base64
+                if isinstance(imguri, (list, tuple)):
                     for img in imguri:
-                        with open(os.path.join(test_dir, img['name']), "wb") as fp:
-                            content = img["content"].split(',')
-                            if len(content) > 1:
-                                content = content[1]
-                            fp.write(base64.b64decode(content))
+                        imguri = img['content']
+                        if imguri.startswith('oss://'):
+                            self.oss_download(os.path.join(test_dir, imguri[6:]))
+                        elif imguri.startswith('http') or imguri.startswith('ftp'):
+                            x = parse.quote(imguri, safe=':/?-=')
+                            request.urlretrieve(x, os.path.join(test_dir, os.path.basename(x)))
+                        else:
+                            with open(os.path.join(test_dir, img['name']), "wb") as fp:
+                                content = imguri.split(',')
+                                if len(content) > 1:
+                                    content = content[1]
+                                fp.write(base64.b64decode(content))
                 else:
                     raise FrameworkError(100215)
             else:
