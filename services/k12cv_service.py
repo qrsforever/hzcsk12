@@ -16,6 +16,7 @@ import re
 # from threading import Thread
 from pyhocon import ConfigFactory
 from pyhocon import HOCONConverter
+from urllib import request, parse
 
 from k12ai.k12ai_base import ServiceRPC
 from k12ai.k12ai_consul import (k12ai_consul_init, k12ai_consul_register)
@@ -101,7 +102,7 @@ class CVServiceRPC(ServiceRPC):
                     if params is not None:
                         params.update(_jdata)
                     else:
-                        params = _jdata 
+                        params = _jdata
                 params['network.resume_continue'] = True
             else:
                 raise FrameworkError(100214)
@@ -132,13 +133,17 @@ class CVServiceRPC(ServiceRPC):
         # download predict images
         if 'predict' in op:
             imguri = params.get('_k12.predict_images')
+            test_dir = os.path.join(usercache, 'predict_images') # TODO don't modify path
+            mkdir_p(test_dir)
             if imguri:
-                if isinstance(imguri, str) and imguri.startswith('oss://'):
-                    self.oss_download(os.path.join(usercache, imguri[6:]))
+                if isinstance(imguri, str):
+                    if imguri.startswith('oss://'):
+                        self.oss_download(os.path.join(test_dir, imguri[6:]))
+                    elif imguri.startswith('http') or imguri.startswith('ftp'):
+                        x = parse.quote(imguri, safe=':/?-=')
+                        request.urlretrieve(x, os.path.join(test_dir, os.path.basename(x)))
                 elif isinstance(imguri, (list, tuple)):
                     import base64
-                    test_dir = os.path.join(usercache, 'predict_images') # TODO don't modify path
-                    mkdir_p(test_dir)
                     for img in imguri:
                         with open(os.path.join(test_dir, img['name']), "wb") as fp:
                             content = img["content"].split(',')
@@ -174,7 +179,7 @@ class CVServiceRPC(ServiceRPC):
         # upload train or evaluate data
         if op.startswith('train'):
             self.oss_upload(os.path.join(usercache, 'config.json'), clear=True)
-            message['ckpts'] = self.oss_upload(os.path.join(usercache, 'output', 'ckpts'), clear=True)
+            self.oss_upload(os.path.join(usercache, 'output', 'ckpts'), clear=True)
         else: # op.startswith('evaluate')
             self.oss_upload(os.path.join(usercache, 'output', 'result'), clear=True)
         return message
