@@ -677,8 +677,8 @@ __start_k12asr_service()
     fi
     if [[ $result != 1 ]]
     then
-        export k12gan_DEBUG=$debug
-        cmdstr="$cmdstr python3 ${top_dir}/services/k12gan_service.py \
+        export k12asr_DEBUG=$debug
+        cmdstr="$cmdstr python3 ${top_dir}/services/k12asr_service.py \
             --host ${k12gan_addr} \
             --port ${k12gan_port} \
             --consul_addr ${consul_addr} \
@@ -686,9 +686,9 @@ __start_k12asr_service()
             --image $use_image"
 
         __run_command $cmdstr
-        __script_logout "start k12gan service"
+        __script_logout "start k12asr service"
     else
-        __script_logout "k12gan service is already running"
+        __script_logout "k12asr service is already running"
     fi
 }
 
