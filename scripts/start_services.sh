@@ -751,7 +751,7 @@ __main()
     [ $2 == all -o $2 == ai ]  && __start_k12ai_service  $3 $4 
     # [ $2 == all -o $2 == ml ]  && __start_k12ml_service  $3 $4
     [ $2 == all -o $2 == cv ]  && __start_k12cv_service  $3 $4
-    [ $2 == all -o $2 == gan ]  && __start_k12gan_service  $3 $4
+    # [ $2 == all -o $2 == gan ]  && __start_k12gan_service  $3 $4
     # [ $2 == all -o $2 == rl ]  && __start_k12rl_service  $3 $4
     # [ $2 == all -o $2 == nlp ] && __start_k12nlp_service $3 $4
     # [ $2 == all -o $2 == 3d ]  && __start_k123d_service  $3 $4
