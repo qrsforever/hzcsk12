@@ -182,6 +182,11 @@ class ImageClassifier(object):
         """
           Validation function during the train phase.
         """
+        # QRS:
+        if save:
+            RunnerHelper.save_net(self, self.cls_net)
+        if len(self.val_loader) == 0:
+            return
         self.cls_net.eval()
         with torch.no_grad():
             for j, data_dict in enumerate(self.val_loader):
@@ -198,9 +203,6 @@ class ImageClassifier(object):
                 # Update the vars of the val phase.
                 self.batch_time.update(time.time() - start_time)
 
-            # QRS:
-            if save:
-                RunnerHelper.save_net(self, self.cls_net)
             RunnerStat.validation(self)
 
             # Print the log info & reset the states.

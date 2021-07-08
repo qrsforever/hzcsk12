@@ -19,7 +19,7 @@ class DefaultDataset(data.Dataset):
         self.configer = configer
         self.aug_transform = aug_transform
         self.img_transform = img_transform
-        self.img_list, self.label_list = self.__read_json_file(root_dir, dataset)
+        self.img_list, self.label_list = self.read_data(root_dir, dataset)
 
     def __getitem__(self, index):
         img = ImageHelper.read_image(self.img_list[index],
@@ -43,7 +43,7 @@ class DefaultDataset(data.Dataset):
 
         return len(self.img_list)
 
-    def __read_json_file(self, root_dir, dataset):
+    def read_data(self, root_dir, dataset):
         img_list = list()
         label_list = list()
 
@@ -73,6 +73,24 @@ class DefaultDataset(data.Dataset):
                     label_list.append(item['label'])
         print(f'Dataset for {dataset} Count: {len(label_list)}')
         return img_list, label_list
+
+
+class ListDirDataset(DefaultDataset):
+    def read_data(self, root_dir, dataset):
+        image_list = []
+        label_list = []
+        image_path = os.path.join(root_dir, dataset)
+        if os.path.exists(image_path):
+            for item in os.scandir(image_path):
+                if item.is_dir():
+                    label = int(item.name)
+                    for entry in os.scandir(item.path):
+                        if entry.is_file():
+                            label_list.append(label)
+                            image_list.append(entry.path)
+
+        print(f'Dataset for {dataset} Count: {len(label_list)}')
+        return image_list, label_list
 
 
 if __name__ == "__main__":

@@ -13,7 +13,7 @@ import lib.data.cv2_aug_transforms as cv2_aug_trans
 from torchvision import transforms as trans
 from lib.data.collate import collate
 from lib.tools.util.logger import Logger as Log
-from data.cls.datasets.default_dataset import DefaultDataset
+from data.cls.datasets.default_dataset import DefaultDataset, ListDirDataset
 
 
 class DataLoader(object):
@@ -41,11 +41,19 @@ class DataLoader(object):
             trans.ToTensor(),
             trans.Normalize(**self.configer.get('data', 'normalize')), ])
 
+        self.dataset_type = self.configer.get('dataset', default='default')
+        self.root_dir = self.configer.get('data', 'data_dir')
+
     def get_trainloader(self):
-        if self.configer.get('dataset', default=None) in [None, 'default']:
-            dataset = DefaultDataset(root_dir=self.configer.get('data', 'data_dir'), dataset='train',
-                                    aug_transform=self.aug_train_transform,
-                                    img_transform=self.img_transform, configer=self.configer)
+        Log.info(self.dataset_type)
+        if self.dataset_type == 'default':
+            dataset = DefaultDataset(root_dir=self.root_dir, dataset='train',
+                    aug_transform=self.aug_train_transform,
+                    img_transform=self.img_transform, configer=self.configer)
+        elif self.dataset_type == 'listdir':
+            dataset = ListDirDataset(root_dir=self.root_dir, dataset='train',
+                    aug_transform=self.aug_train_transform,
+                    img_transform=self.img_transform, configer=self.configer)
         else:
             Log.error('{} dataset is invalid.'.format(self.configer.get('dataset')))
             exit(1)
@@ -66,13 +74,15 @@ class DataLoader(object):
 
         return trainloader
 
-    def get_valloader(self, dataset=None):
-        dataset = 'val' if dataset is None else dataset
-        if self.configer.get('dataset', default=None) in [None, 'default']:
-            dataset = DefaultDataset(root_dir=self.configer.get('data', 'data_dir'), dataset=dataset,
-                                    aug_transform=self.aug_val_transform,
-                                    img_transform=self.img_transform, configer=self.configer)
-
+    def get_valloader(self, dataset='val'):
+        if self.dataset_type == 'default':
+            dataset = DefaultDataset(root_dir=self.root_dir, dataset=dataset,
+                    aug_transform=self.aug_train_transform,
+                    img_transform=self.img_transform, configer=self.configer)
+        elif self.dataset_type == 'listdir':
+            dataset = ListDirDataset(root_dir=self.root_dir, dataset=dataset,
+                    aug_transform=self.aug_train_transform,
+                    img_transform=self.img_transform, configer=self.configer)
         else:
             Log.error('{} dataset is invalid.'.format(self.configer.get('dataset')))
             exit(1)

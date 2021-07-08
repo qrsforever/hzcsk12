@@ -195,6 +195,8 @@ def k12ai_object_get(client, remote_path, bucket_name=None, prefix_map=None):
             local_file = obj.object_name.replace(prefix_map[0], prefix_map[1], 1)
         else:
             local_file = '/' + obj.object_name
+        if local_file[-1] == '/':
+            continue
         dfile = os.path.dirname(local_file)
         if dfile:
             mkdir_p(dfile)

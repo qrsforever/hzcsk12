@@ -221,12 +221,13 @@ class ServiceRPC(object):
         return environs
 
     def clear_cache(self, user, uuid):
-        usercache = os.path.join(self._userdir, user, uuid)
-        try:
-            shutil.rmtree(usercache)
-            os.removedirs(os.path.dirname(usercache))
-        except Exception:
-            pass
+        pass
+        # usercache = os.path.join(self._userdir, user, uuid)
+        # try:
+        #     shutil.rmtree(usercache)
+        #     os.removedirs(os.path.dirname(usercache))
+        # except Exception:
+        #     pass
 
     def get_cache_dir(self, user, uuid):
         usercache = os.path.join(self._userdir, user, uuid)

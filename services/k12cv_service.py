@@ -109,20 +109,23 @@ class CVServiceRPC(ServiceRPC):
                 raise FrameworkError(100214)
 
         # download custom dataset
-        bucket_name = 'data-platform'
         dataset_path = params['data.data_dir']
-        if dataset_path.startswith(bucket_name):
-            dataset_path = dataset_path[len(bucket_name) + 1:]
+        if dataset_path.startswith('oss://'):
+            bucket_name = dataset_path[6:].split('/')[0]
+            dataset_path = dataset_path[len(bucket_name) + 7:]
             self.oss_download(dataset_path,
                     bucket_name=bucket_name,
                     prefix_map=[os.path.dirname(dataset_path), usercache])
-            dataset_zipfile = os.path.join(usercache, os.path.basename(dataset_path))
-            if not os.path.exists(dataset_zipfile):
+            dataset_filename = os.path.basename(dataset_path)
+            dataset_filepath = os.path.join(usercache, dataset_filename)
+            if not os.path.exists(dataset_filepath):
                 raise FrameworkError(100212)
-            result = os.system(f'unzip -qo {dataset_zipfile} -d {usercache}')
-            if result != 0:
-                raise FrameworkError(100909, 'unzip error')
-            params['data.data_dir'] = os.path.join(innercache, params['_k12.data.dataset_name'])
+            if dataset_filename[-3:] == 'zip':
+                result = os.system(f'unzip -qo {dataset_filepath} -d {usercache}')
+                if result != 0:
+                    raise FrameworkError(100909, 'unzip error')
+                dataset_filename = dataset_filename[:-4]
+            params['data.data_dir'] = os.path.join(innercache, dataset_filename)
 
         # download train data (weights)
         if params['network.resume_continue']:
