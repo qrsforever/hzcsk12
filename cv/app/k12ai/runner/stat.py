@@ -122,6 +122,9 @@ class RunnerBase(object):
         if self._m_train_speed:
             self._mm.add_scalar('train', 'speed', x=self._cur_iters, y=1.0 / batch_time)
 
+        # progress
+        self._mm.add_text('train', 'progress', f'{round(100 * self._cur_epoch / self._max_epoch, 2)}')
+
     def handle_validation(self, runner):
         self._cur_iters = runner.runner_state['iters']
         self._cur_epoch = runner.runner_state['epoch']
@@ -136,7 +139,6 @@ class RunnerBase(object):
         if self._m_val_speed:
             self._mm.add_scalar('val', 'speed', x=self._cur_iters, y=1.0 / batch_time)
 
-        # progress
         self._mm.add_scalar('训练', '进度', x=self._cur_iters, y=round(100 * self._cur_epoch / self._max_epoch, 2))
 
     def handle_evaluate(self, runner):
