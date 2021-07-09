@@ -163,4 +163,5 @@ class ImageClassifierTest(object):
                 probs = F.softmax(out, dim=1).cpu().numpy().astype(float)
                 probs_list.extend(probs)
                 path_list.extend(data_dict['path'])
+        print(probs_list)
         RunnerStat.predict(self, probs_list, path_list)

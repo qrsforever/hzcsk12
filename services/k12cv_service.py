@@ -109,14 +109,14 @@ class CVServiceRPC(ServiceRPC):
                 raise FrameworkError(100214)
 
         # download custom dataset
-        dataset_path = params['data.data_dir']
-        if dataset_path.startswith('oss://'):
-            bucket_name = dataset_path[6:].split('/')[0]
-            dataset_path = dataset_path[len(bucket_name) + 7:]
-            self.oss_download(dataset_path,
+        remote_path = params['data.data_dir']
+        if remote_path.startswith('oss://'):
+            bucket_name = remote_path[6:].split('/')[0]
+            remote_path = remote_path[len(bucket_name) + 7:]
+            self.oss_download(remote_path,
                     bucket_name=bucket_name,
-                    prefix_map=[os.path.dirname(dataset_path), usercache])
-            dataset_filename = os.path.basename(dataset_path)
+                    prefix_map=[os.path.dirname(remote_path), usercache])
+            dataset_filename = os.path.basename(remote_path)
             dataset_filepath = os.path.join(usercache, dataset_filename)
             if not os.path.exists(dataset_filepath):
                 raise FrameworkError(100212)
@@ -140,21 +140,16 @@ class CVServiceRPC(ServiceRPC):
             imguri = params.get('_k12.predict_images')
             test_dir = os.path.join(usercache, 'predict_images') # TODO don't modify path
             mkdir_p(test_dir)
-            # bucket_name = dataset_path[6:].split('/')[0]
-            # dataset_path = dataset_path[len(bucket_name) + 7:]
-            # self.oss_download(dataset_path,
-                    # bucket_name=bucket_name,
-                    # prefix_map=[os.path.dirname(dataset_path), usercache])
             if imguri:
                 if isinstance(imguri, (list, tuple)):
                     for img in imguri:
                         imguri = img['content']
                         if imguri.startswith('oss://'):
-
-                            self.oss_download(os.path.join(test_dir, imguri[6:]),
-
-                    bucket_name=bucket_name,
-                                    )
+                            bucket_name = imguri[6:].split('/')[0]
+                            remote_path = imguri[len(bucket_name) + 7:]
+                            self.oss_download(remote_path,
+                                    bucket_name=bucket_name,
+                                    prefix_map=[os.path.dirname(remote_path), test_dir])
                         elif imguri.startswith('http') or imguri.startswith('ftp'):
                             x = parse.quote(imguri, safe=':/?-=')
                             request.urlretrieve(x, os.path.join(test_dir, os.path.basename(x)))
