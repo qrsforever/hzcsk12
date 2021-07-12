@@ -90,7 +90,7 @@ then
 fi
 
 # service name, address and ports
-redis_addr=${REDIS_ADDR:-'10.255.0.41'}
+redis_addr=${REDIS_ADDR:-'10.255.0.58'}
 redis_port=10090
 redis_pswd='qY3Zh4xLPZNMkaz3'
 

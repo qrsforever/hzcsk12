@@ -144,21 +144,19 @@ class CVServiceRPC(ServiceRPC):
                 if isinstance(imguri, (list, tuple)):
                     for img in imguri:
                         imguri = img['content']
+                        local_path = os.path.join(test_dir, img['name'])
                         if imguri.startswith('oss://'):
                             bucket_name = imguri[6:].split('/')[0]
                             remote_path = imguri[len(bucket_name) + 7:]
                             self.oss_download(remote_path,
                                     bucket_name=bucket_name,
-                                    prefix_map=[os.path.dirname(remote_path), test_dir])
+                                    prefix_map=[remote_path, local_path])
                         elif imguri.startswith('http') or imguri.startswith('ftp'):
                             x = parse.quote(imguri, safe=':/?-=')
-                            request.urlretrieve(x, os.path.join(test_dir, os.path.basename(x)))
+                            request.urlretrieve(x, local_path)
                         else:
-                            with open(os.path.join(test_dir, img['name']), "wb") as fp:
-                                content = imguri.split(',')
-                                if len(content) > 1:
-                                    content = content[1]
-                                fp.write(base64.b64decode(content))
+                            with open(local_path, "wb") as fp:
+                                fp.write(base64.b64decode(imguri.split(',')[-1]))
                 else:
                     raise FrameworkError(100215)
             else:
