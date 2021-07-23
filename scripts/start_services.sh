@@ -90,9 +90,9 @@ then
 fi
 
 # service name, address and ports
-redis_addr=${REDIS_ADDR:-'10.255.0.58'}
-redis_port=10090
-redis_pswd='qY3Zh4xLPZNMkaz3'
+redis_addr=${REDIS_ADDR:-'10.255.0.75'}
+redis_port=${REDIS_ADDR}
+redis_pswd=${REDIS_PSWD}
 
 minio_server_url='s3-internal.didiyunapi.com'
 minio_access_key='AKDD002E38WR1J7RMPTGRIGNVCVINY'
