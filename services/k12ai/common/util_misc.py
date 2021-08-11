@@ -15,6 +15,7 @@ import pkgutil
 import sys
 import io
 import torch
+import base64
 import math
 import numbers
 import random
@@ -159,6 +160,10 @@ def image2bytes(image, width=None, height=None):
         return bio.read()
 
     raise NotImplementedError(type(image))
+
+
+def img2b64(x):
+    return base64.b64encode(image2bytes(x)).decode()
 
 
 def make_histogram(values, bins=10):

@@ -15,8 +15,8 @@ import requests
 
 g_consul_addr = "127.0.0.1"
 g_consul_port = 8500
-g_consul_debug = True
-g_errors_store = True
+g_consul_debug = False
+g_errors_store = False
 
 
 class RPCServiceAgent(object):
@@ -93,6 +93,7 @@ def k12ai_consul_message(sname, appId, token, op, user, uuid, msgtype, message, 
     data['timestamp'] = round(now_time * 1000)
     data['datetime'] = time.strftime('%Y%m%d%H%M%S', time.localtime(now_time))
     data['data'] = message
+    print(data)
 
     # service
     api = 'http://{}/k12ai/private/pushmsg?key={}.{}'.format(server, appId, msgtype)
