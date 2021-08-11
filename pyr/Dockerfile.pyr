@@ -64,24 +64,3 @@ RUN cd /hzcsk12/pyr/pytorch-lightning && \
         --editable .
 
 ENV PYTHONPATH=/hzcsk12:/hzcsk12/pyr/app:/hzcsk12/pyr/pytorch-lightning:/hzcsk12/pyr/detectron2:$PYTHONPATH
-
-# ARG jupyter_data_dir=/root/.local/share/jupyter
-# ARG jupyter_conf_dir=/root/.jupyter
-# 
-# RUN PIP_INSTALL="pip install -U --no-cache-dir --retries 20 --timeout 120 \
-#         --trusted-host pypi.tuna.tsinghua.edu.cn \
-#         --index-url https://pypi.tuna.tsinghua.edu.cn/simple" && \
-#     $PIP_INSTALL \
-#         jupyter \
-#         jupyter_contrib_nbextensions \
-#         jupyter_nbextensions_configurator \
-#         && \
-#     jupyter contrib nbextension install --sys-prefix && \
-#     jupyter nbextensions_configurator enable && \
-#     mkdir -p ${jupyter_data_dir}/nbextensions && \
-#     mkdir -p ${jupyter_conf_dir}/nbconfig && \
-#     jupyter notebook --generate-config -y
-# 
-# COPY .jupyter_config/jupyter_notebook_config.json ${jupyter_conf_dir}/jupyter_notebook_config.json
-# COPY .jupyter_config/notebook.json ${jupyter_conf_dir}/nbconfig/notebook.json
-# COPY .jupyter_config/vim_binding ${jupyter_data_dir}/nbextensions/vim_binding

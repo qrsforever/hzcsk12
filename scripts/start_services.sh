@@ -91,7 +91,7 @@ fi
 
 # service name, address and ports
 redis_addr=${REDIS_ADDR:-'10.255.0.75'}
-redis_port=${REDIS_ADDR}
+redis_port=${REDIS_PORT}
 redis_pswd=${REDIS_PSWD}
 
 minio_server_url='s3-internal.didiyunapi.com'
