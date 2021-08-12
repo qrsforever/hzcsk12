@@ -9,6 +9,9 @@ from k12ai.common.util_misc import img2b64
 
 
 def pyr_status(status):
+    send_msg('error', {
+        'status': status,
+    })
     send_msg('runlog', {
         'status': status,
     })

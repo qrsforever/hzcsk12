@@ -54,8 +54,7 @@ class ServiceRPC(object):
     def send_message(self, appId, token, op, user, uuid, msgtype, message, clear=False):
         if not msgtype:
             return
-        if msgtype in ('error', 'runlog'):
-            errcode = 000000 if msgtype == 'runlog' else 999999
+        if msgtype == 'error':
             if 'errinfo' in message:
                 if 'status' in message and 'warning' == message['status']:
                     errcode = 100009
@@ -110,23 +109,25 @@ class ServiceRPC(object):
                         errcode = 100908
                 elif errtype == 'ImageNotFound':
                     errcode = 100905
-                elif errtype == 'IndexError':
+                elif errtype == 'ModuleNotFoundError':
                     errcode = 100910
-                elif errtype == 'NameError':
+                elif errtype == 'IndexError':
                     errcode = 100911
-                elif errtype == 'KeyError':
+                elif errtype == 'NameError':
                     errcode = 100912
-                elif errtype == 'AttributeError':
+                elif errtype == 'KeyError':
                     errcode = 100913
-                elif errtype == 'SyntaxError':
+                elif errtype == 'AttributeError':
                     errcode = 100914
-                elif errtype == 'IndentationError':
+                elif errtype == 'SyntaxError':
                     errcode = 100915
+                elif errtype == 'IndentationError':
+                    errcode = 100916
                 elif errtype == 'TypeError':
                     if 'unsupported operand' in errtext:
-                        errcode = 100917
+                        errcode = 100918
                     else:
-                        errcode = 100916
+                        errcode = 100917
                 elif errtype == 'ZeroDivisionError':
                     errcode = 100930
         else:

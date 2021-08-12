@@ -26,7 +26,6 @@ if __name__ == '__main__':
             try:
                 pyr_status('running')
                 exec(compile(fr.read(), 'pyrcode', 'exec'), globals())
-                pyr_status('finished')
             except Exception:
                 exc_type, exc_value, exc_tb = sys.exc_info()
                 errinfo = {
@@ -51,5 +50,7 @@ if __name__ == '__main__':
                         }
                         errinfo['trackback'].append(err)
                 pyr_error(errinfo)
+            finally:
+                pyr_status('finished')
     else:
         pyr_error({'err_type': 'FileNotFoundError', 'err_text': 'not found %s' % args.pyfile})
