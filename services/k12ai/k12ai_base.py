@@ -57,7 +57,7 @@ class ServiceRPC(object):
         if msgtype in ('error', 'runlog'):
             errcode = 000000 if msgtype == 'runlog' else 999999
             if 'errinfo' in message:
-                if 'warning' == message['status']:
+                if 'status' in message and 'warning' == message['status']:
                     errcode = 100009
                 elif isinstance(message['errinfo'], dict):
                     errcode, message = self.container_on_crash(appId, op, user, uuid, message)
@@ -110,6 +110,25 @@ class ServiceRPC(object):
                         errcode = 100908
                 elif errtype == 'ImageNotFound':
                     errcode = 100905
+                elif errtype == 'IndexError':
+                    errcode = 100910
+                elif errtype == 'NameError':
+                    errcode = 100911
+                elif errtype == 'KeyError':
+                    errcode = 100912
+                elif errtype == 'AttributeError':
+                    errcode = 100913
+                elif errtype == 'SyntaxError':
+                    errcode = 100914
+                elif errtype == 'IndentationError':
+                    errcode = 100915
+                elif errtype == 'TypeError':
+                    if 'unsupported operand' in errtext:
+                        errcode = 100917
+                    else:
+                        errcode = 100916
+                elif errtype == 'ZeroDivisionError':
+                    errcode = 100930
         else:
             errcode = 999999
         return errcode, message

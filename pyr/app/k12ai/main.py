@@ -51,7 +51,12 @@ if __name__ == '__main__':
                         if all([not err.startswith(x) for x in ('GPU av', 'TPU av', 'CUDA_VI')]):
                             errs.append(err)
                     if len(errs) > 0:
-                        k12ai_send_message('runlog', {'log': ''.join(errs)})
+                        k12ai_send_message('error', {
+                            'errinfo': {
+                                'err_type': 'xxx',
+                                'err_text': 'xxx'
+                            }
+                        })
                     break
                 cache.append(output)
                 if time.time() > stime + 0.5:
