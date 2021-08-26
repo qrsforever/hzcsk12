@@ -12,9 +12,9 @@ def pyr_status(status):
     send_msg('error', {
         'status': status,
     })
-    send_msg('runlog', {
-        'status': status,
-    })
+    # send_msg('runlog', {
+    #     'status': status,
+    # })
 
 
 def pyr_print(*args, **kwargs):
