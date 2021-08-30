@@ -1,6 +1,13 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
+# @file initenv.py
+# @brief
+# @author QRS
+# @version 1.0
+# @date 2021-08-13
+
+
 import io
 
 from PIL import Image
@@ -12,9 +19,6 @@ def pyr_status(status):
     send_msg('error', {
         'status': status,
     })
-    # send_msg('runlog', {
-    #     'status': status,
-    # })
 
 
 def pyr_print(*args, **kwargs):

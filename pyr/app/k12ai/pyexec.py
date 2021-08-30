@@ -1,11 +1,19 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
+# @file initenv.py
+# @brief
+# @author QRS
+# @version 1.0
+# @date 2021-08-13
+
+
 import argparse
 import re
 import os
 import sys
 import traceback
+import time
 
 from initenv import pyr_print as print # noqa
 from initenv import pyr_error, pyr_status
@@ -25,6 +33,7 @@ if __name__ == '__main__':
         with open(args.pyfile) as fr:
             try:
                 pyr_status('running')
+                os.chdir('/datasets/pyr')
                 exec(compile(fr.read(), 'pyrcode', 'exec'), globals())
             except Exception:
                 exc_type, exc_value, exc_tb = sys.exc_info()
@@ -51,6 +60,7 @@ if __name__ == '__main__':
                         errinfo['trackback'].append(err)
                 pyr_error(errinfo)
             finally:
+                time.sleep(2) # TODO for go endpoint aread.
                 pyr_status('finished')
     else:
         pyr_error({'err_type': 'FileNotFoundError', 'err_text': 'not found %s' % args.pyfile})
