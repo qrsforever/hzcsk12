@@ -123,6 +123,21 @@ def k12ai_cv_init(configer):
     # Verify Backbone
     _verify_config(backbone, configer)
 
+    # Verify data mode
+    image_tool = configer.get('data.image_tool', default=None)
+    image_mode = configer.get('data.image_mode', default=None)
+    if image_mode not in ('RGB', 'BGR'):
+        configer.update('data.image_mode', 'BGR')
+        if image_tool != 'cv2':
+            configer.update('data.image_tool', 'cv2')
+    else:
+        if image_mode == 'BGR':
+            if image_tool != 'cv2':
+                configer.update('data.image_tool', 'cv2')
+        else:
+            if image_tool != 'pil':
+                configer.update('data.image_tool', 'pil')
+
     # Pretrained
     resume_continue = configer.get('network.resume_continue')
     if resume_continue:
