@@ -12,7 +12,6 @@ import socket
 import os
 import errno
 import json
-from minio import Minio
 
 _LANIP = None
 _NETIP = None
@@ -121,6 +120,7 @@ def mkdir_p(path):
 
 def k12ai_oss_client(server_url=None, access_key=None, secret_key=None,
         region='gz', bucket_name='k12ai'):
+    return None
     if server_url is None:
         server_url = os.environ.get('MINIO_SERVER_URL')
     if access_key is None:
@@ -128,6 +128,7 @@ def k12ai_oss_client(server_url=None, access_key=None, secret_key=None,
     if secret_key is None:
         secret_key = os.environ.get('MINIO_SECRET_KEY')
 
+    from minio import Minio
     mc = Minio(
         endpoint=server_url,
         access_key=access_key,

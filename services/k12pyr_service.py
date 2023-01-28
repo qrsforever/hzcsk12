@@ -135,7 +135,7 @@ if __name__ == "__main__":
             help="image to run container")
     parser.add_argument(
             '--data_root',
-            default='/data',
+            default='/root/data',
             type=str,
             dest='data_root',
             help="data root: datasets, pretrained, users")

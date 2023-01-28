@@ -173,7 +173,7 @@ class ServiceRPC(object):
         return message
 
     def oss_upload(self, filepath, bucket_name=None, prefix_map=None, clear=False):
-        if not os.path.exists(filepath):
+        if not os.path.exists(filepath) or self._ossmc is None:
             return
         try:
             if clear:
@@ -187,6 +187,8 @@ class ServiceRPC(object):
             return {}
 
     def oss_download(self, filepath, bucket_name=None, prefix_map=None):
+        if self._ossmc is None:
+            return
         try:
             result = k12ai_object_get(self._ossmc, remote_path=filepath,
                     bucket_name=bucket_name, prefix_map=prefix_map)
@@ -195,6 +197,8 @@ class ServiceRPC(object):
             Logger.error(str(err))
 
     def oss_remove(self, filepath, bucket_name=None):
+        if self._ossmc is None:
+            return
         try:
             k12ai_object_remove(self._ossmc, remote_path=filepath)
         except Exception as err:

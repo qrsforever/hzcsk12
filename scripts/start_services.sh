@@ -5,7 +5,6 @@
 # author: QRS
 #=================================================================
 
-
 EXE=`ps -o comm= $PPID`
 if [[ $EXE != 'k12ai.sh' ]]
 then
@@ -30,7 +29,7 @@ __find_lanip() {
         result=`ifconfig $ifname 2>&1 | grep -v "error"`
         if [[ x$result != x ]]
         then
-            ip=`echo "$result" | grep inet\ | awk '{print $2}' | awk -F: '{print $2}'`
+            ip=`echo "$result" | grep inet\ | awk '{print $2}'`
             echo $ip
             return
         fi
@@ -90,9 +89,9 @@ then
 fi
 
 # service name, address and ports
-redis_addr=${REDIS_ADDR:-'10.255.0.75'}
-redis_port=${REDIS_PORT}
-redis_pswd=${REDIS_PSWD}
+redis_addr=${REDIS_ADDR:-'172.21.0.2'}
+redis_port=${REDIS_PORT:-10090}
+redis_pswd=${REDIS_PSWD:-'qY3Zh4xLPZNMkaz3'}
 
 minio_server_url='s3-internal.didiyunapi.com'
 minio_access_key='AKDD002E38WR1J7RMPTGRIGNVCVINY'
@@ -381,7 +380,7 @@ __start_consul_service()
         --volume /var/consul:/var/consul \
         --volume ${top_dir}/scripts/consul:/k12ai \
         --network host \
-        pyconsul agent -node=${hostnetip} ${consul_args}
+        consul agent -node=${hostnetip} ${consul_args}
     __script_logout "start consul service"
 }
 
@@ -746,11 +745,12 @@ __main()
     fi
 
     __service_environment_check
+    # __start_consul_service
 
     cd $k12logs
     [ $2 == all -o $2 == ai ]  && __start_k12ai_service  $3 $4 
     # [ $2 == all -o $2 == ml ]  && __start_k12ml_service  $3 $4
-    [ $2 == all -o $2 == cv ]  && __start_k12cv_service  $3 $4
+    # [ $2 == all -o $2 == cv ]  && __start_k12cv_service  $3 $4
     # [ $2 == all -o $2 == gan ]  && __start_k12gan_service  $3 $4
     # [ $2 == all -o $2 == rl ]  && __start_k12rl_service  $3 $4
     # [ $2 == all -o $2 == nlp ] && __start_k12nlp_service $3 $4
@@ -759,8 +759,8 @@ __main()
     [ $2 == all ] && __start_consul_service
     cd - > /dev/null
 
-    __start_dataset_service /data
-    __start_notewww_service $top_dir/../hzcsnote/k12libs/www
+    # __start_dataset_service /data
+    # __start_notewww_service $top_dir/../hzcsnote/k12libs/www
 }
 
 __main $@

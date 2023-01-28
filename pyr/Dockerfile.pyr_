@@ -1,0 +1,41 @@
+FROM hzcsai_com/k12ai
+
+LABEL maintainer="talentai@hzcsai.com"
+
+ARG VENDOR
+ARG PROJECT
+ARG REPOSITORY
+ARG TAG
+ARG DATE
+ARG VERSION
+ARG URL
+ARG COMMIT
+ARG BRANCH
+
+LABEL org.label-schema.schema-version="1.0" \
+      org.label-schema.build-date=$DATE \
+      org.label-schema.name=$REPOSITORY \
+      org.label-schema.description="HZCS K12ai Base" \
+      org.label-schema.url="https://www.hzcsai.com" \
+      org.label-schema.vcs-url=$URL \
+      org.label-schema.vcs-ref=$COMMIT \
+      org.label-schema.vcs-branch=$BRANCH \
+      org.label-schema.vendor=$VENDOR \
+      org.label-schema.version=$VERSION
+
+LABEL com.nvidia.volumes.needed="nvidia_driver"
+
+WORKDIR /hzcsk12/pyr
+
+COPY app app
+COPY pytorch-lightning pytorch-lightning
+
+RUN $PIP_INSTALL sklearn
+
+RUN cd /hzcsk12/pyr/pytorch-lightning && \
+    pip install --no-cache-dir --retries 20 --timeout 120 \
+        --trusted-host mirrors.intra.didiyun.com \
+        --index-url http://mirrors.intra.didiyun.com/pip/simple \
+        --editable .
+
+ENV PYTHONPATH=/hzcsk12:/hzcsk12/pyr/app:/hzcsk12/pyr/pytorch-lightning:/hzcsk12/pyr/detectron2:$PYTHONPATH
