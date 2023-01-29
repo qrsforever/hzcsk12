@@ -11,8 +11,9 @@
 import os
 import zerorpc
 import io
-
+import base64
 from PIL import Image
+
 import numpy as np
 
 _RPCClient = None
@@ -78,6 +79,7 @@ def image2bytes(image, width=None, height=None):
         bio = io.BytesIO()
         image.save(bio, "PNG")
         bio.seek(0)
+
         return bio.read()
 
     raise NotImplementedError(type(image))
@@ -108,9 +110,9 @@ def pyr_error(errinfo):
 
 
 def pyr_imshow(img, *args, **kwargs):
+    b64str = img2b64(img)
     send_msg('runlog', {
-        'imshow': img2b64(img)
+        'imshow': b64str
     })
-
 
 Image._show = pyr_imshow

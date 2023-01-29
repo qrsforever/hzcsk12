@@ -91,7 +91,7 @@ class PyrServiceRPC(ServiceRPC):
 
     def make_container_command(self, appId, op, user, uuid, params):
         usercache, innercache = self.get_cache_dir(user, uuid)
-        command = f'python {self._workdir}/app/k12ai/pyexec.py '
+        command = f'python3 {self._workdir}/app/k12ai/pyexec.py '
         if op.startswith('runcode') and 'code' in params:
             with open(os.path.join(usercache, 'pyrcode.py'), 'w') as fw:
                 fw.write(params['code'])
