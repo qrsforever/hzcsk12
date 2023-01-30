@@ -14,6 +14,8 @@ export LC_ALL=C.UTF-8
 export PYTHONPATH=/home/lidong/.local/lib/python3.6/site-packages:$PYTHONPATH
 export K12AI_DEBUG=1
 
+source $top_dir/env.sh
+
 # /etc/crontab
 # 01 *  * * *   root  cd / && IS_CRONTAB_CHECK=1 /home/lidong/workspace/codes/hzcsai_com/hzcsk12/scripts/k12ai.sh
 # @reboot  root  cd / && IS_SYSTEM_REBOOT=1 /home/lidong/workspace/codes/hzcsai_com/hzcsk12/scripts/k12ai.sh

@@ -93,13 +93,11 @@ redis_addr=${REDIS_ADDR:-'172.21.0.2'}
 redis_port=${REDIS_PORT:-10090}
 redis_pswd=${REDIS_PSWD:-'qY3Zh4xLPZNMkaz3'}
 
-minio_server_url='s3-internal.didiyunapi.com'
-minio_access_key='AKDD002E38WR1J7RMPTGRIGNVCVINY'
-minio_secret_key='ASDDXYWs45ov7MNJbj5Wc2PM9gC0FSqCIkiyQkVC'
-
 consul_name=monitor
 consul_addr=$hostlanip
 consul_port=8500
+
+k12_data_root=/data/k12-nfs
 
 k12ai_service_name=k12ai
 k12ai_addr=$hostlanip
@@ -145,9 +143,6 @@ export HOST_LANIP=${hostlanip}
 export HOST_NETIP=${hostnetip}
 export PYTHONPATH=${top_dir}/common:$PYTHONPATH
 
-export MINIO_SERVER_URL=$minio_server_url
-export MINIO_ACCESS_KEY=$minio_access_key
-export MINIO_SECRET_KEY=$minio_secret_key
 
 # global function
 __script_logout()
@@ -276,6 +271,8 @@ __service_environment_check()
         echo "##############"
         exit -1
     fi
+    exist=($(docker images --filter "label=org.opencontainers.image.title=consul" --format "{{.Tag}}"))
+    [[ x$exist == x ]] && docker pull consul
 }
 
 __service_health_check()
@@ -477,6 +474,7 @@ __start_k12cv_service()
             --port ${k12cv_port} \
             --consul_addr ${consul_addr} \
             --consul_port ${consul_port} \
+            --data_root ${k12_data_root} \
             --image $use_image"
 
         __run_command $cmdstr
@@ -745,18 +743,16 @@ __main()
     fi
 
     __service_environment_check
-    # __start_consul_service
 
     cd $k12logs
-    [ $2 == all -o $2 == ai ]  && __start_k12ai_service  $3 $4 
+    [ $2 == all -o $2 == ai ] && __start_consul_service && __start_k12ai_service  $3 $4 
     # [ $2 == all -o $2 == ml ]  && __start_k12ml_service  $3 $4
-    # [ $2 == all -o $2 == cv ]  && __start_k12cv_service  $3 $4
+    [ $2 == all -o $2 == cv ]  && __start_k12cv_service  $3 $4
     # [ $2 == all -o $2 == gan ]  && __start_k12gan_service  $3 $4
     # [ $2 == all -o $2 == rl ]  && __start_k12rl_service  $3 $4
     # [ $2 == all -o $2 == nlp ] && __start_k12nlp_service $3 $4
     # [ $2 == all -o $2 == 3d ]  && __start_k123d_service  $3 $4
     [ $2 == all -o $2 == pyr ] && __start_k12pyr_service  $3 $4
-    [ $2 == all ] && __start_consul_service
     cd - > /dev/null
 
     # __start_dataset_service /data

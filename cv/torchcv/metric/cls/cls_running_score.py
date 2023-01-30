@@ -37,10 +37,10 @@ class ClsRunningScore(object):
 
             _, pred = output.topk(maxk, 1, True, True)
             pred = pred.t()
-            correct = pred.eq(target.view(1, -1).expand_as(pred))
+            correct = pred.eq(target.reshape(1, -1).expand_as(pred))
             res = []
             for k in topk:
-                correct_k = correct[:k].view(-1).float().sum(0, keepdim=False)
+                correct_k = correct[:k].reshape(-1).float().sum(0, keepdim=False)
                 res.append(correct_k / batch_size_dict[key])
 
             top1_acc_dict[key] = res[0].item()

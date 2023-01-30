@@ -175,34 +175,24 @@ class ServiceRPC(object):
     def oss_upload(self, filepath, bucket_name=None, prefix_map=None, clear=False):
         if not os.path.exists(filepath) or self._ossmc is None:
             return
-        try:
-            if clear:
-                k12ai_object_remove(self._ossmc, remote_path=filepath)
-            result = k12ai_object_put(self._ossmc, local_path=filepath,
-                    bucket_name=bucket_name, prefix_map=prefix_map)
-            Logger.info(result)
-            return result
-        except Exception as err:
-            Logger.error(str(err))
-            return {}
+        if clear:
+            k12ai_object_remove(self._ossmc, remote_path=filepath)
+        result = k12ai_object_put(self._ossmc, local_path=filepath,
+                bucket_name=bucket_name, prefix_map=prefix_map)
+        Logger.info(result)
+        return result
 
     def oss_download(self, filepath, bucket_name=None, prefix_map=None):
         if self._ossmc is None:
             return
-        try:
-            result = k12ai_object_get(self._ossmc, remote_path=filepath,
-                    bucket_name=bucket_name, prefix_map=prefix_map)
-            Logger.info(result)
-        except Exception as err:
-            Logger.error(str(err))
+        result = k12ai_object_get(self._ossmc, remote_path=filepath,
+                bucket_name=bucket_name, prefix_map=prefix_map)
+        Logger.info(result)
 
     def oss_remove(self, filepath, bucket_name=None):
         if self._ossmc is None:
             return
-        try:
-            k12ai_object_remove(self._ossmc, remote_path=filepath)
-        except Exception as err:
-            Logger.error(str(err))
+        k12ai_object_remove(self._ossmc, remote_path=filepath)
 
     def make_container_command(self, appId, op, cachedir, params):
         raise NotImplementedError
@@ -326,7 +316,7 @@ class ServiceRPC(object):
 
             self.send_message(appId, token, op, user, uuid, "error", {'status': 'starting'}, clear=True)
             command = self.make_container_command(appId, op, user, uuid, params)
-            Logger.info(kwargs)
+            Logger.info(f'{kwargs} {command}')
             self._docker.containers.run(f'{self._image}', command, **kwargs)
             return
         except FrameworkError as fwerr:

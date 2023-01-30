@@ -12,6 +12,8 @@ import argparse
 import torch
 import torch.backends.cudnn as cudnn
 
+torch._six.int_classes = int
+
 from runner.runner_selector import RunnerSelector
 from lib.runner.controller import Controller
 from lib.tools.util.configer import Configer

@@ -117,26 +117,42 @@ def mkdir_p(path):
         else:
             raise
 
+XOS_APPID = None
+XOS_REGION = None
 
 def k12ai_oss_client(server_url=None, access_key=None, secret_key=None,
-        region='gz', bucket_name='k12ai'):
-    return None
+        region=None, bucket_name='k12ai'):
+    global XOS_APPID, XOS_REGION
     if server_url is None:
-        server_url = os.environ.get('MINIO_SERVER_URL')
+        server_url = os.environ.get('XOS_SERVER_URL')
     if access_key is None:
-        access_key = os.environ.get('MINIO_ACCESS_KEY')
+        access_key = os.environ.get('XOS_ACCESS_KEY')
     if secret_key is None:
-        secret_key = os.environ.get('MINIO_SECRET_KEY')
+        secret_key = os.environ.get('XOS_SECRET_KEY')
+    if region is None:
+        region = os.environ.get('XOS_REGION')
 
-    from minio import Minio
-    mc = Minio(
-        endpoint=server_url,
-        access_key=access_key,
-        secret_key=secret_key,
-        secure=True)
+    XOS_REGION = region
+    if "myqcloud.com" in server_url:
+        from qcloud_cos import CosConfig
+        from qcloud_cos import CosS3Client
+        appid = os.environ.get('XOS_APPID')
+        mc = CosS3Client(CosConfig(
+            Region=region,
+            SecretId=access_key,
+            SecretKey=secret_key,
+            Token=None, Scheme='https'))
+        XOS_APPID = appid
+    else:
+        from minio import Minio
+        mc = Minio(
+            endpoint=server_url,
+            access_key=access_key,
+            secret_key=secret_key,
+            secure=True)
 
-    if not mc.bucket_exists(bucket_name):
-        mc.make_bucket(bucket_name, location=region)
+        if not mc.bucket_exists(bucket_name):
+            mc.make_bucket(bucket_name, location=region)
 
     return mc
 
@@ -147,6 +163,12 @@ def k12ai_object_put(client, local_path,
 
     if bucket_name is None:
         bucket_name = 'k12ai'
+
+    if XOS_APPID is not None:
+        bucket_name = f'{bucket_name}-{XOS_APPID}'
+        xos_domain = f'https://{bucket_name}.cos.{XOS_REGION}.myqcloud.com'
+    else:
+        xos_domain = f'https://{bucket_name}.s3-internal.didiyunapi.com'
 
     result = []
 
@@ -163,12 +185,20 @@ def k12ai_object_put(client, local_path,
         file_size = os.stat(local_file).st_size
         with open(local_file, 'rb') as file_data:
             btime = time.time()
-            etag = client.put_object(bucket_name,
-                    remote_file, file_data, file_size,
-                    content_type=content_type, metadata=metadata)
+            if XOS_APPID is not None:
+                response = client.put_object(
+                        Bucket=bucket_name,
+                        Body=file_data,
+                        Key=remote_file)
+                etag = response['ETag'].strip('"')
+            else:
+                etag = client.put_object(bucket_name,
+                        remote_file, file_data, file_size,
+                        content_type=content_type, metadata=metadata)
             etime = time.time()
-            result.append({'etag': etag,
-                'bucket': bucket_name,
+            result.append({
+                'etag': etag, 'bucket': bucket_name,
+                'url': f'{xos_domain}/{remote_file}',
                 'object': remote_file,
                 'size': file_size,
                 'time': [btime, etime]})
@@ -183,15 +213,41 @@ def k12ai_object_put(client, local_path,
     return result
 
 
-def k12ai_object_get(client, remote_path, bucket_name=None, prefix_map=None):
-
+def k12ai_object_list(client, prefix, recurive=False, bucket_name='k12ai'):
     if bucket_name is None:
         bucket_name = 'k12ai'
 
+    objects = []
+    if XOS_APPID is not None:
+        bucket_name = f'{bucket_name}-{XOS_APPID}'
+        delimiter = '' if recurive else '/'
+        marker = ""
+        while True:
+            response = client.list_objects(Bucket=bucket_name, Prefix=prefix, Marker=marker, MaxKeys=50, Delimiter=delimiter)
+            if 'Contents' in response:
+                for content in response['Contents']:
+                    objects.append({
+                        'etag': content['ETag'], 'size': content['Size'],
+                        'object_name': content['Key'], 'bucket_name': bucket_name
+                    })
+            if 'CommonPrefixes' in response:
+                for folder in response['CommonPrefixes']:
+                    pass
+            if response['IsTruncated'] == 'false':
+                break
+            marker = response["NextMarker"]
+    else:
+        return client.list_objects(bucket_name, prefix=prefix, recursive=recurive)
+    return objects
+
+
+def k12ai_object_get(client, remote_path, bucket_name=None, prefix_map=None):
+    if bucket_name is None:
+        bucket_name = 'k12ai'
     remote_path = remote_path.lstrip(os.path.sep)
 
     result = []
-    for obj in client.list_objects(bucket_name, prefix=remote_path, recursive=True):
+    for obj in k12ai_object_list(client, remote_path, True, bucket_name):
         if prefix_map:
             local_file = obj.object_name.replace(prefix_map[0], prefix_map[1], 1)
         else:
@@ -202,10 +258,17 @@ def k12ai_object_get(client, remote_path, bucket_name=None, prefix_map=None):
         if dfile:
             mkdir_p(dfile)
         btime = time.time()
-        data = client.get_object(bucket_name, obj.object_name)
-        with open(local_file, 'wb') as file_data:
-            for d in data.stream():
-                file_data.write(d)
+        if XOS_APPID is not None:
+            response = client.get_object(
+        	Bucket=obj.bucket_name,
+        	Key=obj.object_name
+            )
+            response['Body'].get_stream_to_file(local_file)
+        else:
+            data = client.get_object(bucket_name, obj.object_name)
+            with open(local_file, 'wb') as file_data:
+                for d in data.stream():
+                    file_data.write(d)
         etime = time.time()
         result.append({'etag': obj.etag,
             'bucket': obj.bucket_name,
@@ -219,7 +282,7 @@ def k12ai_object_remove(client, remote_path, bucket_name=None):
     if bucket_name is None:
         bucket_name = 'k12ai'
     result = []
-    for obj in client.list_objects(bucket_name, prefix=remote_path, recursive=True):
+    for obj in k12ai_object_list(client, remote_path, True, bucket_name):
         client.remove_object(obj.bucket_name, obj.object_name)
         result.append({'etag': obj.etag,
             'bucket': obj.bucket_name,

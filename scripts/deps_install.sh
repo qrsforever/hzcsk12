@@ -81,7 +81,6 @@ then
     echo ""
     echo "sudo systemctl restart docker.service"
     echo "##############"
-    docker pull consul
 else
     echo "py docker ok!"
 fi
@@ -148,4 +147,12 @@ then
     sudo pip3 install minio
 else
     echo "minio ok"
+fi
+
+check=`python3 -c "import qcloud_cos" 2>&1`
+if [[ x$check != x ]]
+then
+    sudo pip3 install cos-python-sdk-v5
+else
+    echo "cos sdk ok"
 fi

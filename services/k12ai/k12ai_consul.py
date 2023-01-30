@@ -44,7 +44,8 @@ def k12ai_consul_init(addr, port, debug=False):
     global g_consul_addr, g_consul_port, g_consul_debug
     g_consul_addr = addr
     g_consul_port = port
-    g_consul_debug = debug
+    # TODO
+    g_consul_debug = False # debug
 
 
 def k12ai_consul_register(name, host, port, timeout=5):
@@ -105,5 +106,5 @@ def k12ai_consul_message(sname, appId, token, op, user, uuid, msgtype, message, 
         jsondata = json.dumps(data, indent=2)
         if len(jsondata) < 512000:
             client.kv.put(key, jsondata)
-    if g_errors_store and msgtype == 'error' and message['code'] > 100100:
-        client.kv.put('errors/%s/%s/%s' % (user, uuid, data['datetime']), json.dumps(data, indent=2))
+        if g_errors_store and msgtype == 'error' and message['code'] > 100100:
+            client.kv.put('errors/%s/%s/%s' % (user, uuid, data['datetime']), json.dumps(data, indent=2))
