@@ -17,6 +17,27 @@ _LANIP = None
 _NETIP = None
 
 
+class DotDict(dict):
+    __getattr__ = dict.get
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__
+
+    def __init__(self, *args, **kwargs):
+        for arg in args:
+            if isinstance(arg, dict):
+                for k, v in arg.items():
+                    self[k] = v
+        if kwargs:
+            for k, v in kwargs.items():
+                self[k] = v
+
+    def __getstate__(self):
+        return self.__dict__
+
+    def __setstate__(self, d):
+        self.__dict__.update(d)
+
+
 def k12ai_timeit(handler):
     def decorator(func):
         def timed(*args, **kwargs):
@@ -226,10 +247,10 @@ def k12ai_object_list(client, prefix, recurive=False, bucket_name='k12ai'):
             response = client.list_objects(Bucket=bucket_name, Prefix=prefix, Marker=marker, MaxKeys=50, Delimiter=delimiter)
             if 'Contents' in response:
                 for content in response['Contents']:
-                    objects.append({
+                    objects.append(DotDict({
                         'etag': content['ETag'], 'size': content['Size'],
                         'object_name': content['Key'], 'bucket_name': bucket_name
-                    })
+                    }))
             if 'CommonPrefixes' in response:
                 for folder in response['CommonPrefixes']:
                     pass
