@@ -13,10 +13,6 @@
     "disable_host_node_id": false,
     "discard_check_output": true,
     "rejoin_after_leave": true,
-    "retry_interval": "30s",
-    "retry_join": [
-        "10.255.0.201:8301",
-        "10.255.0.202:8301",
-        "10.255.0.58:8301"
-    ]
+    "retry_interval": "100s",
+    "retry_join": [ ]
 }

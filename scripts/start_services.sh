@@ -19,6 +19,12 @@ BRANCH=$(git rev-parse --abbrev-ref HEAD)
 COMMIT=$(git rev-parse HEAD | cut -c 1-12)
 NUMBER=$(git rev-list HEAD | wc -l | awk '{print $1}')
 
+sudo=
+if (( 0 != $(id -u ) ))
+then
+    sudo=sudo
+fi
+
 debug=1
 use_image='unkown'
 
@@ -212,43 +218,43 @@ __service_environment_check()
 {
     if [[ ! -d /data/ ]]
     then
-        sudo mkdir /data
-        sudo chmod 777 /data
+        $sudo mkdir /data
+        $sudo chmod 777 /data
         echo "##############"
         echo "No /data dir, should create the dir or mount remote dir"
         echo "##############"
         exit -1
     fi
 
-    if [[ ! -d /data/nltk_data ]]
-    then
-        echo "##############"
-        echo "Warning: not found nltk_data, downloading from https://github.com/nltk/nltk_data"
-        echo "##############"
-    fi
+    # if [[ ! -d /data/nltk_data ]]
+    # then
+    #     echo "##############"
+    #     echo "Warning: not found nltk_data, downloading from https://github.com/nltk/nltk_data"
+    #     echo "##############"
+    # fi
 
-    ret=$(__software_install_check nfs-kernel-server)
-    if [[ $ret == "0" ]]
-    then
-        echo "##############"
-        echo "1. sudo apt install -y nfs-kernel-server"
-        echo "2. if server: echo '/data 10.xx.xx.*(rw,sync,no_root_squash,no_subtree_check)' >> /etc/exports"
-        echo "3. if server: sudo /etc/init.d/nfs-kernel-server restart"
-        echo "##############"
-        exit -1
-    fi
+    # ret=$(__software_install_check nfs-kernel-server)
+    # if [[ $ret == "0" ]]
+    # then
+    #     echo "##############"
+    #     echo "1. $sudo apt install -y nfs-kernel-server"
+    #     echo "2. if server: echo '/data 10.xx.xx.*(rw,sync,no_root_squash,no_subtree_check)' >> /etc/exports"
+    #     echo "3. if server: $sudo /etc/init.d/nfs-kernel-server restart"
+    #     echo "##############"
+    #     exit -1
+    # fi
 
-    ret=$(__software_install_check nfs-common)
-    if [[ $ret == "0" ]]
-    then
-        echo "##############"
-        echo "1. sudo apt install -y nfs-common"
-        echo "2. add dataserver host, eg: "10.255.0.229 dataserver" in /etc/hosts"
-        echo "3. if client: sudo mount -t nfs server_ip:/data /data"
-        echo "Tips: ip must be lan address, like 10.xxx.xxx.xx"
-        echo "##############"
-        exit -1
-    fi
+    # ret=$(__software_install_check nfs-common)
+    # if [[ $ret == "0" ]]
+    # then
+    #     echo "##############"
+    #     echo "1. $sudo apt install -y nfs-common"
+    #     echo "2. add dataserver host, eg: "10.255.0.229 dataserver" in /etc/hosts"
+    #     echo "3. if client: $sudo mount -t nfs server_ip:/data /data"
+    #     echo "Tips: ip must be lan address, like 10.xxx.xxx.xx"
+    #     echo "##############"
+    #     exit -1
+    # fi
 
     ret=$(__software_install_check docker)
     if [[ $ret == "0" ]]
@@ -266,8 +272,8 @@ __service_environment_check()
         echo "    \"default-runtime\": \"nvidia\""
         echo "}"
         echo ""
-        echo "sudo apt-get install nvidia-container-runtime"
-        echo "sudo systemctl restart docker.service"
+        echo "$sudo apt-get install nvidia-container-runtime"
+        echo "$sudo systemctl restart docker.service"
         echo "##############"
         exit -1
     fi
@@ -356,10 +362,11 @@ __start_consul_service()
     fi
     if [[ ! -d /var/consul ]]
     then
-        sudo mkdir /var/consul
-        sudo chmod 777 /var/consul
+        $sudo mkdir /var/consul
+        $sudo chmod 777 /var/consul
     fi
  
+    consul_args=
     if [[ $is_consul_server == 1 ]]
     then
         consul_args="-config-file=/k12ai/server/config.json"
@@ -727,10 +734,10 @@ __main()
 {
     if [[ -f ${log_fil} ]]
     then
-        sudo mv ${log_fil} ${log_fil}_bak
+        $sudo mv ${log_fil} ${log_fil}_bak
     else
-        sudo touch ${log_fil}
-        sudo chmod 777 ${log_fil}
+        $sudo touch ${log_fil}
+        $sudo chmod 777 ${log_fil}
     fi
     if [[ ! -d $k12logs ]]
     then
