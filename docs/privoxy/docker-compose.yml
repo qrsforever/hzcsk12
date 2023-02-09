@@ -1,0 +1,13 @@
+version: '2'
+services:
+  privoxy:
+    image: vimagick/privoxy
+    container_name: privoxy
+    ports:
+      - "8118:8118"
+    volumes:
+      - ./privoxy/user.action:/etc/privoxy/user.action
+      - ./privoxy/user.filter:/etc/privoxy/user.filter
+    cap_add:
+      - NET_ADMIN
+    restart: always
