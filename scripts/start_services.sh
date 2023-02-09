@@ -216,15 +216,15 @@ __software_install_check()
 
 __service_environment_check()
 {
-    if [[ ! -d /data/ ]]
-    then
-        $sudo mkdir /data
-        $sudo chmod 777 /data
-        echo "##############"
-        echo "No /data dir, should create the dir or mount remote dir"
-        echo "##############"
-        exit -1
-    fi
+    # if [[ ! -d /data/ ]]
+    # then
+    #     $sudo mkdir /data
+    #     $sudo chmod 777 /data
+    #     echo "##############"
+    #     echo "No /data dir, should create the dir or mount remote dir"
+    #     echo "##############"
+    #     exit -1
+    # fi
 
     # if [[ ! -d /data/nltk_data ]]
     # then
@@ -360,6 +360,11 @@ __start_consul_service()
         docker container stop $consul_container 
         docker container rm $consul_container 
     fi
+    if [[ x$1 == xstop ]]
+    then
+        return
+    fi
+
     if [[ ! -d /var/consul ]]
     then
         $sudo mkdir /var/consul
@@ -653,6 +658,7 @@ __start_k12pyr_service()
             --port ${k12pyr_port} \
             --consul_addr ${consul_addr} \
             --consul_port ${consul_port} \
+            --data_root ${k12_data_root} \
             --image $use_image"
 
         __run_command $cmdstr
@@ -752,7 +758,7 @@ __main()
     __service_environment_check
 
     cd $k12logs
-    [ $2 == all -o $2 == ai ] && __start_consul_service && __start_k12ai_service  $3 $4 
+    [ $2 == all -o $2 == ai ] && __start_consul_service $3 && __start_k12ai_service  $3 $4 
     # [ $2 == all -o $2 == ml ]  && __start_k12ml_service  $3 $4
     [ $2 == all -o $2 == cv ]  && __start_k12cv_service  $3 $4
     # [ $2 == all -o $2 == gan ]  && __start_k12gan_service  $3 $4

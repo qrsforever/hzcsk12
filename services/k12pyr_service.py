@@ -79,20 +79,21 @@ class PyrServiceRPC(ServiceRPC):
 
     def make_container_environs(self, op, params):
         environs = {}
-        # environs['PYTHONPATH'] = '/hzcsk12/pyr/app'
+        environs['PYTHONPATH'] = '/hzcsk12/pyr/app'
         return environs
 
     def make_container_kwargs(self, op, params):
         kwargs = {}
-        kwargs['runtime'] = 'nvidia'
-        kwargs['shm_size'] = '10g'
-        kwargs['mem_limit'] = '10g'
+        # kwargs['runtime'] = 'nvidia'
+        # kwargs['shm_size'] = '10g'
+        # kwargs['mem_limit'] = '10g'
         return kwargs
 
     def make_container_command(self, appId, op, user, uuid, params):
         usercache, innercache = self.get_cache_dir(user, uuid)
         command = f'python3 {self._workdir}/app/k12ai/pyexec.py '
         if op.startswith('runcode') and 'code' in params:
+            Logger.info(f'{usercache}')
             with open(os.path.join(usercache, 'pyrcode.py'), 'w') as fw:
                 fw.write(params['code'])
             command += f'--pyfile {os.path.join(innercache, "pyrcode.py")}'
@@ -135,7 +136,7 @@ if __name__ == "__main__":
             help="image to run container")
     parser.add_argument(
             '--data_root',
-            default='/root/data',
+            default='/data',
             type=str,
             dest='data_root',
             help="data root: datasets, pretrained, users")

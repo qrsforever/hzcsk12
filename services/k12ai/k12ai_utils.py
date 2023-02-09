@@ -140,10 +140,11 @@ def mkdir_p(path):
 
 XOS_APPID = None
 XOS_REGION = None
+XOS_SERVER_URL = None
 
 def k12ai_oss_client(server_url=None, access_key=None, secret_key=None,
         region=None, bucket_name='k12ai'):
-    global XOS_APPID, XOS_REGION
+    global XOS_APPID, XOS_REGION, XOS_SERVER_URL
     if server_url is None:
         server_url = os.environ.get('XOS_SERVER_URL')
     if access_key is None:
@@ -154,6 +155,7 @@ def k12ai_oss_client(server_url=None, access_key=None, secret_key=None,
         region = os.environ.get('XOS_REGION')
 
     XOS_REGION = region
+    XOS_SERVER_URL = server_url 
     if "myqcloud.com" in server_url:
         from qcloud_cos import CosConfig
         from qcloud_cos import CosS3Client
@@ -170,7 +172,7 @@ def k12ai_oss_client(server_url=None, access_key=None, secret_key=None,
             endpoint=server_url,
             access_key=access_key,
             secret_key=secret_key,
-            secure=True)
+            secure=False)
 
         if not mc.bucket_exists(bucket_name):
             mc.make_bucket(bucket_name, location=region)
@@ -187,9 +189,10 @@ def k12ai_object_put(client, local_path,
 
     if XOS_APPID is not None:
         bucket_name = f'{bucket_name}-{XOS_APPID}'
-        xos_domain = f'https://{bucket_name}.cos.{XOS_REGION}.myqcloud.com'
+        xos_domain = f'https://{bucket_name}.cos.{XOS_REGION}.{XOS_SERVER_URL}'
     else:
-        xos_domain = f'https://{bucket_name}.s3-internal.didiyunapi.com'
+        # s3-internal.didiyunapi.com
+        xos_domain = f'https://{bucket_name}.{XOS_SERVER_URL}'
 
     result = []
 

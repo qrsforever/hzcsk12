@@ -35,7 +35,7 @@ ENV TZ=Asia/Shanghai \
 RUN sed -i 's/http:\/\/archive\.ubuntu\.com\/ubuntu\//http:\/\/mirrors\.aliyun\.com\/ubuntu\//g' /etc/apt/sources.list \
     && rm -rf /etc/apt/sources.list.d \
     && apt update \
-    && $APT_INSTALL ca-certificates curl gnupg lsb-release \
+    && $APT_INSTALL ca-certificates d gnupg lsb-release \
     && mkdir -p /etc/apt/keyrings && mkdir -p /etc/apt/sources.list.d \
     && curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg \
     && echo \
@@ -43,7 +43,7 @@ RUN sed -i 's/http:\/\/archive\.ubuntu\.com\/ubuntu\//http:\/\/mirrors\.aliyun\.
     $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null \
     && apt update  && $APT_INSTALL docker-ce-cli && apt remove -y gnupg lsb-release
 
-RUN $APT_INSTALL make gcc g++ git python3 python3-pip python3-dev \
+RUN $APT_INSTALL make gcc g++ git unzip zip python3 python3-pip python3-dev \
         libffi-dev iputils-ping net-tools \
         && git config --global --add safe.directory '*'
 
