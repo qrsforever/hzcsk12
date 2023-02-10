@@ -7,18 +7,20 @@
 
 CUR_FIL=${BASH_SOURCE[0]}
 TOP_DIR=`cd $(dirname $CUR_FIL)/..; pwd`
+DOCKER_HOST=hzcsk8s.io
 
-images=('consul'
-    'hzcsai_com/k12ai'
-    'hzcsai_com/k12cv'
-    'hzcsai_com/k12pyr'
+images=(
+    "hzcsai_com/k12ai"
+    "hzcsai_com/k12cv"
+    "hzcsai_com/k12pyr"
 )
-os=ubuntu
 
-__is_ubuntu_os()
-{
-    [[ -n $(awk -F= '/^NAME/{print $2}' /etc/os-release | grep -i ubuntu) ]] && echo "1" || echo "0"
-}
+distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
+
+# __is_ubuntu_os()
+# {
+#     [[ -n $(awk -F= '/^NAME/{print $2}' /etc/os-release | grep -i ubuntu) ]] && echo "1" || echo "0"
+# }
 
 __is_exist_img()
 {
@@ -34,34 +36,55 @@ __apt_install()
 {
     if [[ $(__is_exist_bin $1) == "0" ]]
     then
-        if [[ $os == ubuntu ]]
+        if [[ $distribution =~ "ubuntu" ]]
         then
             apt install -y -f $1
         else
-            yum install -y $1
+            dnf install -y $1
         fi
     fi
 }
 
 __img_install()
 {
-    if [[ $(__is_exist_img $1) == "0" ]]
-    then
-        echo "docker pull $img"
-        # docker pull $img
-    fi
+    [[ $(__is_exist_img consul) == "0" ]] && docker pull consul
+
+    for img in ${images[@]}
+    do
+        if [[ $(__is_exist_img $img) == "0" ]]
+        then
+            echo "docker pull ${DOCKER_HOST}/$img"
+            docker pull ${DOCKER_HOST}/$img
+            docker tag ${DOCKER_HOST}/$img $img
+        fi
+    done
 }
 
 __install_softwares()
 {
     __apt_install git
-
+    # [[ $distribution =~ "centos" ]] && __apt_install mount.nfs
+        
     ret=`__is_exist_bin docker`
     if [[ $ret == "0" ]]
     then
-        __apt_install nvidia-docker2
+        # https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#docker
+        if [[ $distribution =~ "centos8" ]]
+        then
+            dnf install -y tar bzip2 make automake gcc gcc-c++ vim pciutils elfutils-libelf-devel libglvnd-devel iptables
+            dnf config-manager --add-repo=https://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+            dnf repolist -v
+            dnf install -y https://mirrors.aliyun.com/docker-ce/linux/centos/8/x86_64/stable/Packages/containerd.io-1.4.3-3.1.el8.x86_64.rpm --allowerasing
+            dnf install -y docker-ce
+            curl -s -L https://nvidia.github.io/libnvidia-container/$distribution/libnvidia-container.repo | tee /etc/yum.repos.d/nvidia-container-toolkit.repo
+            dnf clean expire-cache --refresh
+            dnf install -y nvidia-container-toolkit
+            nvidia-ctk runtime configure --runtime=docker
+        else
+            __apt_install nvidia-docker2
+        fi
         pkill -SIGHUP dockerd
-        gpasswd -a $USER docker; newgrp docker
+        gpasswd -a $USER docker # ; newgrp docker
         cat > /etc/docker/daemon.json <<EOF
 {
     "default-runtime": "nvidia",
@@ -86,7 +109,8 @@ __install_softwares()
     "insecure-registries": ["0.0.0.0/0"]
 }
 EOF
-        systemctl restart docker.service
+        systemctl enable docker
+        systemctl restart docker
     fi
 }
 
@@ -104,17 +128,9 @@ __start_k12ai()
 
 __main()
 {
-    if [[ $(__is_ubuntu_os) == "0" ]]
-    then
-        os=centos
-    fi
-
     __install_softwares
    
-    for img in ${images[@]}
-    do
-        __img_install $img
-    done
+    __img_install
 
     __start_k12ai
 }

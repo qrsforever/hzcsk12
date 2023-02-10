@@ -176,7 +176,9 @@ def _framework_memstat():
 @k12ai_timeit(handler=Logger.debug)
 def _framework_execute():
     try:
-        reqjson = json.loads(request.get_data().decode())
+        reqdata = request.get_data().decode()
+        Logger.info(f'req: {reqdata}')
+        reqjson = json.loads(reqdata)
         appId = reqjson.get('appId', 'talentai')
         token = reqjson['token']
         user = reqjson['user']
@@ -306,6 +308,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     k12ai_consul_init(args.consul_addr, args.consul_port, False)
+
+    Logger.info(f'start ai server on {args.host}:{args.port}')
 
     thread = Thread(target=_delay_do_loop, args=(args.host, args.port))
     thread.start()

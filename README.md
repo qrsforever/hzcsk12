@@ -49,3 +49,14 @@ docker pull registry
 docker run -d -v /data/images:/var/lib/registry -p 9500:5000 --restart=always --name k12ai_images_registry registry
 curl http://localhost:9500/v2/_catalog
 ```
+
+
+```
+easy_boot:
+
+echo "172.21.0.4 hzcsk8s.io" >> /etc/hosts
+yum install -y mount.nfs
+mkdir -p /data/k12-nfs ; mount -t nfs hzcsk8s.io:/data/k12-nfs /data/k12-nfs
+cd /data/k12-nfs/codes/hzcsk12
+./scripts/k12ai_easy_boot.sh
+```

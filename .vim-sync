@@ -1,7 +1,7 @@
 #!/bin/bash
 
-remote_hostname='eta'
-remote_relative_path='workspace/codes/hzcsai_com/hzcsk12'
+remote_hostname='k8-storage'
+remote_relative_path='/data/k12-nfs/codes/hzcsk12/'
 
 cd $(dirname $0)
 
