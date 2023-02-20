@@ -218,7 +218,7 @@ def k12ai_object_put(client, local_path,
             else:
                 etag = client.put_object(bucket_name,
                         remote_file, file_data, file_size,
-                        content_type=content_type, metadata=metadata)
+                        content_type=content_type, metadata=metadata).etag
             etime = time.time()
             result.append({
                 'etag': etag, 'bucket': bucket_name,
