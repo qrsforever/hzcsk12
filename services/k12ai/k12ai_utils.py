@@ -12,6 +12,7 @@ import socket
 import os
 import errno
 import json
+import hashlib
 
 _LANIP = None
 _NETIP = None
@@ -261,7 +262,7 @@ def k12ai_object_list(client, prefix, recurive=False, bucket_name='k12ai'):
                 break
             marker = response["NextMarker"]
     else:
-        return client.list_objects(bucket_name, prefix=prefix, recursive=recurive)
+        return list(client.list_objects(bucket_name, prefix=prefix, recursive=recurive))
     return objects
 
 
@@ -270,10 +271,15 @@ def k12ai_object_get(client, remote_path, bucket_name=None, prefix_map=None):
         bucket_name = 'k12ai'
     remote_path = remote_path.lstrip(os.path.sep)
 
+    if prefix_map[0][0] == '/':
+        prefix_map[0] = prefix_map[0][1:]
+    if prefix_map[1][0] == '/':
+        prefix_map[1] = prefix_map[1][1:]
+
     result = []
     for obj in k12ai_object_list(client, remote_path, True, bucket_name):
         if prefix_map:
-            local_file = obj.object_name.replace(prefix_map[0], prefix_map[1], 1)
+            local_file = '/' + obj.object_name.replace(prefix_map[0], prefix_map[1], 1)
         else:
             local_file = '/' + obj.object_name
         if local_file[-1] == '/':
@@ -313,3 +319,14 @@ def k12ai_object_remove(client, remote_path, bucket_name=None):
             'object': obj.object_name,
             'size': obj.size})
     return result
+
+ 
+def k12ai_file_md5(file_path):
+    m = hashlib.md5()
+    with open(file_path,'rb') as f:
+        while True:
+            data = f.read(4096)
+            if not data:
+                break
+            m.update(data)
+    return m.hexdigest()

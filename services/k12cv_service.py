@@ -22,7 +22,7 @@ from urllib import request, parse
 from k12ai.k12ai_base import ServiceRPC
 from k12ai.k12ai_consul import (k12ai_consul_init, k12ai_consul_register)
 from k12ai.k12ai_logger import (k12ai_set_loglevel, k12ai_set_logfile, Logger)
-from k12ai.k12ai_utils import k12ai_timeit, mkdir_p
+from k12ai.k12ai_utils import k12ai_timeit, mkdir_p, k12ai_file_md5
 from k12ai.k12ai_platform import k12ai_platform_stats as get_platform_stats
 from k12ai.k12ai_errmsg import FrameworkError
 
@@ -83,20 +83,39 @@ class CVServiceRPC(ServiceRPC):
                 errcode = 100402
         return errcode
 
+    def _get_fakeid(self, token):
+        token_d = json.loads(token)
+        return token_d.get('fake_id', '')
+
     @k12ai_timeit(handler=Logger.info)
-    def pre_processing(self, appId, op, user, uuid, params):
+    def pre_processing(self, appId, token, op, user, uuid, params):
         usercache, innercache = self.get_cache_dir(user, uuid)
         ckpts_dir = os.path.join(usercache, 'output', 'ckpts')
         kv_config = os.path.join(usercache, 'kv_config.json')
+        kv_md5str = kv_config.replace('json', 'md5')
+        fakeid = self._get_fakeid(token)
+        fakeid_remote_path = os.path.join(self._shareddir, 'k12cv', fakeid)
+        Logger.info(f'fakeid: {fakeid} {fakeid_remote_path}')
         if 'train.start' == op:
             # save original parameters
             with open(kv_config, 'w') as fw:
                 json.dump(params, fw)
-            self.oss_upload(kv_config, clear=True)
+            with open(kv_md5str, 'w') as fw:
+                fw.write(k12ai_file_md5(kv_config))
+            if fakeid == '':
+                self.oss_upload(kv_config, clear=True)
+                self.oss_upload(kv_md5sum, clear=True)
             params['network.resume_continue'] = False
         else:
             # resume train or evaluate or predict
-            self.oss_download(kv_config)
+            if self.oss_isexist(fakeid_remote_path):
+                self.oss_download(
+                        fakeid_remote_path, 
+                        prefix_map=[fakeid_remote_path, usercache])
+            else:
+                self.oss_download(kv_config)
+                self.oss_download(kv_md5sum)
+
             if os.path.exists(kv_config):
                 with open(kv_config, 'r') as fr:
                     _jdata = json.load(fr)
@@ -128,11 +147,12 @@ class CVServiceRPC(ServiceRPC):
             params['data.data_dir'] = os.path.join(innercache, dataset_filename)
 
         # download train data (weights)
-        if params['network.resume_continue']:
-            self.oss_download(ckpts_dir)
-        else:
-            # remote ckpts
-            self.oss_remove(ckpts_dir)
+        if fakeid == '':
+            if params['network.resume_continue']:
+                self.oss_download(ckpts_dir)
+            else:
+                # remote ckpts
+                self.oss_remove(ckpts_dir)
 
         # download predict images
         if 'predict' in op:
@@ -164,7 +184,7 @@ class CVServiceRPC(ServiceRPC):
         return params
 
     @k12ai_timeit(handler=Logger.info)
-    def post_processing(self, appId, op, user, uuid, message):
+    def post_processing(self, appId, token, op, user, uuid, message):
         # report train process resource usage
         code, resource = get_platform_stats(appId, 'query', user, uuid, {'containers':True}, isasync=False)
         if code == 100000:
@@ -184,11 +204,20 @@ class CVServiceRPC(ServiceRPC):
                 message['environ']['start_time'] = environs['K12AI_START_TIME']
 
         # upload train or evaluate data
-        if op.startswith('train'):
-            self.oss_upload(os.path.join(usercache, 'config.json'), clear=True)
-            self.oss_upload(os.path.join(usercache, 'output', 'ckpts'), clear=True)
-        else: # op.startswith('evaluate')
-            self.oss_upload(os.path.join(usercache, 'output', 'result'), clear=True)
+        fakeid = self._get_fakeid(token) 
+        if fakeid == '':
+            if op.startswith('train'):
+                self.oss_upload(os.path.join(usercache, 'output', 'ckpts'), clear=True)
+                self.oss_upload(os.path.join(usercache, 'config.json'), clear=True)
+            else: # op.startswith('evaluate')
+                self.oss_upload(os.path.join(usercache, 'output', 'result'), clear=True)
+        else:
+            if code == 100000:
+                fakeid_remote_path = os.path.join(self._shareddir, 'k12cv', fakeid)
+                if not self.oss_isexist(fakeid_remote_path):
+                    self.oss_upload(
+                            usercache,
+                            prefix_map=[usercache, fakeid_remote_path])
         return message
 
     def make_container_volumes(self):
@@ -225,7 +254,7 @@ class CVServiceRPC(ServiceRPC):
         kwargs['runtime'] = 'nvidia'
         kwargs['shm_size'] = '10g'
         kwargs['mem_limit'] = '10g'
-        # kwargs['pid'= 'host' # for nvidia-smi in docker https://github.com/NVIDIA/nvidia-docker/issues/180
+        # kwargs['pid'] = 'host' # for nvidia-smi in docker https://github.com/NVIDIA/nvidia-docker/issues/180
         return kwargs
 
     def get_app_memstat(self, params):
@@ -250,7 +279,7 @@ class CVServiceRPC(ServiceRPC):
             'app_gpu_memory_usage_MB': gmem,
         }
 
-    def make_container_command(self, appId, op, user, uuid, params):
+    def make_container_command(self, appId, token, op, user, uuid, params):
         usercache, innercache = self.get_cache_dir(user, uuid)
         config_file = f'{usercache}/config.json'
         if '_k12.data.dataset_name' in params.keys():

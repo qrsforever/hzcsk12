@@ -34,7 +34,7 @@ class GanServiceRPC(ServiceRPC):
         return errcode
 
     @k12ai_timeit(handler=Logger.info)
-    def pre_processing(self, appId, op, user, uuid, params):
+    def pre_processing(self, appId, token, op, user, uuid, params):
         usercache, innercache = self.get_cache_dir(user, uuid)
         if 'train.start' == op:
             params['continue_train'] = False
@@ -56,7 +56,7 @@ class GanServiceRPC(ServiceRPC):
         return params
 
     @k12ai_timeit(handler=Logger.info)
-    def post_processing(self, appId, op, user, uuid, message):
+    def post_processing(self, appId, token, op, user, uuid, message):
         usercache, innercache = self.get_cache_dir(user, uuid)
         if op.startswith('train'):
             self.oss_upload(os.path.join(usercache, 'config.json'), clear=True)
@@ -86,7 +86,7 @@ class GanServiceRPC(ServiceRPC):
         kwargs['mem_limit'] = '10g'
         return kwargs
 
-    def make_container_command(self, appId, op, user, uuid, params):
+    def make_container_command(self, appId, token, op, user, uuid, params):
         # TODO
         # params['continue_train'] = True
         Logger.info(params)

@@ -63,7 +63,7 @@ class MLServiceRPC(ServiceRPC):
         }
         return kwargs
 
-    def make_container_command(self, appId, op, user, uuid, params):
+    def make_container_command(self, appId, token, op, user, uuid, params):
         usercache, innercache = self.get_cache_dir(user, uuid)
         config_file = f'{usercache}/config.json'
 

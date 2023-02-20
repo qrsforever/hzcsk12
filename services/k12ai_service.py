@@ -217,6 +217,10 @@ def _framework_execute():
     except Exception:
         return json.dumps(_err_msg(100202, exc=True))
 
+# @app.route('/k12ai/framework/cleanup', methods=['POST'], endpoint='framework_cleanup')
+# def __framework_cleanup():
+#     pass
+
 
 @app.route('/k12ai/private/pushmsg', methods=['POST', 'GET'])
 def _framework_message_push():

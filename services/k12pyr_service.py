@@ -47,7 +47,7 @@ class PyrServiceRPC(ServiceRPC):
         return errcode
 
     @k12ai_timeit(handler=Logger.info)
-    def pre_processing(self, appId, op, user, uuid, params):
+    def pre_processing(self, appId, token, op, user, uuid, params):
         usercache, innercache = self.get_cache_dir(user, uuid)
         self.oss_download(os.path.join(usercache, 'checkpoints'))
         if 'code' in params:
@@ -63,7 +63,7 @@ class PyrServiceRPC(ServiceRPC):
         return params
 
     @k12ai_timeit(handler=Logger.info)
-    def post_processing(self, appId, op, user, uuid, message):
+    def post_processing(self, appId, token, op, user, uuid, message):
         usercache, innercache = self.get_cache_dir(user, uuid)
         self.oss_upload(os.path.join(usercache, 'checkpoints'), clear=True)
 
@@ -89,7 +89,7 @@ class PyrServiceRPC(ServiceRPC):
         # kwargs['mem_limit'] = '10g'
         return kwargs
 
-    def make_container_command(self, appId, op, user, uuid, params):
+    def make_container_command(self, appId, token, op, user, uuid, params):
         usercache, innercache = self.get_cache_dir(user, uuid)
         command = f'python3 {self._workdir}/app/k12ai/pyexec.py '
         if op.startswith('runcode') and 'code' in params:

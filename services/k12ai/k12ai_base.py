@@ -24,9 +24,9 @@ from k12ai.k12ai_platform import ( # noqa
         k12ai_platform_memory_free)
 from k12ai.k12ai_utils import ( # noqa
         k12ai_oss_client, k12ai_object_remove,
-        k12ai_object_get, k12ai_object_put)
+        k12ai_object_get, k12ai_object_put, k12ai_object_list)
 
-MAX_TASKS = 10
+MAX_TASKS = 6
 MAX_MSIZE = 2000 # max model size
 
 
@@ -48,6 +48,7 @@ class ServiceRPC(object):
         self._gpu_count = k12ai_platform_gpu_count()
 
         self._userdir = f'{dataroot}/users'
+        self._shareddir = f'{dataroot}/shared'
         self._commlib = os.path.join(k12ai_utils_topdir(), 'services', 'k12ai', 'common')
         self._jschema = os.path.join(self._projdir, 'app', 'templates', 'schema')
 
@@ -59,7 +60,7 @@ class ServiceRPC(object):
                 if 'status' in message and 'warning' == message['status']:
                     errcode = 100009
                 elif isinstance(message['errinfo'], dict):
-                    errcode, message = self.container_on_crash(appId, op, user, uuid, message)
+                    errcode, message = self.container_on_crash(appId, token, op, user, uuid, message)
                 Logger.info(message)
             elif 'status' in message:
                 if 'starting' == message['status']:
@@ -67,11 +68,11 @@ class ServiceRPC(object):
                 elif 'running' == message['status']:
                     errcode = 100002
                 elif message['status'] in ('stopped', 'paused', 'robbed'):
-                    errcode, message = self.container_on_stop(appId, op, user, uuid, message)
+                    errcode, message = self.container_on_stop(appId, token, op, user, uuid, message)
                 elif 'finished' == message['status']:
-                    errcode, message = self.container_on_finished(appId, op, user, uuid, message)
+                    errcode, message = self.container_on_finished(appId, token, op, user, uuid, message)
                 elif 'monitor' == message['status']:
-                    errcode, message = self.container_on_monitor(appId, op, user, uuid, message)
+                    errcode, message = self.container_on_monitor(appId, token, op, user, uuid, message)
                     if errcode < 0:
                         return
             message = k12ai_error_message(errcode, expand=message)
@@ -83,8 +84,8 @@ class ServiceRPC(object):
                 message = k12ai_error_message(errcode)
         k12ai_consul_message(f'k12{self._sname}', appId, token, op, user, uuid, msgtype, message, clear)
 
-    def container_on_crash(self, appId, op, user, uuid, message):
-        message = self.on_finished(appId, op, user, uuid, message)
+    def container_on_crash(self, appId, token, op, user, uuid, message):
+        message = self.on_finished(appId, token, op, user, uuid, message)
         if 'err_code' in message['errinfo']:
             return message['errinfo']['err_code'], message
 
@@ -134,8 +135,8 @@ class ServiceRPC(object):
             errcode = 999999
         return errcode, message
 
-    def container_on_stop(self, appId, op, user, uuid, message):
-        message = self.on_finished(appId, op, user, uuid, message)
+    def container_on_stop(self, appId, token, op, user, uuid, message):
+        message = self.on_finished(appId, token, op, user, uuid, message)
         kStatuCodes = {
             'stopped': 100004,
             'paused':  100005, # noqa
@@ -143,11 +144,11 @@ class ServiceRPC(object):
         }
         return kStatuCodes[message['status']], message
 
-    def container_on_finished(self, appId, op, user, uuid, message):
-        message = self.on_finished(appId, op, user, uuid, message)
+    def container_on_finished(self, appId, token, op, user, uuid, message):
+        message = self.on_finished(appId, token, op, user, uuid, message)
         return 100003, message
 
-    def container_on_monitor(self, appId, op, user, uuid, message):
+    def container_on_monitor(self, appId, token, op, user, uuid, message):
         if isinstance(message, dict) and message['monitor'] == 'gpu_memory':
             code, resource = k12ai_platform_stats(appId, 'query', user, uuid, {'services':True}, isasync=False)
             if code == 100000 and len(resource['services']) == 1:
@@ -157,18 +158,18 @@ class ServiceRPC(object):
                         return 100012, info
         return -1, None
 
-    def pre_processing(self, appId, op, user, uuid, params):
+    def pre_processing(self, appId, token, op, user, uuid, params):
         return params
 
-    def post_processing(self, appId, op, user, uuid, message):
+    def post_processing(self, appId, token, op, user, uuid, message):
         return message
 
-    def on_starting(self, appId, op, user, uuid, params):
+    def on_starting(self, appId, token, op, user, uuid, params):
         self.clear_cache(user, uuid)
-        return self.pre_processing(appId, op, user, uuid, params)
+        return self.pre_processing(appId, token, op, user, uuid, params)
 
-    def on_finished(self, appId, op, user, uuid, message):
-        self.post_processing(appId, op, user, uuid, message)
+    def on_finished(self, appId, token, op, user, uuid, message):
+        self.post_processing(appId, token, op, user, uuid, message)
         self.clear_cache(user, uuid)
         return message
 
@@ -189,12 +190,18 @@ class ServiceRPC(object):
                 bucket_name=bucket_name, prefix_map=prefix_map)
         Logger.info(result)
 
+    def oss_isexist(self, filepath, bucket_name=None):
+        if self._ossmc is None:
+            return True
+        result = k12ai_object_list(self._ossmc, filepath, bucket_name=bucket_name)
+        return len(result)
+
     def oss_remove(self, filepath, bucket_name=None):
         if self._ossmc is None:
             return
         k12ai_object_remove(self._ossmc, remote_path=filepath)
 
-    def make_container_command(self, appId, op, cachedir, params):
+    def make_container_command(self, appId, token, op, cachedir, params):
         raise NotImplementedError
 
     def make_container_labels(self):
@@ -236,6 +243,7 @@ class ServiceRPC(object):
         return environs
 
     def clear_cache(self, user, uuid):
+        return
         usercache = os.path.join(self._userdir, user, uuid)
         try:
             shutil.rmtree(usercache)
@@ -258,7 +266,7 @@ class ServiceRPC(object):
     def start_container_worker(self, appId, token, op, user, uuid, params):
         usercache, innercache = self.get_cache_dir(user, uuid)
         try:
-            params = self.on_starting(appId, op, user, uuid, params)
+            params = self.on_starting(appId, token, op, user, uuid, params)
 
             dev = False
             if 'developer' in params.keys():
@@ -315,7 +323,7 @@ class ServiceRPC(object):
             }
 
             self.send_message(appId, token, op, user, uuid, "error", {'status': 'starting'}, clear=True)
-            command = self.make_container_command(appId, op, user, uuid, params)
+            command = self.make_container_command(appId, token, op, user, uuid, params)
             Logger.info(f'{kwargs} {command}')
             self._docker.containers.run(f'{self._image}', command, **kwargs)
             return
@@ -403,7 +411,6 @@ class ServiceRPC(object):
         cons = self._docker.containers.list(filters={'label': 'k12ai.service.name'})
         if len(cons) > MAX_TASKS:
             return 100210, f'{len(cons) > MAX_TASKS}'
-
         if 'train.start' == op and not isinstance(params, dict):
             return 100231, 'parameters type is not dict'
 
