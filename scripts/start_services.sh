@@ -417,8 +417,10 @@ __start_k12ai_service()
             --redis_addr ${redis_addr} \
             --redis_port ${redis_port} \
             --redis_passwd ${redis_pswd} \
+            --data_root ${k12_data_root} \
             --consul_addr ${consul_addr} \
             --consul_port ${consul_port}"
+
 
         __run_command $cmdstr
         __script_logout "start k12ai service"

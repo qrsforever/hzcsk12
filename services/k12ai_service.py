@@ -15,7 +15,7 @@ from flask import Flask, request
 from flask_cors import CORS
 from threading import Thread
 
-from k12ai.k12ai_utils import k12ai_timeit
+from k12ai.k12ai_utils import k12ai_timeit, k12ai_object_remove, k12ai_oss_client
 from k12ai.k12ai_errmsg import k12ai_error_message as _err_msg
 from k12ai.k12ai_consul import (k12ai_consul_init, k12ai_consul_register, k12ai_consul_service)
 from k12ai.k12ai_platform import (k12ai_platform_stats, k12ai_platform_control)
@@ -32,6 +32,7 @@ CORS(app, supports_credentials=True)
 
 g_app_quit = False
 g_redis = None
+g_data_root = None
 
 
 def _delay_do_loop(host, port):
@@ -92,7 +93,7 @@ def _platform_control():
         reqjson = json.loads(request.get_data().decode())
         user = reqjson['user']
         op = reqjson['op']
-        if op not in ('container.stop'):
+        if op not in ('container.stop', 'oss.remove'):
             return json.dumps(_err_msg(100102, f'not support op:{op}'))
         service_uuid = reqjson.get('service_uuid', None)
         service_params = reqjson.get('service_params', None)
@@ -217,10 +218,6 @@ def _framework_execute():
     except Exception:
         return json.dumps(_err_msg(100202, exc=True))
 
-# @app.route('/k12ai/framework/cleanup', methods=['POST'], endpoint='framework_cleanup')
-# def __framework_cleanup():
-#     pass
-
 
 @app.route('/k12ai/private/pushmsg', methods=['POST', 'GET'])
 def _framework_message_push():
@@ -228,6 +225,7 @@ def _framework_message_push():
     try:
         if g_redis:
             key = request.args.get("key", default='unknown')
+            Logger.debug(key)
             g_redis.lpush(key, request.get_data().decode())
             g_redis.expire(key, 432000) # 5 days
     except Exception as err:
@@ -242,11 +240,12 @@ def _framework_message_pop():
     try:
         if g_redis:
             key = request.args.get("key", default='unknown')
+            Logger.debug(key)
             while True:
                 item = g_redis.rpop(key)
                 if item is None:
                     break
-                response.append(item.decode())
+                response.append(json.loads(item.decode()))
     except Exception as err:
         Logger.info(err)
     finally:
@@ -309,8 +308,15 @@ if __name__ == "__main__":
             type=int,
             dest='consul_port',
             help="consul port")
+    parser.add_argument(
+            '--data_root',
+            default='/data',
+            type=str,
+            dest='data_root',
+            help="data root: datasets, pretrained, users")
     args = parser.parse_args()
 
+    g_data_root = args.data_root
     k12ai_consul_init(args.consul_addr, args.consul_port, False)
 
     Logger.info(f'start ai server on {args.host}:{args.port}')

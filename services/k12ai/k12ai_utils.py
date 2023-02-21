@@ -271,10 +271,11 @@ def k12ai_object_get(client, remote_path, bucket_name=None, prefix_map=None):
         bucket_name = 'k12ai'
     remote_path = remote_path.lstrip(os.path.sep)
 
-    if prefix_map[0][0] == '/':
-        prefix_map[0] = prefix_map[0][1:]
-    if prefix_map[1][0] == '/':
-        prefix_map[1] = prefix_map[1][1:]
+    if prefix_map:
+        if prefix_map[0][0] == '/':
+            prefix_map[0] = prefix_map[0][1:]
+        if prefix_map[1][0] == '/':
+            prefix_map[1] = prefix_map[1][1:]
 
     result = []
     for obj in k12ai_object_list(client, remote_path, True, bucket_name):
@@ -312,6 +313,8 @@ def k12ai_object_remove(client, remote_path, bucket_name=None):
     if bucket_name is None:
         bucket_name = 'k12ai'
     result = []
+    if remote_path[0] == '/':
+        remote_path = remote_path[1:]
     for obj in k12ai_object_list(client, remote_path, True, bucket_name):
         client.remove_object(obj.bucket_name, obj.object_name)
         result.append({'etag': obj.etag,

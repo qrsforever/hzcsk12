@@ -11,11 +11,13 @@
 import docker
 import GPUtil
 import psutil
+import os
 from subprocess import Popen, PIPE
 from threading import Thread
 
 from k12ai.k12ai_errmsg import k12ai_error_message
 from k12ai.k12ai_consul import k12ai_consul_message
+from k12ai.k12ai_utils import k12ai_oss_client, k12ai_object_remove
 
 g_cpu_count = -1
 g_gpu_count = -1
@@ -214,6 +216,21 @@ def _stop_container(op, user, uuid, params):
         return 100205, f'container:{cid}'
     return 100000, None
 
+def _remove_oss_objects(op, user, uuid, params):
+    try:
+        mc = k12ai_oss_client()
+        target = params.get('target')
+        if target == 'fakeid':
+            bucket = params.get('bucket', 'k12ai')
+            for obj in params.get('objects', []):
+                k12ai_object_remove(
+                        mc,
+                        os.path.join('/data/', 'shared', 'k12cv', obj),
+                        bucket_name=bucket)
+    except Exception as err:
+        return 100950, f'{err}'
+    return 100000, None
+
 
 def k12ai_platform_stats(appId, op, user, uuid, params, isasync):
     if op not in ('query'):
@@ -230,6 +247,28 @@ def k12ai_platform_stats(appId, op, user, uuid, params, isasync):
 def k12ai_platform_control(op, user, uuid, params, isasync):
     if op == 'container.stop':
         return _stop_container(op, user, uuid, params)
+    elif op == 'oss.remove':
+        return _remove_oss_objects(op, user, uuid, params)
+
+
+#  @app.route('/k12ai/framework/', methods=['POST'], endpoint='framework_delete')
+#  def __framework_delete():
+#      try:
+#          reqdata = request.get_data().decode()
+#          Logger.info(f'req: {reqdata}')
+#          reqjson = json.loads(reqdata)
+#          op = reqjson['op']
+#          if op == 'rmfakeid':
+#              ossmc = k12ai_oss_client()
+#              fake_prefix = f'{g_data_root}/shared/k12cv'
+#              reqjson.get('bu
+#              if ossmc:
+#                  for x in reqjson.get('data', []):
+#                      k12ai_object_remove(ossmc, os.path.join(fake_prefix, x), bucket_name=bucket)
+#              else:
+#                  return json.dumps(_err_msg(100951, 'oss'))
+#      except Exception:
+#          return json.dumps(_err_msg(100913, exc=True))
 
 
 def k12ai_platform_cpu_count():

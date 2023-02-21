@@ -98,6 +98,8 @@ ERRORS = {
         100917: {'en': 'type error', 'cn': '常见错误: 类型错误'},
         100918: {'en': 'unsupported operand type', 'cn': '常见错误: 不支持该操作类型'},
         100930: {'en': 'zero division error', 'cn': '常见错误: 数学算式分母为零'},
+        100950: {'en': 'oss operation fail', 'cn': '常见错误: 对象存储操作失败'},
+        100951: {'en': 'oss connect operation connect fail', 'cn': '常见错误: 对象存储连接失败'},
         100999: {'en': 'unkown error!', 'cn': '不可知错误'},
 
         999999: {'en': 'unknown error!', 'cn': '常见错误: 不可知错误'},

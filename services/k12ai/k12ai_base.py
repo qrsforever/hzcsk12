@@ -48,7 +48,8 @@ class ServiceRPC(object):
         self._gpu_count = k12ai_platform_gpu_count()
 
         self._userdir = f'{dataroot}/users'
-        self._shareddir = f'{dataroot}/shared'
+        self._ossroot = '/data'
+        self._ossshrd = f'{self._ossroot}/shared'
         self._commlib = os.path.join(k12ai_utils_topdir(), 'services', 'k12ai', 'common')
         self._jschema = os.path.join(self._projdir, 'app', 'templates', 'schema')
 
@@ -243,7 +244,6 @@ class ServiceRPC(object):
         return environs
 
     def clear_cache(self, user, uuid):
-        return
         usercache = os.path.join(self._userdir, user, uuid)
         try:
             shutil.rmtree(usercache)
@@ -332,6 +332,7 @@ class ServiceRPC(object):
                 'status': 'crash', 'errinfo': {'err_code': fwerr.errcode, 'err_text': fwerr.errtext}
             })
         except Exception:
+            Logger.info(gen_exc_info())
             self.send_message(appId, token, op, user, uuid, "error", {
                 'status': 'crash', 'errinfo': gen_exc_info()
             })
