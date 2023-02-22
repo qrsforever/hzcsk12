@@ -265,7 +265,8 @@ class CVServiceRPC(ServiceRPC):
         kwargs['runtime'] = 'nvidia'
         kwargs['shm_size'] = '10g'
         kwargs['mem_limit'] = '10g'
-        # kwargs['pid'] = 'host' # for nvidia-smi in docker https://github.com/NVIDIA/nvidia-docker/issues/180
+        # kwargs['pid_mode'] = 'host'  # if use command: nvidia-smi
+        # kwargs['privileged'] = True
         return kwargs
 
     def get_app_memstat(self, params):

@@ -63,7 +63,9 @@ __img_install()
 __install_softwares()
 {
     __apt_install git
-    # [[ $distribution =~ "centos" ]] && __apt_install mount.nfs
+    [[ $distribution =~ "centos" ]] && __apt_install mount.nfs
+    # locate error:  updatedb
+    # [[ $distribution =~ "centos" ]] && updatedb
         
     ret=`__is_exist_bin docker`
     if [[ $ret == "0" ]]
@@ -116,11 +118,21 @@ EOF
 
 __start_k12ai()
 {
-    docker run -d --runtime nvidia --name k12ai --network host \
+    # ubuntu: /usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1
+    # centos: ?
+    nvidia_so_path=/usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1
+    if [[ $distribution =~ "centos" ]]
+    then
+        nvidia_so_path=xxx
+    fi
+    docker run -d --runtime nvidia --name k12ai --network host --pid host --privileged \
         --shm-size=10g --ulimit memlock=-1 --ulimit stack=67108864 \
         --env PRI_HTTP_PROXY=${HTTP_PROXY:-''} \
         --volume /var/run/docker.sock:/var/run/docker.sock \
         --volume /data:/data \
+        --volume /usr/bin/nvidia-smi:/usr/bin/nvidia-smi \
+        --volume ${nvidia_so_path}:/usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1 \
+        --volume /tmp/k12logs:/tmp/k12logs \
         --volume ${TOP_DIR}:${TOP_DIR} \
         --entrypoint ${TOP_DIR}/entrypoint.sh hzcsai_com/k12ai 
 }

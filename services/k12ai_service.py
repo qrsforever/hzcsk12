@@ -51,7 +51,7 @@ def _delay_do_loop(host, port):
                 {'cpus': True, 'gpus': True}, True)
         except Exception:
             pass
-        time.sleep(30)
+        time.sleep(120)
 
 
 ### check health

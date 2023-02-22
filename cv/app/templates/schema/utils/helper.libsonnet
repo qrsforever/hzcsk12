@@ -88,6 +88,7 @@ local _network_maps = {
     else if $.dataset_name == 'rflowers5' then import '../constants/datasets/flowers5.jsonnet'
     else if $.dataset_name == 'rfruits' then import '../constants/datasets/rfruits.jsonnet'
     else if $.dataset_name == 'rmnist' then import '../constants/datasets/mnist.jsonnet'
+    else if $.dataset_name == 'cleaner_robot' then import '../constants/datasets/cleaner_robot.jsonnet'
     else if $.dataset_name == 'rcifar10' then import '../constants/datasets/cifar10.jsonnet'
     else if $.dataset_name == 'rDogsVsCats' then import '../constants/datasets/dogsVsCats.jsonnet'
     else if $.dataset_name == 'rchestxray' then import '../constants/datasets/chestxray.jsonnet'

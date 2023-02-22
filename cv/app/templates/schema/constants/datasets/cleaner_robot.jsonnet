@@ -3,28 +3,28 @@
     task: 'cls',
     method: 'image_classifier',
     data: {
-        num_records: 3263,
-        num_classes: 5,
-        data_dir: '/datasets/rfruits',
+        num_records: 96,
+        num_classes: 3,
+        data_dir: '/datasets/cleaner_robot',
         image_tool: 'pil',
         input_mode: 'RGB',
-        workers: 1,
+        workers: 4,
         normalize: {
             div_value: 1,
             mean: [
-                0.7507,
-                0.6427,
-                0.5061,
+                0.7566,
+                0.7323,
+                0.7016
             ],
             std: [
-                0.2251,
-                0.2804,
-                0.3714,
+                0.1805,
+                0.194,
+                0.2195
             ],
         },
     },
     train: {
-        batch_size: 32,
+        batch_size: 64,
         aug_trans: {
             trans_seq: [],
         },
@@ -70,11 +70,11 @@
     solver: {
         lr: {
             metric: 'epoch',
-            base_lr: 0.01,
+            base_lr: 0.1,
             lr_policy: 'step',
             step: {
                 gamma: 0.1,
-                step_size: 30,
+                step_size: 50,
             },
             multistep: {},
         },
@@ -94,10 +94,10 @@
                 nesterov: false,
             },
         },
-        display_iter: 128,
-        save_iters: 1024,
-        test_interval: 512,
-        max_epoch: 30,
+        display_iter: 32,
+        save_iters: 512,
+        test_interval: 48,
+        max_epoch: 300,
     },
     loss: {
         loss_type: 'ce_loss',
@@ -137,11 +137,9 @@
     _k12: {
         detail: {
             name_seq: [
-                'Banana',
-                'Pear',
-                'Lemon',
-                'Apple',
-                'Orange',
+               "ring",
+               "cable",
+               "other"
             ],
         },
         data: {

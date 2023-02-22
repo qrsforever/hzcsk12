@@ -108,7 +108,7 @@ class ServiceRPC(object):
                     errcode = 100907
                 elif errtype == 'RuntimeError':
                     if 'CUDA out of memory' in errtext or 'CUDA error: out of memory' in errtext:
-                        errcode = 100908
+                        errcode = 100906
                 elif errtype == 'ImageNotFound':
                     errcode = 100905
                 elif errtype == 'ModuleNotFoundError':

@@ -96,6 +96,10 @@ def _get_disk_infos():
 def _get_process_infos(pid = -1):
     infos = []
     try:
+        # /usr/bin/nvidia-smi
+        # /usr/lib/x86_64-linux-gnu/libnvidia-ml.so
+        # /usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1
+        # /usr/lib/x86_64-linux-gnu/libnvidia-ml.so.470.103.01
         process = Popen(['nvidia-smi', "pmon", "--count", "1", "--select", "mu"], stdout=PIPE)
         stdout, stderr = process.communicate()
         output = stdout.decode('UTF-8').split('\n')
@@ -249,26 +253,6 @@ def k12ai_platform_control(op, user, uuid, params, isasync):
         return _stop_container(op, user, uuid, params)
     elif op == 'oss.remove':
         return _remove_oss_objects(op, user, uuid, params)
-
-
-#  @app.route('/k12ai/framework/', methods=['POST'], endpoint='framework_delete')
-#  def __framework_delete():
-#      try:
-#          reqdata = request.get_data().decode()
-#          Logger.info(f'req: {reqdata}')
-#          reqjson = json.loads(reqdata)
-#          op = reqjson['op']
-#          if op == 'rmfakeid':
-#              ossmc = k12ai_oss_client()
-#              fake_prefix = f'{g_data_root}/shared/k12cv'
-#              reqjson.get('bu
-#              if ossmc:
-#                  for x in reqjson.get('data', []):
-#                      k12ai_object_remove(ossmc, os.path.join(fake_prefix, x), bucket_name=bucket)
-#              else:
-#                  return json.dumps(_err_msg(100951, 'oss'))
-#      except Exception:
-#          return json.dumps(_err_msg(100913, exc=True))
 
 
 def k12ai_platform_cpu_count():
