@@ -226,11 +226,15 @@ def _remove_oss_objects(op, user, uuid, params):
         target = params.get('target')
         if target == 'fakeid':
             bucket = params.get('bucket', 'k12ai')
-            for obj in params.get('objects', []):
-                k12ai_object_remove(
-                        mc,
-                        os.path.join('/data/', 'shared', 'k12cv', obj),
-                        bucket_name=bucket)
+            objs = params.get('objects', '')
+            if isinstance(objs, str):
+                objs = [objs]
+            for obj in objs:
+                if obj != '':
+                    k12ai_object_remove(
+                            mc,
+                            os.path.join('/data/', 'shared', 'k12cv', obj),
+                            bucket_name=bucket)
     except Exception as err:
         return 100950, f'{err}'
     return 100000, None

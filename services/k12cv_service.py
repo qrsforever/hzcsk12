@@ -214,21 +214,15 @@ class CVServiceRPC(ServiceRPC):
             else: # op.startswith('evaluate')
                 self.oss_upload(os.path.join(usercache, 'output', 'result'), clear=True)
         else:
-            if code == 100000:
-                fakeid_remote_path = os.path.join(self._ossshrd, 'k12cv', fakeid)
-                if op.startswith('train'):
-                    if not self.oss_isexist(fakeid_remote_path) or fakeid.startswith('resnet50'):
-                        self.oss_upload(
-                                usercache,
-                                prefix_map=[usercache, fakeid_remote_path])
-                else:
-                    # TODO not cache weights
-                    if not fakeid.startswith('resnet50'):
-                        self.oss_remove(fakeid_remote_path)
-                    else:
-                        self.oss_upload(
-                                os.path.join(usercache, 'output', 'result'),
-                                prefix_map=[usercache, fakeid_remote_path], clear=True)
+            fakeid_remote_path = os.path.join(self._ossshrd, 'k12cv', fakeid)
+            if op.startswith('train'):
+                self.oss_upload(
+                        usercache,
+                        prefix_map=[usercache, fakeid_remote_path])
+            else:
+                self.oss_upload(
+                        os.path.join(usercache, 'output', 'result'),
+                        prefix_map=[usercache, fakeid_remote_path], clear=True)
         return message
 
     def make_container_volumes(self):
