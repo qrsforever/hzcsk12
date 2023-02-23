@@ -214,15 +214,16 @@ class CVServiceRPC(ServiceRPC):
             else: # op.startswith('evaluate')
                 self.oss_upload(os.path.join(usercache, 'output', 'result'), clear=True)
         else:
-            fakeid_remote_path = os.path.join(self._ossshrd, 'k12cv', fakeid)
-            if op.startswith('train'):
-                self.oss_upload(
-                        usercache,
-                        prefix_map=[usercache, fakeid_remote_path])
-            else:
-                self.oss_upload(
-                        os.path.join(usercache, 'output', 'result'),
-                        prefix_map=[usercache, fakeid_remote_path], clear=True)
+            if 'status' in message and 'finished' == message['status']:
+                fakeid_remote_path = os.path.join(self._ossshrd, 'k12cv', fakeid)
+                if op.startswith('train'):
+                    self.oss_upload(
+                            usercache,
+                            prefix_map=[usercache, fakeid_remote_path])
+                else:
+                    self.oss_upload(
+                            os.path.join(usercache, 'output', 'result'),
+                            prefix_map=[usercache, fakeid_remote_path], clear=True)
         return message
 
     def make_container_volumes(self):
