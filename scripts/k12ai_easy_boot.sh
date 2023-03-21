@@ -83,7 +83,16 @@ __install_softwares()
             dnf install -y nvidia-container-toolkit
             nvidia-ctk runtime configure --runtime=docker
         else
+            curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
+            curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | tee /etc/apt/sources.list.d/nvidia-docker.list
+            apt-get update
             __apt_install nvidia-docker2
+        fi
+        ret=`__is_exist_bin docker`
+        if [[ $ret == "0" ]]
+        then
+            echo "install docker error"
+            exit -1
         fi
         pkill -SIGHUP dockerd
         gpasswd -a $USER docker # ; newgrp docker
