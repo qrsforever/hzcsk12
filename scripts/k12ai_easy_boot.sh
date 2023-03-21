@@ -118,6 +118,7 @@ EOF
 
 __start_k12ai()
 {
+    mkdir -p /tmp/k12logs
     # ubuntu: /usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1
     # centos: ?
     nvidia_so_path=/usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1

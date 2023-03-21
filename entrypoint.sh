@@ -18,7 +18,7 @@ do
         restart=0
         for chk in ${servers[@]}
         do
-            res=`ps -eo pid,args | grep "$chk" | grep -v grep`
+            res=`ps -eo pid,args | grep "${chk}_service.py" | grep -v grep`
             echo "check $chk: $res"
             if [[ x$res == x ]]
             then
