@@ -1,0 +1,12 @@
+#!/bin/bash
+
+export DOCKER_TCP_HOST='tcp://82.157.36.183:5000'
+export HOST_LAN_IP='172.19.76.72'
+export DATA_ROOT='/data/k12ai'
+export REDIS_ADDR=${HOST_LAN_IP}
+export REDIS_PORT=10090
+export REDIS_PSWD='qY3Zh4xLPZNMkaz3'
+export PRI_HTTP_PROXY="${HOST_LAN_IP}:8118"
+export XOS_SERVER_URL="${HOST_LAN_IP}:9000"
+export XOS_ACCESS_KEY='E8QFW1UE18WZXQUYM0XF'
+export XOS_SECRET_KEY='0u6vuKN0fDopyIizvpJZog2oR13Cltar1k8AFlxf'

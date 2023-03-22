@@ -66,8 +66,8 @@ __find_netip() {
 }
 
 hostname=`hostname`
-hostlanip=$(__find_lanip)
-hostnetip=$(__find_netip)
+hostlanip=${HOST_LAN_IP:-$(__find_lanip)}
+hostnetip=${HOST_NET_IP:-$(__find_netip)}
 
 echo -e "\n####\thostname($hostname), hostlanip($hostlanip), hostnetip($hostnetip)\t####"
 
@@ -103,7 +103,7 @@ consul_name=monitor
 consul_addr=$hostlanip
 consul_port=8500
 
-k12_data_root=/data/k12-nfs
+k12_data_root=${DATA_ROOT:-'/data/k12-nfs'}
 
 k12ai_service_name=k12ai
 k12ai_addr=$hostlanip

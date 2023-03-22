@@ -7,12 +7,17 @@
 
 CUR_FIL=${BASH_SOURCE[0]}
 TOP_DIR=`cd $(dirname $CUR_FIL)/..; pwd`
-DOCKER_HOST=hzcsk8s.io
+
+source ${TOP_DIR}/_env
+
+DOCKER_HOST=${DOCKER_TCP_HOST:-'hzcsk8s.io'}
 
 images=(
     "hzcsai_com/k12ai"
     "hzcsai_com/k12cv"
     "hzcsai_com/k12pyr"
+    "hzcsai_com/raceai"
+    "hzcsai_com/raceai_app"
 )
 
 distribution=$(. /etc/os-release;echo $ID$VERSION_ID)

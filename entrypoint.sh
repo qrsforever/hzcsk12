@@ -4,7 +4,6 @@
 CUR_DIR=$(cd $(dirname ${BASH_SOURCE[0]}); pwd)
 
 servers=("k12ai" "k12cv" "k12pyr")
-ifnames=("eth0" "ens3")
 
 cd $CUR_DIR
 while true
