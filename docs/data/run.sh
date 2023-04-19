@@ -9,4 +9,5 @@ source ${TOP_DIR}/_env
 AI_HOST=${HOST_LAN_IP:-'172.21.0.13'}
 
 # curl -XPOST -H "Content-Type:application/json" -d@dogcat.json http://${AI_HOST}:8119/k12ai/framework/execute 
-curl -XPOST -H "Content-Type:application/json" -d@hellopyr.json http://${AI_HOST}:8119/k12ai/framework/execute 
+# curl -XPOST -H "Content-Type:application/json" -d@hellopyr.json http://${AI_HOST}:8119/k12ai/framework/execute 
+curl -XPOST -H "Content-Type:application/json" -d@cr.json http://${AI_HOST}:9119/raceai/framework/inference

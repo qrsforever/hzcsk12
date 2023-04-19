@@ -1,6 +1,6 @@
 #!/bin/bash
 
-remote_hostnames=('tau' 'k8-storage')
+remote_hostnames=('p40' 'k8-storage')
 remote_relative_path=('/data/hzcsai_com/hzcsk12' '/data/k12-nfs/codes/hzcsk12')
 
 cd $(dirname $0)

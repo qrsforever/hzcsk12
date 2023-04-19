@@ -1,0 +1,37 @@
+{
+    "task": "zmq.cr.resnet18.inference",
+    "cfg":
+    {
+        "data": {
+            "class_name": "raceai.data.process.PathListDataLoader",
+            "params": {
+                "data_source": "https://raceai.s3.didiyunapi.com/data/datasets/cv/clean_robot/clearnrobot0/dataline5.png",
+                "dataset": {
+                    "class_name": "raceai.data.PredictListImageDataset",
+                    "params": {
+                        "input_size": 224
+                    }
+                },
+                "sample": {
+                    "batch_size": 32,
+                    "num_workers": 4
+                }
+            }
+        },
+        "nms": {
+            "conf_thres": 0.2,
+            "iou_thres": 0.5
+        },
+        "pigeon": {
+            "user_id": 128,
+            "class_id": 12,
+            "scene_id": 9,
+            "weight_id": 13,
+            "component_id": 0,
+            "pre_times": 7,
+            "msgkey": "talent:edu:zmq.yolo.inference.prod",
+            "errkey": "talent:edu:zmq.yolo.inference.error.prod",
+            "created_at": "2023-03-21T19:35:38.208774074+08:00"
+        }
+    }
+}
