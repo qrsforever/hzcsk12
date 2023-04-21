@@ -156,7 +156,7 @@ __start_k12ai()
     nvidia_so_path=/usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1
     if [[ $distribution =~ "centos" ]]
     then
-        nvidia_so_path=xxx
+        nvidia_so_path=/usr/lib64/libnvidia-ml.so.1
     fi
     docker run -d --runtime nvidia --name k12ai \
         --restart unless-stopped \
@@ -175,7 +175,7 @@ __start_k12ai()
 
 __main()
 {
-    __install_softwares
+    # __install_softwares
 
     __img_install
 
