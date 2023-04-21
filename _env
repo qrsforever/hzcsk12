@@ -1,8 +1,24 @@
 #!/bin/bash
 
+ifnames=("enp4s3", "eth0" "ens3")
+__find_lanip() {
+    for ifname in ${ifnames[*]}
+    do
+        result=`ifconfig $ifname 2>&1 | grep -v "error"`
+        if [[ x$result != x ]]
+        then
+            ip=`echo "$result" | grep inet\ | awk '{print $2}'`
+            echo $ip
+            return
+        fi
+    done
+    exit -1
+}
+
 export FRP_SERVER_ADDR=82.157.36.183
 export DOCKER_TCP_HOST='tcp://82.157.36.183:5000'
-export HOST_LAN_IP='172.19.76.72'
+export HOST_LAN_IP=$(__find_lanip)
+export HOST_NET_IP=${HOST_LAN_IP}
 export DATA_ROOT='/data/k12ai'
 export REDIS_ADDR=81.70.134.40
 export REDIS_PORT=10090
