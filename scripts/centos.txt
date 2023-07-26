@@ -1,0 +1,3 @@
+# start nfs
+
+service nfs-server start
