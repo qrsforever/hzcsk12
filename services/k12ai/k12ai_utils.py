@@ -188,12 +188,13 @@ def k12ai_object_put(client, local_path,
     if bucket_name is None:
         bucket_name = 'k12ai'
 
-    if XOS_APPID is not None:
+    if "myqcloud.com" in XOS_SERVER_URL:
         bucket_name = f'{bucket_name}-{XOS_APPID}'
         xos_domain = f'https://{bucket_name}.cos.{XOS_REGION}.{XOS_SERVER_URL}'
-    else:
-        # s3-internal.didiyunapi.com
+    elif 'didiyunapi' in XOS_SERVER_URL
         xos_domain = f'https://{bucket_name}.{XOS_SERVER_URL}'
+    else:
+        xos_domain = f'https://{XOS_SERVER_URL}/{bucket_name}'
 
     result = []
 
