@@ -1,6 +1,6 @@
 #!/bin/bash
 
-ifnames=("enp4s3" "eth0" "ens3")
+ifnames=("wlx081f71309528" "eth0" "ens3" "wlp4s0")
 __find_lanip() {
     for ifname in ${ifnames[*]}
     do
