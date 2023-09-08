@@ -122,9 +122,8 @@ class CVServiceRPC(ServiceRPC):
                 with open(kv_config, 'r') as fr:
                     _jdata = json.load(fr)
                     if params is not None:
-                        params.update(_jdata)
-                    else:
-                        params = _jdata
+                        _jdata.update(params)
+                    params = _jdata
                 params['network.resume_continue'] = True
             else:
                 raise FrameworkError(100214)
